@@ -5,7 +5,7 @@ Introduction:
 
 This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for my phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
 
-<<<<<<< HEAD
+
 Still uploading the rest of files.. all files are not done yet. 
 
 Folders Description:
@@ -23,6 +23,3 @@ original is having all the files i have modified in source folder. There is a Re
 README.md is the file which has the contents you are reading!
 
 and finally thanks to manoranjan2050, kurotsugi, savie and Maroc-os. All of them have taught me lot of things. and i am greatful for them. thanks guys.
-=======
-Still uploading the rest of files.. all files are not done yet. 
->>>>>>> 25b7f0bb9b7e5593982d596994e9a73b2613caeb
