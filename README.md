@@ -11,9 +11,11 @@ Only source folder needs to be uploaded yet.
 
 Folders Description:
 
-"arm-2009q3" is cross compiler used to build android kernel. You can also get the Toolchain from here. Visit http://www.codesourcery.com/, download and install it(hard way).
+"arm-2009q3" is cross compiler used to build android kernel.
+Or You can also get the Toolchain from here. Visit http://www.codesourcery.com/, download and install it(hard way).
 
 "ncurses-5.9" is required to enablemenuconfig option which helps you config kernel with a menu instead of editing manually .config files.. even though everyone says menuconfig is better, i prefer to edit .config file directly using text editor.
+You can also get ncurses from its official page from here. link--> http://ftp.gnu.org/pub/gnu/ncurses/
 
 "source" is the folder which has files required to compile the kernel or name itself is self explanatory i guess.
 
