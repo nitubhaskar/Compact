@@ -6,11 +6,12 @@ Introduction:
 This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for my phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
 
 
-Still uploading the rest of files.. all files are not done yet. 
+Only source folder needs to be uploaded yet.
+
 
 Folders Description:
 
-"arm-2009q3" is cross compiler used to build android kernel.
+"arm-2009q3" is cross compiler used to build android kernel. You can also get the Toolchain from here. Visit http://www.codesourcery.com/, download and install it(hard way).
 
 "ncurses-5.9" is required to enablemenuconfig option which helps you config kernel with a menu instead of editing manually .config files.. even though everyone says menuconfig is better, i prefer to edit .config file directly using text editor.
 
