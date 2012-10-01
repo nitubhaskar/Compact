@@ -31,14 +31,21 @@ You can also get ncurses from its official page from here. link--> http://ftp.gn
 
 COMMANDS used: from building kernel to packing boot.img
 
-use the commands without QUOTES "" in terminal.
+Note: 
+1. use the commands without QUOTES "" in terminal.
 
-Note: first 3 commands should be entered inside this folder or path
-/"your path to kernel"/common/
+2. open folder "common" inside source folder, there is a file called "Makefile". open it with text editor and find this line using search option "/opt/toolchains/arm-eabi-4.4.3/bin/arm-eabi-". replace the line with this "/<your path to toolchain folder>/arm-2009q3/bin/arm-none-eabi-".
+For Ex. in mine the line has this after replacing.
+/home/com/kernel/arm-2009q3/bin/arm-none-eabi-
+
+3. first 3 commands should be entered inside this folder or path
+/<your path to kernel folder>/common/
 For Ex. mine is here /home/com/kernel/source/common/
 So my terminal should be showing the above when i type "pwd" command. (pwd means PresentWorkingDirectory).
 
-last 2 commands should be entered inside the bootimg folder.
+4. last 2 commands should be entered inside the bootimg folder.
+
+Now your system environment is setup and ready to build the kernel.. Follow the below commands to build the kernel.
 
 
 1. "make clean" --> its better to do this. so that you will have a fresh files to build kernel and no old files compiled before will be used.
