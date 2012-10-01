@@ -32,6 +32,7 @@ You can also get ncurses from its official page from here. link--> http://ftp.gn
 COMMANDS used: from building kernel to packing boot.img
 
 Note: 
+
 1. use the commands without QUOTES "" in terminal.
 
 2. open folder "common" inside source folder, there is a file called "Makefile". open it with text editor and find this line using search option "/opt/toolchains/arm-eabi-4.4.3/bin/arm-eabi-". replace the line with this "/<your path to toolchain folder>/arm-2009q3/bin/arm-none-eabi-".
