@@ -1,0 +1,5 @@
+config FB_BRCM_DSI
+	tristate "Broadcom DSI Platform Framebuffer support"
+    default N
+	help
+	  This framebuffer device driver is for the Broadcom DSI interface.
