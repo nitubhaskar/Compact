@@ -6,9 +6,6 @@ Introduction:
 This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for my phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
 
 
-Only source folder needs to be uploaded yet.
-
-
 Folders Description:
 
 "arm-2009q3" is cross compiler used to build android kernel.
