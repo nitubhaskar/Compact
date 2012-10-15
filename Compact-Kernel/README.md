@@ -1,33 +1,34 @@
-MerrukTechnology Kernel Version : 2.5
-=======================================
-For Samsung GT-S5360 : `Galaxy Y Young`
-========================================
-
-
-______________
-
+Compact Kernel:
+~~~~~~~~~~~~~~~
+For Samsung GT-S6102 : Galaxy Y DUOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Introduction
---------------
+~~~~~~~~~~~~
 
--	This kernel source code repository has included tools to simplify building the kernel, create/install the environment and, eventually, compress the kernel image `(zImage, RamDisk)` after you make your modifications in the `Boot` directory.
-
--	When you execute the scripts you will see the verbose output for better understanding the processes.
-
-This can be done in three steps:
-<dl>
-	<dt>* 1. Compiling</dt>
-	<dd>	Build the kernel. There are 4 parameters to customize your build.</dd>
-	<dt>* 2. Preparing the environment</dt>
-	<dd>	Set up the environment and decompress the RamDisk.</dd>
-	<dt>* 3. Kernel compression</dt>
-	<dd>	Compress the kernel image with modifications in the boot directory or with default Merruk or Samsung files.</dd>
-</dl>
+Folders description:
+~~~~~~~~~~~~~~~~~~~~
 
 
-Compiling
----------------
+"common" and "modules" folders: these are the folder which has files required to compile the kernel. These two folders are obtained from samsung source
+
+"MerrukTechnology_Output": This is the Output `Directory` for all compiled files.
+Compiled Files :
+	* 1. Kernel Image
+		The Kernel image file `zImage` on the root of this Output directory "./".
+	* 2. Kernel Modules
+		All Kernel modules `files.ko` will be automatically copied to "./system/lib/modules/".
+
+
+"Tools": This `Directory` is an add-ons gives you a simple way to Compress/Decompress all kernels with different Compression types.
+
+	You can use the tools to install the environment at first time with ./Install.sh [parameter]. `(Decompression)`
+	Also you can use it to compress the files after you generate files in `./Boot` directory {InitRamFS}. `(Compression)`
+
+
+Compiling:
+~~~~~~~~~
 
 For compiling Merruk Technology kernel open the command prompt `(CONSOLE)` and see this :
 
@@ -39,7 +40,7 @@ For compiling Merruk Technology kernel open the command prompt `(CONSOLE)` and s
 	<td>New Compile/Update Existing Kernel</td><td>First Compile or Only Modded Codes</td><td>Kernel_Make</td><td>-MT</td>
   </tr>
   <tr>
-	<td>Specific 'CONFIG_FILE' Compile</td><td>Must be in <b>/arch/arm/configs/</b></td><td>Kernel_Make</td><td>-CF totoro_brcm21553_05_defconfig</td>
+	<td>Specific 'CONFIG_FILE' Compile</td><td>Must be in <b>/arch/arm/configs/</b></td><td>Kernel_Make</td><td>-CF bcm21553_torino_02_defconfig</td>
   </tr>
   <tr>
 	<td>Clean Build (0 files already built)</td><td>Like first time, clean files and build</td><td>Kernel_Make</td><td>-CL</td>
@@ -50,8 +51,8 @@ For compiling Merruk Technology kernel open the command prompt `(CONSOLE)` and s
 </table>
 
 
-Preparing the environment
-----------------------------
+Preparing the environment:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 On first use of the `Tools` directory you need to set up the environment :
 
@@ -70,8 +71,8 @@ Parameters:
 </dl>
 
 
-Kernel compression
---------------------
+Kernel compression:
+~~~~~~~~~~~~~~~~~~~
 
 You can simply call this tool after you made changes in the 'Boot' directory `(RamFS)` :
 
@@ -90,8 +91,8 @@ Parameters:
 </dl>
 
 
-Output files
---------------
+Output files:
+~~~~~~~~~~~~~
 
 Your compressed kernel will be built as:
 

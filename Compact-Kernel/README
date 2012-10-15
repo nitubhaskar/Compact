@@ -1,4 +1,7 @@
-Merruk Technology Kernel v.2.5 For Samsung Galaxy Y 'Young' GT-S5360.
+Compact Kernel:
+~~~~~~~~~~~~~~~
+For Samsung GT-S6102 : Galaxy Y DUOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ###How-To USE :###
 ##################
@@ -6,12 +9,12 @@ Merruk Technology Kernel v.2.5 For Samsung Galaxy Y 'Young' GT-S5360.
 *COMPILATION :*
 _______________
 
-For compiling Merruk Technology Kernel open the command prompt (CONSOLE) and see this :
+For compiling Merruk Technology Kernel, open the command prompt (CONSOLE) and see this :
 - --------------------------------------------------------------------------------------------------------------------------------------------- -
 - Description				: What does that mean?			* Command [-Parameter]						-
 ----------------------------------------------------------------------------------------------------------------------------------------------- -
 - New Compile/Update Existing Kernel	: "First Compile or Only Modded Codes"	* Kernel_Make -MT						-
-- Specific CONFIG_FILE Compile		: "Must be in '/arch/arm/configs/'"	* Kernel_Make -CF totoro_brcm21553_05_defconfig			-
+- Specific CONFIG_FILE Compile		: "Must be in '/arch/arm/configs/'"	* Kernel_Make -CF bcm21553_torino_02_defconfig			-
 - Clean Build (0 Files already built's)	: "Like First Time, Clean Files&Build"	* Kernel_Make -CL						-
 - Specify Number Of Prosessors		: "Script Guess That Automaticlly"	* Kernel_Make -CPU [Number of Cores] (all cores by default) 	-
 - --------------------------------------------------------------------------------------------------------------------------------------------- -
@@ -20,7 +23,7 @@ root#/: ./Kernel_Make -Help
 Welcome To Merruk Technology Kernel Tools v.1.0 !
 
 	-MT					: Standard Compile Option, Automatic Kernel/Modules Installation
-	-CF totoro_brcm21553_05_defconfig	: Specify the defconfig file you want, PS: Must Be In 'arch/arm/configs'
+	-CF bcm21553_torino_02_defconfig	: Specify the defconfig file you want, PS: Must Be In 'arch/arm/configs'
 	-CL					: Make a clean compilation from scratch
 	-CPU [Number Of Cores]			: Specify Number Of Cores You Wanna Use (By default the script calculates all cores)
 	-HELP/-H				: Show This Help Prompt.

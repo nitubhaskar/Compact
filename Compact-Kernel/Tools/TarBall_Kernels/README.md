@@ -1,17 +1,13 @@
-MerrukTechnology Kernel Version : 2.5
-=======================================
-For Samsung GT-S5360 : `Galaxy Y Young`
-========================================
-
-
-______________
-
+Compact Kernel:
+~~~~~~~~~~~~~~~
+For Samsung GT-S6102 : Galaxy Y DUOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Kernels Directory : TAR
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
--	This `Directory` Contiene's the tarball kernels used in our case "Stock, MerrukTechnology"
+-	This `Directory` Contains the tarball kernels used in our case "Stock, MerrukTechnology"
 
 What i can do with it? :
 <dl>
@@ -23,8 +19,6 @@ What i can do with it? :
 </dl>
 
 
-______________
-
 
 Please See the first page on this project for instructions.
-============================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,72 +1,108 @@
-Compact Kernel Version : 1.2.6
+Compact Kernel:
+~~~~~~~~~~~~~~~
 For Samsung GT-S6102 : Galaxy Y DUOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Introduction:
+~~~~~~~~~~~~~
 
-This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for my phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
+-	This kernel source code repository has included tools to simplify building the kernel, create/install environment and, eventually, compress the kernel image `(zImage, RamDisk)` after you make your modifications in the `Boot` directory.
 
+-	When you execute the scripts you will see the verbose output for better understanding the processes.
 
-Folders Description:
-
-"arm-2009q3" is cross compiler used to build android kernel.
-Or You can also get the Toolchain from here. Visit http://www.codesourcery.com/, download and install it(hard way).
-
-"ncurses-5.9" is required to enablemenuconfig option which helps you config kernel with a menu instead of editing manually .config files.. even though everyone says menuconfig is better, i prefer to edit .config file directly using text editor.
-You can also get ncurses from its official page from here. link--> http://ftp.gnu.org/pub/gnu/ncurses/
-
-"source" is the folder which has files required to compile the kernel or name itself is self explanatory i guess.
-
-"bootimgpack" contains all the necessary files to compress kernel(zImage) and ramdisk(ramdisk.gz). remember you need to put these 2 files of yours under this folder.
-
-"original" is having all the files i have modified in source folder. There is a Readme file inside that folder which explains things more.
-
-".config working backup" has my .config file.. just for backup purpose.
-
-"README.md" is the file which has the contents you are reading!
+This can be done in three steps:
+<dl>
+	<dt>* 1. Compiling</dt>
+	<dd>	Build the kernel. There are 4 parameters to customize your build.</dd>
+	<dt>* 2. Preparing the environment</dt>
+	<dd>	Set up the environment and decompress the RamDisk.</dd>
+	<dt>* 3. Kernel compression</dt>
+	<dd>	Compress the kernel image with modifications in the boot directory or with default Merruk or Samsung files.</dd>
+</dl>
 
 
+Compiling:
+~~~~~~~~~~
 
-COMMANDS used: from building kernel to packing boot.img
+For compiling Merruk Technology kernel open the command prompt `(CONSOLE)` and see this :
 
-Note: 
+<table>
+  <tr>
+	<th>Description</th><th>Meaning</th><th>Command</th><th>Parameter</th>
+  </tr>
+  <tr>
+	<td>New Compile/Update Existing Kernel</td><td>First Compile or Only Modded Codes</td><td>Kernel_Make</td><td>-MT</td>
+  </tr>
+  <tr>
+	<td>Specific 'CONFIG_FILE' Compile</td><td>Must be in <b>/arch/arm/configs/</b></td><td>Kernel_Make</td><td>-CF bcm21553_torino_02_defconfig</td>
+  </tr>
+  <tr>
+	<td>Clean Build (0 files already built)</td><td>Like first time, clean files and build</td><td>Kernel_Make</td><td>-CL</td>
+  </tr>
+  <tr>
+	<td>Specify number of prosessors</td><td>Script guesses that automatically</td><td>Kernel_Make</td><td>-CPU [Number of cores] (all cores by default)</td>
+  </tr>
+  <tr>
+	<td>Make the torino defconfig 02</td><td>menuconfig use the actual torino</td><td>Kernel_Make</td><td>MENU</td>
+  </tr>
+</table>
 
-1. use the commands without QUOTES "" in terminal.
 
-2. open folder "common" inside source folder, there is a file called "Makefile". open it with text editor and find this line using search option "/opt/toolchains/arm-eabi-4.4.3/bin/arm-eabi-". replace the line with this "/<your path to toolchain folder>/arm-2009q3/bin/arm-none-eabi-".
-For Ex. in mine the line has this after replacing.
-/home/com/kernel/arm-2009q3/bin/arm-none-eabi-
+Preparing the environment:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-3. first 3 commands should be entered inside this folder or path
-/<your path to kernel folder>/common/
-For Ex. mine is here /home/com/kernel/source/common/
-So my terminal should be showing the above when i type "pwd" command. (pwd means PresentWorkingDirectory).
+On first use of the `Tools` directory you need to set up the environment :
 
-4. last 2 commands should be entered inside the bootimg folder.
+Usage:
 
-Now your system environment is setup and ready to build the kernel.. Follow the below commands to build the kernel.
+	cd ./Tools
+
+	./Install.sh [Parameter]
+
+Parameters:
+<dl>
+	<dt>merruk</dt>
+	<dd>Use Merruk Technology RamDisk</dd>
+	<dt>stock</dt>
+	<dd>Use Samsung RamDisk</dd>
+</dl>
 
 
-1. "make clean" --> its better to do this. so that you will have a fresh files to build kernel and no old files compiled before will be used.
+Kernel compression:
+~~~~~~~~~~~~~~~~~~~
 
-2. "make bcm21553_torino_02_defconfig" --> this sets everything to default settings as provided by samsung source.
+You can simply call this tool after you made changes in the 'Boot' directory `(RamFS)` :
 
-3. "make" --> this is used to compile the kernel. this does the compilation in only single process.
-alternate command to speed up the compilation process do "make -j(x)"
-Note: remove () from -j option.. and x means the number of threads to use.
-if you have new cpu or powerful cpu in PC then use the -j option.
-for Ex. make -j4 to run 4 process together to compile. if you have quad core then use it.
+Usage:
+~~~~~~
+	cd ./Tools
 
-4. "mv -i /"your path to kernel"/common/arch/arm/boot/zImage /"your path to bootimg folder"/" --> use this to move zImage created after finishing compilation which takes around 20 minutes. if you used make only. -i is for interactive mode. or you can just go to that folder by gui and copy paste it to bootimg folder.
-For Ex. this is what i use in my system. 
-mv -i /home/com/kernel/common/arch/arm/boot/zImage /home/com/Desktop/bootimg
+	./Compress.sh [Parameter]
 
-5. "md5sum zImage" --> is md5sum of zImage file which is required in boot.img for galaxy y series. If you leave this. It wont boot.
-you will get something like
-d78f52b755b388381d6207c13d8a46ab zImage
+Parameters:
+<dl>
+	<dt>merruk</dt>
+	<dd>Use Merruk Technology kernel</dd>
+	<dt>stock</dt>
+	<dd>Use Samsung kernel</dd>
+</dl>
 
-6. "./mkbootimg --kernel zImage --ramdisk ramdisk.gz --base 0x81600000 --kernelMD5 d78f52b755b388381d6207c13d8a46ab -o boot.img" --> You need to add the md5sum obtained in 5th command in this command.
 
-Now you have yourself a boot.img file in the same folder which you can flash through Odin software by making a tar compression of boot.img or make a flashable zip file for cwm.
+Output files:
+~~~~~~~~~~~~~
+
+Your compressed kernel will be built as:
+
+<table>
+	<tr>
+		<td>PDA.[parameter].tar</td><td>Odin file, search for a compatible version</td>
+	</tr>
+	<tr>
+		<td>Kernel.[parameter].Boot.img</td><td>Raw file, flash with 'dd' command</td>
+	</tr>
+</table>
+
+Now you have yourself a boot.img file in the same folder which you can flash through Odin software by making a tar compression of boot.img into boot.tar or make a flashable zip file for cwm.
 
 
 and finally thanks to manoranjan2050, kurotsugi, savie and Maroc-os. All of them have taught me lot of things. i am greatful for them. thanks guys.

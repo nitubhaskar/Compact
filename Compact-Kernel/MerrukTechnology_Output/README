@@ -1,15 +1,11 @@
-MerrukTechnology Kernel Version : 2.5
-=======================================
-For Samsung GT-S5360 : `Galaxy Y Young`
-========================================
-
-
-______________
-
+Compact Kernel:
+~~~~~~~~~~~~~~~
+For Samsung GT-S6102 : Galaxy Y DUOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Modules Directory : MerrukTechnology_Output
----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -	This is the Output `Directory` for all compiled files.
 
