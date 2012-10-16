@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Compact : Compact kernel for Samsung Galaxy Y DUOS[GT-S6102]" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Compact</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/nitubhaskar/Compact">View on GitHub</a>
+
+          <h1 id="project_title">Compact</h1>
+          <h2 id="project_tagline">Compact kernel for Samsung Galaxy Y DUOS[GT-S6102]</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/nitubhaskar/Compact/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/nitubhaskar/Compact/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>Compact Kernel:</p>
+
+<pre><code>For Samsung GT-S6102 : Galaxy Y DUOS
+</code></pre>
+
+<p>Introduction:</p>
+
+<pre><code>
+-   This kernel source code repository has included tools to simplify building the kernel, create/install environment and, eventually, compress the kernel image `(zImage, RamDisk)` after you make your modifications in the `Boot` directory.
+
+-   When you execute the scripts you will see the verbose output for better understanding the processes.
+
+This can be done in three steps:
+&lt;dl&gt;
+    &lt;dt&gt;* 1. Compiling&lt;/dt&gt;
+    &lt;dd&gt;    Build the kernel. There are 4 parameters to customize your build.&lt;/dd&gt;
+    &lt;dt&gt;* 2. Preparing the environment&lt;/dt&gt;
+    &lt;dd&gt;    Set up the environment and decompress the RamDisk.&lt;/dd&gt;
+    &lt;dt&gt;* 3. Kernel compression&lt;/dt&gt;
+    &lt;dd&gt;    Compress the kernel image with modifications in the boot directory or with default Merruk or Samsung files.&lt;/dd&gt;
+&lt;/dl&gt;
+
+
+Compiling:
+</code></pre>
+
+<p>For compiling Merruk Technology kernel open the command prompt <code>(CONSOLE)</code> and see this :</p>
+
+<table>
+<tr>
+<th>Description</th>
+<th>Meaning</th>
+<th>Command</th>
+<th>Parameter</th>
+  </tr>
+<tr>
+<td>New Compile/Update Existing Kernel</td>
+<td>First Compile or Only Modded Codes</td>
+<td>Kernel_Make</td>
+<td>-MT</td>
+  </tr>
+<tr>
+<td>Specific 'CONFIG_FILE' Compile</td>
+<td>Must be in <b>/arch/arm/configs/</b>
+</td>
+<td>Kernel_Make</td>
+<td>-CF bcm21553_torino_02_defconfig</td>
+  </tr>
+<tr>
+<td>Clean Build (0 files already built)</td>
+<td>Like first time, clean files and build</td>
+<td>Kernel_Make</td>
+<td>-CL</td>
+  </tr>
+<tr>
+<td>Specify number of prosessors</td>
+<td>Script guesses that automatically</td>
+<td>Kernel_Make</td>
+<td>-CPU [Number of cores] (all cores by default)</td>
+  </tr>
+<tr>
+<td>Make the torino defconfig 02</td>
+<td>menuconfig use the actual torino</td>
+<td>Kernel_Make</td>
+<td>MENU</td>
+  </tr>
+</table><p>Preparing the environment:</p>
+
+<pre><code>
+On first use of the `Tools` directory you need to set up the environment :
+
+Usage:
+
+    cd ./Tools
+
+    ./Install.sh [Parameter]
+
+Parameters:
+&lt;dl&gt;
+    &lt;dt&gt;merruk&lt;/dt&gt;
+    &lt;dd&gt;Use Merruk Technology RamDisk&lt;/dd&gt;
+    &lt;dt&gt;stock&lt;/dt&gt;
+    &lt;dd&gt;Use Samsung RamDisk&lt;/dd&gt;
+&lt;/dl&gt;
+
+
+Kernel compression:
+</code></pre>
+
+<p>You can simply call this tool after you made changes in the 'Boot' directory <code>(RamFS)</code> :</p>
+
+<p>Usage:</p>
+
+<pre><code>    cd ./Tools
+
+    ./Compress.sh [Parameter]
+
+Parameters:
+&lt;dl&gt;
+    &lt;dt&gt;merruk&lt;/dt&gt;
+    &lt;dd&gt;Use Merruk Technology kernel&lt;/dd&gt;
+    &lt;dt&gt;stock&lt;/dt&gt;
+    &lt;dd&gt;Use Samsung kernel&lt;/dd&gt;
+&lt;/dl&gt;
+
+
+Output files:
+</code></pre>
+
+<p>Your compressed kernel will be built as:</p>
+
+<table>
+<tr>
+<td>PDA.[parameter].tar</td>
+<td>Odin file, search for a compatible version</td>
+    </tr>
+<tr>
+<td>Kernel.[parameter].Boot.img</td>
+<td>Raw file, flash with 'dd' command</td>
+    </tr>
+</table><p>Now you have yourself a boot.img file in the same folder which you can flash through Odin software by making a tar compression of boot.img into boot.tar or make a flashable zip file for cwm.</p>
+
+<p>and finally thanks to manoranjan2050, kurotsugi, savie and Maroc-os. All of them have taught me lot of things. i am greatful for them. thanks guys.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Compact maintained by <a href="https://github.com/nitubhaskar">nitubhaskar</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
