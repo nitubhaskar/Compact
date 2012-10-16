@@ -88,6 +88,12 @@ config BOARD_THUNDERBIRD_EDN5x
 	help
 	  Configure this option to specify whether the board used
 	  for development is a BCM21553 Thunderbird EDN5x.
+	  
+config BOARD_ACAR
+	bool "China reference platform AthenaPebble (ACAR)"
+	help
+	  Configure this option to specify the whether the used
+	  for development is a BCM21553 ACAR board.
 
 config BOARD_TOTORO
 	bool "Samsung BCM2155x Totoro board"
@@ -111,7 +117,7 @@ config BOARD_COOPERVE
 	bool "Samsung BCM2155x COOPERVE board"
 	help
 	  Configure this option to specify the whether the used
-	  for development is a BCM21553 TassVE board.
+	  for development is a BCM21553 COOPERVE board.
 
 config BOARD_LUISA_DS
 	bool "Samsung BCM2155x LUISA DS board"

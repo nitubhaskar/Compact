@@ -122,7 +122,7 @@
 #endif
 
 #define BCM2091_CLK_REQ_PASS_THOUGH 36
-#define GPS_CNTIN_CLK_ENABLE 37
+#define GPS_CNTIN_CLK_ENABLE 18
 
 #if (defined(CONFIG_BCM_RFKILL) || defined(CONFIG_BCM_RFKILL_MODULE))
 #include <linux/broadcom/bcmblt-rfkill.h>
@@ -235,7 +235,7 @@ static struct bcmsdhc_platform_data bcm21553_sdhc_data3 = {
 	.base_clk = FREQ_MHZ(48),
 	.flags = SDHC_DEVTYPE_SD | SDHC_DISABLE_PED_MODE,
 	.cd_pullup_cfg = 0,	//using external pull-up
-	.irq_cd = 5,
+	.irq_cd = 37,  // 5 -> -1 [Alvin 2011.10.18]
 	.syscfg_interface = board_sysconfig,
 	.cfg_card_detect = bcmsdhc_cfg_card_detect,
 	.external_reset = bcmsdhc_external_reset,
@@ -523,8 +523,8 @@ struct platform_device bcm_backlight_devices = {
 static struct platform_pwm_backlight_data bcm_backlight_data = {
 	/* backlight */
 	.pwm_id = 1,
-	.max_brightness = 32,	/* Android calibrates to 32 levels*/
-	.dft_brightness = 32,
+	.max_brightness = 16,	/* Android calibrates to 16 levels*/
+	.dft_brightness = 16,   //by wangpl, change 32 to 16 for bug176757
 	/*set pwm clock rate to 200Hz. min value of the operating range of the max1561
          *step-up converter(200Hz - 200KHz) which takes this PWM as an input signal*/
 	.pwm_period_ns =  5000000,
@@ -541,6 +541,7 @@ static struct pwm_platform_data pwm_dev = {
 
 #ifdef CONFIG_LEDS_GPIO
 static struct gpio_led gpio_leds[] = {
+#if 0 /* Removed for Poppy. [Alvin 2011.09.20] */
 	{
 		.name	= "blue",
 		.default_trigger = "timer",
@@ -559,6 +560,9 @@ static struct gpio_led gpio_leds[] = {
 		.gpio	= GPIO_RED_LED ,
 		.active_low = 0,
 	},
+#endif
+	/* This gpio is used as keypad backlight. The application can control the
+	keypad backlight via /sys/devices/platform/leds-gpio/leds/keypad_bl/brightness */
 	{
 		.name	= "keypad_bl",
 		.default_trigger = "timer",
@@ -792,7 +796,7 @@ static void bcm21553_add_gpio_i2c_slaves(void)
 #define I2C_SECONDARY_CAM_SLAVE_ADDRESS		0x7C   /*tcm9001*/
 
 struct i2c_slave_platform_data mt9t111_cam_pdata = {
-        .i2c_spd = I2C_SPD_100K,
+        .i2c_spd = I2C_SPD_400K,/* Modified by yubin */
 };
 
 struct i2c_slave_platform_data tcm9001MD_cam_pdata = {
@@ -862,7 +866,7 @@ static struct bma222_accl_platform_data bma_pdata = {
 #endif
 
 #if defined(CONFIG_SENSORS_AL3006)
-int dyna_gpio_init(void)
+static int dyna_gpio_init(void)
 {
 	gpio_request(14, "al3006"); // PS sensor interrupt
 	gpio_direction_input(14);
@@ -870,8 +874,14 @@ int dyna_gpio_init(void)
 	return 0;
 }
 
+static void dyna_gpio_free(struct device *dev)
+{
+	gpio_free(14);
+}
+
 static struct al3006_platform_data dyna_pdata = {
 	.init = dyna_gpio_init,
+	.exit = dyna_gpio_free,
 	.i2c_pdata = {.i2c_spd = I2C_SPD_100K,},
 };
 #endif
@@ -2231,8 +2241,8 @@ int board_sysconfig(uint32_t module, uint32_t op)
 	case SYSCFG_AUXMIC:
 		if (op == SYSCFG_INIT) {
 			writel(AUXMIC_PRB_CYC_MS(128), auxmic_base + AUXMIC_PRB_CYC);
-			writel(AUXMIC_MSR_DLY_MS(2), auxmic_base + AUXMIC_MSR_DLY);
-			writel(AUXMIC_MSR_INTVL_MS(64), auxmic_base + AUXMIC_MSR_INTVL);
+			writel(AUXMIC_MSR_DLY_MS(4), auxmic_base + AUXMIC_MSR_DLY);
+			writel(AUXMIC_MSR_INTVL_MS(4), auxmic_base + AUXMIC_MSR_INTVL);
 			writel(readl(auxmic_base + AUXMIC_CMC) & ~AUXMIC_CMC_PROB_CYC_INF,
 				auxmic_base + AUXMIC_CMC);
 			writel(readl(auxmic_base + AUXMIC_MIC) | AUXMIC_MIC_SPLT_MSR_INTR,

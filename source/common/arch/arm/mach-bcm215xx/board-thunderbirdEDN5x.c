@@ -2482,9 +2482,7 @@ static int __init arch_late_init(void)
 		if (alloc_mem != NULL) {
                          android_pmem_pdata.start = dma_address;
                          android_pmem_pdata.size = PMEM_ADSP_SIZE;
-                         if((ret = platform_device_register(&android_pmem_device))) {
-                              printk("registration failed for device: %s\n", android_pmem_device.name);
-                         }
+                         platform_device_register(&android_pmem_device);
                         printk(" ****** %s:Success PMEM alloc 0x%x ****** \n", __func__,
                                  dma_address);
                  } else {
