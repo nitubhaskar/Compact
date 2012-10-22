@@ -475,8 +475,7 @@ static int _max8986_regulator_enable(struct max8986_regl_priv *regl_priv,
 	struct max8986 *max8986 = regl_priv->max8986;
 	int ret;
 	u8 regVal;
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 	ret = max8986->read_dev(max8986, max8986_regls[id].pm_reg, &regVal);
 	/*00: ON (normal) 01: Low power mode 10: OFF */
@@ -522,8 +521,7 @@ static int _max8986_regulator_disable(struct max8986_regl_priv *regl_priv,
 	int ret;
 	u8 regVal = 0;
 
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 	/*00: ON (normal) 01: Low power mode 10: OFF*/
 	/*Normal mode : PC1 = 1*/
@@ -551,8 +549,7 @@ static int _max8986_regulator_is_enabled(struct max8986_regl_priv *regl_priv,
 	int ret;
 	u8 regVal;
 
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return 0;
 	ret = max8986->read_dev(max8986, max8986_regls[id].pm_reg, &regVal);
 
@@ -582,8 +579,7 @@ static int max8986_get_best_voltage_inx(int reg_id, int min_uV, int max_uV)
 	* in strict falling order so we need to check them
 	* all for the best match.
 	*/
-	/*if ((reg_id < 0) || (reg_id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (reg_id < 0)
+	if ((reg_id < 0) || (reg_id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 
 	bestmatch = INT_MAX;
@@ -613,8 +609,7 @@ static int _max8986_regulator_set_voltage(struct max8986_regl_priv *pri_dev,
 	int bitPos, ret;
 	u8 mask, regVal;
 
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-		if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 	mask = max8986_regulator_ctrl_reg_mask(id, &bitPos);
 	if (!mask)
@@ -640,8 +635,7 @@ static int max8986_regulator_set_voltage(struct regulator_dev *rdev,
 	/* Find the best index */
 	inx = max8986_get_best_voltage_inx(id, min_uV, max_uV);
 
-	/*if (inx < 0 || inx >= max8986_regls[id].num_vol)*/
-	if (inx < 0)
+	if (inx < 0 || inx >= max8986_regls[id].num_vol)
 		return inx;
 	value = max8986_regls[id].vol_list[inx][1];
 
@@ -657,8 +651,7 @@ static int _max8986_regulator_get_voltage(struct max8986_regl_priv *pri_dev,
 	struct max8986_regl_priv *regl_priv = pri_dev;
 	struct max8986 *max8986 = regl_priv->max8986;
 
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 
 	ret = max8986->read_dev(max8986, max8986_regls[id].ctrl_reg, &regVal);
@@ -692,8 +685,7 @@ static int _max8986_regulator_set_mode(struct max8986_regl_priv *pri_dev,
 	u8 regVal;
 	int ret;
 
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 	if (mode < 0 || mode >= PMU_REGL_MASK)
 		return -EINVAL;
@@ -704,7 +696,7 @@ static int _max8986_regulator_set_mode(struct max8986_regl_priv *pri_dev,
 	regVal &= ~((PMU_REGL_MASK << PC2PC1_00) |
 					(PMU_REGL_MASK << PC2PC1_10));
 	regVal |= ((mode << PC2PC1_00) | (mode << PC2PC1_10));
-	pr_info("%s: rgVal = %x\n", __func__, regVal);
+	printk(KERN_INFO "%s: rgVal = %x\n",__func__,regVal);
 	ret = max8986->write_dev(max8986, max8986_regls[id].pm_reg, regVal);
 	return ret;
 }
@@ -715,13 +707,14 @@ static int max8986_regulator_set_mode(struct regulator_dev *rdev,
 	u8 opmode;
 	struct max8986_regl_priv *regl_priv = rdev_get_drvdata(rdev);
 	int id = rdev_get_id(rdev);
-	pr_info("%s:mode = %d\n", __func__, mode);
+	printk(KERN_INFO "%s:mode = %d\n",__func__,mode);
 
 	switch(mode)
 	{
 	case REGULATOR_MODE_FAST:
 		opmode = PMU_REGL_TURBO;
 		break;
+
 	case REGULATOR_MODE_NORMAL:
 		opmode = PMU_REGL_ON;
 		break;
@@ -749,8 +742,7 @@ static int _max8986_regulator_get_mode(struct max8986_regl_priv *pri_dev,
 	u8 regVal = 0;
 	int ret;
 
-	/*if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))*/
-	if (id < 0)
+	if ((id < 0) || (id >= MAX8986_REGL_NUM_REGULATOR))
 		return -EINVAL;
 
 	ret = max8986->read_dev(max8986, max8986_regls[id].pm_reg, &regVal);
@@ -769,7 +761,7 @@ static unsigned int max8986_regulator_get_mode(struct regulator_dev *rdev)
 	int id = rdev_get_id(rdev);
 
 	mode = _max8986_regulator_get_mode(regl_priv, id);
-	pr_info("%s:opmode = %d\n", __func__, mode);
+	printk(KERN_INFO "%s:opmode = %d\n",__func__,mode);
 	switch(mode)
 	{
 	case PMU_REGL_ON:
@@ -813,9 +805,8 @@ static int max8986_regulator_ioctl_handler(u32 cmd, u32 arg, void *pri_data)
 			return -EFAULT;
 		}
 
-		/*if ((regulator.regl_id < 0) ||
-			(regulator.regl_id >= MAX8986_REGL_NUM_REGULATOR))*/
-		if(regulator.regl_id < 0)
+		if ((regulator.regl_id < 0) ||
+			(regulator.regl_id >= MAX8986_REGL_NUM_REGULATOR))
 			return -EINVAL;
 
 		/* Validate the input voltage */
@@ -886,44 +877,12 @@ static int max8986_regulator_ioctl_handler(u32 cmd, u32 arg, void *pri_data)
 	}
 	case BCM_PMU_IOCTL_ACTIVATESIM:
 	{
-		int id = MAX8986_REGL_SIMLDO;
-		pmu_sim_volt sim_volt;
-		u8 value;
-		if (copy_from_user(&sim_volt, (int *)arg,
-					sizeof(int)) != 0)
-			return -EFAULT;
-
-		/*Make sure that voltage index inx is valid */
-		if(max8986_regls[id].num_vol >= sim_volt)
-			return -EINVAL;
-		/*check the status of SIMLDO*/
-		ret = _max8986_regulator_is_enabled(regl_priv, id);
-		if (ret) {
-			pr_info("SIMLDO is activated already\n");
-			return -EPERM;
-		}
-		/* Put SIMLDO in ON State */
-		ret = _max8986_regulator_enable(regl_priv, id);
-		if (ret)
-			return ret;
-		/* Set SIMLDO voltage */
-		value = max8986_regls[id].vol_list[sim_volt][1];
-		ret = _max8986_regulator_set_voltage(regl_priv, id,
-				value);
+		/* Unused IOCTL */
 		break;
 	}
 	case BCM_PMU_IOCTL_DEACTIVATESIM:
 	{
-		int id = MAX8986_REGL_SIMLDO;
-		/*check the status of SIMLDO*/
-		ret = _max8986_regulator_is_enabled(regl_priv, id);
-		if (!ret) {
-			pr_info("SIMLDFO is already disabled\n");
-			return -EPERM;
-		}
-		ret = _max8986_regulator_disable(regl_priv, id);
-		if (ret)
-			return ret;
+		/* Unused IOCTL */
 		break;
 	}
 	}	/*end of switch*/
