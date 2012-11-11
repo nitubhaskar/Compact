@@ -856,7 +856,6 @@ S32 SensorPowerOff( struct stCamacqSensorManager_t* this, U32 uiSelectedSensor )
     {
         CamacqTraceErr( " pstSensor[%x], uiSelectedSensor[%d] ", (U32)pstSensor, uiSelectedSensor );
         iRet = -1;
-        return iRet; //aska add for prevent issue
     }
 
     // change sony sensor slave id, temp code 
@@ -1180,15 +1179,13 @@ S32 CamacqAPIEnumFrameSizes( struct stCamacqSensor_t *this, struct v4l2_frmsizee
 
         pstSize = g_stCamacqJpegSizes + pstV4l2FrameSizeEnum->index;
     }    
-    if(pstSize!=0){ //aska add for prevent issue
+    
 
     // set pstV4l2FmtDesc
     pstV4l2FrameSizeEnum->type = V4L2_FRMSIZE_TYPE_DISCRETE;
     pstV4l2FrameSizeEnum->discrete.width = pstSize->uiWidth;
     pstV4l2FrameSizeEnum->discrete.height = pstSize->uiHeight;
-		}else{
-			iRet=-1;
-		}
+
     CamacqTraceOUT();
     return iRet;
 }
@@ -2438,20 +2435,6 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
             }
         }
         break;
-
-        	case CAMACQ_SENSORDATA_CAPTURE_NIGHTSCENE:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvSnapshotNightsceneRegs != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSnapshotNightsceneRegs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvSnapshotNightsceneRegs  is NULL" );
-            }
-        }
-	break;
 
 		
     case CAMACQ_SENSORDATA_SCENE_NIGHT_DARK:

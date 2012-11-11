@@ -81,6 +81,7 @@ static void bcm_gpt_clkevt_mode(enum clock_event_mode mode,
 		break;
 	}
 }
+
 static int reload;
 
 static int bcm_gpt_set_nextevt(unsigned long evt,

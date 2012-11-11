@@ -66,7 +66,5 @@ struct bq27425_info
 
 extern int get_bq27425_battery_data(u8 reg, unsigned int* val);
 extern int get_bq27425_battery_subdata(u8 reg, unsigned int subcmd, unsigned int* val);
-extern int bq27425_reset(void);
-extern int get_bq27425_dffs_version(unsigned int* version);
 
 #endif

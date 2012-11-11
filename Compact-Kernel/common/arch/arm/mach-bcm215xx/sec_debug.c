@@ -24,18 +24,8 @@
 #include <mach/system.h>
 #include <mach/sec_debug.h>
 #include <linux/fs.h>
-#include <linux/seq_file.h>
 
 #define DEBUG_LEVEL_FILE_NAME "/mnt/.lfs/debug_level.inf"
-
-#define RESET_REASON_NORMAL			0x1A2B3C00
-#define RESET_REASON_SMPL			0x1A2B3C01
-#define RESET_REASON_WSTR			0x1A2B3C02
-#define RESET_REASON_WATCHDOG 			0x1A2B3C03
-#define RESET_REASON_PANIC			0x1A2B3C04
-#define RESET_REASON_LPM			0x1A2B3C10
-#define RESET_REASON_RECOVERY			0x1A2B3C11
-#define RESET_REASON_FOTA			0x1A2B3C12
 
 enum sec_debug_upload_cause_t {
 	UPLOAD_CAUSE_INIT = 0xCAFEBABE,
@@ -149,11 +139,9 @@ struct sec_debug_fault_status_t {
 static unsigned enable = 1;
 static unsigned enable_user = 1;
 int debug_level=1;
-static unsigned reset_reason = 0xFFEEFFEE;
 
 module_param_named(enable, enable, uint, 0644);
 module_param_named(enable_user, enable_user, uint, 0644);
-module_param_named(reset_reason, reset_reason, uint, 0644);
 
 static const char *gkernel_sec_build_info_date_time[] = {
 	__DATE__,
@@ -763,70 +751,4 @@ static int __init sec_debug_user_fault_init(void)
 
 device_initcall(sec_debug_user_fault_init);
 #endif  /* CONFIG_SEC_DEBUG_USER */
-/* Reset Reason given from Bootloader */
-static int set_reset_reason_proc_show(struct seq_file *m, void *v)
-{
-	/*
-		RESET_REASON_NORMAL
-		RESET_REASON_SMPL
-		RESET_REASON_WSTR
-		RESET_REASON_WATCHDOG
-		RESET_REASON_PANIC
-		RESET_REASON_LPM
-		RESET_REASON_RECOVERY
-		RESET_REASON_FOTA
-	*/
-	switch(reset_reason){
-	case RESET_REASON_NORMAL:
-		seq_printf(m, "PON_NORMAL\n");
-		break;
-	case RESET_REASON_SMPL:
-		seq_printf(m, "PON_SMPL\n");
-		break;	
-	case RESET_REASON_WSTR:
-	case RESET_REASON_WATCHDOG:
-	case RESET_REASON_PANIC:
-		seq_printf(m, "PON_PANIC\n");
-		break;	
-	case RESET_REASON_LPM:
-		seq_printf(m, "PON_LPM\n");
-		break;	
-	case RESET_REASON_RECOVERY:
-		seq_printf(m, "PON_RECOVER\n");
-		break;	
-	case RESET_REASON_FOTA:
-		seq_printf(m, "PON_FOTA\n");
-		break;	
-	default:
-		seq_printf(m, "PON_NORMAL\n");
-	}
-
-	return 0;
-}
-
-static int sec_reset_reason_proc_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, set_reset_reason_proc_show, NULL);
-}
-
-static const struct file_operations sec_reset_reason_proc_fops = {
-	.open		= sec_reset_reason_proc_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= single_release,
-};
-
-static int __init sec_debug_reset_reason_init(void)
-{
-	struct proc_dir_entry *entry;
-
-	entry = proc_create("reset_reason", S_IRUGO, NULL,
-			    &sec_reset_reason_proc_fops);
-	if (!entry)
-		return -ENOMEM;
-
-	return 0;
-}
-
-device_initcall(sec_debug_reset_reason_init);
 

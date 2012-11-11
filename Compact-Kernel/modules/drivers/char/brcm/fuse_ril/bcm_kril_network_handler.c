@@ -31,10 +31,9 @@ extern MSRegInfo_t  gRegInfo[DUAL_SIM_SIZE];
 extern MSUe3gStatusInd_t  gUE3GInfo[DUAL_SIM_SIZE];
 extern KrilDataCallResponse_t pdp_resp[DUAL_SIM_SIZE][BCM_NET_MAX_RIL_PDP_CNTXS];
 
-bool block_operator_name = false;
 /*+20111110 HKPARK if NO SIM status, send Error Message*/
-// bool v_NoSimCheck2 = false;
-// bool v_NoSimCheck1 = false;
+bool v_NoSimCheck2 = false;
+bool v_NoSimCheck1 = false;
 /*-20111110 HKPARK if NO SIM status, send Error Message*/
 
 UInt8 FindDunPdpCid(SimNumber_t SimId);
@@ -683,8 +682,7 @@ void KRIL_RegistationStateHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 
 				if (presult->rat == RAT_UMTS)
 				{
-                    if (TRUE == presult->uasConnInfo.ue_out_of_service &&
-                       (TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsdpa_supported || TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsupa_supported)) // if UAS in out of services, MMI need to display the no_services.
+                    if (TRUE == presult->uasConnInfo.ue_out_of_service) // if UAS in out of services, MMI need to display the no_services.
                     {
                         rdata->gsm_reg_state = REG_STATE_NO_SERVICE;
                         rdata->gprs_reg_state = REG_STATE_NO_SERVICE;
@@ -802,8 +800,10 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     break;
                 }
-                if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE && presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE) ||
-                    (TRUE == presult->uasConnInfo.ue_out_of_service && (TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsdpa_supported || TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsupa_supported)))
+		  if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE 
+                 && presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE
+                 && presult->gsm_reg_state != REG_STATE_LIMITED_SERVICE)
+                    || TRUE == presult->uasConnInfo.ue_out_of_service)
                 {
                     pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
@@ -825,22 +825,12 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     CAPI2_NetRegApi_GetPLMNNameByCode(InitClientInfo(pdata->ril_cmd->SimId), presult->mcc, presult->mnc, presult->lac, FALSE);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
-
-				if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE) 
-					   && (presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE))
-				{
-					block_operator_name = TRUE;
-				}
-				else
-				{
-					block_operator_name = FALSE;
-				}
 /*+20111110 HKPARK if NO SIM status, send Error Message*/				
-//		  if((v_NoSimCheck2 ==true)&&(v_NoSimCheck1 ==true))
-//		  {
-//                    pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
-//                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
-//		  }
+		  if((v_NoSimCheck2 ==true)&&(v_NoSimCheck1 ==true))
+		  {
+                    pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+		  }
 /*-20111110 HKPARK if NO SIM status, send Error Message*/		 
 				
             }
@@ -899,12 +889,6 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                         // will pass numeric string back to Android RIL as longname
                         KRIL_DEBUG(DBG_INFO, "CAPI2_MS_GetPLMNNameByCode result FALSE, just returning numeric...\n");
                     }
-
-		    if(block_operator_name == TRUE)
-		    {
-			rdata->longname[0] = '\0';
-			rdata->shortname[0] = '\0';
-		    }
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
                 else

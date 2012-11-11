@@ -854,6 +854,7 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE,_T("MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP,_T("MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED,_T("MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
+		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR,_T("MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 

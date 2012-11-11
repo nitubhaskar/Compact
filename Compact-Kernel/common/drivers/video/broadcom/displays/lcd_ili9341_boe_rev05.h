@@ -65,8 +65,8 @@ const char *LCD_panel_name = "S6D04H0X20 LCD";
 int LCD_num_panels = 1;
 LCD_Intf_t LCD_Intf = LCD_Z80;
 LCD_Bus_t LCD_Bus = LCD_16BIT;
-CSL_LCDC_PAR_SPEED_t timingReg = {24, 25, 0, 4, 3, 0};
-CSL_LCDC_PAR_SPEED_t timingMem = {24, 25, 0, 4, 3, 0};
+CSL_LCDC_PAR_SPEED_t timingReg = {24, 25, 0, 3, 3, 0};
+CSL_LCDC_PAR_SPEED_t timingMem = {24, 25, 0, 3, 3, 0};
 
 LCD_dev_info_t LCD_device[1] = {
 	{
@@ -368,7 +368,7 @@ Lcd_init_t power_on_seq_s6d04h0_boe[] =
 		{WR_DATA, 0, 0x00},
 	
 		{WR_CMND, 0x36,0}, 
-		{WR_DATA, 0, 0x98},
+		{WR_DATA, 0, 0x88},
 	
 		{WR_CMND, 0x3A,0}, 
 		{WR_DATA, 0, 0x06},

@@ -172,8 +172,8 @@ static void bcmsdhc_reset(struct bcmsdhc_host *host, u8 mask)
 	if (mask & SOFT_RESET_ALL)
 		host->clock = 0;
 
-	/* Wait max 110 ms */
-	timeout = 110;
+	/* Wait max 100 ms */
+	timeout = 100;
 
 	/* hw clears the bit when it's done */
 	while (readb(host->ioaddr + SDHC_SOFT_RESET) & mask) {

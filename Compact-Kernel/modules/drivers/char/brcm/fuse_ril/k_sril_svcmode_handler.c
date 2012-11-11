@@ -2109,60 +2109,7 @@ static void KRIL_SRIL_requestOemSvcTest_S(void *ril_cmd,  Kril_CAPI2Info_t *capi
 					sprintf(testbuffer[5],"Chanal Mode:%d",rsp->gsm_param.chan_mode);
 					sprintf(testbuffer[6],"Bsic:%d , LAC:%d",rsp->gsm_param.bsic, rsp->gsm_param.lac);
 			  	      }
-/*+20111226 HKP ADD 3G PARAMETER*/
-					else if (1 == rsp->mm_param.rat)
-					{
-						UInt16 mcc, mnc;
-						
-						KRIL_DEBUG(DBG_ERROR,"RAT = 1 , PARAMETER SETTING \n");
-						KRIL_DEBUG(DBG_ERROR,"VAILD : %d \n",rsp->mm_param.rat);
-
-						// Problem : MCC = 123, MNC = 45  --display--> MCC: F321, MNC: 54 
-						mcc = ((rsp->umts_param.plmn_id.mcc & 0x000F)<<8)|(rsp->umts_param.plmn_id.mcc & 0x00F0)|((rsp->umts_param.plmn_id.mcc & 0x0F00)>>8);
-
-						if((rsp->umts_param.plmn_id.mcc & 0xF000) == 0xF000)
-						{
-							mnc = ((rsp->umts_param.plmn_id.mnc & 0x000F)<<4)|((rsp->umts_param.plmn_id.mnc & 0x00F0)>>4);
-						}
-						else
-						{
-							mnc = ((rsp->umts_param.plmn_id.mnc & 0x000F)<<8)|(rsp->umts_param.plmn_id.mnc & 0x00F0)|((rsp->umts_param.plmn_id.mcc & 0xF000)>>12);					
-						}
 					
-						/*+LKWON Display RRC state +*/
-						if(rsp->umts_param.rrc_state == 0)
-						{
-							sprintf(testbuffer[0], "CELL_DCH");
-						}else if(rsp->umts_param.rrc_state == 1)
-						{
-							sprintf(testbuffer[0], "CELL_FACH");
-						}else if(rsp->umts_param.rrc_state == 2)
-						{
-							sprintf(testbuffer[0], "CELL_PCH");
-						}else if(rsp->umts_param.rrc_state == 3)
-						{
-							sprintf(testbuffer[0], "URA_PCH");
-						}else if(rsp->umts_param.rrc_state == 4)
-						{
-							sprintf(testbuffer[0], "IDLE");
-						}else if(rsp->umts_param.rrc_state == 5)
-						{
-							sprintf(testbuffer[0], "IDLE_CCCH");
-						}else
-						{
-							sprintf(testbuffer[0], "---");
-						}
-					
-						//sprintf(testbuffer[0],"WCDMA: %d", rsp->umts_param.rrc_state);
-						/*-LKWON Display RRC state -*/						
-//						sprintf(testbuffer[1],"MCC:%x  MNC:%x",rsp->umts_param.plmn_id.mcc,  rsp->umts_param.plmn_id.mnc);
-						sprintf(testbuffer[2],"Rx CH:%d , Rssi:%d",rsp->umts_param.dl_uarfcn, rsp->umts_param.rssi);
-						sprintf(testbuffer[3],"Tx CH:%d , TxPwr:%d",rsp->umts_param.ul_uarfcn, rsp->umts_param.tx_pwr);
-						sprintf(testbuffer[4],"Ecn0:%d , RSCP:%d",rsp->umts_param.cpich_ecn0, rsp->umts_param.cpich_rscp);
-						sprintf(testbuffer[5],"Chanal Mode:%d",rsp->gsm_param.chan_mode);
-						sprintf(testbuffer[6],"PSC:%d , LAC:%d",rsp->umts_param.p_sc, rsp->umts_param.lac);
-					}
-/*-20111226 HKP ADD 3G PARAMETER*/					
 				     else
 			   	     {
 					pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;

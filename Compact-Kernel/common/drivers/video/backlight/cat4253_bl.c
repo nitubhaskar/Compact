@@ -58,7 +58,7 @@ static int backlight_mode=1;
 #elif defined(CONFIG_BACKLIGHT_TASSVE)
 #define DIMMING_VALUE		2
 #elif defined(CONFIG_BACKLIGHT_TORINO)
-#define DIMMING_VALUE		1
+#define DIMMING_VALUE		2
 #else
 #define DIMMING_VALUE		1
 #endif
@@ -119,7 +119,7 @@ struct brt_value brt_table_ktd[] = {
 };
 #elif defined(CONFIG_BACKLIGHT_TORINO)
 struct brt_value brt_table_ktd[] = {
-	{ MIN_BRIGHTNESS_VALUE,  1 }, // Min pulse
+	{ MIN_BRIGHTNESS_VALUE,  2 }, // Min pulse
 	{ 38,  3 }, 
 	{ 46,  4 },
 	{ 55,  5 }, 
@@ -203,8 +203,8 @@ static void lcd_backlight_control(int num)
 }
 
 /* input: intensity in percentage 0% - 100% */
-int CurrDimmingPulse = 0;
-int PrevDimmingPulse = 16;
+int CurrDimmingPulse = 16;
+int PrevDimmingPulse = 0;
 static int cat4253_backlight_update_status(struct backlight_device *bd)
 {
 	//struct cat4253_bl_data *cat4253= dev_get_drvdata(&bd->dev);
@@ -215,7 +215,8 @@ static int cat4253_backlight_update_status(struct backlight_device *bd)
 	//printk("[BACKLIGHT] cat4253_backlight_update_status ==> user_intensity  : %d\n", user_intensity);
 	BLDBG("[BACKLIGHT] cat4253_backlight_update_status ==> user_intensity  : %d\n", user_intensity);
 
-
+	PrevDimmingPulse = CurrDimmingPulse;
+	
 	if(backlight_mode==BACKLIGHT_RESUME)
 	{
 	    if(gLcdfbEarlySuspendStopDraw==0)
@@ -244,11 +245,10 @@ static int cat4253_backlight_update_status(struct backlight_device *bd)
 			}
 			else
 			{
-				BLDBG("[BACKLIGHT] cat4253_backlight_update_status ==> OFF\n");
+				printk("[BACKLIGHT] cat4253_backlight_update_status ==> OFF\n");
 				CurrDimmingPulse = 0;
 				gpio_set_value(backlight_pin,0);
 				mdelay(10);
-				PrevDimmingPulse = CurrDimmingPulse;
 
 				return 0;
 			}
@@ -259,7 +259,6 @@ static int cat4253_backlight_update_status(struct backlight_device *bd)
 		    if (PrevDimmingPulse == CurrDimmingPulse)
 		    {
 		    	//printk("[BACKLIGHT] cat4253_backlight_update_status ==> Same brightness\n");
-		    	PrevDimmingPulse = CurrDimmingPulse;
 		        return 0;
 		    }
 		    else
@@ -285,14 +284,11 @@ static int cat4253_backlight_update_status(struct backlight_device *bd)
 				lcd_backlight_control(pulse);
 				
 				//printk("[BACKLIGHT] cat4253_backlight_update_status ==> Prev = %d, Curr = %d, pulse = %d\n", PrevDimmingPulse, CurrDimmingPulse, pulse);
-				PrevDimmingPulse = CurrDimmingPulse;
 
 				return 0;
 		    }
 	    }
 	}
-	PrevDimmingPulse = CurrDimmingPulse;
-
 	return 0;
 }
 
@@ -315,8 +311,7 @@ static void cat4253_backlight_earlysuspend(struct early_suspend *desc)
 	//struct backlight_device *bl = platform_get_drvdata(cat4253->pdev);
 	
 	backlight_mode=BACKLIGHT_SUSPEND;
-	PrevDimmingPulse=0;
-    printk("[BACKLIGHT] cat4253_backlight_earlysuspend\n");
+    BLDBG("[BACKLIGHT] cat4253_backlight_earlysuspend\n");
 }
 
 static void cat4253_backlight_earlyresume(struct early_suspend *desc)
@@ -325,7 +320,7 @@ static void cat4253_backlight_earlyresume(struct early_suspend *desc)
 	struct backlight_device *bl = platform_get_drvdata(cat4253->pdev);
 
 	backlight_mode=BACKLIGHT_RESUME;
-    printk("[BACKLIGHT] cat4253_backlight_earlyresume\n");
+    BLDBG("[BACKLIGHT] cat4253_backlight_earlyresume\n");
     
     backlight_update_status(bl);
 }
@@ -336,7 +331,7 @@ static int cat4253_backlight_suspend(struct platform_device *pdev, pm_message_t 
 	struct backlight_device *bl = platform_get_drvdata(pdev);
 	struct cat4253_bl_data *cat4253 = dev_get_drvdata(&bl->dev);
     
-	printk("[BACKLIGHT] cat4253_backlight_suspend\n");
+	BLDBG("[BACKLIGHT] cat4253_backlight_suspend\n");
         
 	return 0;
 }
@@ -345,7 +340,7 @@ static int cat4253_backlight_resume(struct platform_device *pdev)
 {
 	struct backlight_device *bl = platform_get_drvdata(pdev);
 
-	printk("[BACKLIGHT] cat4253_backlight_resume\n");
+	BLDBG("[BACKLIGHT] cat4253_backlight_resume\n");
         
 	backlight_update_status(bl);
         
@@ -366,7 +361,7 @@ static int cat4253_backlight_probe(struct platform_device *pdev)
 	
 	int ret;
 
-	printk("[BACKLIGHT] cat4253_backlight_probe\n");
+	BLDBG("[BACKLIGHT] cat4253_backlight_probe\n");
     
 	if (!data) 
 	{

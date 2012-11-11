@@ -58,9 +58,6 @@ Boolean gIsFlightModeOnBoot = TRUE;
 // In STK refresh reset case, it need to turn off then turn on SIM card.
 Boolean gIsStkRefreshReset = FALSE;
 
-Boolean gIsStkRefreshResetSTK2 = FALSE;   // gearn STK2 SIM refresh reset
-
-
 // Store whether Dual SIM boot up
 Boolean gDualSIMBoot = FALSE;
 
@@ -74,7 +71,7 @@ UInt8 terminal_profile_data[30] = {0xFF,0xFF,0xFF,0xFF,/*0xFF*/0x7F,0x81,0x00,/*
 
 
 // For india
-#define MAX_MCCMNC_COUNT 142
+#define MAX_MCCMNC_COUNT 127
 char MCCMNC_CODES_HAVING_3DIGITS_MNC[MAX_MCCMNC_COUNT][7] = {"405025", "405026", "405027", "405028", "405029", "405030", "405031", "405032",
         "405033", "405034", "405035", "405036", "405037", "405038", "405039", "405040",
         "405041", "405042", "405043", "405044", "405045", "405046", "405047", "405750",
@@ -87,12 +84,10 @@ char MCCMNC_CODES_HAVING_3DIGITS_MNC[MAX_MCCMNC_COUNT][7] = {"405025", "405026",
         "405841", "405842", "405843", "405844", "405845", "405846", "405847", "405848",
         "405849", "405850", "405851", "405852", "405853", "405875", "405876", "405877",
         "405878", "405879", "405880", "405881", "405882", "405883", "405884", "405885",
-        "405886", "405908", "405909", "405910", "405911",
-        "405912", "405913", "405914", "405915", "405916", "405917", "405918", "405919",
-        "405920", "405921", "405922", "405923", "405924", 
-        "405925", "405926", "405927",
-        "405928", "405929", "405930", "405931", "405932"
+        "405886", "405908", "405909", "405910", "405911", "405925", "405926", "405927",
+        "405928", "405929", "405932"
     };
+
 // IMEI information
 #ifdef CONFIG_BRCM_SIM_SECURE_ENABLE
 static Boolean ProcessImei(UInt8* imeiStr, UInt8* imeiVal);
@@ -432,7 +427,7 @@ void KRIL_InitCmdHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         {
             CAPI2_MS_Element_t data;
             memset((UInt8*)&data, 0x00, sizeof(CAPI2_MS_Element_t));
-            data.inElemType = MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS;
+            data.inElemType = MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS;
             data.data_u.bData = FALSE;
             CAPI2_MsDbApi_SetElement(InitClientInfo(pdata->ril_cmd->SimId), &data);
             pdata->handler_state = BCM_SATK_SEND_SETUP_EVENT_LIST_CTR;
@@ -512,7 +507,7 @@ void KRIL_InitCmdHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 }
 
 
-
+static int RadioDuringRefresh = 0;
 void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
@@ -536,49 +531,36 @@ void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         {
             int *OnOff = (int *)(pdata->ril_cmd->data);
 
-            KRIL_DEBUG(DBG_ERROR, " KRIL_RadioPowerHandler 1 On-Off:%d, gIsStkRefreshReset: %d, SIM ID : %d\n", *OnOff ,gIsStkRefreshReset, pdata->ril_cmd->SimId );
+            KRIL_DEBUG(DBG_INFO, "On-Off:%d\n", *OnOff);
 
-			if((gIsStkRefreshReset == TRUE)||(gIsStkRefreshResetSTK2 == TRUE)){ // gearn STK2 SIM refresh reset
-
-
-                    if(gIsStkRefreshReset == TRUE)  
-                    {
-
-                        pdata->ril_cmd->SimId = SIM_DUAL_FIRST; 
-
-			KRIL_DEBUG(DBG_ERROR, " SET KRIL_RadioPowerHandler 2 gIsStkRefreshReset: %d\n" ,gIsStkRefreshReset); 
+			if(gIsStkRefreshReset == TRUE){
 				
+				RadioDuringRefresh ++;
+				KRIL_DEBUG(DBG_INFO, "Refresh : RadioDuringRefresh %d\n",RadioDuringRefresh);
+				if(RadioDuringRefresh >= 3){
+					if(RadioDuringRefresh == 4){
+						RadioDuringRefresh = 0;
+						gIsStkRefreshReset = FALSE;
 					}
-                    else if(gIsStkRefreshResetSTK2 == TRUE)
-                    {
-
-                         pdata->ril_cmd->SimId = SIM_DUAL_SECOND; 
-                                                
-                         KRIL_DEBUG(DBG_ERROR, " SET KRIL_RadioPowerHandler 2 gIsStkRefreshResetSTK2: %d\n" ,gIsStkRefreshResetSTK2);
-
-                       }
 						
+					KRIL_DEBUG(DBG_INFO, "Skip power on-off - Refresh\n");
+					pdata->bcm_ril_rsp = NULL;
+					pdata->rsp_len = 0;
+					pdata->handler_state = BCM_FinishCAPI2Cmd;
+					break;
 
-
-
+				}
 				
 				if(*OnOff == 0){
-					KRIL_DEBUG(DBG_INFO, "Power off Sim card 1- Refresh SIM ID : %d\n", pdata->ril_cmd->SimId);
+					KRIL_DEBUG(DBG_INFO, "Power off Sim card - Refresh\n");
                     CAPI2_SimApi_PowerOnOffCard (InitClientInfo(pdata->ril_cmd->SimId), FALSE, SIM_POWER_ON_INVALID_MODE);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
 
 				}else{
-					KRIL_DEBUG(DBG_INFO, "Power on Sim card 2-Refresh SIM ID : %d\n", pdata->ril_cmd->SimId);
+					KRIL_DEBUG(DBG_INFO, "Power on Sim card - Refresh\n");
 					CAPI2_SimApi_PowerOnOffCard (InitClientInfo(pdata->ril_cmd->SimId), TRUE, SIM_POWER_ON_NORMAL_MODE);
 					pdata->handler_state = BCM_RESPCAPI2Cmd;
-                                         if(gIsStkRefreshReset == TRUE)  
-                                       {
-					gIsStkRefreshReset = FALSE;
-                                        }
-                                         if(gIsStkRefreshResetSTK2 == TRUE)  
-                                       {
-					gIsStkRefreshResetSTK2 = FALSE;
-                                        }
+					//gIsStkRefreshReset = FALSE;
 				}
 				break;
 
@@ -1246,7 +1228,7 @@ void ParseIMSIData(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
     else
     {
         imsi_result->result = BCM_E_SUCCESS;
-        // KRIL_DEBUG(DBG_INFO,"IMSI:%s\n", (char*)rsp);
+        KRIL_DEBUG(DBG_INFO,"IMSI:%s\n", (char*)rsp);
         memcpy(imsi_result->imsi, (char*)rsp, (IMSI_DIGITS+1));
 
 	  //  ++JSHAN
@@ -1257,6 +1239,7 @@ void ParseIMSIData(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
 	  
       strncpy(MccMnc, (char*)rsp, 6);
 	  strncpy(Mcc, (char*)rsp, 3);
+      
       mncLength = 2;
       for(i = 0 ; i < MAX_MCCMNC_COUNT; i++)
       {
@@ -1265,7 +1248,9 @@ void ParseIMSIData(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
                  mncLength = 3;
             }
       }
+      
       strncpy(Mnc, (char*)rsp + 3, mncLength);
+  
 	  KRIL_DEBUG(DBG_INFO,"IMSI: MCC:%s , MNC:%s\n",Mcc,Mnc);
 	  
 	  Sim_MCC = ConvertStrToNum(Mcc);

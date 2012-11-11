@@ -10,7 +10,7 @@
 #include "bootloader.h"
 #include "SILABS_S6102_TYE017_BL006_APP001.h"
 #include "SILABS_S6102_SYN001_BL006_APP002.h"
-#include "SILABS_S6102_SYN002_BL006_APP005.h"
+#include "SILABS_S6102_SYN002_BL006_APP002.h"
 
 unsigned int Running_CRC;
 int APP_END_ADDR;
@@ -194,7 +194,7 @@ int WriteBytes (unsigned int addr, unsigned int num)
    else if(TSP_MODULE_ID==0x01)
    for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SYN_MOD01_APP02_Binary[addr+i];
    else if(TSP_MODULE_ID==0x02)
-   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SYN_MOD02_APP05_Binary[addr+i];
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SYN_MOD02_APP02_Binary[addr+i];
    
    SMB_Write(SMB_DATA_OUT,num+9);
    mdelay(10);
@@ -280,7 +280,7 @@ int GetPageCRC (unsigned int addr)
 		else if(TSP_MODULE_ID==0x01)
 			write_data = SYN_MOD01_APP02_Binary[addr+i];
 		else if(TSP_MODULE_ID==0x02)
-			write_data = SYN_MOD02_APP05_Binary[addr+i];
+			write_data = SYN_MOD02_APP02_Binary[addr+i];
 		
 		Update_CRC (write_data);
    }

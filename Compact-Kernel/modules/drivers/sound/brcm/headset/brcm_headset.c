@@ -31,8 +31,8 @@
 #include <linux/switch.h>
 #include <linux/wakelock.h>
 
-//#undef USE_SERVICEMODE
-#define USE_SERVICEMODE
+#undef USE_SERVICEMODE
+//#define USE_SERVICEMODE
 
 #ifdef USE_SERVICEMODE
 #include <asm/uaccess.h>
@@ -214,12 +214,12 @@ static struct device_attribute hs_Attrs[] = {
         .store = hs_Store,
 	},
        {
-	 .attr = { .name = "threshold", .mode = S_IRUGO | S_IWUG, .owner = THIS_MODULE },
+	 .attr = { .name = "threshold", .mode = S_IRUGO | S_IWUGO, .owner = THIS_MODULE },
         .show = hs_Show,
         .store = hs_Store,
 	},
 	{
-	 .attr = { .name = "teston", .mode = S_IWUG, .owner = THIS_MODULE },
+	 .attr = { .name = "teston", .mode = S_IWUGO, .owner = THIS_MODULE },
         .show = hs_Show,
         .store = hs_Store,
 	}
@@ -801,16 +801,6 @@ static struct platform_driver headset_driver = {
 		.owner = THIS_MODULE,
 	},
 };
-
-int get_headset_state(void)
-{
-    if (mic.headset_state) 
-        return 1;
-    else
-        return 0;
-}
-
-EXPORT_SYMBOL(get_headset_state);
 
 /*------------------------------------------------------------------------------
 Function name   : BrcmHeadsetModuleInit

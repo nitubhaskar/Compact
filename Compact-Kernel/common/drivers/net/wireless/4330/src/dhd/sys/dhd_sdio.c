@@ -563,11 +563,11 @@ dhdsdio_htclk(dhd_bus_t *bus, bool on, bool pendok)
 			return BCME_ERROR;
 		}
 
-		if (pendok &&
-		    ((bus->sih->buscoretype == PCMCIA_CORE_ID) && (bus->sih->buscorerev == 9))) {
-			uint32 dummy, retries;
-			R_SDREG(dummy, &bus->regs->clockctlstatus, retries);
-		}
+//		if (pendok &&
+//		    ((bus->sih->buscoretype == PCMCIA_CORE_ID) && (bus->sih->buscorerev == 9))) {
+//			uint32 dummy, retries;
+//			R_SDREG(dummy, &bus->regs->clockctlstatus, retries);
+//		}
 
 		/* Check current status */
 		clkctl = bcmsdh_cfg_read(sdh, SDIO_FUNC_1, SBSDIO_FUNC1_CHIPCLKCSR, &err);
@@ -1681,7 +1681,8 @@ dhd_bus_clearcounts(dhd_pub_t *dhdp)
 	dhd_bus_t *bus = (dhd_bus_t *)dhdp->bus;
 
 	bus->intrcount = bus->lastintrs = bus->spurious = bus->regfails = 0;
-	bus->rxrtx = bus->rx_toolong = bus->rx_toolong = bus->rxc_errors = 0;
+//	bus->rxrtx = bus->rx_toolong = bus->rx_toolong = bus->rxc_errors = 0;
+	bus->rxrtx = bus->rx_toolong = bus->rxc_errors = 0;
 	bus->rx_hdrfail = bus->rx_badhdr = bus->rx_badseq = 0;
 	bus->tx_sderrs = bus->fc_rcvd = bus->fc_xoff = bus->fc_xon = 0;
 	bus->rxglomfail = bus->rxglomframes = bus->rxglompkts = 0;
@@ -5884,6 +5885,7 @@ dhdsdio_download_code_file(struct dhd_bus *bus, char *fw_path)
 	uint len;
 	void *image = NULL;
 	uint8 *memblock = NULL, *memptr;
+	unsigned int bl;
 
 	DHD_INFO(("%s: download firmware %s\n", __FUNCTION__, fw_path));
 
@@ -5900,7 +5902,9 @@ dhdsdio_download_code_file(struct dhd_bus *bus, char *fw_path)
 		memptr += (DHD_SDALIGN - ((uint32)(uintptr)memblock % DHD_SDALIGN));
 
 	/* Download image */
-	while ((len = dhd_os_get_image_block((char*)memptr, MEMBLOCK, image))) {
+//	while ((len = dhd_os_get_image_block((char*)memptr, MEMBLOCK, image))) {
+	while ((bl = dhd_os_get_image_block((char*)memptr, MEMBLOCK, image))) {
+		len=(int)bl;
 		bcmerror = dhdsdio_membytes(bus, TRUE, offset, memptr, len);
 		if (bcmerror) {
 			DHD_ERROR(("%s: error %d on writing %d membytes at 0x%08x\n",

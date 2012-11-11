@@ -820,13 +820,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Georgia ****
  *****************/
 /* Geocell Limited */
-{ 282,   1, NETWK_TYPE_GSM_900, "Geocell", "Geocell" },
+{ 282,   1, NETWK_TYPE_GSM_900, "GEO-GEOCELL", "GEO-GEOCELL" },
 /* Geocell Limited */
-{ 282,   1, NETWK_TYPE_DCS_1800, "Geocell", "Geocell" },
+{ 282,   1, NETWK_TYPE_DCS_1800, "GEO-GEOCELL", "GEO-GEOCELL" },
 /* Magti GSM */
-{ 282,   2, NETWK_TYPE_GSM_900, "Magticom", "Magticom" },
+{ 282,   2, NETWK_TYPE_GSM_900, "MAGTI-GSM-GEO", "MAGTI-GSM-GEO" },
 /* Magti GSM */
-{ 282,   2, NETWK_TYPE_DCS_1800, "Magticom", "Magticom" },
+{ 282,   2, NETWK_TYPE_DCS_1800, "MAGTI-GSM-GEO", "MAGTI-GSM-GEO" },
 
 /*****************
  **** Armenia ****
@@ -836,13 +836,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Karabakh Telecom */
 { 283,   4, NETWK_TYPE_GSM_900, "RA 04", "RA 04" },
 /* K Telecom CJSC */
-{ 283, 5, NETWK_TYPE_GSM_900, "VivaCell-MTS", "VivaCell-MTS" }, 
+{ 283, 5, NETWK_TYPE_GSM_900, "RA 05", "RA 05" }, 
 /* K Telecom CJSC */
-{ 283, 5, NETWK_TYPE_DCS_1800, "VivaCell-MTS", "VivaCell-MTS" }, 
-/* Orange */
-{ 283, 10, NETWK_TYPE_GSM_900, "Orange", "Orange" }, 
-/* Orange */
-{ 283, 10, NETWK_TYPE_DCS_1800, "Orange", "Orange" },
+{ 283, 5, NETWK_TYPE_DCS_1800, "RA 05", "RA 05" }, 
 
 /******************
  **** Bulgaria ****
@@ -1519,14 +1515,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Azerbaijan ****
  ********************/
 /* Azercell Telekom B.M. */
-{ 400,   1, NETWK_TYPE_GSM_900, "Azercell", "Azercell" },
-{ 400,   1, NETWK_TYPE_DCS_1800, "Azercell", "Azercell" },
+{ 400,   1, NETWK_TYPE_GSM_900, "AZE - AZERCELL GSM", "AZE - AZERCELL GSM" },
 /* Bakcell */
-{ 400,   2, NETWK_TYPE_GSM_900, "Bakcell", "Bakcell" },
-{ 400,   2, NETWK_TYPE_DCS_1800, "Bakcell", "Bakcell" },
-/* Nar */
-{ 400,   4, NETWK_TYPE_GSM_900, "Nar", "Nar" },
-{ 400,   4, NETWK_TYPE_DCS_1800, "Nar", "Nar" },
+{ 400,   2, NETWK_TYPE_GSM_900, "BAKCELL GSM 2000", "BAKCELL GSM 2000" },
 
 /********************
  **** Kazakhstan ****

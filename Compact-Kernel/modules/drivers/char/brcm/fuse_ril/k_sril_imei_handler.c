@@ -428,21 +428,8 @@ void KRIL_SRIL_requestOemSimOut(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			ClientInfo_t clientInfo;
 			CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
 			clientInfo.simId = pdata->ril_cmd->SimId;
-
-                    if(clientInfo.simId == SIM_ALL)
-                   {
-
-                          KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_requestOemSimOut SIM_ALL \n");
-
 			CAPI2_SimApi_PowerOnOffCard (InitClientInfo(SIM_DUAL_FIRST), FALSE, SIM_POWER_ON_INVALID_MODE);
 			CAPI2_SimApi_PowerOnOffCard (InitClientInfo(SIM_DUAL_SECOND), FALSE, SIM_POWER_ON_INVALID_MODE);
-                   }
-                    else
-                    {
-                    
-                        KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_requestOemSimOut SIM_SINGLE \n");
-                        CAPI2_SimApi_PowerOnOffCard (InitClientInfo(SIM_DUAL_FIRST), FALSE, SIM_POWER_ON_INVALID_MODE);
-                    }
 			pdata->handler_state = BCM_FinishCAPI2Cmd;
 		}
 		break;

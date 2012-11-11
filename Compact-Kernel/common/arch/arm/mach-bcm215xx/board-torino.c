@@ -846,7 +846,7 @@ static struct platform_device bcm215xx_keypad_device = {
 struct platform_device bcm_test_vibrator_devices = {
 	.name = "vibrator", 
 	.id = 0,
-	.voltage = 3000000,
+	.voltage = 3200000,
 };
 #ifdef CONFIG_BACKLIGHT_AAT1401
 struct platform_device bcm_aat1401_backlight_devices = {
@@ -1394,8 +1394,8 @@ static struct max8986_audio_pdata audio_pdata = {
 };
 
 static struct max8986_power_pdata power_pdata = {
-	.usb_charging_cc = MAX8986_CHARGING_CURR_500MA,
-	.wac_charging_cc = MAX8986_CHARGING_CURR_500MA,
+	.usb_charging_cc = MAX8986_CHARGING_CURR_450MA,
+	.wac_charging_cc = MAX8986_CHARGING_CURR_450MA,
 	.eoc_current = MAX8986_EOC_100MA,
 
 	.temp_adc_channel =  0,
@@ -2426,20 +2426,19 @@ int board_sysconfig(uint32_t module, uint32_t op)
                 	writel(readl(ADDR_GPIO_GPIPEN1) &
 				(0xFFFFFFFE), ADDR_GPIO_GPIPEN1);
                    
-		} else if (op == SYSCFG_INIT) {
-			writel(readl(ADDR_GPIO_GPIPEN1) & (0xFFFFFFFE), ADDR_GPIO_GPIPEN1);
-			writel(((readl(ADDR_SYSCFG_IOCR0) | (SYSCFG_IOCR0_LCD16_LCD17_MUX)) & ~((SYSCFG_IOCR0_PRIVATE)|(SYSCFG_IOCR0_MPHI_MUX))), ADDR_SYSCFG_IOCR0);			
-			writel(((readl(ADDR_SYSCFG_IOCR0) & ~(SYSCFG_IOCR0_LCD_CTRL_MUX))), ADDR_SYSCFG_IOCR0);
-			writel(readl(ADDR_GPIO_GPIPEN1) | (0x80000000), ADDR_GPIO_GPIPEN1);
-			writel(readl(ADDR_GPIO_GPIPUD1) & (0x7FFFFFFF), ADDR_GPIO_GPIPUD1); 
-			}
-		else {
+		} else {
 			/* Configure IOCR0[29].IOCR0[25] = 10 (GPIO[49:44])*/
 			/* Configure IOCR0[29].IOCR0[25] = 00 (LCDCTRL,LCDD[0])*/
 
-            writel(readl(ADDR_GPIO_GPIPEN1) & (0xFFFFFFFE), ADDR_GPIO_GPIPEN1);
-			writel((readl(ADDR_SYSCFG_IOCR0) & ~(SYSCFG_IOCR0_LCD_CTRL_MUX)), ADDR_SYSCFG_IOCR0);
-			
+                  	writel(readl(ADDR_GPIO_GPIPEN1) &
+				(0xFFFFFFFE), ADDR_GPIO_GPIPEN1);
+			writel((readl(ADDR_SYSCFG_IOCR0) &
+				~(SYSCFG_IOCR0_LCD_CTRL_MUX | SYSCFG_IOCR0_MPHI_MUX)),
+				ADDR_SYSCFG_IOCR0);
+			if (op == SYSCFG_INIT) {
+				writel((readl(ADDR_SYSCFG_IOCR0) | SYSCFG_IOCR0_LCD_CTRL_MUX),
+				ADDR_SYSCFG_IOCR0);
+			}
 		}
 		break;
 	case (SYSCFG_PWM0 + 1): /* PWM1 => LCD Backlight */
@@ -3124,11 +3123,14 @@ int board_sysconfig(uint32_t module, uint32_t op)
 		break;
 	case SYSCFG_TOUCH:
 		if (op == SYSCFG_INIT) {
-			/* No Pull GPIO30 */
-			writel(readl(ADDR_GPIO_GPIPEN0) &
-				(0xBFFFFFFF), ADDR_GPIO_GPIPEN0);
+			writel(readl(ADDR_GPIO_GPIPUD0) | (0x4C000000), ADDR_GPIO_GPIPUD0);
 		}
-
+		else if (op == SYSCFG_ENABLE){
+			writel(readl(ADDR_GPIO_GPIPUD0) & ~(0x4C000000) | (0x4C000000), ADDR_GPIO_GPIPUD0);
+		}
+		else if (op == SYSCFG_DISABLE){
+			writel(readl(ADDR_GPIO_GPIPUD0) | (0x4C000000), ADDR_GPIO_GPIPUD0);
+		}
 		break;
 	case SYSCFG_SENSORS:
 		if(op == SYSCFG_ENABLE){
@@ -3139,6 +3141,12 @@ int board_sysconfig(uint32_t module, uint32_t op)
 			writel(readl(HW_GPIO_BASE) & ~(0x3 << (GEO_SCL * 2))  | (0x2 << (GEO_SCL * 2)) , HW_GPIO_BASE);
 			writel(readl(HW_GPIO_BASE+4) & ~(0x3 <<( PROXI_SCL-16)*2 )  | (0x2 << ( PROXI_SCL-16)*2) , HW_GPIO_BASE+4);
 			writel(readl(HW_GPIO_BASE+4) & ~(0x3 <<( PROXI_SDA-16)*2)  | (0x2 << ( PROXI_SDA-16)*2) , HW_GPIO_BASE+4);
+
+                    /*ACC_SCL => GPIO7  0 - GPIO[7:0] pin select*/
+            		writel(readl(ADDR_SYSCFG_IOCR1) & ~(0x1 << 7) , ADDR_SYSCFG_IOCR1);	
+
+                    /*ACC_SDA => GPIO15  0 - GPIO[15:8] pin select*/
+            		writel(readl(ADDR_SYSCFG_IOCR1) & ~(0x1 << 15) , ADDR_SYSCFG_IOCR1);	
 
                     /*GEO_SCL => GPIO5  0 - GPIO[7:0] pin select*/
             		writel(readl(ADDR_SYSCFG_IOCR1) & ~(0x1 << 5) , ADDR_SYSCFG_IOCR1);	
@@ -3309,7 +3317,7 @@ static void torino_init_gpio(void)
 #define ADDR_GPIO_GPIPUD0 (HW_GPIO_BASE + 0x028) //0x088CE028 GPIO 0 - 31
 #define ADDR_GPIO_GPIPUD1 (HW_GPIO_BASE + 0x02c) //0x088CE02C GPIO 32 - 63
 
-#define IOTR_GPIO(GPIO) ((GPIO%16)<<1)
+#define IOTR_GPIO(GPIO) (~(3<<((GPIO%16)<<1)))
 #define GPIPEN_PULL_EN(GPIO) (1<<(GPIO%32))
 #define GPIPUD_PULL_DOWN(GPIO) (~(1<<(GPIO%32)))
 

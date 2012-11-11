@@ -102,16 +102,11 @@ static long alps_ioctl( struct file* filp, unsigned int cmd, unsigned long arg)
 
 			ALPSDBG("[ALPS] ioctl(cmd = ALPSIO_SET_DELAY), delay=%d\n", tmpval);
 
-                        mutex_lock(&alps_lock);
-                        if (flgM) {
-                            if      (tmpval <=  10) tmpval =  10;
-                            else if (tmpval <=  20) tmpval =  20;
-                            else if (tmpval <=  60) tmpval =  50;
-                            else                    tmpval = 100;
-                        }
-                        else {
-                            if      (tmpval <=  10) tmpval =  10;
-                        }
+			if      (tmpval <=  10) tmpval =  10;
+			else if (tmpval <=  20) tmpval =  20;
+			else if (tmpval <=  60) tmpval =  50;
+			else                    tmpval = 100;
+			mutex_lock(&alps_lock);
 			delay = tmpval;
 			/*poll_stop_cnt = POLL_STOP_TIME / tmpval;*/
 			hscd_activate(1, flgM, delay);

@@ -192,17 +192,8 @@ typedef enum
     PAUSE,
     I2C_CNTRL,
     SENSOR_FUNC,
-    I2C_CNTRL2,
-    REGULATOR_CNTRL //CYK_TEST
+    I2C_CNTRL2
 }CamSensorCntrlSel_t;
-
-/** Camera Power Regulrator Interface Control Select */
-typedef enum 
-{
-    PORT_A,
-    PORT_I,
-    PORT_C,
-}CamRagulratorCntrlSel_t;
 
 /** Camera Sensor Interface Control Commands */
 typedef enum 
@@ -211,9 +202,7 @@ typedef enum
     GPIO_SetHigh,
     GPIO_SetLow,
     CLK_TurnOn,
-    CLK_TurnOff,
-    REGUL_TurnOn,
-    REGUL_TurnOff
+    CLK_TurnOff
 }CamSensorCntrlCmd_t;
 
 /// Sensor GPIO/Clock Interface Control 
@@ -221,7 +210,6 @@ typedef struct {
     CamSensorCntrlSel_t   cntrl_sel;                ///< Interface control select:  GPIO, Clock                       
     UInt32                value;                    ///< GPIO #, Pause time       
     CamSensorCntrlCmd_t   cmd;                      ///< Interface control command            
-    CamRagulratorCntrlSel_t port_id;                ///< Ragulrator Port ID>
 } CamSensorIntfCntrl_st_t;              
 
 /**  Camera Sync Interface  

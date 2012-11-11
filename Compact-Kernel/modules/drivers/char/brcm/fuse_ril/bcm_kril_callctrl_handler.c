@@ -306,7 +306,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         {
             PHONE_NUMBER_STR_t *rsp = (PHONE_NUMBER_STR_t *) capi2_rsp->dataBuf;
             KrilCallListState_t *rdata = (KrilCallListState_t *)pdata->bcm_ril_rsp;
-            //KRIL_DEBUG(DBG_INFO, "MSG_CC_GETCALLNUMBER_RSP::phone_number:%s\n",rsp->phone_number);
+            KRIL_DEBUG(DBG_INFO, "MSG_CC_GETCALLNUMBER_RSP::phone_number:%s\n",rsp->phone_number);
 
             if(rsp->phone_number[0] == INTERNATIONAL_CODE)
             {
@@ -327,8 +327,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 return;
             }              
             strncpy(rdata->KRILCallState[rdata->index].number, rsp->phone_number, PHONE_NUMBER_LENGTH_MAX);
-
-            KRIL_DEBUG(DBG_INFO, "MSG_CC_GETCALLNUMBER_RSP::rdata->index:%d\n", rdata->index);
+            KRIL_DEBUG(DBG_INFO, "MSG_CC_GETCALLNUMBER_RSP::rdata->index:%d KRILCallState->phone_number:%s\n", rdata->index, rdata->KRILCallState[rdata->index].number);
             CAPI2_CcApi_IsMultiPartyCall(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
             pdata->handler_state = BCM_CC_IsMultiPartyCall;
         }
@@ -562,7 +561,7 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             {
                 KRIL_DEBUG(DBG_INFO, "VT set call param Failed \n");
             }
-            //KRIL_DEBUG(DBG_INFO, "Phone number: %s\n", tdata->address);
+            KRIL_DEBUG(DBG_INFO, "Phone number: %s\n", tdata->address);
             CAPI2_CcApi_MakeVideoCall(InitClientInfo(pdata->ril_cmd->SimId), (UInt8*)tdata->address);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
@@ -581,7 +580,7 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             	KrilCallRetryInfo_t *context = (KrilCallRetryInfo_t *)pdata->cmdContext;
                 memset(context, 0, sizeof(KrilCallRetryInfo_t));
 
-                KRIL_DEBUG(DBG_INFO, "clir:%d, is emergency:%d\n", tdata->clir, tdata->isEmergency);
+                KRIL_DEBUG(DBG_INFO, "address:%s clir:%d, is emergency:%d\n", tdata->address, tdata->clir, tdata->isEmergency);
                 memset(&m_VoiceCallParam, 0, sizeof(VoiceCallParam_t));
 
                 m_VoiceCallParam.subAddr = defaultSubAddress;

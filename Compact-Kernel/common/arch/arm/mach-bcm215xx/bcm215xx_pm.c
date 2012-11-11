@@ -1020,6 +1020,7 @@ static void bcm215xx_force_sleep(void)
  *                   LINUX PM FRAMEWORK INTERFACE                    *
  *********************************************************************/
 int bcm_gpt_evt_wait_wfi_sync(void);
+
 static void bcm215xx_enter_sleep(struct bcm_pm_sleep *bcm_pm_sleep)
 {
 #if (BCM_PM_DORMANT_PROFILING == 1)
@@ -1103,6 +1104,7 @@ bool __attribute__ ((weak)) brcm_clk_is_pedestal_allowed(void)
 	return true;
 }
 
+
 inline void bcm215xx_enter_idle(int cpu_state)
 {
 	bool allow_pedestal = true;
@@ -1174,6 +1176,7 @@ inline void bcm215xx_enter_idle(int cpu_state)
 			new = t.tv_sec * USEC_PER_SEC + t.tv_usec;
 		}
 	}
+
 
 	if (allow_pedestal) {
 		/* Restore UART[A,B,C]_UCR registers */
@@ -1403,7 +1406,7 @@ static int bcm215xx_pm_enter(suspend_state_t state)
 		if(!pmu_is_charger_inserted())
 		{
 			pr_info("%s: Disabling enter sleep\n", __func__);
-			bcm215xx_enter_sleep(bcm_pm_sleep_buf);
+		bcm215xx_enter_sleep(bcm_pm_sleep_buf);
 		}
 		/* Restore AP interrupt mask.
 		 * DSP interrupt mask bits should not be modified

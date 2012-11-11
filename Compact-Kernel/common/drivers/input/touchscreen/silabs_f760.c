@@ -63,7 +63,6 @@
 
 #define FW_VER01  0x01
 #define FW_VER02  0x02
-#define FW_VER05  0x05
 
 #define NUM_TX_CHANNEL 12
 #define NUM_RX_CHANNEL 9
@@ -212,7 +211,7 @@ int tsp_reset( void )
 	touch_ctrl_regulator(0);
 
 	gpio_direction_output(30, 0);
-  gpio_direction_output(27, 0);
+      	gpio_direction_output(27, 0);
 	gpio_direction_output(26, 0);
             
 	msleep(200);
@@ -223,13 +222,13 @@ int tsp_reset( void )
       TSP_forced_release_forkey();
 
 	gpio_direction_output(30, 1);
-  gpio_direction_output(27, 1);
+      	gpio_direction_output(27, 1);
 	gpio_direction_output(26, 1);
 
 	gpio_direction_input(30);
- 	gpio_direction_input(27);
+      	gpio_direction_input(27);
 	gpio_direction_input(26);
-	
+
 	touch_ctrl_regulator(1);
 		
 	msleep(200);
@@ -731,10 +730,10 @@ static int silabs_ts_probe(struct i2c_client *client, const struct i2c_device_id
 			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
 		}
 	}
-    else if (( buf_firmware[2] == SYN_MODULE_VER02)&&(buf_firmware[0] < FW_VER05))
+    else if (( buf_firmware[2] == SYN_MODULE_VER02)&&(buf_firmware[0] < FW_VER02))
     { 
         TSP_MODULE_ID =  buf_firmware[2];
-        PHONE_VER = FW_VER05;
+        PHONE_VER = FW_VER02;
 	    local_irq_disable();
 		ret = Firmware_Download();	
         printk("[TSP] enable_irq : %d\n", __LINE__ );
@@ -805,6 +804,13 @@ static int silabs_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 			printk("[TSP] cancel_work_sync for work timer error.\n", __func__ );
 	    }
 
+
+	    ret = cancel_work_sync(&ts->work);
+        if (ret <0)
+	    {
+			printk("[TSP] cancel_work_sync for work error.\n", __func__ );
+	    }
+            
         if(tsp_chheck==0)
 	    hrtimer_cancel(&ts->timer);
 
@@ -832,6 +838,8 @@ static int silabs_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 
     TSP_forced_release_forkey();
 
+	//board_sysconfig(SYSCFG_TOUCH, SYSCFG_ENABLE);
+
 	printk("[TSP] %s-\n", __func__ );
 	return 0;
 }
@@ -846,7 +854,11 @@ static int silabs_ts_resume(struct i2c_client *client)
 	if( touch_present )
 	{ 
 
-		board_sysconfig(SYSCFG_TOUCH, SYSCFG_INIT);
+		board_sysconfig(SYSCFG_TOUCH, SYSCFG_DISABLE);
+
+		gpio_direction_output(30, 1);
+    	gpio_direction_output(27, 1);
+		gpio_direction_output(26, 1);
 
 		gpio_direction_input(30);
     	gpio_direction_input(27);
@@ -866,7 +878,8 @@ static int silabs_ts_resume(struct i2c_client *client)
 		set_tsp_for_ta_detect(tsp_charger_type_status);
 	}
     
-     if(tsp_chheck==0)
+ 
+    if(tsp_chheck==0)
 	hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 
 	enable_irq(tsp_irq);
@@ -1028,7 +1041,6 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 	if(testmode==1) return sprintf(buf, "-1");   
 
 	mdelay(300); 
-#if 0//temp
 
 	buffer1[0] = ESCAPE_ADDR;
 	buffer1[1] = JIG_MODE_COMMAND;
@@ -1080,7 +1092,7 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 		}
     }
 
-#endif
+
 	buf_firmware_show[0] = ESCAPE_ADDR;
 	buf_firmware_show[1] = TS_READ_VERSION_ADDR;
 	ret = i2c_master_send(ts_global->client, &buf_firmware_show, 2);
@@ -1098,10 +1110,8 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 
      if ( buf_firmware_show[2] == YTE_MODULE_VER11)
              PHONE_VER = FW_VER01;
-     else if ( buf_firmware_show[2] == SYN_MODULE_VER01)
+     else if (( buf_firmware_show[2] == SYN_MODULE_VER01)||( buf_firmware_show[2] == SYN_MODULE_VER02))
              PHONE_VER = FW_VER02;
-     else if ( buf_firmware_show[2] == SYN_MODULE_VER02)
-             PHONE_VER = FW_VER05;
 
 	if(buf_firmware_show[0]!=PHONE_VER)
 		return sprintf(buf, "0");
@@ -1368,7 +1378,7 @@ static ssize_t firmware_show(struct device *dev, struct device_attribute *attr, 
 	 }	
 	 else if ( buf_firmware_show[2] == SYN_MODULE_VER02)
 	 {
-	 	PHONE_VER = FW_VER05;
+	 	PHONE_VER = FW_VER02;
     	sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
 	 }
 	 
@@ -1464,7 +1474,7 @@ static ssize_t read_node(struct device *dev, struct device_attribute *attr, char
     {
     	for(i = 0 ; i < Tx_Channel; i++)
 		{
-			written_bytes += sprintf(buf+written_bytes, ",%5d", baseline_node[i][j]) ;
+			written_bytes += sprintf(buf+written_bytes, ",%d", baseline_node[i][j]) ;
     	}
 	}
 

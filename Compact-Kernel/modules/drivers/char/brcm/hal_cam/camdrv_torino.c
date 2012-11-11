@@ -74,8 +74,6 @@ the GPL, without Broadcom's express prior written consent.
 #include "camacq_api.h"
 #include "camacq_sr300pc20.h"//BYKIM_DTP
 
-UInt8  CAMDRV_CheckEXP(UInt8 mode);//swsw_for SR300PC20
-
 /*****************************************************************************/
 /* start of CAM configuration */
 /*****************************************************************************/
@@ -91,12 +89,9 @@ CAMDRV_IMAGE_TYPE_T    sViewFinderFormat            = CAMDRV_IMAGE_YUV422;
 CAMDRV_RESOLUTION_T    sCaptureImageResolution        = CAMDRV_RESOLUTION_QXGA;
 CAMDRV_IMAGE_TYPE_T    sCaptureImageFormat            = CAMDRV_IMAGE_JPEG;
 
-#if 1 //CYK_TEST
 static struct regulator *cam_regulator_i;//swsw_dual
 static struct regulator *cam_regulator_c;
 static struct regulator *cam_regulator_a;
-
-#endif
 
 #define SENSOR_CLOCK_SPEED              CamDrv_24MHz
 
@@ -121,18 +116,8 @@ static CamSensorIntfCntrl_st_t CamPowerOnSeq[] = {
     {GPIO_CNTRL, CAM_VGA_STBY,   GPIO_SetLow},
     {MCLK_CNTRL, CamDrv_NO_CLK,    CLK_TurnOff},
 // -------Turn On Power to ISP
-
-	{GPIO_CNTRL, VCAM_IO_EN,   GPIO_SetHigh},
-
-	{REGULATOR_CNTRL, 2800000, Nop_Cmd, PORT_A},
-	
-	{REGULATOR_CNTRL, 1200000, Nop_Cmd, PORT_C},
-
-
-
     {GPIO_CNTRL, CAM_VGA_STBY,   GPIO_SetHigh},
 // -------Enable Clock to Cameras @ Main clock speed
-    {PAUSE, 2, Nop_Cmd},
     {MCLK_CNTRL, SENSOR_CLOCK_SPEED,    CLK_TurnOn},
     {PAUSE, 10, Nop_Cmd},
     {GPIO_CNTRL, CAM_VGA_RST,   GPIO_SetHigh},
@@ -140,7 +125,7 @@ static CamSensorIntfCntrl_st_t CamPowerOnSeq[] = {
     {PAUSE, 10, Nop_Cmd},
     {GPIO_CNTRL, CAM_3M_STBY,   GPIO_SetHigh},
     {PAUSE, 10, Nop_Cmd},
-    {GPIO_CNTRL, CAM_3M_RST,   GPIO_SetHigh}
+    {GPIO_CNTRL, CAM_3M_RST,   GPIO_SetHigh},
     
 };
 
@@ -148,20 +133,13 @@ static CamSensorIntfCntrl_st_t CamPowerOnSeq[] = {
 /*---------Sensor Power Off*/
 static CamSensorIntfCntrl_st_t CamPowerOffSeq[] = {
 	// -------Lower Reset to ISP    
-	{GPIO_CNTRL, CAM_VGA_RST,    GPIO_SetLow},
-	{PAUSE, 2, Nop_Cmd},
-	{GPIO_CNTRL, CAM_3M_RST,    GPIO_SetLow},
-	{PAUSE, 1, Nop_Cmd},
+    {GPIO_CNTRL, CAM_VGA_RST,    GPIO_SetLow},
+    {PAUSE, 2, Nop_Cmd},
+    {GPIO_CNTRL, CAM_3M_RST,    GPIO_SetLow},
+    {PAUSE, 1, Nop_Cmd},
 	// -------Disable Clock to Cameras 
-	{MCLK_CNTRL, CamDrv_NO_CLK,    CLK_TurnOff},
-	{GPIO_CNTRL, CAM_3M_STBY,    GPIO_SetLow},
-
-	{REGULATOR_CNTRL, 0, Nop_Cmd, PORT_C},
-
-	{REGULATOR_CNTRL, 0, Nop_Cmd, PORT_A},
-
-	{GPIO_CNTRL, VCAM_IO_EN,   GPIO_SetLow},
-	{PAUSE, 1, Nop_Cmd}
+    {MCLK_CNTRL, CamDrv_NO_CLK,    CLK_TurnOff},
+    {GPIO_CNTRL, CAM_3M_STBY,    GPIO_SetLow},
 };
 
 //---------Sensor Flash Enable
@@ -187,43 +165,32 @@ static CamSensorIntfCntrl_st_t  CamFlashDisable[] =
 
 static CamSensorIntfCntrl_st_t CamPowerOnSeq[] = {
 	// -------Turn everything OFF   
-	//{GPIO_CNTRL, CAM_3M_RST,   GPIO_SetLow},
-	//{MCLK_CNTRL, CamDrv_NO_CLK,    CLK_TurnOff},
-	// -------Turn On Power to ISP
-
-	//{GPIO_CNTRL, VCAM_IO_EN,   GPIO_SetHigh},
-
-	//{REGULATOR_CNTRL, 2800000, Nop_Cmd, PORT_A},
-
-	//{REGULATOR_CNTRL, 1200000, Nop_Cmd, PORT_C},
-	{PAUSE,2, Nop_Cmd},
-	// -------Enable Clock to Cameras @ Main clock speed
-	{MCLK_CNTRL, SENSOR_CLOCK_SPEED,    CLK_TurnOn},
-	{PAUSE,2, Nop_Cmd},
-	{GPIO_CNTRL, CAM_3M_STBY,   GPIO_SetHigh},
-	{PAUSE,30, Nop_Cmd},
-	{GPIO_CNTRL, CAM_3M_RST,   GPIO_SetHigh}
-	//{PAUSE,1, Nop_Cmd}
-
+    {GPIO_CNTRL, CAM_3M_RST,   GPIO_SetLow},
+    {MCLK_CNTRL, CamDrv_NO_CLK,    CLK_TurnOff},
+// -------Turn On Power to ISP
+// -------Enable Clock to Cameras @ Main clock speed
+    {MCLK_CNTRL, SENSOR_CLOCK_SPEED,    CLK_TurnOn},
+    {PAUSE, 12, Nop_Cmd},
+// -------Raise PwrDn to ISP
+// -------Raise Reset to ISP
+    {GPIO_CNTRL, CAM_3M_STBY,   GPIO_SetHigh},
+    {PAUSE,20, Nop_Cmd},
+    {GPIO_CNTRL, CAM_3M_RST,   GPIO_SetHigh},
 
 };
 
 /*---------Sensor Power Off*/
 static CamSensorIntfCntrl_st_t CamPowerOffSeq[] = {
 	// -------Lower Reset to ISP    
-//	{PAUSE, 16, Nop_Cmd},
     {GPIO_CNTRL, CAM_3M_RST,    GPIO_SetLow},
-    {PAUSE, 1, Nop_Cmd},
+    {PAUSE, 10, Nop_Cmd},
 	// -------Disable Clock to Cameras 
     {MCLK_CNTRL, CamDrv_NO_CLK,    CLK_TurnOff},
     {GPIO_CNTRL, CAM_3M_STBY,    GPIO_SetLow},
 	// -------Turn Power OFF    
-    	//{REGULATOR_CNTRL, 0, Nop_Cmd, PORT_C},
-//  {PAUSE, 2, Nop_Cmd},
-	//{REGULATOR_CNTRL, 0, Nop_Cmd, PORT_A},
-
-	//{GPIO_CNTRL, VCAM_IO_EN,   GPIO_SetLow}
- 
+  //  {GPIO_CNTRL, 0xFF,       GPIO_SetLow},
+  //  {GPIO_CNTRL, 0xFF,       GPIO_SetLow},
+   {PAUSE, 1, Nop_Cmd}
 };
 
 //---------Sensor Flash Enable
@@ -934,6 +901,7 @@ HAL_CAM_Result_en_t cam_WaitValue(UInt32 timeout, UInt16 sub_addr, UInt8 value)
     return result;
 }
 
+
 static void cam_InitStatus ()
 {
     sCamI2cStatus = HAL_CAM_SUCCESS;
@@ -944,7 +912,7 @@ static HAL_CAM_Result_en_t cam_GetStatus ()
     return sCamI2cStatus;
 }
 
-#if 1 //CYK_TEST
+
 /*****************************************************************************
 *
 * Function Name:   CAMDRV_GetRegulator
@@ -980,46 +948,6 @@ static int CAMDRV_GetRegulator()//swsw_dual
 	return 1;
 
 }
-
-/*****************************************************************************
-*
-* Function Name:   CAMDRV_SetRegulator
-*
-* Description: Set Camera sensor's LDO
-*
-* Notes:
-*
-*****************************************************************************/
-static int CAMDRV_SetRegulator()//swsw_dual
-{
-	int rc;
-/*
-	regulator_set_voltage(cam_regulator_i,2800000,2800000);
-	if (!cam_regulator_a){
-		HalcamTraceErr( "CAMDRV_SetRegulator cam_regulator_i Not available");
-		rc = -EFAULT;
-		return rc;
-	}
-	}
-*/	
-    regulator_set_voltage(cam_regulator_a,2800000,2800000);
-    if (!cam_regulator_a){
-		HalcamTraceErr( "CAMDRV_SetRegulator cam_regulator_a Not available");
-		rc = -EFAULT;
-		return rc;
-	}
-	regulator_set_voltage(cam_regulator_c,1200000,1200000);	
-	if (!cam_regulator_c){
-		HalcamTraceErr( "CAMDRV_SetRegulator cam_regulator_c Not available");
-		rc = -EFAULT;
-		return rc;
-	}
-	return 1;
-
-}
-#endif
-
-#if 1 //CYK_TEST
 /*****************************************************************************
 *
 * Function Name:   CAMDRV_TurnOnRegulator
@@ -1029,13 +957,13 @@ static int CAMDRV_SetRegulator()//swsw_dual
 * Notes:
 *
 *****************************************************************************/
-static int CAMDRV_TurnOnRegulator()//CYK_TEST
+static int CAMDRV_TurnOnRegulator()//swsw_dual
 {
 	int rc=1;
-	unsigned long stat;
+	CAMDRV_GetRegulator();
+	
 
-	rc = CAMDRV_GetRegulator();
-	rc += CAMDRV_SetRegulator();
+
 
 #if defined (CONFIG_BCM_DUAL_CAM)
 
@@ -1044,29 +972,40 @@ static int CAMDRV_TurnOnRegulator()//CYK_TEST
 
     regulator_set_voltage(cam_regulator_a,2800000,2800000);
     if (cam_regulator_a)
-    rc += regulator_enable(cam_regulator_a);
+    rc = regulator_enable(cam_regulator_a);
 
 
 
     regulator_set_voltage(cam_regulator_c,1200000,1200000);	
 	if (cam_regulator_c)
-		rc += regulator_enable(cam_regulator_c);
+		rc = regulator_enable(cam_regulator_c);
+
 
 #else
-	//HalcamTraceErr( "[Torino] 1");
     gpio_direction_output(23, 1);  //CAM_IO_EN
-	//HalcamTraceErr( "[Torino] 2");
-	rc += regulator_enable(cam_regulator_a);
-	//HalcamTraceErr( "[Torino] 3");
-	rc += regulator_enable(cam_regulator_c);	
-	//HalcamTraceErr( "[Torino] 4");
+
+
+    regulator_set_voltage(cam_regulator_a,2800000,2800000);
+    if (cam_regulator_a)
+    rc = regulator_enable(cam_regulator_a);
+    
+    
+
+	regulator_set_voltage(cam_regulator_c,1200000,1200000);	
+	if (cam_regulator_c)
+		rc = regulator_enable(cam_regulator_c);	
+	
     #endif
+	
+
+
+
+
     return rc;
+	
 }
-	#endif
 
 
-#if 1 //CYK_TEST
 /*****************************************************************************
 *
 * Function Name:   CAMDRV_TurnOffRegulator
@@ -1109,7 +1048,7 @@ static int CAMDRV_TurnOffRegulator()
 
     
 }
-#endif
+
 /*****************************************************************************
 *
 * Function Name:   CAMDRV_GetIntfConfig
@@ -1165,6 +1104,15 @@ static CamSensorIntfCntrl_st_t *CAMDRV_GetIntfSeqSel(CamSensorSelect_t nSensor,
 			*pLength = sizeof(CamPowerOnSeq);
 			power_seq = CamPowerOnSeq;
 
+#if 0//swsw_dual
+
+		if ((nSensor == CamSensorPrimary)
+		    || (nSensor == CamSensorSecondary)) {
+			//HalcamTraceDbg("SensorPwrUp Sequence");
+			*pLength = sizeof(CamPowerOnSeq);
+			power_seq = CamPowerOnSeq;
+		}
+#endif
 		break;
 
 	case SensorInitPwrDn:	/* Camera Init Power Down (Unused) */
@@ -1173,6 +1121,16 @@ static CamSensorIntfCntrl_st_t *CAMDRV_GetIntfSeqSel(CamSensorSelect_t nSensor,
 			*pLength = sizeof(CamPowerOffSeq);
 			power_seq = CamPowerOffSeq;
 
+#if 0//swsw_dual
+
+		if ((nSensor == CamSensorPrimary)
+		    || (nSensor == CamSensorSecondary)) {
+			//HalcamTraceDbg("SensorPwrDn Sequence");
+			*pLength = sizeof(CamPowerOffSeq);
+			power_seq = CamPowerOffSeq;
+		}
+
+#endif
 		break;
 
 	case SensorFlashEnable:	/* Flash Enable */
@@ -1590,28 +1548,9 @@ static HAL_CAM_Result_en_t CAMDRV_CfgStillnThumbCapture(
 	HalcamTraceDbg("CAMDRV_CfgStillnThumbCapture(): write the capture table");
        Drv_Capturemode = TRUE;  //BYKIM_TEMP_TORINO
 	HalcamTraceDbg("Drv_Capturemode =%d",Drv_Capturemode);
-//swsw_underconstruction
 
-
-	if(Drv_Scene == CamSceneMode_Night)
-	{
-		U8 checkExp =0;
-		checkExp =CAMDRV_CheckEXP(CAM_NIGHT);
-
-		if(checkExp==0)
-		{
-		    pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_CAPTURE_NIGHTSCENE);//nightshot
-		}
-		else
-		{
-		    pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_CAPTURE );//snapshot
-		}
-	}
-	else
-	{
-		pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_CAPTURE );//snapshot        
-	}
-     
+	pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_CAPTURE );
+       
     return result;
 }
 
@@ -1680,9 +1619,7 @@ static HAL_CAM_Result_en_t CAMDRV_SetSceneMode(CamSceneMode_t scene_mode,
         case CamSceneMode_Fallcolor:
            pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_FALL);
 		break;
-
-
-       case CamSceneMode_Night: //swsw
+       case CamSceneMode_Night:
 	     pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_NIGHT);
              break;
         case CamSceneMode_Party_Indoor:
@@ -1693,18 +1630,6 @@ static HAL_CAM_Result_en_t CAMDRV_SetSceneMode(CamSceneMode_t scene_mode,
         break;
         case CamSceneMode_Againstlight:
             pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_AGAINST_LIGHT);
-        break;
-
-        case CamSceneMode_Sports:
-            pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_SPORTS);
-        break;
-        
-        case CamSceneMode_Beach_Snow:
-            pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_BEACH_SNOW);
-        break;
-	
-        case CamSceneMode_Firework:
-            pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_FIRE);
         break;
 		
 	   default:
@@ -2117,10 +2042,11 @@ UInt8  CAMDRV_CheckEXP(UInt8 mode)
 	struct stCamacqSensorManager_t* pstSensorManager = NULL;
 	struct stCamacqSensor_t* pstSensor = NULL;
 	
-	U32 Exptime=0;
-	U8 Page0[2] = {0x03,0x20};
-	U8 Write_Exptime0 = 0x20,Write_Exptime1= 0x21,Write_Exptime2 = 0x22,Write_Exptime3 = 0x23, Write_CheckExp_night = 0xb1;
-	U8 Read_Exptime0 = 0,Read_Exptime1= 0,Read_Exptime2 = 0,Read_Exptime3 = 0, Read_CheckExp_night =0;
+    U32   Exptime=0;
+    U8 Page0[2] = {0x03,0x20};
+   
+    U8 Write_Exptime0 = 0x20,Write_Exptime1= 0x21,Write_Exptime2 = 0x22,Write_Exptime3 = 0x23;
+    U8 Read_Exptime0 = 0,Read_Exptime1= 0,Read_Exptime2 = 0,Read_Exptime3 = 0;
     U8 nSizePage, nSizeAddr;
     U32 sensor= 0;//Rear Camera
 		
@@ -2175,27 +2101,7 @@ UInt8  CAMDRV_CheckEXP(UInt8 mode)
 		}
     }
 
-	HalcamTraceDbg("CheckExp : %d ",Exptime);
-
-
-    if(mode == CAM_NIGHT)/*shutter speed */
-    {
-        CamacqExtReadI2c( pstSensor->m_pI2cClient, Write_CheckExp_night,1, &Read_CheckExp_night,1);
-
-        HalcamTraceDbg("Read_CheckExp_night : %d ",Read_CheckExp_night);
-
-		if( Read_CheckExp_night < 0x16 ) 
-		{
-			HalcamTraceDbg("Read_CheckExp_night <0x16");
-			return 0;
-		}
-		else/* Dark condition */
-		{
-			HalcamTraceDbg("Read_CheckExp_night >=0x16");
-			return 1;
-		}
-
-	}
+	HalcamTraceDbg("Exptime : %d ",Exptime);
         
 	return result;
 }
@@ -2233,19 +2139,19 @@ void  CAMDRV_CheckISO(void)
         CamacqExtReadI2c( pstSensor->m_pI2cClient, Write_Exptime0,1, &Read_Exptime0,1);
         HalcamTraceDbg("Read_Exptime0 = %d ",Read_Exptime0);
 		
-        if(Read_Exptime0  <37) /* ISO Range 10~80 */
+        if(Read_Exptime0  <16) /* ISO Range 10~80 */
         {
             gv_isoSpeedRatings= 50;
         }
-        else if (Read_Exptime0 < 92)
+        else if (Read_Exptime0 < 48)
         {
             gv_isoSpeedRatings= 100;
         }
-        else if (Read_Exptime0 < 131)
+        else if (Read_Exptime0 < 80)
         {
             gv_isoSpeedRatings= 200;
         }
-        else if (Read_Exptime0 < 241)
+        else if (Read_Exptime0 < 96)
         {
             gv_isoSpeedRatings= 400;
         }
@@ -2443,67 +2349,22 @@ static HAL_CAM_Result_en_t CAMDRV_GetSensorValuesForEXIF( CAM_Sensor_Values_For_
         sprintf(aString, "%d,", gv_isoSpeedRatings); 
         strcpy(exif_parm->isoSpeedRating,aString);
     }
-#if 0
-
-    if(Drv_Scene==CamSceneMode_Auto)
-    {
-        switch(Drv_Brightness)
-        {
-            case CamBrightnessLevel_0:   // -2
-                strcpy(aString, "-20/10");
-                break;
-            case CamBrightnessLevel_1:   // -1.5
-                strcpy(aString, "-15/10");
-                break;
-            case CamBrightnessLevel_2:   // -1
-                strcpy(aString, "-10/10");
-                break;
-            case CamBrightnessLevel_3:     // -0.5
-                strcpy(aString, "-5/10");
-                break;
-            case CamBrightnessLevel_4:     // 0
-                strcpy(aString, "0/10");
-                break;
-            case CamBrightnessLevel_5:     // 0.5
-                strcpy(aString, "5/10");
-                break;
-            case CamBrightnessLevel_6:     // 1.0
-                strcpy(aString, "10/10");
-                break;
-            case CamBrightnessLevel_7:     // 1.5
-                strcpy(aString, "15/10");
-                break;
-            case CamBrightnessLevel_8:     // 2.0
-                strcpy(aString, "20/10");
-                break;            
-        }    
-    }
-	else if(Drv_Scene==CamSceneMode_Beach_Snow)
-	{
-        strcpy(aString, "10/10");
-	}
-	else
-	{
-		strcpy(aString, "0/10");
-	}
-#endif
-   
     strcpy(exif_parm->FNumber,(char *)"26/10" );
     strcpy(exif_parm->maxLensAperture,(char *)"2757/1000" ); //26/10-2.46 , 27/10-2.55 , 28/10-2.64 , 27/11 - 2.34 , 28/11 -2.42, 30/11-2.57 , 32/12-2.52
     strcpy(exif_parm->lensFocalLength,(char *)"279/100" );
     strcpy(exif_parm->exposureProgram,"3" );
     strcpy(exif_parm->colorSpaceInfo,"1");
-    strcpy(exif_parm->exposureBias,"");//NOT_USED 
     strcpy(exif_parm->softwareUsed,"S5360XXKH3");//NOT_USED 
     strcpy(exif_parm->shutterSpeed,"" );//NOT_USED 
     strcpy(exif_parm->aperture,"" );//NOT_USED 
     strcpy(exif_parm->brightness,"" );//NOT_USED 
+    strcpy(exif_parm->exposureBias,"");//NOT_USED 
     strcpy(exif_parm->flash,"");//NOT_USED 
     strcpy(exif_parm->userComments,"");//NOT_USED 
     strcpy(exif_parm->contrast,"");//NOT_USED 
     strcpy(exif_parm->saturation,"");//NOT_USED 
     strcpy(exif_parm->sharpness,"");//NOT_USED 
-
+	
     return HAL_CAM_SUCCESS;
 }
 
@@ -2614,11 +2475,10 @@ static HAL_CAM_Result_en_t CAMDRV_SensorSetConfigTablePts(CamSensorSelect_t sens
 
 
 struct sens_methods sens_meth = {
-#if 1 //CYK_TEST
     DRV_GetRegulator: CAMDRV_GetRegulator,
     DRV_TurnOnRegulator: CAMDRV_TurnOnRegulator,
     DRV_TurnOffRegulator: CAMDRV_TurnOffRegulator,
-#endif
+
     DRV_GetIntfConfig: CAMDRV_GetIntfConfig,
     DRV_GetIntfSeqSel : CAMDRV_GetIntfSeqSel,
     DRV_Wakeup : CAMDRV_Wakeup,

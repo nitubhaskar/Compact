@@ -23,62 +23,6 @@ struct bq27425_info bq27425;
 
 static int bq27425_subcmd_i2c(u8 reg, unsigned int subcmd);
 static int bq27425_read_i2c(u8 reg, unsigned int *rt_value);
-static int bq27425_read_burst_i2c(u8 reg, u8 *data, int len);
-static int bq27425_write_burst_i2c(u8 *packet, int len);
-
-int get_bq27425_dffs_version(unsigned int* version)
-{
-	int ret = 0;
-	u8 packet[2];
-	u8 data[4];
-
-	packet[0] = BQ27425_EXTCMD_DFDCNTL, packet[1] = 0x00;	
-	ret = bq27425_write_burst_i2c(packet, 2);	
-	udelay(BQ27425_I2C_UDELAY);	
-	if (ret < 0)
-		goto error;
-	
-	packet[0] = BQ27425_EXTCMD_DFCLS, packet[1] = 0x3A;	
-	ret = bq27425_write_burst_i2c(packet, 2);
-	udelay(BQ27425_I2C_UDELAY);	
-	if (ret < 0)
-		goto error;
-	
-	packet[0] = BQ27425_EXTCMD_DFBLK, packet[1] = 0x00;	
-	ret = bq27425_write_burst_i2c(packet, 2);
-	udelay(BQ27425_I2C_UDELAY);	
-	if (ret < 0)
-		goto error;
-
-	ret = bq27425_read_burst_i2c(BQ27425_EXTCMD_DFD, data, 4);
-	udelay(BQ27425_I2C_UDELAY);	
-	if (ret < 0)
-		goto error;
-
-	*version = get_unaligned_le32(data);
-	
-	return 0;
-	
-error:
-	printk( "%s: error reading dffs, code: %d\n", __func__, ret);
-	return ret;
-}
-
-int bq27425_reset(void)
-{
-	int ret = 0;
-	
-	ret = bq27425_subcmd_i2c(BQ27425_REG_CNTL, BQ27425_SUBCMD_RESET);
-	udelay(BQ27425_I2C_UDELAY);
-	printk("%s: reset fuel gauge\n", __func__);
-
-	if (ret < 0) {
-		printk( "%s: error reading subcmd, code: %d\n", __func__, ret);
-		return ret;
-	}
-
-	return 0;
-}
 
 int get_bq27425_battery_subdata(u8 reg, unsigned int subcmd, unsigned int* val)
 {
@@ -122,58 +66,6 @@ int get_bq27425_battery_data(u8 reg, unsigned int* val)
 	return ret;
 }
 
-static int bq27425_read_burst_i2c(u8 reg, u8 *data, int len)
-{
-	struct i2c_client *client = bq27425.client;
-	struct i2c_msg msg;
-	int err = 0;
-	int i;
-
-	if (!client->adapter)
-		return -ENODEV;
-
-	for(i=0; i<len; i++)	
-		*(data+i) = 0;
-
-	msg.addr = client->addr;
-	msg.flags = 0;
-	msg.len = 1;
-	msg.buf = &reg;
-
-	err = i2c_transfer(client->adapter, &msg, 1);
-	if (err >= 0) {
-		msg.len = len;
-		msg.flags = I2C_M_RD;
-		msg.buf = data;
-		err = i2c_transfer(client->adapter, &msg, 1);
-		if (err >= 0) 
-			return 0;
-	}
-
-	return err;
-}
-
-static int bq27425_write_burst_i2c(u8 *packet, int len)
-{
-	struct i2c_client *client = bq27425.client;
-	struct i2c_msg msg;
-	int err = 0;
-
-	if (!client->adapter)
-		return -ENODEV;
-
-	msg.addr = client->addr;
-	msg.flags = 0;
-	msg.len = len;
-	msg.buf = packet;
-
-	err = i2c_transfer(client->adapter, &msg, 1);
-	if (err < 0)
-		return -EIO;
-
-	return 0;
-}
-
 static int bq27425_subcmd_i2c(u8 reg, unsigned int subcmd)
 {
 	struct i2c_client *client = bq27425.client;
@@ -204,26 +96,26 @@ static int bq27425_subcmd_i2c(u8 reg, unsigned int subcmd)
 static int  bq27425_read_i2c(u8 reg, unsigned int *rt_value)
 {
 	struct i2c_client *client = bq27425.client;
-	struct i2c_msg msg;
+	struct i2c_msg msg[1];
 	unsigned char data[2];
 	int err = 0;
 
 	if (!client->adapter)
 		return -ENODEV;
 
-	msg.addr = client->addr;
-	msg.flags = 0;
-	msg.len = 1;
-	msg.buf = data;
+	msg->addr = client->addr;
+	msg->flags = 0;
+	msg->len = 1;
+	msg->buf = data;
 
 	memset(data, 0, sizeof(data));
 	data[0] = reg;
-	err = i2c_transfer(client->adapter, &msg, 1);
+	err = i2c_transfer(client->adapter, msg, 1);
 
 	if (err >= 0) {
-		msg.len = 2;
-		msg.flags = I2C_M_RD;
-		err = i2c_transfer(client->adapter, &msg, 1);
+		msg->len = 2;
+		msg->flags = I2C_M_RD;
+		err = i2c_transfer(client->adapter, msg, 1);
 		if (err >= 0) 
 		{
 			*rt_value = get_unaligned_le16(data);
@@ -272,11 +164,6 @@ err1:
 	return retval;
 }
 
-static int bq27425_battery_suspend(struct i2c_client *client, pm_message_t mesg)
-{
-	return 0;
-}
-
 static int bq27425_battery_remove(struct i2c_client *client)
 {
 	return 0;
@@ -293,7 +180,6 @@ static struct i2c_driver bq27425_battery_driver = {
 	},
 	.probe		= bq27425_battery_probe,
 	.remove		= bq27425_battery_remove,
-	.suspend	= bq27425_battery_suspend,
 	.id_table	= bq27425_id,
 };
 

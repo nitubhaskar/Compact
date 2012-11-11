@@ -71,9 +71,6 @@ the GPL, without Broadcom's express prior written consent.
 #endif
 #endif
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-
 #include "ostask.h"
 //#include "vpripcmdq.h"
 #include "csl_apcmd.h"
@@ -411,10 +408,6 @@ UInt16 AUDCTRL_GetTelephonySpkrVolume()
 // Description:   enable a playback path
 //
 //============================================================================
-
-
-UInt8 earPathEnabled = 0;
-UInt8 spkPathWithEar = 0;
 void AUDCTRL_EnablePlay(
 				AUDIO_HW_ID_t			src,
 				AUDIO_HW_ID_t			sink,
@@ -609,16 +602,8 @@ void AUDCTRL_EnablePlay(
                         {
 			    if (spkSel != AUDDRV_SPKR_NONE)
 			    {
-
-                
 			    	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_PLR_OUT) spkSel = 0x%x, tapSpkSel = 0x%x AA \n", spkSel, tapSpkSel );
-                    
 			    	AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, spkSel, TRUE, sr, numCh);
-
-                            if ( spkSel == AUDDRV_SPKR_HS)
-                            {
-                                earPathEnabled = 1;
-                            }
 			    }
 			    if (tapSpkSel != AUDDRV_SPKR_NONE && tapSpkSel != spkSel)
 			    {
@@ -630,9 +615,7 @@ void AUDCTRL_EnablePlay(
 			polySpkr1 = spkSel;
 			//OSTASK_Sleep( 10 );
 			powerOnExternalAmp( spk, PolyUseExtSpkr, TRUE );
-            
 			Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_PLR_OUT) spkSel = 0x%x, tapSpkSel = 0x%x, audioSpkr1 = 0x%x, polySpkr1 %d \n", spkSel, tapSpkSel, audioSpkr1, polySpkr1);
-            
 			break;
 
 		case AUDIO_HW_MONO_BT_OUT:  // PCM I/F
@@ -692,10 +675,6 @@ void AUDCTRL_DisablePlay(
 				)
 {
 	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_DisablePlay: end, src = 0x%x, sink = 0x%x, spk = 0x%x\n", src, sink,  spk);
-	
-
-        earPathEnabled = 0;
-        spkPathWithEar = 0;
 	
 	// don't consider src right now. only consider playback from memory.
 	switch (src)
@@ -1096,12 +1075,6 @@ void AUDCTRL_AddPlaySpk(
 				polySpkr2 = GetDrvSpk (spk);
 
 			AUDDRV_SelectSpkr( AUDDRV_RINGTONE_OUTPUT, polySpkr1, polySpkr2 );
-
-                    if( (spk == AUDCTRL_SPK_LOUDSPK) && earPathEnabled ) 
-                    {
-                        spkPathWithEar = 1;
-                    }
-    
 			//OSTASK_Sleep( 100 );
 			powerOnExternalAmp( spk, PolyUseExtSpkr, TRUE );
 			break;
@@ -1118,9 +1091,6 @@ void AUDCTRL_AddPlaySpk(
 // Description:   remove a speaker to a playback path
 //
 //============================================================================
-extern int get_headset_state(void);
-
-
 void AUDCTRL_RemovePlaySpk(
 				AUDIO_HW_ID_t			sink,
 				AUDCTRL_SPEAKER_t		spk
@@ -1128,9 +1098,6 @@ void AUDCTRL_RemovePlaySpk(
 {
 	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_RemovePlaySpk: Remove speaker, sink = 0x%x,  spk = 0x%x\n", sink, spk);
 		
-
-    int (*pget_headset_state)() = symbol_get(get_headset_state);
-       
 	switch  (sink)
 	{
 		case AUDIO_HW_VOICE_OUT:
@@ -1188,15 +1155,6 @@ void AUDCTRL_RemovePlaySpk(
 				polySpkr1 = polySpkr2;
 				polySpkr2 = AUDDRV_SPKR_NONE;
 			}
-
-                    if ( spkPathWithEar && pget_headset_state())
-                    {
-                        Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_RemovePlaySpk:OSTASK_Sleep\n");
-
-                        OSTASK_Sleep( 100 );
-                    }     
-                    
-                        
 			powerOnExternalAmp( spk, PolyUseExtSpkr, FALSE );
 			//OSTASK_Sleep( 100 );
 			AUDDRV_SelectSpkr( AUDDRV_RINGTONE_OUTPUT, polySpkr1, polySpkr2 );
@@ -1205,8 +1163,6 @@ void AUDCTRL_RemovePlaySpk(
 		default:
 			break;
 	}
-    
-        spkPathWithEar = 0; 
 }
 
 
@@ -2162,9 +2118,7 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 			break;
 	}
 
-	if (((telephonyUseHS==FALSE) && (voiceUseHS==FALSE) && (audioUseHS==FALSE) && (polyUseHS==FALSE))
-		|| ((telephonyUseHS==FALSE) && (voiceUseHS==FALSE) && (audioUseHS==FALSE) && ((polyUseHS==TRUE) && (telephonyUseIHF==TRUE))) // 20111216 When headset is connected there is a popcorn noise while turning on the speaker.
-	)
+	if ((telephonyUseHS==FALSE) && (voiceUseHS==FALSE) && (audioUseHS==FALSE) && (polyUseHS==FALSE))
 	{
 		if ( HS_IsOn != FALSE )
 		{

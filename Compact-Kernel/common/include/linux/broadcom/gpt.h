@@ -124,6 +124,7 @@ extern int gpt_stop(int gpt_index);
  *				 or If the gpt_read is performed with a proper request.
  */
 extern unsigned int gpt_read(int gpt_index);
+
 /*
  * This function will return the current reload count on a give GPT.
  *

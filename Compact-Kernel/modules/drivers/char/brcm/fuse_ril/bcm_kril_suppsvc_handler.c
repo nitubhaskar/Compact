@@ -1481,16 +1481,6 @@ void KRIL_QueryCallForwardStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
                             fwdInfoPtr++;
                         }
-                        /* if ss_class is '0' when service is deactivated, set the ss_class for all services to display properly */
-                        if( (rdata->call_forward_class_info_list[0].activated == FALSE) 
-                             && (rdata->call_forward_class_info_list[0].ss_class == ATC_NOT_SPECIFIED) )
-                        {
-                            if( KRIL_GetServiceClassValue() != 0 )
-                                rdata->call_forward_class_info_list[0].ss_class = KRIL_GetServiceClassValue();
-                            else                           
-                                rdata->call_forward_class_info_list[0].ss_class = 0xff;  // all services
-                        }
-                        
                         KRIL_SetServiceClassValue(0);            
                         break;
                     }

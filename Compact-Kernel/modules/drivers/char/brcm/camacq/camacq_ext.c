@@ -212,8 +212,6 @@ _stCamacqSensorRegs g_stCamacqMainSensorRegs =
     pvSnapshotOutdoorRegs	: CAMACQ_MAIN_REG_HIGHLIGHT,
     pvSnapshotLowlightRegs	: CAMACQ_MAIN_REG_LOWLIGHT,
     pvSnapshotNightsceneRegs	: CAMACQ_MAIN_REG_NIGHTSHOT,
-     #elif defined(CONFIG_BCM_CAM_SR300PC20)
-    pvSnapshotNightsceneRegs	: CAMACQ_MAIN_REG_NIGHTSHOT,
    #endif
  	
 };

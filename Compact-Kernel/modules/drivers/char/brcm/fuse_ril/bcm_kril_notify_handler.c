@@ -64,7 +64,6 @@ extern bcm_kril_dev_result_t bcm_dev_results[TOTAL_BCMDEVICE_NUM];
 extern Boolean gIsFlightModeOnBoot;
 
 extern Boolean gIsStkRefreshReset;
-extern Boolean gIsStkRefreshResetSTK2;  // gearn STK2 SIM refresh reset
 
 extern struct timezone sys_tz;
 
@@ -4558,17 +4557,7 @@ void ProcessSATKRefresh(Kril_CAPI2Info_t *dataBuf)
         case SMRT_RESET:
              data[0] = BCM_SIM_RESET;
              data[1] = 0;
-
-             if(dataBuf->SimId == SIM_DUAL_FIRST) // gearn STK2 SIM refresh reset
-             {
              gIsStkRefreshReset = TRUE;
-                 KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 1 gIsStkRefreshReset: %d\n" ,gIsStkRefreshReset);
-             }
-             else if(dataBuf->SimId == SIM_DUAL_SECOND)
-            {
-                 gIsStkRefreshResetSTK2 = TRUE;
-                 KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 1 gIsStkRefreshResetSTK2: %d\n" ,gIsStkRefreshResetSTK2);            
-             }    
              KRIL_DEBUG(DBG_ERROR,"ParseSATKRefresh() SMRT_RESET!!\n");
              KRIL_SendNotify(dataBuf->SimId, BRCM_RIL_UNSOL_SIM_REFRESH, data, sizeof(int)*2);
              //return;
@@ -4583,19 +4572,7 @@ void ProcessSATKRefresh(Kril_CAPI2Info_t *dataBuf)
 	  // And AP need to use RIL_REQUEST_RADIO_POWER to power down and power on SIM.
 	  if (SMRT_RESET == pRefresh->refreshType)
 	  {
-      
-           if(dataBuf->SimId == SIM_DUAL_FIRST) // gearn STK2 SIM refresh reset
-           {
 	      gIsStkRefreshReset = TRUE;
-               KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 2  gIsStkRefreshReset: %d\n" ,gIsStkRefreshReset);
-           }
-           else if(dataBuf->SimId == SIM_DUAL_SECOND)
-          {
-               gIsStkRefreshResetSTK2 = TRUE;
-               KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 2 gIsStkRefreshResetSTK2: %d\n" ,gIsStkRefreshResetSTK2);            
-           }    
-
-          
 	  }
 	  else
 	  {

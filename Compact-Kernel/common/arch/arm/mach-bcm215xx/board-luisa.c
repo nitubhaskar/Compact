@@ -2875,7 +2875,7 @@ static void __init update_pm_sysparm(void)
 static void luisa_init_gpio(void)
 {
 /* +++ H/W req */
-#define IOTR_GPIO(GPIO) ((GPIO%16)<<1)
+#define IOTR_GPIO(GPIO) (~(3<<((GPIO%16)<<1)))
 #define GPIPEN_PULL_EN(GPIO) (1<<(GPIO%32))
 #define GPIPUD_PULL_DOWN(GPIO) (~(1<<(GPIO%32)))
 

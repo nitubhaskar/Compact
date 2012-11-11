@@ -193,7 +193,6 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvSceneAutoRegs;
     const void*     pvSceneNightRegs;
     const void*     pvSceneNightDarkRegs;
-    const void*     pvSnapshotNightsceneRegs;
     const void*     pvSceneLandScapeRegs;
     const void*     pvSceneSunSetRegs;
     const void*     pvScenePortraitRegs;

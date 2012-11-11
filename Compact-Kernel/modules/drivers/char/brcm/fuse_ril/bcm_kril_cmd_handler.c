@@ -509,7 +509,7 @@ void KRIL_CommandThread(struct work_struct *data)
     bool found = FALSE;
     int i = 0;
 
-    //KRIL_DEBUG(DBG_TRACE2, "Enter...!\n");
+    KRIL_DEBUG(DBG_TRACE2, "Enter...!\n");
     mutex_lock(&gKrilCmdQueue.mutex);
     list_for_each_safe(listptr, pos, &gKrilCmdQueue.list)
     {
@@ -535,14 +535,12 @@ void KRIL_CommandThread(struct work_struct *data)
         cmd_list->cmdContext = NULL;
         cmd_list->result = BCM_E_GENERIC_FAILURE; // default error code is BCM_E_GENERIC_FAILURE
         cmd_list->handler_state = BCM_SendCAPI2Cmd;
-        //KRIL_DEBUG(DBG_TRACE2, "cmd list cmd:%ld list:%p next:%p prev:%p\n", cmd_list->cmd, &cmd_list->list, cmd_list->list.next, cmd_list->list.prev);
+        KRIL_DEBUG(DBG_TRACE2, "cmd list cmd:%ld list:%p next:%p prev:%p\n", cmd_list->cmd, &cmd_list->list, cmd_list->list.next, cmd_list->list.prev);
         mutex_lock(&gKrilCmdList.mutex);
         list_add_tail(&cmd_list->list, &gKrilCmdList.list);
         mutex_unlock(&gKrilCmdList.mutex);
 
         KRIL_DEBUG(DBG_TRACE, "client:%d CmdID:%ld RIL_Token:0x%lx\n", cmd_list->ril_cmd->client, cmd_list->ril_cmd->CmdID, (long unsigned int)cmd_list->ril_cmd->t);
-        
-        KRIL_DEBUG(DBG_TRACE2, "%d more a arrary cmd:0x%x  command:0x%lx\n", ARRAY_SIZE(g_kril_capi2_handler_array)-1, g_kril_capi2_handler_array[0].cmd, entry->cmd);
         // search function
         for (i = 0; i < ARRAY_SIZE(g_kril_capi2_handler_array); ++i)
         {
@@ -571,11 +569,10 @@ void KRIL_CommandThread(struct work_struct *data)
                     KRIL_DEBUG(DBG_ERROR, "The function does not implement yet or not in Capi2 handler array ...!\n");
                 }
             }
-// Too many logs are printed. It make problems.
-//          else
-//          {
-//              KRIL_DEBUG(DBG_TRACE2, "arrary cmd:0x%x  command:0x%lx\n", g_kril_capi2_handler_array[i].cmd, entry->cmd);
-//          }
+            else
+            {
+                KRIL_DEBUG(DBG_TRACE2, "arrary cmd:0x%x  command:0x%lx\n", g_kril_capi2_handler_array[i].cmd, entry->cmd);
+            }
         }
         //KRIL_DEBUG(DBG_ERROR, "Iterations are over...!\n");
         //KRIL_SendResponse(cmd_list);
@@ -704,11 +701,7 @@ void KRIL_ResponseHandler(struct work_struct *data)
             {
                 KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx client:%d CmdID:%ld\n", listentry->handler_state, listentry->ril_cmd->client, listentry->ril_cmd->CmdID);
                 if (BCM_URIL_CLIENT == listentry->ril_cmd->client ||
-                    BCM_AT_URIL_CLIENT == listentry->ril_cmd->client
-#ifdef BCM_RIL_FOR_EAP_SIM         // BCM_EAP_SIM            
-                    ||BCM_EAP_URIL_CLIENT == listentry->ril_cmd->client
-#endif
-                 )
+                    BCM_AT_URIL_CLIENT == listentry->ril_cmd->client )
                 {
                     KRIL_DEBUG(DBG_TRACE, "BCMRIL_CLIENT...!\n");
                     KRIL_SendResponse(listentry);
@@ -1002,10 +995,10 @@ Boolean IsNeedToWait(SimNumber_t SimId, unsigned long CmdID)
         list_for_each_safe(listptr, listpos, &gKrilCmdList.list)
         {
             listentry = list_entry(listptr, KRIL_CmdList_t, list);
-            KRIL_DEBUG(DBG_TRACE2, "command list:: i:%d CmdID:%ld\n", i, listentry->ril_cmd->CmdID);
+            KRIL_DEBUG(DBG_TRACE, "command list:: i:%d CmdID:%ld\n", i, listentry->ril_cmd->CmdID);
             if(CmdID == listentry->ril_cmd->CmdID)
             {
-                KRIL_DEBUG(DBG_TRACE2, "command list::find tid:%ld\n", listentry->tid);
+                KRIL_DEBUG(DBG_INFO, "command list::find tid:%ld\n", listentry->tid);
                 found = TRUE;
                 break;
             }
@@ -2483,16 +2476,6 @@ void KRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                KRIL_GenericSimAccessHandler(ril_cmd, capi2_rsp);
                break;
 */
-	
-#ifdef BCM_RIL_FOR_EAP_SIM 	 // BCM_EAP_SIM
-	case BRIL_HOOK_EAP_SIM_AUTHENTICATION:	
-	   KRIL_GsmSimAuthenticationHandler(ril_cmd, capi2_rsp);
-	   break;
-	
-	case BRIL_HOOK_EAP_AKA_AUTHENTICATION:
-	   KRIL_USimAuthenticationHandler(ril_cmd, capi2_rsp);
-	   break;	  
-#endif
             default:
                KRIL_DEBUG(DBG_ERROR,"Unsupported msgtype:%d Error!!!\n", msgid);
                pdata->handler_state = BCM_ErrorCAPI2Cmd;

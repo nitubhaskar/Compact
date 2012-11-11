@@ -207,6 +207,38 @@ uint32_t lcd_read_reg(uint32_t reg)
 	return data;
 }
 
+#if defined (CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)	
+uint32_t LCD_DRV_ID_Check(void)
+{
+
+	uint8_t Read_buf[3] = {0,};
+	uint32_t Read_value = 0;
+
+	CSL_LCD_RES_T ret;
+	uint32_t data;
+	int i;
+	UInt8 CMD_readId[] = {0xDA, 0xDB, 0xDC};
+
+	for(i=0; i< 3; i++)
+	{
+		ret=CSL_LCDC_WrCmnd(handle, CMD_readId[i]);
+		if (CSL_LCD_OK != ret)
+			printk("CSL_LCDC_WrCmnd failed error: %d", ret);
+
+		ret = CSL_LCDC_PAR_RdData(handle, &data);		// dummy data
+		ret = CSL_LCDC_PAR_RdData(handle, &data);		
+		Read_buf[i] =data;		
+		printk("lcd_read_reg_id data:%x\n", Read_buf[i]);	
+	
+	}
+ 
+	Read_value += Read_buf[0] << 16;
+	Read_value += Read_buf[1] << 8;
+	Read_value += Read_buf[2];
+
+    return Read_value;
+}
+#else
 
 void lcd_read_reg_id(UInt8 reg, UInt8 * Read_value, UInt8 num)
 {
@@ -247,6 +279,7 @@ uint32_t LCD_DRV_ID_Check(UInt8 reg, UInt8 num)
 
     return Read_value;
 }
+#endif
  
 
 /***************************************************************************
@@ -319,7 +352,7 @@ static inline bool is_tx_done_32(LCD_dev_info_t * dev)
 static void lcd_dev_dirty_rect(LCD_dev_info_t * dev,
 			       LCD_DirtyRect_t * dirtyRect)
 {
-	if(lcd_id == 0)
+	if(lcd_enable == 0)
 		return;
 		
 	CSL_LCD_RES_T ret;
@@ -440,7 +473,7 @@ done:
 
 void lcd_dev_dirty_rows(LCD_dev_info_t * dev, LCD_DirtyRows_t * dirtyRows)
 {
-	if(lcd_id == 0)
+	if(lcd_enable == 0)
 		return;
 		
 	LCD_DirtyRect_t dirtyRect = {
@@ -1076,14 +1109,21 @@ static int __init lcdc_probe(struct platform_device *pdev)
 
 	for(j=0;j<5;j++)
 	{
-
+	#if defined (CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)	
+    		lcd_id = LCD_DRV_ID_Check();
+    		printk("lcd_probe : %x\n",   lcd_id );
+	#else 
     		lcd_id = LCD_DRV_ID_Check(0x04,4);
    	 		printk("lcd_probe : %x\n",   lcd_id );
-
-		if(lcd_id>0)
+	#endif /*CONFIG_BCM_LCD_S6D05A1X31_COOPERVE*/
+	#if defined(CONFIG_BCM_LCD_S6D04K1_LUISA_HW02)
+	if(lcd_id==PANEL_BOE)
+		break;
+	#elif defined(CONFIG_BCM_LCD_S6D04H0A01) || defined(CONFIG_BCM_LCD_ILI9341_BOE) || defined(CONFIG_BCM_LCD_ILI9341_BOE_REV05) //TOTORO
+	if((lcd_id==PANEL_GP)||(lcd_id==PANEL_GP1)||(lcd_id==PANEL_BOE)||(lcd_id==PANEL_BOE2))
 			break;
+	#endif
 	}
-
     if(lcd_id == 0)
         lcd_enable=0;
 
@@ -1260,7 +1300,7 @@ static long lcd_ioctl(struct file *file,
 			    0)
 				return -EFAULT;
 
-			if(lcd_id==0)
+			if(lcd_enable==0)
 				break;
 
 			lcd_display_rect(dev, &r);
@@ -1277,7 +1317,7 @@ static long lcd_ioctl(struct file *file,
 			if (copy_from_user(&dirtyRows, (LCD_DirtyRows_t *) arg,
 					   sizeof (LCD_DirtyRows_t)) != 0)
 				return -EFAULT;
-			if(lcd_id==0)
+			if(lcd_enable==0)
 				break;
 
 			lcd_dev_dirty_rows(dev, &dirtyRows);
@@ -1291,7 +1331,7 @@ static long lcd_ioctl(struct file *file,
 			if (copy_from_user(&dirtyRect, (LCD_DirtyRect_t *) arg,
 					   sizeof (LCD_DirtyRect_t)) != 0)
 				return -EFAULT;
-			if(lcd_id==0)
+			if(lcd_enable==0)
 				break;
 
 			lcd_dev_dirty_rect(dev, &dirtyRect);
@@ -1507,17 +1547,23 @@ static void lcd_send_cmd_sequence(Lcd_init_t *init)
 static inline void lcd_init_panels(void)
 {
 	int j;
-
+#if defined(CONFIG_BCM_LCD_S6D04H0A01) || defined(CONFIG_BCM_LCD_ILI9341_BOE) || defined(CONFIG_BCM_LCD_ILI9341_BOE_REV05) //TOTORO
     if(!lcd_id) {	
 		for(j=0;j<5;j++)
 		{	
+			#if defined (CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)	
+				lcd_id = LCD_DRV_ID_Check();
+				printk("lcd_probe : %x\n",	 lcd_id );
+			#else 
 				lcd_id = LCD_DRV_ID_Check(0x04,4);
 				printk("lcd_probe : %x\n",	 lcd_id );
+			#endif /*CONFIG_BCM_LCD_S6D05A1X31_COOPERVE*/
 		
 			if(lcd_id>0)
 				break;
 		}
 	}
+#endif
 
 #if defined(CONFIG_BCM_LCD_S6D04H0A01) || defined(CONFIG_BCM_LCD_ILI9341_BOE) || defined(CONFIG_BCM_LCD_ILI9341_BOE_REV05) //TOTORO
     if(lcd_id==PANEL_BOE)
@@ -1538,6 +1584,18 @@ static inline void lcd_init_panels(void)
 	lcd_send_cmd_sequence(power_on_seq_s6d04k1_sdi);
 #elif defined(CONFIG_BCM_LCD_S6D04H0A01_TASSVE)
 	lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
+#elif defined(CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
+	if(lcd_id == PANEL_DTC)
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_DTC);
+	else if(lcd_id==PANEL_AUO)
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_AUO);
+	else if(lcd_id==PANEL_SHARP)
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_SHARP);
+	else
+	{
+		printk("[Caution] Unknown lcd (id: 0x%x )\r\n", lcd_id);	
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_DTC);
+	}
 #else
 	lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
 #endif
@@ -1546,7 +1604,18 @@ static inline void lcd_init_panels(void)
 
 static inline void lcd_poweroff_panels(void)
 {
+#if defined(CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
+	if(lcd_id == PANEL_DTC)	
+		lcd_send_cmd_sequence(power_off_seq_DTC);
+	else if(lcd_id==PANEL_AUO)
+		lcd_send_cmd_sequence(power_off_seq_AUO);
+	else if(lcd_id==PANEL_SHARP)
+		lcd_send_cmd_sequence(power_off_seq_SHARP);		
+	else
+		lcd_send_cmd_sequence(power_off_seq_DTC);
+#else
 	lcd_send_cmd_sequence(power_off_seq);
+#endif
 }
 
 
@@ -1596,7 +1665,7 @@ void lcd_display_test(LCD_dev_info_t * dev)
 
 void lcd_display_rect(LCD_dev_info_t * dev, LCD_Rect_t * r)
 {
-	if(lcd_id == 0)
+	if(lcd_enable == 0)
 		return;
 
 	int i, j;

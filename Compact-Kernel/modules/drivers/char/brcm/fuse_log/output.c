@@ -109,7 +109,6 @@ static struct acm_callbacks _acm_cb =	//	ACM flow control callbacks
 
 typedef struct 
 {
-	struct workqueue_struct *wqs;
 	struct work_struct	wq ;	
 	int					outdev; 
 	int					prev_outdev; 
@@ -121,7 +120,6 @@ typedef struct
 static WriteToLogDevParms_t g_devWrParms =		//	worker thread vars
 {
 	.file			= 0,
-	.acm_file		= 0,
 	.busy			= 0,
 	.prev_outdev	= BCMLOG_OUTDEV_NONE,
 	.outdev			= BCMLOG_OUTDEV_NONE,
@@ -290,12 +288,8 @@ int WriteToLogDev_NAND( void )
 			}
 		} while( nFifo > 0 );
 	}
-
-    if( pfile )
-    {
 	filp_close( pfile ,NULL ); /* file close for next logging */
 	pfile =0;
-    }
 	set_fs( oldfs ) ;
 	return 0;
 }
@@ -571,30 +565,31 @@ static void WriteToLogDev_ACM( void )
 	/*
 	 *	Attempt to open log file, if not already open
 	 */
-	if (!g_devWrParms.acm_file)
+	if( !g_devWrParms.file )
 	{
 		struct tty_struct *tty = NULL;
 		
-		g_devWrParms.acm_file = filp_open( "/dev/ttyGS1", O_WRONLY|O_TRUNC|O_CREAT, 0666);
+		g_devWrParms.file = filp_open( "/dev/ttyGS1", O_WRONLY|O_TRUNC|O_CREAT, 0666); 
 
-		tty = g_devWrParms.acm_file->private_data;		
+		tty = g_devWrParms.file->private_data;
 		tty->termios->c_iflag |= IGNBRK | ISTRIP | IGNPAR;
 		tty->termios->c_oflag = 0;
 		tty->termios->c_lflag = 0;
-		tty->termios->c_cc[VERASE] =0;
+		tty->termios->c_cc[VERASE] =
 		tty->termios->c_cc[VKILL]  = 0;
 		tty->termios->c_cc[VMIN]   = 1;
 		tty->termios->c_cc[VTIME]  = 0;
 		
-		if( IS_ERR( g_devWrParms.acm_file ) )
-			g_devWrParms.acm_file = 0 ;
+		if( IS_ERR( g_devWrParms.file ) )
+			g_devWrParms.file = 0 ;
 
+		g_devWrParms.acm_file = g_devWrParms.file;
 	}
 
 	/*
 	 *	If log file open start logging to it
 	 */
-	if( g_devWrParms.acm_file )
+	if( g_devWrParms.file )
 	{
 		if (g_acm_on) {
 			u32 nFifo ;
@@ -612,15 +607,18 @@ static void WriteToLogDev_ACM( void )
 
 				if( nFifo > 0 )
 				{
-					nWrite = g_devWrParms.acm_file->f_op->write( g_devWrParms.acm_file,
-						pData, nFifo, &g_devWrParms.acm_file->f_pos ) ;
+					nWrite = g_devWrParms.file->f_op->write( g_devWrParms.file, 
+						pData, nFifo, &g_devWrParms.file->f_pos ) ;
 					
 					if( nWrite > 0 )
 						BCMLOG_FifoRemove( &g_fifo, nWrite ) ;
 
 					if( nWrite < nFifo )
+					{
 						nFifo = 0 ;
-
+						filp_close( g_devWrParms.file ,NULL );
+						g_devWrParms.file = 0 ;
+					}
 				}
 			} while( nFifo > 0 );	
 		}
@@ -704,7 +702,7 @@ static void WriteToLogDev( struct work_struct *work )
 
 	if( g_devWrParms.prev_outdev != g_devWrParms.outdev )
 	{
-		if( g_devWrParms.file)
+		if( g_devWrParms.file && g_devWrParms.file!=g_devWrParms.acm_file )
 		{
 			filp_close( g_devWrParms.file ,NULL );
 			g_devWrParms.file = 0 ;
@@ -835,8 +833,7 @@ void BCMLOG_Output( unsigned char *pBytes, unsigned long nBytes , unsigned int m
 		g_devWrParms.busy   = 1; 
 		g_devWrParms.prev_outdev = g_devWrParms.outdev ;
 		g_devWrParms.outdev = BCMLOG_GetRunlogDevice( ) ;
-		//schedule_work( &g_devWrParms.wq ) ;
-		queue_work(g_devWrParms.wqs, &g_devWrParms.wq);
+		schedule_work( &g_devWrParms.wq ) ;
 	}
 }
 
@@ -856,7 +853,6 @@ int BCMLOG_OutputInit( void )
 	memset(fifoend, 0xff, MTT_HEAD_LEN);
 #else
 	fifobuf = kmalloc( BCMLOG_OUTPUT_FIFO_MAX_BYTES, GFP_KERNEL ) ;
-
 	if( !fifobuf )
         return -1 ;
 
@@ -869,7 +865,6 @@ int BCMLOG_OutputInit( void )
 
 
 	INIT_WORK( &g_devWrParms.wq, WriteToLogDev ) ;
-	g_devWrParms.wqs = create_workqueue("DevOutput_wq");
 
 	/*
 	 *	register flow control callback functions
