@@ -111,6 +111,13 @@ struct mmc_host_ops {
 
 	/* optional callback for HC quirks */
 	void	(*init_card)(struct mmc_host *host, struct mmc_card *card);
+
+	/* functions for panic dumping */
+	int (*panic_probe)(struct raw_hd_struct *rhd, int type);
+	int (*panic_write)(struct raw_hd_struct *rhd, char *buf,
+			unsigned int offset, unsigned int len);
+	int (*panic_erase)(struct raw_hd_struct *rhd, unsigned int offset,
+			unsigned int len);
 };
 
 struct mmc_card;
@@ -125,9 +132,6 @@ struct mmc_host {
 	unsigned int		f_max;
 	u32			ocr_avail;
 	struct notifier_block	pm_notify;
-
-	// add for detect damaged sd card and vreg struct.
-	unsigned int damaged_sd_card;	
 
 #define MMC_VDD_165_195		0x00000080	/* VDD voltage 1.65 - 1.95 */
 #define MMC_VDD_20_21		0x00000100	/* VDD voltage 2.0 ~ 2.1 */

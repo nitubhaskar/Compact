@@ -295,7 +295,7 @@ static void KRIL_SRIL_requestLockMode(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rs
 		mccmnc[i] = rawdata[i+7];	//svcMode
 	}
 
-	KRIL_DEBUG(DBG_ERROR,"mccmnc :%s",mccmnc);
+	// KRIL_DEBUG(DBG_ERROR,"mccmnc :%s",mccmnc);
 
 
 	for (i=0; i<8; i++)		
@@ -318,9 +318,9 @@ static void KRIL_SRIL_requestLockMode(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rs
 				return;          
 			}                        
 
-			KRIL_DEBUG(DBG_ERROR,"## Test IMSI : %s, Locktype : %d, Password : %s \n", mccmnc, simlock_type, password);
+			// KRIL_DEBUG(DBG_ERROR,"## Test IMSI : %s, Locktype : %d, Password : %s \n", mccmnc, simlock_type, password);
 
-			KRIL_DEBUG(DBG_ERROR,"## Test IMSI : %s, Locktype : %d, Password : %s \n", (UInt8*)mccmnc, simlock_type, (UInt8*)password);
+			// KRIL_DEBUG(DBG_ERROR,"## Test IMSI : %s, Locktype : %d, Password : %s \n", (UInt8*)mccmnc, simlock_type, (UInt8*)password);
 
 
 //SIMLock_Status_t  SIMLockSetLock(UInt8 action, Boolean ph_sim_full_lock_on, SIMLockType_t lockType, UInt8* key, UInt8* imsi, UInt8* gid1, UInt8* gid2)			

@@ -126,7 +126,7 @@ enum {
 
 };
 
-typedef u32 (*pmu_platform_callback)(int event, int param);
+typedef u32 (*pmu_platform_callback_t)(int event, int param);
 
 
 typedef int(*pmu_subdev_ioctl_handler)(u32 cmd, u32 arg, void *pri_data);
@@ -256,7 +256,7 @@ struct max8986;
 struct max8986_platform_data {
 	struct i2c_slave_platform_data i2c_pdata;
 	int flags;
-	pmu_platform_callback pmu_event_cb;
+	pmu_platform_callback_t pmu_event_cb;
 	/* Regulator specific data */
 	struct max8986_regl_pdata *regulators;
 

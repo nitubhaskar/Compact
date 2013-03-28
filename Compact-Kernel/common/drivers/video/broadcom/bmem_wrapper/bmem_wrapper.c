@@ -1374,7 +1374,7 @@ int __init bmem_wrapper_init(void)
 	} else if (result != 0) {	/* this is for dynamic major */
 		bmem_major = result;
 	}
-
+	KLOG_D("BMEM_SIZE = [%d]MB",BMEM_SIZE/1024/1024);
 	init_completion(&dma_complete);
 
 	if (bmem_mempool_base == NULL) {

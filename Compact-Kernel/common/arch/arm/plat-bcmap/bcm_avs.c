@@ -138,6 +138,8 @@ static int bcm_avs_drv_probe(struct platform_device *pdev)
 				      type_info->lpm_voltage);
 		regulator_put(regl);
 	}
+	
+#if !defined(CONFIG_MFD_D2041)  // 20111227 DVFS
 	if(pdata->core_nml_regl && type_info->nm_voltage != -1)
 	{
 		regl = regulator_get(NULL, pdata->core_nml_regl);
@@ -152,6 +154,7 @@ static int bcm_avs_drv_probe(struct platform_device *pdev)
 				      type_info->nm_voltage);
 		regulator_put(regl);
 	}
+#endif
 
 	/* It is assumed that, at boot up system is in turbo mode */
 	if (pdata->core_turbo_regl && type_info->nm2_turbo_voltage != -1)

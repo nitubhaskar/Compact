@@ -187,6 +187,11 @@ int STK_ParseResult(UInt8 *byte, SATK_ResultCode_t *resultcode, SATK_ResultCode2
             *resultcode = SATK_Result_NumberUnknownToMe;
             break;
         
+	case 0x34:
+           *resultcode = SATK_Result_SSReturnResultError;
+            break;
+
+		
         case 0x36:
             *resultcode = SATK_Result_ValueMissingError;
             break;

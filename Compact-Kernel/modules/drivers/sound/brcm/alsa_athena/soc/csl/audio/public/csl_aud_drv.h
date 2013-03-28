@@ -144,6 +144,7 @@ typedef enum {
 
 typedef Boolean (*BufDoneCB_t)( UInt8  *pBuf,  UInt32 nSize );
 
+typedef void ( *audio_HWEnabled_Cb_t )( void );
 
 /**
 *  @brief  Initialize audio system
@@ -216,7 +217,8 @@ void AUDDRV_EnableHWOutput (
 		   Boolean                 enable_speaker,
 		   AUDIO_SAMPLING_RATE_t   sample_rate,
 		   AUDIO_CHANNEL_NUM_t     input_to_mixer,
-		   AUDDRV_REASON_Enum_t	   from
+		   AUDDRV_REASON_Enum_t	   reason,
+		   audio_HWEnabled_Cb_t    callback
 		   );
 
 /**

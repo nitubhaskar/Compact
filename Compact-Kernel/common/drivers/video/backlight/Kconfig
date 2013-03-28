@@ -229,13 +229,6 @@ config BACKLIGHT_PWM
 	  If you have a LCD backlight adjustable by PWM, say Y to enable
 	  this driver.
 
-config BACKLIGHT_FAN5626
-	tristate "FAN5626 Backlight Driver"
-	depends on HAVE_PWM
-	help
-	  If you have a LCD backlight adjustable by FAN5626, say Y to enable
-	  this driver.
-
 config BACKLIGHT_DA903X
 	tristate "Backlight Driver for DA9030/DA9034 using WLED"
 	depends on PMIC_DA903X
@@ -285,6 +278,20 @@ config BACKLIGHT_TORINO
 	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
 	  this driver.	
 	  
+config BACKLIGHT_CORI
+	tristate "Generic aat1401 wire based Backlight Driver"
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
+	  this driver.	
+	    
+config BACKLIGHT_AMAZING
+	tristate "Generic ktd253b wire based Backlight Driver"
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  If you have a LCD backlight adjustable by KTD253B wire, say Y to enable
+	  this driver.	
+	  	  
 config BACKLIGHT_MAX8925
 	tristate "Backlight driver for MAX8925"
 	depends on MFD_MAX8925
@@ -384,8 +391,8 @@ config BACKLIGHT_CAT4253
 	If you have a LCD backlight adjustable by CAT4253 wire, say Y to enable
 	this driver.
 	
-config BACKLIGHT_FAN5345
-	tristate "Generic FAN5345 wire based Backlight Driver"
+config BACKLIGHT_KTD253B
+	tristate "Generic CAT4253 wire based Backlight Driver"
 	depends on BACKLIGHT_CLASS_DEVICE
 	help
 	If you have a LCD backlight adjustable by CAT4253 wire, say Y to enable

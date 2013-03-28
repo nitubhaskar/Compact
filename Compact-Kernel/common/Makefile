@@ -190,7 +190,8 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
-ARCH		?=arm
+ARCH		?= arm
+#CROSS_COMPILE	?=/opt/toolchains/arm-eabi-4.4.3/bin/arm-eabi-
 CROSS_COMPILE	?=/home/com/old/arm-2009q3/bin/arm-none-eabi-
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
@@ -358,6 +359,36 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks
 KBUILD_AFLAGS   := -D__ASSEMBLY__
+
+#[ latin_scm 2011.07.02 Set up kernel feature for Latin (Luisa, Totoro, Amazing)
+ifeq ($(LTN_BUILD_LOCALE),LTN)
+
+## Latin Common about all project
+KBUILD_CFLAGS += -DCONFIG_LTN_COMMON
+
+## Model Common
+# ex) CONFIG_TOTORO_LTN_COMMON
+#      CONFIG_LUISA_LTN_COMMON
+KBUILD_CFLAGS += -DCONFIG_${SEC_PROJECT}_LTN_COMMON
+
+## Band Common
+# ex) CONFIG_TOTORO_L_LTN_COMMON
+#      CONFIG_LUISA_L_LTN_COMMON
+ifeq ($(LTN_BAND),L)
+KBUILD_CFLAGS += -DCONFIG_${SEC_PROJECT}_L_LTN_COMMON
+else ifeq ($(LTN_BAND),B)
+KBUILD_CFLAGS += -DCONFIG_${SEC_PROJECT}_B_LTN_COMMON
+else
+KBUILD_CFLAGS += -DCONFIG_${SEC_PROJECT}_E_LTN_COMMON
+endif
+
+## TCE FEATURE for debug packet latin_protocol wkj 111103
+ifeq ($(LTN_TCE_FORCE_NWLOCK),true)
+KBUILD_CFLAGS += -DCONFIG_LTN_TCE_DEBUGPACK
+endif
+
+endif
+#] latin_scm 2011.07.02 Set up kernel feature for Latin (Luisa, Totoro, Amazing)
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)

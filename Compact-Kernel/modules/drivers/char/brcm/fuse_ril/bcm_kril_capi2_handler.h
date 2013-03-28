@@ -66,6 +66,19 @@
 #define BCM_SS_SET_ELEM_FDN_CHECK                 0x011F // CWYoon 110707::Check FDN list for SS.
 #define BCM_SET_SIM_LOCK_SUPPORTED                0x0120
 
+
+// -----------------------------------------------------------------------------
+//
+// @doc EXTERNAL
+//
+// @ Set Radio Power handler
+//
+// @comm None
+//
+// -----------------------------------------------------------------------------
+#define BCM_PowerOnOffCard                  0x0110
+
+
 // -----------------------------------------------------------------------------
 //
 // @doc EXTERNAL
@@ -297,6 +310,29 @@
 #define BCM_SS_SendCallBarringReq         0x0101
 
 
+//EAP-SIM
+// -----------------------------------------------------------------------------
+//
+// @doc EXTERNAL
+//
+// @Do Authentication
+//
+// @comm None
+//
+// -----------------------------------------------------------------------------
+
+// BCM_EAP_SIM
+#ifdef BCM_RIL_FOR_EAP_SIM 
+#define BCM_SIM_DoGSMAuthentication               0x0100
+#define BCM_SIM_SelectMF                          0x0101
+#define BCM_SIM_SelectDedicatedFile               0x0102
+#define BCM_SIM_GetAdditionDataReq                0x0103
+#define BCM_SIM_DoUSimAuthentication              0x0104
+#define BCM_SIM_SelectMFUsim                      0x0105
+#define BCM_SIM_SelectDedicatedFileOfADF          0x0106
+#endif
+
+
 // -----------------------------------------------------------------------------
 //
 // @doc EXTERNAL
@@ -312,6 +348,18 @@
 #define BCM_SIM_GetFDNInfo                  0x0103
 #define BCM_SIM_UpdateFDNRsult              0x0104
 
+
+// -----------------------------------------------------------------------------
+//
+// @doc EXTERNAL
+//
+// @ Normal SMS handler
+//
+// @comm None
+//
+// -----------------------------------------------------------------------------
+#define BCM_SMS_SET_FDN_MODE                 0x001
+#define BCM_SMS_RESPONSE_AND_RESET_FDN       0x002
 
 // -----------------------------------------------------------------------------
 //
@@ -542,7 +590,11 @@ void KRIL_SetFacilityLockHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_SimIOHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_QuerySimPinRemainingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_GenericSimAccessHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
-
+// BCM_EAP_SIM
+#ifdef BCM_RIL_FOR_EAP_SIM 
+void KRIL_GsmSimAuthenticationHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
+void KRIL_USimAuthenticationHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
+#endif
 
 // for STK
 void KRIL_StkSendTerminalRspHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);

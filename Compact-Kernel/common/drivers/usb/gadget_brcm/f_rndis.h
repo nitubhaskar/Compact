@@ -30,5 +30,5 @@ Broadcom's express prior written consent.
 #ifndef __F_RNDIS_H
 #define __F_RNDIS_H
 void rndis_interface_enable(int enable);
-
+void rndis_set_ether_addr(u8 ethaddr[6]);
 #endif /* __F_RNDIS_H */

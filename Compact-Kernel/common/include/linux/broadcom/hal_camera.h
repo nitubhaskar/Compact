@@ -52,10 +52,14 @@ enum {
 	CAM_CMD_GET_STILL_YCbCr,
 	CAM_CMD_ENABLE_AUTOFOCUS,
 	CAM_CMD_DISABLE_AUTOFOCUS,
+	CAM_CMD_CANCEL_AUTOFOCUS,
 	CAM_CMD_GET_DEFAULT_SETTING,
 	CAM_CMD_SET_SENSOR_SETTING_PARAMS,
 	CAM_CMD_GET_SENSOR_VALUES_FOR_EXIF,
 	CAM_CMD_GET_ESD_VALUE,
+#if 1   // Albert_Chung 12-01-2011 : Test for CSP_478144
+    CAM_CMD_GET_STILL_YCbCr_BufferVA,
+#endif
 	CAM_CMD_LAST
 };
 
@@ -69,11 +73,15 @@ enum {
 
 #define CAM_IOCTL_ENABLE_AUTOFOCUS	_IO(BCM_CAM_MAGIC, CAM_CMD_ENABLE_AUTOFOCUS)
 #define CAM_IOCTL_DISABLE_AUTOFOCUS	_IO(BCM_CAM_MAGIC, CAM_CMD_DISABLE_AUTOFOCUS)
+#define CAM_IOCTL_CANCEL_AUTOFOCUS	_IO(BCM_CAM_MAGIC, CAM_CMD_CANCEL_AUTOFOCUS)
 
 #define CAM_IOCTL_SET_THUMBNAIL_PARAMS	_IOW(BCM_CAM_MAGIC, CAM_CMD_SET_THUMBNAIL_PARAMS, CAM_Parm_t)	/* arg is CAM_Parm_t * */
 #define CAM_IOCTL_MEM_REGISTER	_IOW(BCM_CAM_MAGIC, CAM_CMD_MEM_REGISTER, CAM_Parm_t)
 #define CAM_IOCTL_MEM_BUFFERS     	_IOW(BCM_CAM_MAGIC, CAM_CMD_MEM_BUFFERS, CAM_Parm_t)
 #define CAM_IOCTL_GET_STILL_YCbCr	_IOWR(BCM_CAM_MAGIC, CAM_CMD_GET_STILL_YCbCr, CAM_Frame_t)
+#if 1   // Albert_Chung 12-01-2011 : Test for CSP_478144
+#define CAM_IOCTL_GET_STILL_YCbCr_BufferVA	_IOR( BCM_CAM_MAGIC, CAM_CMD_GET_STILL_YCbCr_BufferVA, unsigned char )
+#endif
 #define CAM_IOCTL_GET_DEFAULT_SETTING _IOWR( BCM_CAM_MAGIC, CAM_CMD_GET_DEFAULT_SETTING, CAM_Sensor_Supported_Params_t )
 
 #define CAM_IOCTL_SET_SENSOR_SETTING_PARAMS _IOWR( BCM_CAM_MAGIC, CAM_CMD_SET_SENSOR_SETTING_PARAMS, CAM_Parm_t )
@@ -251,6 +259,46 @@ typedef enum {
 	CamZoom_4_0 = 64,	/* /< zoom factor 4.0    (256/64) */
 	CamZoom_Table_Max = 31,	/* /< 0 < CamZoom_t < 32 zoom factor is Table look-up */
 	CamZoom_PP = 0		/* /< Post Processing Zoom */
+	,
+	CamZoom_1_25_0 = 257,
+	CamZoom_1_25_1,
+	CamZoom_1_25_2,
+	CamZoom_1_25_3,
+	CamZoom_1_25_4,
+	CamZoom_1_25_5,
+	CamZoom_1_25_6,
+	CamZoom_1_25_7,
+	CamZoom_1_25_8,
+
+	CamZoom_1_6_0,
+	CamZoom_1_6_1,
+	CamZoom_1_6_2,
+	CamZoom_1_6_3,
+	CamZoom_1_6_4,
+	CamZoom_1_6_5,
+	CamZoom_1_6_6,
+	CamZoom_1_6_7,
+	CamZoom_1_6_8,
+
+	CamZoom_2_0_0,
+	CamZoom_2_0_1,
+	CamZoom_2_0_2,
+	CamZoom_2_0_3,
+	CamZoom_2_0_4,
+	CamZoom_2_0_5,
+	CamZoom_2_0_6,
+	CamZoom_2_0_7,
+	CamZoom_2_0_8,
+
+	CamZoom_4_0_0,
+	CamZoom_4_0_1,
+	CamZoom_4_0_2,
+	CamZoom_4_0_3,
+	CamZoom_4_0_4,
+	CamZoom_4_0_5,
+	CamZoom_4_0_6,
+	CamZoom_4_0_7,
+	CamZoom_4_0_8,
 } CamZoom_t;
 
 /**  Camera Scaler Values
@@ -610,7 +658,9 @@ typedef struct {
 	
 	char  		 phone_make[20];
 	char		 phone_model[20];
-	
+#if 1//defined(CONFIG_BCM_CAM_S5K4ECGX)
+           bool      bIsAutoFocusSupported;
+#endif
 	
 }CAM_Sensor_Supported_Params_t;
 

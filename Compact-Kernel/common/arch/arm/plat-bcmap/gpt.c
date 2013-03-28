@@ -89,6 +89,7 @@ static irqreturn_t gpt_interrupt(int irq, void *dev_id)
 				writel(readl(gpt_ptr->base_config.base_addr + GPT_CSR(i)) 
 					& ~GPT_CSR_EN , 
 					gpt_ptr->base_config.base_addr + GPT_CSR(i));
+				writel(-1, gpt.base_config.base_addr + GPT_RELOAD(i));
 			}
 
 			gpt_ptr->gpt_desc[i].gcallback(gpt_ptr->gpt_desc[i].arg);
@@ -367,7 +368,7 @@ err:
 EXPORT_SYMBOL(gpt_read);
 
 /*
- * This function will return the current reload count on a give GPT.
+  * This function will return the current reload count on a give GPT.
  *
  * Return:
  * 	Non-zero counter value : This is the current reload count of the requested timer
@@ -402,7 +403,7 @@ err:
 EXPORT_SYMBOL(gpt_reload_read);
 
 /*
- * Set up timer interrupt, and return the current time in seconds.
+* Set up timer interrupt, and return the current time in seconds.
  */
 static struct irqaction bcm_timer_irq = {
 	.name = "BCM Timer Tick",

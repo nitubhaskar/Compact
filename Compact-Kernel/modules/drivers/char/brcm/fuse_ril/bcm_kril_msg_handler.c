@@ -31,6 +31,8 @@ const UInt16 Select_Mf_Path = APDUFILEID_MF;
 static UInt8 schnlIDs[CHNL_IDS_SIZE];
 static UInt8 scodings[CHNL_IDS_SIZE];
 
+extern Boolean gFdnSkip[DUAL_SIM_SIZE];
+
 static const SIMSMSMesgStatus_t Kril_SMSMsgStatuss[] =
 {
     SIMSMSMESGSTATUS_UNREAD,
@@ -142,12 +144,6 @@ void KRIL_SendSMSHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         KRIL_DEBUG(DBG_ERROR, "[SEND_SMS] handler_state:0x%4X::result:%d\n", pdata->handler_state, capi2_rsp->result);
         if(capi2_rsp->result != RESULT_OK)
         {
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
-            if (KRIL_GetSendSMSNumber(pdata->ril_cmd->SimId) > 0) // if the SMS have more bodies, need to trigger the cmd queue event to process next SMS body
-            {
-                KRIL_DecrementSendSMSNumber(pdata->ril_cmd->SimId);
-                KRIL_CmdQueueWork();
-            }
             pdata->result = RILErrorResult(capi2_rsp->result);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             return;
@@ -167,7 +163,19 @@ void KRIL_SendSMSHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         {
             KrilSendMsgInfo_t *tdata = (KrilSendMsgInfo_t *)pdata->ril_cmd->data;
             UInt8 *pszMsg = NULL;
-            Sms_411Addr_t sca; memset(&sca, 0, sizeof(Sms_411Addr_t));
+            Sms_411Addr_t sca;
+            
+            // Check if need skip FDN
+            if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+            {
+                gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                
+                CAPI2_MsDbApi_GetElement(InitClientInfo(pdata->ril_cmd->SimId), MS_LOCAL_SS_ELEM_FDN_CHECK);
+                pdata->handler_state = BCM_SMS_SET_FDN_MODE;
+                return;
+            }
+            
+            memset(&sca, 0, sizeof(Sms_411Addr_t));
             pdata->bcm_ril_rsp = kmalloc(sizeof(KrilSendSMSResponse_t), GFP_KERNEL);
             if(!pdata->bcm_ril_rsp) {
                 KRIL_DEBUG(DBG_ERROR, "unable to allocate bcm_ril_rsp buf\n");                
@@ -187,19 +195,63 @@ void KRIL_SendSMSHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 #endif
             KRIL_DEBUG(DBG_ERROR, "[SEND_SMS] Toa:%d Len:%d\n", sca.Toa, sca.Len);
 
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, TRUE);
-
+            KRIL_DEBUG(DBG_INFO, "Toa:%d Len:%d\n", sca.Toa, sca.Len);
             CAPI2_SmsApi_SendSMSPduReq(InitClientInfo(pdata->ril_cmd->SimId), tdata->Length, pszMsg, &sca);
-            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            pdata->handler_state = BCM_SMS_RESPONSE_AND_RESET_FDN;
         }
         break;
 
-        case BCM_RESPCAPI2Cmd:
+        case BCM_SMS_SET_FDN_MODE:
+        {
+            CAPI2_MS_Element_t *rsp = (CAPI2_MS_Element_t*)capi2_rsp->dataBuf;
+            KrilSMSInfo_t *pSmsInfo = (KrilSMSInfo_t*)pdata->cmdContext;
+            CAPI2_MS_Element_t data;
+            
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR, "rsp is NULL. Error!!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            
+            if (!pSmsInfo)
+            {
+                KRIL_DEBUG(DBG_ERROR, "pSmsInfo is NULL. Error!!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            
+            memset(pSmsInfo, 0x00, sizeof(KrilSMSInfo_t));
+            
+            // Backup fdnmode
+            pSmsInfo->fdnmode = rsp->data_u.u8Data;
+            KRIL_DEBUG(DBG_INFO, "Original fdnmode:%d\n", pSmsInfo->fdnmode);
+            
+            // Set FDN mode as CONFIG_MODE_SUPPRESS to skip FDN
+            pSmsInfo->isfdnskip = TRUE;
+
+            memset(&data, 0, sizeof(CAPI2_MS_Element_t));
+            data.inElemType = MS_LOCAL_SS_ELEM_FDN_CHECK;
+            data.data_u.u8Data = CONFIG_MODE_SUPPRESS;
+            CAPI2_MsDbApi_SetElement(InitClientInfo(pdata->ril_cmd->SimId), &data);
+            pdata->handler_state = BCM_SendCAPI2Cmd;
+        }
+        break;
+
+        case BCM_SMS_RESPONSE_AND_RESET_FDN:
         {
             SmsSubmitRspMsg_t* rsp = (SmsSubmitRspMsg_t*) capi2_rsp->dataBuf;
             KrilSendSMSResponse_t *rdata = (KrilSendSMSResponse_t *)pdata->bcm_ril_rsp;
-            KRIL_DEBUG(DBG_ERROR, "[SEND_SMS] InternalErrCause:%d NetworkErrCause:0x%x submitRspType:%d tpMr:%d\n", 
-				rsp->InternalErrCause, rsp->NetworkErrCause, rsp->submitRspType, rsp->tpMr);
+            KrilSMSInfo_t *pSmsInfo = (KrilSMSInfo_t*)pdata->cmdContext;
+            
+            KRIL_DEBUG(DBG_INFO, "InternalErrCause:%d NetworkErrCause:0x%x submitRspType:%d tpMr:%d\n", rsp->InternalErrCause, rsp->NetworkErrCause, rsp->submitRspType, rsp->tpMr);
+            
+            if (!pSmsInfo)
+            {
+                KRIL_DEBUG(DBG_ERROR, "pSmsInfo is NULL. Error!!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
 
             if(MS_MN_SMS_NO_ERROR == rsp->NetworkErrCause)
             {
@@ -225,12 +277,37 @@ void KRIL_SendSMSHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 rdata->errorCode = rsp->NetworkErrCause;
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
-            if (KRIL_GetSendSMSNumber(pdata->ril_cmd->SimId) > 0) // if more SMS in queue, need to trigger the cmd queue event to process next SMS body
+            
+            if (TRUE == pSmsInfo->isfdnskip)
             {
-                KRIL_DecrementSendSMSNumber(pdata->ril_cmd->SimId);
-                KRIL_CmdQueueWork();
+                CAPI2_MS_Element_t data;
+                
+                // Backup the handler_state 
+                pSmsInfo->handler_state = pdata->handler_state;
+                
+                // Set FDN mode as original mode
+                memset(&data, 0, sizeof(CAPI2_MS_Element_t));
+                data.inElemType = MS_LOCAL_SS_ELEM_FDN_CHECK;
+                data.data_u.u8Data = pSmsInfo->fdnmode;
+                CAPI2_MsDbApi_SetElement(InitClientInfo(pdata->ril_cmd->SimId), &data);
+                
+                pdata->handler_state = BCM_RESPCAPI2Cmd;
             }
+        }
+        break;
+
+        case BCM_RESPCAPI2Cmd:
+        {
+            KrilSMSInfo_t *pSmsInfo = (KrilSMSInfo_t*)pdata->cmdContext;
+            
+            if (!pSmsInfo)
+            {
+                KRIL_DEBUG(DBG_ERROR, "pSmsInfo is NULL. Error!!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            
+            pdata->handler_state = pSmsInfo->handler_state;
         }
         break;
 
@@ -261,12 +338,6 @@ void KRIL_SendSMSExpectMoreHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         KRIL_DEBUG(DBG_INFO, "(KRIL_SendSMSExpectMoreHandler)handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
         if(capi2_rsp->result != RESULT_OK)
         {
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
-            if (KRIL_GetSendSMSNumber(pdata->ril_cmd->SimId) > 0) // if the SMS have more bodies, need to trigger the cmd queue event to process next SMS body
-            {
-                KRIL_DecrementSendSMSNumber(pdata->ril_cmd->SimId);
-                KRIL_CmdQueueWork();
-            }
             pdata->result = RILErrorResult(capi2_rsp->result);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             return;
@@ -297,7 +368,6 @@ void KRIL_SendSMSExpectMoreHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 data.inElemType = MS_LOCAL_SMS_ELEM_MORE_MESSAGE_TO_SEND;
                 data.data_u.u8Data = 1; // enable the more message to send
                 sMoreMessageToSend = TRUE;
-                KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, TRUE);
                 CAPI2_MsDbApi_SetElement(InitClientInfo(pdata->ril_cmd->SimId), &data);
                 pdata->handler_state = BCM_SMS_StartMultiSMSTransfer;
             }
@@ -320,7 +390,6 @@ void KRIL_SendSMSExpectMoreHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 memcpy(sca.Val, tdata->Val, sca.Len);
                 pszMsg = (UInt8 *) tdata->Pdu;
                 KRIL_DEBUG(DBG_INFO, "Toa:%d Len:%d\n", sca.Toa, sca.Len);
-                KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, TRUE);
                 CAPI2_SmsApi_SendSMSPduReq(InitClientInfo(pdata->ril_cmd->SimId), tdata->Length, pszMsg, &sca);
                 pdata->handler_state = BCM_RESPCAPI2Cmd;				
             }
@@ -357,7 +426,6 @@ void KRIL_SendSMSExpectMoreHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 KRIL_DEBUG(DBG_INFO, "pdu[%d]:0x%x\n", a, tdata->Pdu[a]);
 #endif
             KRIL_DEBUG(DBG_INFO, "Toa:%d Len:%d\n", sca.Toa, sca.Len);
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, TRUE);
             CAPI2_SmsApi_SendSMSPduReq(InitClientInfo(pdata->ril_cmd->SimId), tdata->Length, pszMsg, &sca);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
         }
@@ -392,13 +460,7 @@ void KRIL_SendSMSExpectMoreHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 rdata->errorCode = rsp->NetworkErrCause;
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
-            if (KRIL_GetSendSMSNumber(pdata->ril_cmd->SimId) > 0) // if the SMS have more bodies, need to trigger the cmd queue event to process next SMS body
-            {
-                KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
-                KRIL_DecrementSendSMSNumber(pdata->ril_cmd->SimId);
-                KRIL_CmdQueueWork();
-            }
-            else // if the SMS body is last, we need to disable the more message to send
+            if (KRIL_IsMoreSendSMSCmd(pdata->ril_cmd->SimId) == FALSE)
             {
                 CAPI2_MS_Element_t data;
                 memset((UInt8*)&data, 0x00, sizeof(CAPI2_MS_Element_t));
@@ -420,7 +482,6 @@ void KRIL_SendSMSExpectMoreHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
         case BCM_SMS_StopMultiSMSTransfer:
         {
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
             sMoreMessageToSend = FALSE;
             pdata->handler_state = sSMSExpectMoreState;
             sSMSExpectMoreState = 0;
@@ -1693,7 +1754,6 @@ void KRIL_SendStoredSmsHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         KRIL_DEBUG(DBG_INFO, "handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
         if(capi2_rsp->result != RESULT_OK)
         {
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             return;
         }
@@ -1728,7 +1788,6 @@ void KRIL_SendStoredSmsHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 pdu = (UInt8*)(&pszMsg[scaLen+1]);
                 pduLen = SMSMESG_DATA_SZ-scaLen;
 
-                KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, TRUE);
                 CAPI2_SmsApi_SendSMSPduReq(InitClientInfo(pdata->ril_cmd->SimId), pduLen, pdu, NULL);
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
             }
@@ -1784,7 +1843,6 @@ void KRIL_SendStoredSmsHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 }
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
-            KRIL_SetInSendSMSHandler(pdata->ril_cmd->SimId, FALSE);
         }
         break;
 

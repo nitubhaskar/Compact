@@ -1878,8 +1878,9 @@ iwpriv_set_ap_config(struct net_device *dev,
 		}
 
 		extra[wrqu->data.length] = 0;
+#ifdef BRCM_SECURITY_LOG
 		WL_SOFTAP((" Got str param in iw_point:\n %s\n", extra));
-
+#endif
 		memset(ap_cfg, 0, sizeof(struct ap_profile));
 
 		/*  parse param string and write extracted values into the ap_profile structure */
@@ -2656,9 +2657,11 @@ wl_iw_set_wap(
 	}
 
 	if (g_ssid.SSID_len) {
+#ifdef BRCM_SECURITY_LOG		
 		WL_TRACE(("%s: join SSID=%s BSSID="MACSTR" ch=%d\n", __FUNCTION__,
 			g_ssid.SSID, MAC2STR((u8 *)awrq->sa_data),
 			g_wl_iw_params.target_channel));
+#endif			
 	}
 #endif
 	/* Clean up cached SSID */
@@ -4582,8 +4585,10 @@ wl_iw_set_essid(
 	}
 	g_call_join_disassoc = G_WLAN_CALL_JOIN_DISASSOC;
 	if (g_ssid.SSID_len) {
+#ifdef BRCM_SECURITY_LOG
 		WL_ERROR(("%s: join SSID=%s ch=%d\n", __FUNCTION__,
 			g_ssid.SSID,  g_wl_iw_params.target_channel));
+#endif			
 	}
 	kfree(join_params);
 	return 0;
@@ -6572,10 +6577,14 @@ set_ap_cfg(struct net_device *dev, struct ap_profile *ap)
 	DHD_OS_MUTEX_LOCK(&wl_softap_lock);
 
 	WL_SOFTAP(("wl_iw: set ap profile:\n"));
+#ifdef BRCM_SECURITY_LOG
 	WL_SOFTAP(("	ssid = '%s'\n", ap->ssid));
+#endif	
 	WL_SOFTAP(("	security = '%s'\n", ap->sec));
+#ifdef BRCM_SECURITY_LOG
 	if (ap->key[0] != '\0')
 		WL_SOFTAP(("	key = '%s'\n", ap->key));
+#endif
 	WL_SOFTAP(("	channel = %d\n", ap->channel));
 	WL_SOFTAP(("	max scb = %d\n", ap->max_scb));
 #ifdef USE_HIDDEN_SSID
@@ -6797,10 +6806,14 @@ wl_iw_set_ap_security(struct net_device *dev, struct ap_profile *ap)
 
 	WL_SOFTAP(("\nsetting SOFTAP security mode:\n"));
 	WL_SOFTAP(("wl_iw: set ap profile:\n"));
+#ifdef BRCM_SECURITY_LOG	
 	WL_SOFTAP(("	ssid = '%s'\n", ap->ssid));
+#endif
 	WL_SOFTAP(("	security = '%s'\n", ap->sec));
+#ifdef BRCM_SECURITY_LOG
 	if (ap->key[0] != '\0')
 		WL_SOFTAP(("	key = '%s'\n", ap->key));
+#endif
 	WL_SOFTAP(("	channel = %d\n", ap->channel));
 	WL_SOFTAP(("	max scb = %d\n", ap->max_scb));
 
@@ -7037,8 +7050,9 @@ get_parameter_from_string(
 			parm_str_len = param_str_end - param_str_begin;
 		}
 
+#ifdef BRCM_SECURITY_LOG
 		WL_TRACE((" 'token:%s', len:%d, ", token, parm_str_len));
-
+#endif
 		if (parm_str_len > param_max_len) {
 			WL_ERROR((" WARNING: extracted param len:%d is > MAX:%d\n",
 				parm_str_len, param_max_len));
@@ -7075,7 +7089,9 @@ get_parameter_from_string(
 				/* param is array of ASCII chars, no convertion needed */
 				memcpy(dst, param_str_begin, parm_str_len);
 				*((char *)dst + parm_str_len) = 0; /* Z term */
+#ifdef BRCM_SECURITY_LOG				
 				WL_ERROR((" written as a string:%s\n", (char *)dst));
+#endif
 			break;
 
 		}
@@ -7131,7 +7147,9 @@ get_ssid_from_string(
 
 		memcpy(dst, param_str_begin, parm_str_len);
 		*((char *)dst + parm_str_len) = 0; /* Z term */
+#ifdef BRCM_SECURITY_LOG		
 		WL_ERROR((" written as a string:%s\n", (char *)dst));
+#endif
 
 		return 0;
 	}

@@ -230,6 +230,18 @@ typedef struct
     const UInt16 *select_path;
 } KrilSimDedFilePath_t;
 
+
+/**
+Context data for SMS handler
+**/
+typedef struct
+{
+	UInt8 fdnmode;
+	Boolean isfdnskip;
+	UInt32 handler_state;
+} KrilSMSInfo_t;
+
+
 void KRIL_InitHandler(void);
 void KRIL_CommandThread(struct work_struct *data);
 void KRIL_ResponseHandler(struct work_struct *data);
@@ -275,6 +287,7 @@ UInt32 KRIL_GetHungupForegroundResumeBackgroundEndMPTY(void);
 void KRIL_SetLastCallFailCause(SimNumber_t SimId, BRIL_LastCallFailCause inCause);
 BRIL_LastCallFailCause KRIL_GetLastCallFailCause(SimNumber_t SimId);
 BRIL_LastCallFailCause KRIL_MNCauseToRilError(Cause_t inMNCause);
+void KRIL_BroadcastCallStatus(SimNumber_t SimId, MsgType_t msgType, void* data);
 
 // for Network
 void KRIL_SetInSetPrferredDataConnectionHandler(Boolean state);
@@ -303,8 +316,7 @@ void KRIL_SetSmsMti(SimNumber_t SimId, SmsMti_t SmsMti);
 SmsMti_t KRIL_GetSmsMti(SimNumber_t SimId);
 void SetIsRevClass2SMS(SimNumber_t SimId, Boolean value);
 Boolean GetIsRevClass2SMS(SimNumber_t SimId);
-void KRIL_SetInSendSMSHandler(SimNumber_t SimId, Boolean SMSHandler);
-Boolean KRIL_GetInSendSMSHandler(SimNumber_t SimId);
+Boolean KRIL_IsMoreSendSMSCmd(SimNumber_t SimId);
 void KRIL_SetMESMSAvailable(Boolean IsSMSMEAvailable);
 Boolean KRIL_GetMESMSAvailable(void);
 void KRIL_SetTotalSMSInSIM(SimNumber_t SimId, UInt8 TotalSMSInSIM);
@@ -312,9 +324,6 @@ UInt8 KRIL_GetTotalSMSInSIM(SimNumber_t SimId);
 UInt8 CheckFreeSMSIndex(SimNumber_t SimId);
 void SetSMSMesgStatus(SimNumber_t SimId, UInt8 Index, SIMSMSMesgStatus_t status);
 SIMSMSMesgStatus_t GetSMSMesgStatus(SimNumber_t SimId, UInt8 Index);
-void KRIL_IncrementSendSMSNumber(SimNumber_t SimId);
-void KRIL_DecrementSendSMSNumber(SimNumber_t SimId);
-Int8 KRIL_GetSendSMSNumber(SimNumber_t SimId);
 void KRIL_SetInUpdateSMSInSIMHandler(SimNumber_t SimId, Boolean SMSHandler);
 Boolean KRIL_GetInUpdateSMSInSIMHandler(SimNumber_t SimId);
 void KRIL_IncrementUpdateSMSNumber(SimNumber_t SimId);

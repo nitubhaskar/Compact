@@ -260,7 +260,8 @@ Result_t csl_audio_render_start ( UInt32 streamID )
 			FALSE,	//this param bears no meaning in this context.
 			AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 			AUDIO_CHANNEL_STEREO,
-			AUDDRV_REASON_DATA_DRIVER
+			AUDDRV_REASON_DATA_DRIVER,
+			NULL
        );
 
 	return RESULT_OK;
@@ -354,7 +355,8 @@ Result_t csl_audio_render_resume( UInt32 streamID )
 			FALSE,	//this param bears no meaning in this context.
 			AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 			AUDIO_CHANNEL_STEREO,
-			AUDDRV_REASON_DATA_DRIVER
+			AUDDRV_REASON_DATA_DRIVER,
+			NULL
        );
 	}
 	else if (streamID == CSL_AUDVOC_STREAM_POLYRINGER)
@@ -369,7 +371,8 @@ Result_t csl_audio_render_resume( UInt32 streamID )
 			FALSE,	//this param bears no meaning in this context.
 			AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 			AUDIO_CHANNEL_STEREO,
-			AUDDRV_REASON_DATA_DRIVER
+			AUDDRV_REASON_DATA_DRIVER,
+			NULL
        );			
 	}
 #else

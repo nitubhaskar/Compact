@@ -515,12 +515,12 @@ typedef struct
 
 typedef struct
   {
-    UInt8 A[22];
+    UInt8 A[MAX_ADDRESS_LEN+1];
   }SUBADDR_t;
 
 typedef struct
   {
-    UInt8 A[23];
+    UInt8 A[(MAX_DIGITS>>1)+2];
   }TEL_NUMBER_t;
 
 typedef struct 

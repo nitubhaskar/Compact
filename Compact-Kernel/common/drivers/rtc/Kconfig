@@ -389,6 +389,10 @@ config RTC_DRV_RX8025
 	  This driver can also be built as a module. If so, the module
 	  will be called rtc-rx8025.
 
+config RTC_DRV_D2041
+	tristate "Dialog D2041 RTC"
+	depends on MFD_D2041
+
 endif # I2C
 
 comment "SPI RTC drivers"

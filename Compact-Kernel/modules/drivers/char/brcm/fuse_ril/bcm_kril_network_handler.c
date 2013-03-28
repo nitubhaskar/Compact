@@ -31,10 +31,18 @@ extern MSRegInfo_t  gRegInfo[DUAL_SIM_SIZE];
 extern MSUe3gStatusInd_t  gUE3GInfo[DUAL_SIM_SIZE];
 extern KrilDataCallResponse_t pdp_resp[DUAL_SIM_SIZE][BCM_NET_MAX_RIL_PDP_CNTXS];
 
+bool block_operator_name = false;
 /*+20111110 HKPARK if NO SIM status, send Error Message*/
-bool v_NoSimCheck2 = false;
-bool v_NoSimCheck1 = false;
+// bool v_NoSimCheck2 = false;
+// bool v_NoSimCheck1 = false;
 /*-20111110 HKPARK if NO SIM status, send Error Message*/
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] skh
+void KRIL_GetSalesCode(void);
+static char sales_code[4] = {0,};
+#endif
+
+Boolean gNeedToAbortBeforeAutoSelect = FALSE;
 
 UInt8 FindDunPdpCid(SimNumber_t SimId);
 UInt8 ReleaseDunPdpContext(SimNumber_t SimId, UInt8 cid);
@@ -326,6 +334,385 @@ void GetSamsungPLMNname(
 }
 
 /* END : Irine_JSHAN_SunnyVale */
+
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] skh
+Boolean GetSamsungLatinPLMNname(
+					Boolean ucs2,
+					UInt16	plmn_mcc,
+					UInt16	plmn_mnc,
+					char *long_name, 
+					char *short_name,
+					const char	**country_name )
+{
+
+
+	UInt16 plmn_mcc_deci;  // AHJ_090817_PLMN table_modifiy
+	UInt16 plmn_mnc_deci; // AHJ_090817_PLMN table_modifiy
+	
+	Boolean            found = FALSE;
+
+
+
+	if( (plmn_mcc < 0x1) || (plmn_mcc > 0x901 ) || ((plmn_mcc == 0x1)&&(plmn_mnc < 0x1)) || ((plmn_mcc == 0x901)&& (plmn_mnc > 0x18)))
+
+	{
+		KRIL_DEBUG(DBG_INFO, "No PLMN name in PLMN table ::  MCC=%x, MNC=%x \n", plmn_mcc, plmn_mnc);
+
+		return found;
+
+	}
+
+	plmn_mcc_deci = ((plmn_mcc & 0x0F00) >> 8) *100 + ((plmn_mcc & 0x00F0) >> 4)*10 + (plmn_mcc & 0x000F) ;
+
+	plmn_mnc_deci = ((plmn_mnc & 0x0F00) >> 8) *100 + ((plmn_mnc & 0x00F0) >> 4)*10 + (plmn_mnc & 0x000F) ;
+
+	KRIL_DEBUG(DBG_ERROR, "GetSamsungLatinPLMNname ::  hex MCC=%x, MNC=%x \n", plmn_mcc, plmn_mnc);
+	KRIL_DEBUG(DBG_ERROR, "GetSamsungLatinPLMNname ::  deci MCC=%d, MNC=%d \n", plmn_mcc_deci, plmn_mnc_deci);
+	KRIL_DEBUG(DBG_ERROR, "GetSamsungLatinPLMNname ::  sales_code %s \n", sales_code);
+
+	//LOGD("plmn='%s', plmnId=%d", plmn, plmnId);
+
+	if((strncmp(sales_code,"ZVV",3)==0)||(strncmp(sales_code,"ZVO",3)==0)) //VIVO-2
+	{
+		if((plmn_mcc_deci == 714)&&(plmn_mnc_deci == 20))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"Movistar",strlen("Movistar"));
+			if (short_name != NULL)
+				memcpy(short_name,"Movistar",strlen("Movistar"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 716)&&(plmn_mnc_deci == 06))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"MOVISTAR",strlen("MOVISTAR"));
+			if (short_name != NULL)
+				memcpy(short_name,"MOVISTAR",strlen("MOVISTAR"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 722)&&(plmn_mnc_deci == 07))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"Movistar",strlen("Movistar"));
+			if (short_name != NULL)
+				memcpy(short_name,"Movistar",strlen("Movistar"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 730)&&(plmn_mnc_deci == 02))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"CHL Movistar",strlen("CHL Movistar"));
+			if (short_name != NULL)
+				memcpy(short_name,"Movistar",strlen("Movistar"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 740)&&(plmn_mnc_deci == 00))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"Movistar",strlen("Movistar"));
+			if (short_name != NULL)
+				memcpy(short_name,"Movistar",strlen("Movistar"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 748)&&(plmn_mnc_deci == 07))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"Movistar",strlen("Movistar"));
+			if (short_name != NULL)
+				memcpy(short_name,"Movistar",strlen("Movistar"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 710)&&(plmn_mnc_deci == 300))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"MOVISTARNI",strlen("MOVISTARNI"));
+			if (short_name != NULL)
+				memcpy(short_name,"movistar",strlen("movistar"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 268)&&(plmn_mnc_deci == 06))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"P TMN",strlen("P TMN"));
+			if (short_name != NULL)
+				memcpy(short_name,"TMN",strlen("TMN"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 222)&&(plmn_mnc_deci == 01))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"I TIM",strlen("I TIM"));
+			if (short_name != NULL)
+				memcpy(short_name,"TIM",strlen("TIM"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 724)&&(plmn_mnc_deci == 02))
+		{
+			//fabio.p 30-aug-2011 - PLMN in idle was different from manual search (TIM BRASIL and TIM). Keep both only TIM.
+			if (long_name != NULL)	
+				memcpy(long_name,"TIM",strlen("TIM"));
+			if (short_name != NULL)
+				memcpy(short_name,"TIM",strlen("TIM"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 724)&&(plmn_mnc_deci == 03))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"TIM",strlen("TIM"));
+			if (short_name != NULL)
+				memcpy(short_name,"TIM",strlen("TIM"));
+				found = TRUE;
+		}
+		else if((plmn_mcc_deci == 724)&&(plmn_mnc_deci == 04))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"TIM",strlen("TIM"));
+			if (short_name != NULL)
+				memcpy(short_name,"TIM",strlen("TIM"));
+				found = TRUE;
+		}
+
+	}
+	else  if(strncmp(sales_code,"COM",3)==0) //COMCEL -9 //2010.11. Julian requested
+	{
+		if((plmn_mcc_deci == 334)&&(plmn_mnc_deci == 20))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"TELCEL",strlen("TELCEL"));
+			if (short_name != NULL)
+				memcpy(short_name,"TELCEL",strlen("TELCEL"));
+				found = TRUE;
+		}
+		else if(((plmn_mcc_deci == 722)&&(plmn_mnc_deci == 31)) ||
+                            ((plmn_mcc_deci == 722)&&(plmn_mnc_deci == 310)) ||
+                            ((plmn_mcc_deci == 724)&&(plmn_mnc_deci == 05)) ||
+                            ((plmn_mcc_deci == 730)&&(plmn_mnc_deci == 03)) ||
+                            ((plmn_mcc_deci == 740)&&(plmn_mnc_deci == 01)) ||
+                            ((plmn_mcc_deci == 706)&&(plmn_mnc_deci == 01)) ||
+                            ((plmn_mcc_deci == 704)&&(plmn_mnc_deci == 01)) ||
+                            ((plmn_mcc_deci == 708)&&(plmn_mnc_deci == 00)) ||
+                            ((plmn_mcc_deci == 708)&&(plmn_mnc_deci == 01)) ||
+                            ((plmn_mcc_deci == 708)&&(plmn_mnc_deci == 001)) ||
+                            ((plmn_mcc_deci == 338)&&(plmn_mnc_deci == 70)) ||
+                            ((plmn_mcc_deci == 710)&&(plmn_mnc_deci == 73)) ||
+                            ((plmn_mcc_deci == 710)&&(plmn_mnc_deci == 21)) ||
+                            ((plmn_mcc_deci == 714)&&(plmn_mnc_deci == 03)) ||
+                            ((plmn_mcc_deci == 744)&&(plmn_mnc_deci == 02)) ||
+                            ((plmn_mcc_deci == 716)&&(plmn_mnc_deci == 10)) ||
+                            ((plmn_mcc_deci == 330)&&(plmn_mnc_deci == 110)) ||
+                            ((plmn_mcc_deci == 370)&&(plmn_mnc_deci == 02)) ||
+                            ((plmn_mcc_deci == 748)&&(plmn_mnc_deci == 10)))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO",strlen("CLARO"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO",strlen("CLARO"));
+				found = TRUE;
+		}
+
+	}
+	else if(strncmp(sales_code,"TCE",3)==0) //TELCEL-21
+	{
+		// 33011, 330110
+		if(((plmn_mcc_deci == 330)&&(plmn_mnc_deci == 11))||
+			((plmn_mcc_deci == 330)&&(plmn_mnc_deci == 110)))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"PR Claro",strlen("PR Claro"));
+			if (short_name != NULL)
+				memcpy(short_name,"Claro",strlen("Claro"));
+				found = TRUE;
+		}
+		// 310410
+		else if((plmn_mcc_deci == 310)&&(plmn_mnc_deci == 410))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"AT&T",strlen("AT&T"));
+			if (short_name != NULL)
+				memcpy(short_name,"AT&T",strlen("AT&T"));
+				found = TRUE;
+		}
+		// 71403
+		else if((plmn_mcc_deci == 714)&&(plmn_mnc_deci == 3))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO PA",strlen("CLARO PA"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO PA",strlen("CLARO PA"));
+				found = TRUE;
+		}
+		// 73003
+		else if((plmn_mcc_deci == 730)&&(plmn_mnc_deci == 3))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO CHL",strlen("CLARO CHL"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroCHL",strlen("ClaroCHL"));
+				found = TRUE;
+
+		}
+		// 37002
+		else if((plmn_mcc_deci == 370)&&(plmn_mnc_deci == 2))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO DOM",strlen("CLARO DOM"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroDOM",strlen("ClaroDOM"));
+				found = TRUE;
+		}
+		//74810
+		else if((plmn_mcc_deci == 748)&&(plmn_mnc_deci == 10))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO URUGUAY",strlen("CLARO URUGUAY"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO UY",strlen("CLARO UY"));
+				found = TRUE;
+		}
+		//74402
+		else if((plmn_mcc_deci == 744)&&(plmn_mnc_deci == 2))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO PY",strlen("CLARO PY"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO PY",strlen("CLARO PY"));
+				found = TRUE;
+		}
+		// 722310, 72231
+		else if(((plmn_mcc_deci == 722)&&(plmn_mnc_deci == 31))||
+			((plmn_mcc_deci == 722)&&(plmn_mnc_deci == 310)))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO ARGENTINA",strlen("CLARO ARGENTINA"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO AR",strlen("CLARO AR"));
+				found = TRUE;
+		}
+		// 732101
+		else if((plmn_mcc_deci == 732)&&(plmn_mnc_deci == 101))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"Comcel 3GSM",strlen("Comcel 3GSM"));
+			if (short_name != NULL)
+				memcpy(short_name,"Comcel S.A",strlen("Comcel S.A"));
+				found = TRUE;
+		}
+		// 70401
+		else if((plmn_mcc_deci == 704)&&(plmn_mnc_deci == 1))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO GTM",strlen("CLARO GTM"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroGTM",strlen("ClaroGTM"));
+				found = TRUE;
+		}
+		// 71610
+		else if((plmn_mcc_deci == 716)&&(plmn_mnc_deci == 10))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO PER",strlen("CLARO PER"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroPER",strlen("ClaroPER"));
+				found = TRUE;
+		}
+		//74001
+		else if((plmn_mcc_deci == 740)&&(plmn_mnc_deci == 1))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO",strlen("CLARO"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO",strlen("CLARO"));
+				found = TRUE;
+		}
+		// 70601
+		else if((plmn_mcc_deci == 706)&&(plmn_mnc_deci == 1))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO SLV",strlen("CLARO SLV"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroSLV",strlen("ClaroSLV"));
+				found = TRUE;
+		}
+		// 70800, 70801,708001
+		else if(((plmn_mcc_deci == 708)&&(plmn_mnc_deci == 0))||
+			((plmn_mcc_deci == 708)&&(plmn_mnc_deci == 1)))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO HND",strlen("CLARO HND"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroHND",strlen("ClaroHND"));
+				found = TRUE;
+		}
+		// 71021
+		else if((plmn_mcc_deci == 710)&&(plmn_mnc_deci == 21))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO NIC",strlen("CLARO NIC"));
+			if (short_name != NULL)
+				memcpy(short_name,"ClaroNIC",strlen("ClaroNIC"));
+				found = TRUE;
+		}
+		// 71203
+		else if((plmn_mcc_deci == 712)&&(plmn_mnc_deci == 3))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"CLARO CR",strlen("CLARO CR"));
+			if (short_name != NULL)
+				memcpy(short_name,"CLARO CR",strlen("CLARO CR"));
+				found = TRUE;
+		}
+		// 33402 33420, 334020
+		else if(((plmn_mcc_deci == 334)&&(plmn_mnc_deci == 2))||
+			((plmn_mcc_deci == 334)&&(plmn_mnc_deci == 20)))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"TELCEL",strlen("TELCEL"));
+			if (short_name != NULL)
+				memcpy(short_name,"TELCEL",strlen("TELCEL"));
+				found = TRUE;
+		}
+		/*  it is removed since 20120424 requirement 
+		else if(((plmn_mcc_deci == 338)&&(plmn_mnc_deci == 07))||
+			((plmn_mcc_deci == 338)&&(plmn_mnc_deci == 70))||
+			((plmn_mcc_deci == 338)&&(plmn_mnc_deci == 070)))
+		{
+			if (long_name != NULL)
+				memcpy(long_name,"Claro JAM",strlen("Claro JAM"));
+			if (short_name != NULL)
+				memcpy(short_name,"Claro JAM",strlen("Claro JAM"));
+				found = TRUE;
+		}
+		*/
+
+	}
+	else if(strncmp(sales_code,"CHD",3)==0) //Telsur
+	{
+		if((plmn_mcc_deci == 730)&&(plmn_mnc_deci == 02))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"GTD Movil",strlen("GTD Movil"));
+			if (short_name != NULL)
+				memcpy(short_name,"GTD Movil",strlen("GTD Movil"));
+				found = TRUE;	
+		}
+	}
+	else if(strncmp(sales_code,"CHV",3)==0) //Vtr
+	{
+		if((plmn_mcc_deci == 730)&&(plmn_mnc_deci == 02))
+		{
+			if (long_name != NULL)	
+				memcpy(long_name,"Vtr",strlen("Vtr"));
+			if (short_name != NULL)
+				memcpy(short_name,"Vtr",strlen("Vtr"));
+				found = TRUE;	
+		}
+	}
+
+	return found;
+
+}
+#endif
 
 //******************************************************************************
 // Function Name: ConvertNetworkType
@@ -682,7 +1069,8 @@ void KRIL_RegistationStateHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 
 				if (presult->rat == RAT_UMTS)
 				{
-                    if (TRUE == presult->uasConnInfo.ue_out_of_service) // if UAS in out of services, MMI need to display the no_services.
+                    if (TRUE == presult->uasConnInfo.ue_out_of_service &&
+                       (TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsdpa_supported || TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsupa_supported)) // if UAS in out of services, MMI need to display the no_services.
                     {
                         rdata->gsm_reg_state = REG_STATE_NO_SERVICE;
                         rdata->gprs_reg_state = REG_STATE_NO_SERVICE;
@@ -800,10 +1188,10 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     break;
                 }
-		  if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE 
-                 && presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE
-                 && presult->gsm_reg_state != REG_STATE_LIMITED_SERVICE)
-                    || TRUE == presult->uasConnInfo.ue_out_of_service)
+                if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE 
+			&& presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE
+			&& presult->gsm_reg_state != REG_STATE_LIMITED_SERVICE) 
+			||(TRUE == presult->uasConnInfo.ue_out_of_service && (TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsdpa_supported || TRUE == gRegInfo[pdata->ril_cmd->SimId].netInfo.hsupa_supported)))
                 {
                     pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
@@ -825,12 +1213,22 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     CAPI2_NetRegApi_GetPLMNNameByCode(InitClientInfo(pdata->ril_cmd->SimId), presult->mcc, presult->mnc, presult->lac, FALSE);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
+
+				if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE) 
+					   && (presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE))
+				{
+					block_operator_name = TRUE;
+				}
+				else
+				{
+					block_operator_name = FALSE;
+				}
 /*+20111110 HKPARK if NO SIM status, send Error Message*/				
-		  if((v_NoSimCheck2 ==true)&&(v_NoSimCheck1 ==true))
-		  {
-                    pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
-		  }
+//		  if((v_NoSimCheck2 ==true)&&(v_NoSimCheck1 ==true))
+//		  {
+//                    pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
+//                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+//		  }
 /*-20111110 HKPARK if NO SIM status, send Error Message*/		 
 				
             }
@@ -853,7 +1251,14 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			     Boolean		coding = FALSE;
 			     /* END :  Irine_JSHAN_SunnyVale */
                         KRIL_DEBUG(DBG_INFO, "longName:%s size %d shortName:%s %d\n", nameResult->long_name.name,nameResult->long_name.name_size, nameResult->short_name.name,nameResult->short_name.name_size);
-
+             //[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol]
+                        if(strlen(sales_code) == 0)
+                           {
+                            KRIL_GetSalesCode();
+                           }
+                           KRIL_DEBUG(DBG_INFO, "longNametype:%d shortname type %d Mcc/Mnc:%d /%d Rat %d\n", nameResult->long_name.nameType,nameResult->short_name.nameType,v_current_mcc,v_current_mnc,gRegInfo[pdata->ril_cmd->SimId].netInfo.rat);
+#endif
                         /* START : Irine_JSHAN_SunnyVale */
                         /*
                         memcpy(rdata->longname, nameResult->long_name.name, (nameResult->long_name.name_size < PLMN_LONG_NAME)?nameResult->long_name.name_size:PLMN_LONG_NAME );
@@ -862,8 +1267,37 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                         if( (nameResult->long_name.nameType == PLMN_NAME_TYPE_LKUP_TABLE)  || (nameResult->long_name.nameType == PLMN_NAME_TYPE_INVALID) )
 			     {
 			     		coding = (nameResult->long_name.coding==0x00)?FALSE:TRUE;
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa                  
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] skh
+                  if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL))
 					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL,FALSE);
+#else
+					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL,FALSE);
+#endif
 			     }
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa                  
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol]
+               else if(nameResult->long_name.nameType == PLMN_NAME_TYPE_NITZ)
+              {
+                 if( ((v_current_mcc == 0x724)&&((v_current_mnc==0x10)||(v_current_mnc==0x11)||(v_current_mnc==0x06)||(v_current_mnc==0x23))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS))||
+               ((v_current_mcc == 0x724)&&((v_current_mnc==0x02)||(v_current_mnc==0x03)||(v_current_mnc==0x04))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS)))
+                  {
+                  coding = (nameResult->long_name.coding==0x00)?FALSE:TRUE;
+                  if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL))
+               GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL,FALSE);
+                  }
+                 else if((strncmp(nameResult->long_name.name," ",1)==0)||((v_current_mcc == 0x724)&&(v_current_mnc==0x23)&&strnicmp(nameResult->long_name.name,"Telemig Cel",strlen("Telemig Cel"))==0))
+                  {
+               coding = (nameResult->long_name.coding==0x00)?FALSE:TRUE;
+               if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL))
+               GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->longname, NULL, NULL,FALSE);
+                  }
+             else
+               {
+               memcpy(rdata->longname, nameResult->long_name.name, (nameResult->long_name.name_size < PLMN_LONG_NAME)?nameResult->long_name.name_size:PLMN_LONG_NAME );
+               }
+              }
+#endif						
 			     else
                         {
                         		memcpy(rdata->longname, nameResult->long_name.name, (nameResult->long_name.name_size < PLMN_LONG_NAME)?nameResult->long_name.name_size:PLMN_LONG_NAME );
@@ -872,8 +1306,39 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			     if( (nameResult->short_name.nameType == PLMN_NAME_TYPE_LKUP_TABLE) || (nameResult->short_name.nameType == PLMN_NAME_TYPE_INVALID) )
                         {
                         		coding = (nameResult->short_name.coding==0x00)?FALSE:TRUE;              
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol]
+               if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL))
+                  GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL,FALSE);
+#else
+					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL,FALSE);
+#endif					
+                        }			   	
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol]
+                 else if(nameResult->short_name.nameType == PLMN_NAME_TYPE_NITZ)
+                {
+                if( ((v_current_mcc == 0x724)&&((v_current_mnc==0x10)||(v_current_mnc==0x11)||(v_current_mnc==0x06)||(v_current_mnc==0x23))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS))||
+                 ((v_current_mcc == 0x724)&&((v_current_mnc==0x02)||(v_current_mnc==0x03)||(v_current_mnc==0x04))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS)))
+                    {
+                    coding = (nameResult->short_name.coding==0x00)?FALSE:TRUE;
+              if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL))
+                 GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL,FALSE);
+  
+                    }
+                  else if((strncmp(nameResult->short_name.name," ",1)==0)||((v_current_mcc == 0x724)&&(v_current_mnc==0x23)&&strnicmp(nameResult->short_name.name,"Telemig Cel",strlen("Telemig Cel"))==0))
+                    {
+                 coding = (nameResult->short_name.coding==0x00)?FALSE:TRUE;
+                 if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL))
 					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->shortname, NULL,FALSE);
                         }			   	
+			     else
+                        {
+                        		memcpy(rdata->shortname, nameResult->short_name.name, (nameResult->short_name.name_size < PLMN_SHORT_NAME)?nameResult->short_name.name_size:PLMN_SHORT_NAME);
+  
+                 }
+                }
+#endif				 
 			     else
                         {
                         		memcpy(rdata->shortname, nameResult->short_name.name, (nameResult->short_name.name_size < PLMN_SHORT_NAME)?nameResult->short_name.name_size:PLMN_SHORT_NAME);
@@ -889,6 +1354,12 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                         // will pass numeric string back to Android RIL as longname
                         KRIL_DEBUG(DBG_INFO, "CAPI2_MS_GetPLMNNameByCode result FALSE, just returning numeric...\n");
                     }
+
+		    if(block_operator_name == TRUE)
+		    {
+			rdata->longname[0] = '\0';
+			rdata->shortname[0] = '\0';
+		    }
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
                 else
@@ -993,6 +1464,8 @@ void KRIL_SetNetworkSelectionAutomaticHandler(void *ril_cmd, Kril_CAPI2Info_t *c
     if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
     {
         KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
+        KRIL_SetNetworkSelectTID(0);
+        KRIL_SetInNetworkSelectHandler( FALSE );
         pdata->handler_state = BCM_ErrorCAPI2Cmd;
         return;
     }
@@ -1007,13 +1480,31 @@ void KRIL_SetNetworkSelectionAutomaticHandler(void *ril_cmd, Kril_CAPI2Info_t *c
             // we're not re-entrant, so indicate to command thread that we're already handling 
             // a network select request 
             KRIL_SetInNetworkSelectHandler( TRUE );
+            if (TRUE == gNeedToAbortBeforeAutoSelect) // Call MSG_MS_PLMN_ABORT_REQ to return RPLMN when automatic selection if previous manual selection fail, 
+            {
+                KRIL_DEBUG(DBG_INFO, "Calling CAPI2_NetRegApi_AbortPlmnSelect first\n");
+                CAPI2_NetRegApi_AbortPlmnSelect(InitClientInfo(pdata->ril_cmd->SimId));
+                gNeedToAbortBeforeAutoSelect = FALSE;
+                pdata->handler_state = BCM_MS_AbortPlmnSelect;
+            }
+            else
+            {
             KRIL_DEBUG(DBG_INFO, "Calling CAPI2_NetRegApi_PlmnSelect\n");
             CAPI2_NetRegApi_PlmnSelect(InitClientInfo(pdata->ril_cmd->SimId), FALSE, PLMN_SELECT_AUTO, PLMN_FORMAT_LONG, "");
             KRIL_SetNetworkSelectTID( GetTID() );
             pdata->handler_state = BCM_RESPCAPI2Cmd;
         }
+        }
         break;
 
+        case BCM_MS_AbortPlmnSelect:
+        {
+            KRIL_DEBUG(DBG_INFO, "Calling CAPI2_NetRegApi_PlmnSelect::capi2 result:%d\n", capi2_rsp->result);
+            CAPI2_NetRegApi_PlmnSelect(InitClientInfo(pdata->ril_cmd->SimId), FALSE, PLMN_SELECT_AUTO, PLMN_FORMAT_LONG, "");
+            KRIL_SetNetworkSelectTID(GetTID());
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
+        }
+        break;
         case BCM_RESPCAPI2Cmd:
         {
             if ( MSG_PLMN_SELECT_RSP == capi2_rsp->msgType )
@@ -1053,15 +1544,15 @@ void KRIL_SetNetworkSelectionAutomaticHandler(void *ril_cmd, Kril_CAPI2Info_t *c
                 if(OPERATION_SUCCEED == presult || NO_REJECTION == presult)
                 {
                     KRIL_DEBUG(DBG_INFO, "Completed OK presult: %d\n", presult );
-                    KRIL_SetInNetworkSelectHandler( FALSE );
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
                 else
                 {
-                    KRIL_DEBUG(DBG_ERROR, "error result:%d, calling CAPI2_NetRegApi_AbortPlmnSelect...\n", presult);
-                    CAPI2_NetRegApi_AbortPlmnSelect(InitClientInfo(pdata->ril_cmd->SimId));
-                    pdata->handler_state = BCM_MS_AbortPlmnSelect;
+                    KRIL_DEBUG(DBG_INFO, "PLMN select fail:%d", presult);
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
                 }
+                KRIL_SetNetworkSelectTID(0);
+                KRIL_SetInNetworkSelectHandler( FALSE );
             }
             else
             {
@@ -1073,17 +1564,11 @@ void KRIL_SetNetworkSelectionAutomaticHandler(void *ril_cmd, Kril_CAPI2Info_t *c
         }
         break;
 
-        case BCM_MS_AbortPlmnSelect:
-        {
-            KRIL_DEBUG(DBG_INFO, "CAPI2_NetRegApi_AbortPlmnSelect result %d\n", capi2_rsp->result);
-            KRIL_SetInNetworkSelectHandler( FALSE );
-            pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        }
-        break;
-
         default:
         {
             KRIL_DEBUG(DBG_ERROR, "handler_state:%lu error...!\n", pdata->handler_state);
+            KRIL_SetNetworkSelectTID(0);
+            KRIL_SetInNetworkSelectHandler( FALSE );
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }
@@ -1162,16 +1647,17 @@ void KRIL_SetNetworkSelectionManualHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
                 if(OPERATION_SUCCEED == presult || NO_REJECTION == presult)
                 {
                     KRIL_DEBUG(DBG_INFO, "Completed OK presult: %d\n", presult);
-                    KRIL_SetInNetworkSelectHandler( FALSE );
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
                 else
                 {
-                    KRIL_DEBUG(DBG_ERROR, "error result:%d, calling CAPI2_NetRegApi_AbortPlmnSelect...\n", presult);
-                    KRIL_SetNetworkSelectTID( 0 );
-                    KRIL_SetInNetworkSelectHandler( FALSE );
+                    KRIL_DEBUG(DBG_ERROR, "error result:%d, need to call CAPI2_NetRegApi_AbortPlmnSelect before automatic PLMN selection...\n", presult);
+                    gNeedToAbortBeforeAutoSelect = TRUE;
+
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                 }
+                    KRIL_SetNetworkSelectTID( 0 );
+                    KRIL_SetInNetworkSelectHandler( FALSE );
             }
             else
             {
@@ -1284,8 +1770,35 @@ void KRIL_QueryAvailableNetworksHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		   if( (rsp->searched_plmn[i].nonUcs2Name.longName.nameType== PLMN_NAME_TYPE_LKUP_TABLE) || (rsp->searched_plmn[i].nonUcs2Name.longName.nameType== PLMN_NAME_TYPE_INVALID) )
 		   {
 		   		coding = (rsp->searched_plmn[i].nonUcs2Name.longName.coding==0x00)?FALSE:TRUE;
+				#if defined (CONFIG_LTN_COMMON) //fabio.p 22-nov-2011 - Porting -  P110823-0127/P110823-0117 - Customize PLMN list in manual search 
+				if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL))
+				GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL,FALSE);
+#else
+					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL,FALSE);
+#endif
+		   }
+#if defined (CONFIG_LTN_COMMON) //fabio.p 22-nov-2011 - Porting - P110823-0127/P110823-0117 - Customize PLMN list in manual search 
+                        else if(rsp->searched_plmn[i].nonUcs2Name.longName.nameType == PLMN_NAME_TYPE_NITZ)
+			     {
+			        if( ((v_current_mcc == 0x724)&&((v_current_mnc==0x10)||(v_current_mnc==0x11)||(v_current_mnc==0x06)||(v_current_mnc==0x23))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS))||
+					((v_current_mcc == 0x724)&&((v_current_mnc==0x02)||(v_current_mnc==0x03)||(v_current_mnc==0x04))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS)))
+			        	{
+			        	coding = (rsp->searched_plmn[i].nonUcs2Name.longName.coding==0x00)?FALSE:TRUE;
+						if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL))
 				GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL,FALSE);
 		   }
+			        else if((strncmp(rsp->searched_plmn[i].nonUcs2Name.longName.name," ",1)==0)||((v_current_mcc == 0x724)&&(v_current_mnc==0x23)&&strnicmp(rsp->searched_plmn[i].nonUcs2Name.longName.name,"Telemig Cel",strlen("Telemig Cel"))==0))
+			        	{
+					coding = (rsp->searched_plmn[i].nonUcs2Name.longName.coding==0x00)?FALSE:TRUE;
+					if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL))
+				GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].longname, NULL, NULL,FALSE);
+		   }
+		   else
+		   {		
+				 	memcpy(rdata->available_plmn[rdata->num_of_plmn].longname, rsp->searched_plmn[i].nonUcs2Name.longName.name, (rsp->searched_plmn[i].nonUcs2Name.longName.name_size < PLMN_LONG_NAME)?rsp->searched_plmn[i].nonUcs2Name.longName.name_size:PLMN_LONG_NAME );
+		   }
+			     }
+#endif			
 		   else
 		   {		
                 		strncpy(rdata->available_plmn[rdata->num_of_plmn].longname, rsp->searched_plmn[i].nonUcs2Name.longName.name, rsp->searched_plmn[i].nonUcs2Name.longName.name_size);
@@ -1293,8 +1806,37 @@ void KRIL_QueryAvailableNetworksHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		   if( (rsp->searched_plmn[i].nonUcs2Name.shortName.nameType == PLMN_NAME_TYPE_LKUP_TABLE) || (rsp->searched_plmn[i].nonUcs2Name.shortName.nameType == PLMN_NAME_TYPE_INVALID) )
                 {
                    		coding = (rsp->searched_plmn[i].nonUcs2Name.shortName.coding==0x00)?FALSE:TRUE;  
+#if defined (CONFIG_LTN_COMMON) //fabio.p 22-nov-2011 - Porting -  P110823-0127/P110823-0117 - Customize PLMN list in manual search 
+						if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->available_plmn[rdata->num_of_plmn].shortname, NULL))
+							GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->available_plmn[rdata->num_of_plmn].shortname, NULL,FALSE);
+#else
 				GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, NULL,  rdata->available_plmn[rdata->num_of_plmn].shortname, NULL,FALSE);
+#endif
+                }
+
+#if defined (CONFIG_LTN_COMMON) //fabio.p 22-nov-2011 - Porting - P110823-0127/P110823-0117 - Customize PLMN list in manual search 
+                        else if(rsp->searched_plmn[i].nonUcs2Name.shortName.nameType == PLMN_NAME_TYPE_NITZ)
+			     {
+			        if( ((v_current_mcc == 0x724)&&((v_current_mnc==0x10)||(v_current_mnc==0x11)||(v_current_mnc==0x06)||(v_current_mnc==0x23))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS))||
+					((v_current_mcc == 0x724)&&((v_current_mnc==0x02)||(v_current_mnc==0x03)||(v_current_mnc==0x04))&&(gRegInfo[pdata->ril_cmd->SimId].netInfo.rat != RAT_UMTS)))
+			        	{
+			        	coding = (rsp->searched_plmn[i].nonUcs2Name.shortName.coding==0x00)?FALSE:TRUE;
+						if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].shortname, NULL, NULL))
+					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].shortname, NULL, NULL,FALSE);
                 }			   	
+			        else if((strncmp(rsp->searched_plmn[i].nonUcs2Name.shortName.name," ",1)==0)||((v_current_mcc == 0x724)&&(v_current_mnc==0x23)&&strnicmp(rsp->searched_plmn[i].nonUcs2Name.shortName.name,"Telemig Cel",strlen("Telemig Cel"))==0))
+			        	{
+					coding = (rsp->searched_plmn[i].nonUcs2Name.shortName.coding==0x00)?FALSE:TRUE;
+					if(!GetSamsungLatinPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].shortname, NULL, NULL))
+					GetSamsungPLMNname(coding, v_current_mcc, v_current_mnc, rdata->available_plmn[rdata->num_of_plmn].shortname, NULL, NULL,FALSE);
+                }			   	
+		   else
+                {
+				 	memcpy(rdata->available_plmn[rdata->num_of_plmn].shortname, rsp->searched_plmn[i].nonUcs2Name.shortName.name, (rsp->searched_plmn[i].nonUcs2Name.shortName.name_size < PLMN_LONG_NAME)?rsp->searched_plmn[i].nonUcs2Name.shortName.name_size:PLMN_LONG_NAME );
+                }			   	
+			     }
+#endif		
+			   	
 		   else
                 {
                 		strncpy(rdata->available_plmn[rdata->num_of_plmn].shortname, rsp->searched_plmn[i].nonUcs2Name.shortName.name, rsp->searched_plmn[i].nonUcs2Name.shortName.name_size);
@@ -2071,3 +2613,46 @@ void KRIL_SetBPMModeHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         }
     }
 }
+
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] skh
+//#define SALES_CODE "/system/csc/sales_code.dat"
+#define SALES_CODE  "/proc/LinuStoreIII/efs_info" 
+
+void KRIL_GetSalesCode(void)
+{
+	mm_segment_t oldfs ;
+	struct file* config_file ;
+	int retval;
+
+	oldfs = get_fs( ) ;
+	set_fs (KERNEL_DS);
+
+      printk("########## KRIL_GetSalesCode   Start ############\n");
+	config_file = filp_open( "/proc/LinuStoreIII/efs_info" , O_RDONLY, 0 ); 
+
+	if( IS_ERR( config_file ) )
+	{
+		printk("Open sales_code.dat Failed!!! IS_ERR(config_file):%ld\n",IS_ERR(config_file));
+	}
+
+	else
+	{
+		retval= config_file->f_op->read( config_file, sales_code, 
+				sizeof(sales_code), &config_file->f_pos );
+		printk("step 1\n");	
+
+		filp_close( config_file ,NULL );
+	}
+	printk("step 2\n");	
+	set_fs( oldfs );
+	printk("step 3\n");	
+	sales_code[3] = 0;
+	//printk("Open sales_code.dat Sales_code =  %s\n",sales_code);
+	printk("########## End KRIL_GetSalesCode   ############\n");
+	return;
+}
+
+#endif
+
+

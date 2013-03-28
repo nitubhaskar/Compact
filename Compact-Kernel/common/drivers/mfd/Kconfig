@@ -81,7 +81,7 @@ config MFD_DAVINCI_VOICECODEC
 	select MFD_CORE
 
 config MFD_MAX8986
-        bool "Support for Maxim MAX8986 PMU chip"
+        tristate "Support for Maxim MAX8986 PMU chip"
         depends on I2C && ARCH_BCM215XX
         select MFD_CORE
         ---help---
@@ -520,6 +520,12 @@ config MFD_JANZ_CMODIO
 	  carrier board. This device is a PCI to MODULbus bridge which may
 	  host many different types of MODULbus daughterboards, including
 	  CAN and GPIO controllers.
+
+config MFD_D2041
+	tristate "Support for D2041 PMIC"
+	select MFD_CORE
+	help
+	  This is the core driver for the Dialog D2041 chip.
 
 endif # MFD_SUPPORT
 

@@ -4493,6 +4493,11 @@ typedef struct
 	GPRSDeactInd_t	*val;
 }CAPI2_GPRS_DEACTIVATE_IND_Rsp_t;
 
+typedef struct
+{
+	PBK_ENTRY_DATA_RSP_t	*val;
+}CAPI2_PbkReadyInd_Rsp_t;
+
 
 bool_t xdr_CAPI2_MS_IsGSMRegistered_Rsp_t(void* xdrs, CAPI2_MS_IsGSMRegistered_Rsp_t *rsp);
 bool_t xdr_CAPI2_MS_IsGPRSRegistered_Rsp_t(void* xdrs, CAPI2_MS_IsGPRSRegistered_Rsp_t *rsp);
@@ -5299,4 +5304,5 @@ bool_t xdr_CAPI2_USSD_CALLINDEX_IND_Rsp_t(void* xdrs, CAPI2_USSD_CALLINDEX_IND_R
 bool_t xdr_CAPI2_USSD_SESSION_END_IND_Rsp_t(void* xdrs, CAPI2_USSD_SESSION_END_IND_Rsp_t *rsp);
 bool_t xdr_CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t(void* xdrs, CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t *rsp);
 bool_t xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t(void* xdrs, CAPI2_GPRS_DEACTIVATE_IND_Rsp_t *rsp);
+bool_t xdr_CAPI2_PbkReadyInd_Rsp_t(void* xdrs, CAPI2_PbkReadyInd_Rsp_t *rsp);
 #endif

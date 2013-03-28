@@ -596,10 +596,8 @@ static bool sysrq_filter(struct input_handle *handle, unsigned int type,
 		break;
 
 	default:
-		if (sysrq_down && value && value != 2) {
-			pr_info("SYSRQ: Triggered from sysrq_filter\n");
+		if (sysrq_down && value && value != 2)
 			__handle_sysrq(sysrq_xlate[code], NULL, 1);
-		}
 		break;
 	}
 
@@ -767,7 +765,6 @@ static ssize_t write_sysrq_trigger(struct file *file, const char __user *buf,
 
 		if (get_user(c, buf))
 			return -EFAULT;
-		pr_info("SYSRQ: Triggered from proc\n");
 		__handle_sysrq(c, NULL, 0);
 	}
 

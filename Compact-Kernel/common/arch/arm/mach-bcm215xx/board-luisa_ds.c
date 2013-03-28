@@ -1712,6 +1712,8 @@ static void max8986_sysparms(struct max8986 *max8986)
     // VSIM2 1.8V
     max8986_load_sysparm(PMU_REG_0x42_PM_D3LDOCTRL,
 				MAX8986_PM_REG_D3LDOCTRL, max8986);
+
+	max8986->write_dev(max8986, MAX8986_PM_REG_ADISCHARGE1, 0x0E);
 }
 
 #endif /* CONFIG_BRCM_FUSE_SYSPARM */
@@ -2666,10 +2668,31 @@ int board_sysconfig(uint32_t module, uint32_t op)
 							ADDR_SYSCFG_IOCR4);
 		} else if (op == SYSCFG_DISABLE) {
 			/* Offset for IOCR2 = 0x0c */
+#if 0		//set no-pull
 			writel(readl(ADDR_SYSCFG_IOCR2) &
 				~(SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN) |
 			         SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
 			       ADDR_SYSCFG_IOCR2);
+#else		// set pull-down
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   & ~(SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
+				   ADDR_SYSCFG_IOCR2);
+			
+			/* Offset for IOCR2 = 0x0c */
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   | SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_DOWN),
+				   ADDR_SYSCFG_IOCR2);
+			
+			/* Offset for IOCR2 = 0x0c */
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   & ~(SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
+				   ADDR_SYSCFG_IOCR2);
+			
+			/* Offset for IOCR2 = 0x0c */
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   | SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_DOWN),
+				   ADDR_SYSCFG_IOCR2);
+#endif
 		}
 		break;
 #ifdef CONFIG_USB_DWC_OTG

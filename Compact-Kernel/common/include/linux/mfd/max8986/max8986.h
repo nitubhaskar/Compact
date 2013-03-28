@@ -832,6 +832,7 @@ extern int max8986_muic_register_event_handler(int event,void (*handler) (int, u
 					void* data);
 extern void max8986_muic_unregister_event_handler(int event);
 extern pmu_muic_chgtyp max8986_muic_get_charger_type(void);
+extern pmu_muic_chgtyp fsa880_muic_get_charger_type(void);
 extern void max8986_muic_force_charger_detection(void);
 extern void pmu_set_charging_current(pmu_charging_current charging_cur);
 extern pmu_charging_current pmu_get_charging_current(void);

@@ -592,13 +592,11 @@ unsigned long bcm21553_arm11_get_rate(struct clk *clk)
 int bcm21553_arm11_set_rate(struct clk *clk, unsigned long val)
 {
 	u32 mode;
-	u32 arm11_freq[4];
+	u32 arm11_freq[2];
 	u32 apps_pll_freq = bcm21553_apps_pll_get_rate();
 
-	arm11_freq[0] = (apps_pll_freq)/4;
-	arm11_freq[1] = (apps_pll_freq*3)/8;
-	arm11_freq[2] = (apps_pll_freq)/2;
-	arm11_freq[3] = (apps_pll_freq*2)/3;
+	arm11_freq[0] = FREQ_MHZ(312);
+	arm11_freq[1] = (apps_pll_freq*2)/3;
 
 	/*we support only two modes  - 0xC & 0xF*/
 	if (val == arm11_freq[0])
@@ -606,14 +604,6 @@ int bcm21553_arm11_set_rate(struct clk *clk, unsigned long val)
 		mode = 0x0C;
 	}
 	else if (val == arm11_freq[1])
-	{
-		mode = 0x0D;
-	}
-	else if (val == arm11_freq[2])
-	{
-		mode = 0x0E;
-	}
-	else if (val == arm11_freq[3])
 	{
 		mode = 0x0F;
 	} else
@@ -627,18 +617,16 @@ int bcm21553_arm11_set_rate(struct clk *clk, unsigned long val)
 
 long bcm21553_arm11_round_rate(struct clk *clk, unsigned long desired_val)
 {
-	u32 arm11_freq[4];
+	u32 arm11_freq[2];
 	u32 apps_pll_freq = bcm21553_apps_pll_get_rate();
 
 	/*we support only two freq  - 312Mhz & appPll/1.5*/
-	arm11_freq[0] = (apps_pll_freq)/4;//312
-	arm11_freq[1] = (apps_pll_freq*3)/8;//468
-	arm11_freq[2] = (apps_pll_freq)/2;//624
-	arm11_freq[3] = (apps_pll_freq*2)/3;//832
+	arm11_freq[0] = FREQ_MHZ(312);
+	arm11_freq[1] = (apps_pll_freq*2)/3;
 
 	return (long)bcm21553_generic_round_rate(desired_val,
 						 arm11_freq,
-						 4);
+						 2);
 }
 
 /*AHB clock*/

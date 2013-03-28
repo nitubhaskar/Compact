@@ -1,3 +1,28 @@
+  /*
+ *
+ * sensor value type definition 
+ *
+. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2010   
+ *
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+
+
 #if !defined(_CAMACQ_EXT_H_)
 #define _CAMACQ_EXT_H_
 
@@ -193,6 +218,7 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvSceneAutoRegs;
     const void*     pvSceneNightRegs;
     const void*     pvSceneNightDarkRegs;
+    const void*     pvSnapshotNightsceneRegs;
     const void*     pvSceneLandScapeRegs;
     const void*     pvSceneSunSetRegs;
     const void*     pvScenePortraitRegs;
@@ -219,6 +245,17 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvBrightness_7_Regs;
     const void*     pvBrightness_8_Regs;
 
+    const void*     pvCCDBrightness_0_Regs;
+    const void*     pvCCDBrightness_1_Regs;
+    const void*     pvCCDBrightness_2_Regs;
+    const void*     pvCCDBrightness_3_Regs;
+    const void*     pvCCDBrightness_4_Regs;
+    const void*     pvCCDBrightness_5_Regs;
+    const void*     pvCCDBrightness_6_Regs;
+    const void*     pvCCDBrightness_7_Regs;
+    const void*     pvCCDBrightness_8_Regs;
+
+
     /* ExposureCompensation */
     const void*     pvExpCompensation_0_Regs;
     const void*     pvExpCompensation_1_Regs;
@@ -229,6 +266,18 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvExpCompensation_6_Regs;
     const void*     pvExpCompensation_7_Regs;
     const void*     pvExpCompensation_8_Regs;
+
+    #if defined (CONFIG_BCM_CAM_S5K4ECGX)
+
+    /* AE */  //swsw
+    const void*     pvAELockRegs;
+    const void*     pvAEUnlockRegs;
+    const void*     pvAWBLockRegs;
+    const void*     pvAWBUnlockReg;
+    
+    const void*     pvSingleAFStartRegs;
+    const void* 	pvPreviewRetRegs;
+    #endif
 
     /* AF */
     const void*     pvSetAFRegs;
@@ -311,7 +360,7 @@ typedef struct stCamacqSensorRegs_t
     
     /* Jpeg output size */
     const void*    pvJpegOutSize5M;
-    const void*    pvJpegOutSize5M_2;
+ 
     const void*    pvJpegOutSize4M;
     const void*    pvJpegOutSize3M;
     const void*    pvJpegOutSize2M;
@@ -355,10 +404,65 @@ typedef struct stCamacqSensorRegs_t
     const void*    pvZoom_8_reg;
 
     const void*    pvCalibrationDefault;	
-#elif defined(CONFIG_BCM_CAM_S5K5CCGX)
+#elif defined(CONFIG_BCM_CAM_S5K5CCGX)||defined (CONFIG_BCM_CAM_S5K4ECGX)
 	const void*    pvSnapshotOutdoorRegs;
 	const void*    pvSnapshotLowlightRegs;
-	const void*    pvSnapshotNightsceneRegs;
+    const void*    pvFlashLowCapOn;
+    const void*    pvFlashLowCapOff;
+//	const void*    pvSnapshotNightsceneRegs;
+#endif
+
+#if defined(CONFIG_BCM_CAM_S5K4ECGX)
+
+#if 0
+        const void*     pvFlashInit;
+        const void*     pvFlashPreOn;
+        const void*     pvFlashPreOff;
+        const void*     pvFlashOn;
+        const void*     pvFlashOff;
+        const void*     pvFlashLowCapOn;
+        const void*     pvFlashLowCapOff;
+#endif
+
+        const void*    pvZoom_1_25_reg_0;
+        const void*    pvZoom_1_25_reg_1;
+        const void*    pvZoom_1_25_reg_2;
+        const void*    pvZoom_1_25_reg_3;
+        const void*    pvZoom_1_25_reg_4;
+        const void*    pvZoom_1_25_reg_5;
+        const void*    pvZoom_1_25_reg_6;
+        const void*    pvZoom_1_25_reg_7;
+        const void*    pvZoom_1_25_reg_8;
+    
+        const void*    pvZoom_1_6_reg_0;
+        const void*    pvZoom_1_6_reg_1;
+        const void*    pvZoom_1_6_reg_2;
+        const void*    pvZoom_1_6_reg_3;
+        const void*    pvZoom_1_6_reg_4;
+        const void*    pvZoom_1_6_reg_5;
+        const void*    pvZoom_1_6_reg_6;
+        const void*    pvZoom_1_6_reg_7;
+        const void*    pvZoom_1_6_reg_8;
+    
+        const void*    pvZoom_2_reg_0;  
+        const void*    pvZoom_2_reg_1;
+        const void*    pvZoom_2_reg_2;
+        const void*    pvZoom_2_reg_3;
+        const void*    pvZoom_2_reg_4;
+        const void*    pvZoom_2_reg_5;
+        const void*    pvZoom_2_reg_6;
+        const void*    pvZoom_2_reg_7;
+        const void*    pvZoom_2_reg_8;
+    
+        const void*    pvZoom_4_reg_0;  
+        const void*    pvZoom_4_reg_1;
+        const void*    pvZoom_4_reg_2;
+        const void*    pvZoom_4_reg_3;
+        const void*    pvZoom_4_reg_4;
+        const void*    pvZoom_4_reg_5;
+        const void*    pvZoom_4_reg_6;
+        const void*    pvZoom_4_reg_7;
+        const void*    pvZoom_4_reg_8;
 #endif
 
     /* Private Control */

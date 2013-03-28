@@ -31,6 +31,7 @@
 #include <linux/broadcom/gpt.h>
 #include <linux/module.h>
 #include <plat/timer.h>
+#include <linux/delay.h>
 
 #define SLPTMR_SMTDCLR  0x00    /**< Sleep Mode Timer Down Counter Load Register */
 #define SLPTMR_SMTDCR   0x04    /**< Sleep Mode Timer Down Counter Register */
@@ -98,6 +99,7 @@ void bcm_gpt_evt_wait_wfi_sync(void)
 {
 	int i, j = 10000;
 
+	udelay(32);
 	while ((gpt_reload_read(config.ce_index) != reload)) {
 		for (i=0; i < 500; ++i);
 		if (!j--) {

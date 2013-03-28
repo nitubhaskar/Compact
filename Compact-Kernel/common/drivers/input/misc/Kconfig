@@ -441,6 +441,10 @@ config INPUT_BMA150_SMB380
 	help
 	  Say Y to enable BMA150/ SMB380 based acceleromter support
 
+config INPUT_ONKEY_D2041
+	tristate "Onkey D2041 support"
+	depends on MFD_D2041	
+
 config SENSORS_AK8973
 	tristate "AK8973 3-axis Electronic Compass support"
 	depends on I2C=y

@@ -30,7 +30,10 @@ the GPL, without Broadcom's express prior written consent.
 #define PCG_IOCTL_SETMODEAPP  112
 #define PCG_IOCTL_GETMODEAPP  113
 
-
+//#define D2041_USE_OWN_TUNING_TOOL
+#if (defined(CONFIG_MFD_D2041) && (defined(D2041_USE_OWN_TUNING_TOOL)))
+#define AUDIO_D2041_GAIN_CONTROL 200
+#endif
 
 typedef struct{
   UInt32 val1;

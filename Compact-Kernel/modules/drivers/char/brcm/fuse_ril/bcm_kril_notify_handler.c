@@ -31,6 +31,8 @@ static Boolean sHspaChnlAlloc = FALSE;
 
 Boolean StkCall= FALSE;  // gearn setup call 
 Boolean StkIcon= FALSE;  // gearn not support icon TR
+Boolean Msisdnck= FALSE;  // solokou check MSISDN
+Boolean Msisdnck_1= FALSE;  // solokou check MSISDN
 
 #ifdef BRCM_AGPS_CONTROL_PLANE_ENABLE
 #include "capi2_lcs_cplane_api.h"
@@ -42,6 +44,8 @@ static MSRegState_t  sCgreg_state[DUAL_SIM_SIZE] = {REG_STATE_NO_SERVICE, REG_ST
 MSRegInfo_t  gRegInfo[DUAL_SIM_SIZE];
 MSUe3gStatusInd_t  gUE3GInfo[DUAL_SIM_SIZE];
 extern int gdataprefer; // SIM1:0 SIM2:1
+
+extern int gpowerOffcard;
 
 // For STK
 /* Macro to determine if the passed coding type is ALPHAID encoding */
@@ -64,6 +68,12 @@ extern bcm_kril_dev_result_t bcm_dev_results[TOTAL_BCMDEVICE_NUM];
 extern Boolean gIsFlightModeOnBoot;
 
 extern Boolean gIsStkRefreshReset;
+extern Boolean gIsStkRefreshResetSTK2;  // gearn STK2 SIM refresh reset
+
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON)  //[latin_protocol] skh STK Issue
+extern Boolean radio_on_setupmenu;
+#endif
 
 extern struct timezone sys_tz;
 
@@ -1099,7 +1109,7 @@ UInt16 ParseItemData(UInt8 *simple_tlv_ptr, UInt8 numItems, UInt8 *pItemIdList, 
     
     // If the "item data object for item 1" is a null data object(i.e. length = "00"
     // and no value part), this is an indication to the ME to remove the existing menu.
-    if ((0 == numItems) || (0 == pItemIdList[0]) || (NULL != pItemList && 0 == pItemList[0].len))
+    if ((0 == numItems) || (0 == pItemIdList[0]))
     {
         tlv_ptr = simple_tlv_ptr;
         
@@ -3078,7 +3088,8 @@ int ParseSATKSendMOSMS(char* tlv_data_string, SendMOSMS_t *pSendMOSMS)
     simple_tlv_ptr += device_identities_length;
 
     // Parse Alpha identifier data
-    if (pSendMOSMS->isAlphaIdProvided)
+	// Skip Alpha ID TLV if default is supplied
+    if (!((pSendMOSMS->isAlphaIdProvided == FALSE) && (pSendMOSMS->text.len > 0)))
     {
         alphaidentifier_length = ParseAlphaIdentifier(simple_tlv_ptr, pSendMOSMS->text);
         if(!alphaidentifier_length)
@@ -3191,7 +3202,8 @@ int ParseSATKSendSs(char* tlv_data_string, SendSs_t *pSendSs)
     simple_tlv_ptr += device_identities_length;
 
     // Parse Alpha identifier data
-    if (pSendSs->isAlphaIdProvided)
+	// Skip Alpha ID TLV if default is supplied
+    if (!((pSendSs->isAlphaIdProvided == FALSE) && (pSendSs->text.len > 0)))    
     {
         alphaidentifier_length = ParseAlphaIdentifier(simple_tlv_ptr, pSendSs->text);
         if(!alphaidentifier_length)
@@ -3291,7 +3303,8 @@ int ParseSATKSendUssd(char* tlv_data_string, SendUssd_t *pSendUssd)
     simple_tlv_ptr += device_identities_length;
 
     // Parse Alpha identifier data
-    if (pSendUssd->isAlphaIdProvided)
+    // Skip Alpha ID TLV if default is supplied
+    if (!((pSendUssd->isAlphaIdProvided == FALSE) && (pSendUssd->text.len > 0)))        
     {
         alphaidentifier_length = ParseAlphaIdentifier(simple_tlv_ptr, pSendUssd->text);
         if (!alphaidentifier_length)
@@ -3481,7 +3494,8 @@ int ParseSATKSendStkDtmf(char* tlv_data_string, SendStkDtmf_t *pSendStkDtmf)
     simple_tlv_ptr += device_identities_length;
 
     // Parse Alpha identifier data
-    if (pSendStkDtmf->isAlphaIdProvided)
+	// Skip Alpha ID TLV if default is supplied
+    if (!((pSendStkDtmf->isAlphaIdProvided == FALSE) && (pSendStkDtmf->alphaString.len > 0)))    
     {
         alphaidentifier_length = ParseAlphaIdentifier(simple_tlv_ptr, pSendStkDtmf->alphaString);
         if(!alphaidentifier_length)
@@ -4199,6 +4213,14 @@ void ProcessSATKSetupMenu(Kril_CAPI2Info_t *dataBuf)
         }
 
 
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON)  //[latin_protocol] skh STK Issue :setup menu event will be sent when radio on.so we don't need to send it here.
+   if(radio_on_setupmenu== false) //Do nothing
+   {
+      KRIL_DEBUG(DBG_ERROR,"Don't Send Setup Menu Proactive until radio on\n");
+      return;
+   }
+#endif
     KRIL_SendNotify(dataBuf->SimId, BRCM_RIL_UNSOL_STK_PROACTIVE_COMMAND, tlv_data_string, (tlv_length * 2 + 1));
 }
 
@@ -4546,6 +4568,17 @@ void ProcessSATKRefresh(Kril_CAPI2Info_t *dataBuf)
         case SMRT_INIT:
             data[0] = BCM_SIM_INIT;
             data[1] = 0;
+             if(dataBuf->SimId == SIM_DUAL_FIRST) // gearn STK2 SIM refresh reset
+             {
+                 Msisdnck = FALSE;
+                 KRIL_DEBUG(DBG_ERROR, " Msisdnck FALSE");
+             }
+             else if(dataBuf->SimId == SIM_DUAL_SECOND)
+            {
+                 Msisdnck_1 = FALSE;
+                 KRIL_DEBUG(DBG_ERROR, " Msisdnck_1 FALSE");            
+             }  
+            KRIL_SendNotify(dataBuf->SimId, BRCM_RIL_UNSOL_SIM_REFRESH, data, sizeof(int)*2);            
             break;
         
         case SMRT_FILE_CHANGED:
@@ -4553,11 +4586,24 @@ void ProcessSATKRefresh(Kril_CAPI2Info_t *dataBuf)
             path_len = pRefresh->FileIdList.changed_file[0].path_len;
             data[1] = (int)pRefresh->FileIdList.changed_file[0].file_path[path_len-1];
             KRIL_DEBUG(DBG_INFO,"SMRT_FILE_CHANGED: data[1]:0x%X\n",data[1]);
+            KRIL_SendNotify(dataBuf->SimId, BRCM_RIL_UNSOL_SIM_REFRESH, data, sizeof(int)*2);            
             break;
         case SMRT_RESET:
              data[0] = BCM_SIM_RESET;
              data[1] = 0;
+
+             if(dataBuf->SimId == SIM_DUAL_FIRST) // gearn STK2 SIM refresh reset
+             {
              gIsStkRefreshReset = TRUE;
+                 Msisdnck = FALSE;
+                 KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 1 gIsStkRefreshReset: %d\n" ,gIsStkRefreshReset);
+             }
+             else if(dataBuf->SimId == SIM_DUAL_SECOND)
+            {
+                 gIsStkRefreshResetSTK2 = TRUE;
+                 Msisdnck_1 = FALSE;
+                 KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 1 gIsStkRefreshResetSTK2: %d\n" ,gIsStkRefreshResetSTK2);            
+             }    
              KRIL_DEBUG(DBG_ERROR,"ParseSATKRefresh() SMRT_RESET!!\n");
              KRIL_SendNotify(dataBuf->SimId, BRCM_RIL_UNSOL_SIM_REFRESH, data, sizeof(int)*2);
              //return;
@@ -4572,7 +4618,19 @@ void ProcessSATKRefresh(Kril_CAPI2Info_t *dataBuf)
 	  // And AP need to use RIL_REQUEST_RADIO_POWER to power down and power on SIM.
 	  if (SMRT_RESET == pRefresh->refreshType)
 	  {
+      
+           if(dataBuf->SimId == SIM_DUAL_FIRST) // gearn STK2 SIM refresh reset
+           {
 	      gIsStkRefreshReset = TRUE;
+               KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 2  gIsStkRefreshReset: %d\n" ,gIsStkRefreshReset);
+           }
+           else if(dataBuf->SimId == SIM_DUAL_SECOND)
+          {
+               gIsStkRefreshResetSTK2 = TRUE;
+               KRIL_DEBUG(DBG_ERROR, " ProcessSATKRefresh 2 gIsStkRefreshResetSTK2: %d\n" ,gIsStkRefreshResetSTK2);            
+           }    
+
+          
 	  }
 	  else
 	  {
@@ -5865,6 +5923,7 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             KRIL_SetIncomingCallIndex(notify->SimId, pIncomingCall->callIndex);
             KRIL_SetCallNumPresent(notify->SimId, pIncomingCall->callIndex, pIncomingCall->callingInfo.present);
             KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
+            KRIL_BroadcastCallStatus(notify->SimId, notify->msgType, NULL);            
             break;
         }
 
@@ -5874,6 +5933,7 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             KRIL_SetWaitingCallIndex(notify->SimId, pWaitingCall->callIndex);
             KRIL_SetCallNumPresent(notify->SimId, pWaitingCall->callIndex, pWaitingCall->callingInfo.present);
             KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
+            KRIL_BroadcastCallStatus(notify->SimId, notify->msgType, NULL);                        
             break;
         }
 
@@ -5958,7 +6018,11 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             RIL_SIM_Chaged SimStatusChage; 
             UInt8 msg[6+(ICC_DIGITS + 1)];
             
-            KRIL_DEBUG(DBG_ERROR, "MSG_SIM_DETECTION_IND::sim_appl_type:%d ruim_supported:%d\n", pind->sim_appl_type, pind->ruim_supported);
+            KRIL_DEBUG(DBG_ERROR, "MSG_SIM_DETECTION_IND::sim_appl_type:%d ruim_supported:%d gpowerOffcard:%d\n", pind->sim_appl_type, pind->ruim_supported, gpowerOffcard);
+            if(1 == gpowerOffcard) // if shut down the phone, don't need to send these information
+            {
+                return;
+            }
             KRIL_SetSimAppType(notify->SimId, pind->sim_appl_type);
 
             SimStatusChage.simCardType = pind->sim_appl_type; 
@@ -6060,12 +6124,47 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             break;
 
         case MSG_PBK_READY_IND:
+        {       char msg[5 + 33]  ;	///< NULL terminated IMSI string in ASCII format
+			PBK_ENTRY_DATA_RSP_t *pbk_entry = (PBK_ENTRY_DATA_RSP_t*) notify->dataBuf;
+
+			if ( pbk_entry->pbk_id == PB_MSISDN){
+				/* handle the MSISDN message */
+			//	KRIL_DEBUG(DBG_ERROR,"BRIL_HOOK_UNSOL_SIM_MSISDN_DATA: %s \n", pbk_entry->pbk_rec.number);
+				if ((notify->SimId == SIM_DUAL_FIRST) && (Msisdnck == FALSE)){
+        			memset(msg,0,sizeof(msg));
+		
+        			msg[0]=(UInt8)'B';
+        			msg[1]=(UInt8)'R';
+        			msg[2]=(UInt8)'C';
+        			msg[3]=(UInt8)'M';
+        			msg[4]=(UInt8)BRIL_HOOK_UNSOL_SIM_MSISDN_DATA;
+        			memcpy(&(msg[5]),pbk_entry->pbk_rec.number,33);
+				KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_OEM_HOOK_RAW, msg, sizeof(msg));
+        			Msisdnck = TRUE;
+                                }
+				if ((notify->SimId == SIM_DUAL_SECOND) && (Msisdnck_1 == FALSE)){
+        			memset(msg,0,sizeof(msg));
+		
+        			msg[0]=(UInt8)'B';
+        			msg[1]=(UInt8)'R';
+        			msg[2]=(UInt8)'C';
+        			msg[3]=(UInt8)'M';
+        			msg[4]=(UInt8)BRIL_HOOK_UNSOL_SIM_MSISDN_DATA;
+        			memcpy(&(msg[5]),pbk_entry->pbk_rec.number,33);
+				KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_OEM_HOOK_RAW, msg, sizeof(msg));
+        			Msisdnck_1 = TRUE;
+                                }
+        	}else 
+			{
+
             if(!KRIL_DevSpecific_Cmd(BCM_KRIL_CLIENT, notify->SimId, KRIL_REQUEST_QUERY_SIM_EMERGENCY_NUMBER, NULL, 0))
             {
                 KRIL_DEBUG(DBG_ERROR,"Command KRIL_REQUEST_QUERY_SIM_EMERGENCY_NUMBER failed\n");
             }
-            break;
+			}
 
+        	break;
+		}
         case MSG_SIM_PIN_IND:
         {
             SimPinInd_t *pind = (SimPinInd_t*) notify->dataBuf;
@@ -6108,7 +6207,10 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             if (ndata->exitCause != MNCAUSE_RADIO_LINK_FAILURE_APPEARED ||  // Add the call status notification here, replace the call status change in MSG_CALL_STATUS_IND for CC_CALL_DISCONNECT
                     !(KRIL_GetCallType(notify->SimId, ndata->callIndex) ==MOVOICE_CALL && // send RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED only not MO call and not dialing or alerting state
                     (KRIL_GetCallState(notify->SimId, ndata->callIndex) == BCM_CALL_DIALING || KRIL_GetCallState(notify->SimId, ndata->callIndex) == BCM_CALL_ALERTING)))
+            {
                 KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
+                KRIL_BroadcastCallStatus(notify->SimId, notify->msgType, NULL);                        
+            }                
             break;
         }
 
@@ -6117,6 +6219,7 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             VoiceCallPreConnectMsg_t *ndata = (VoiceCallPreConnectMsg_t*) notify->dataBuf;
             KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_PRECONNECT_IND::callIndex:%d\n",ndata->callIndex);
             KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
+            KRIL_BroadcastCallStatus(notify->SimId, notify->msgType, NULL);                        
             break;
         }
 
@@ -6125,6 +6228,7 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             VoiceCallConnectMsg_t *ndata = (VoiceCallConnectMsg_t*) notify->dataBuf;
             KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_CONNECTED_IND::callIndex:%d\n",ndata->callIndex);
             KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
+            KRIL_BroadcastCallStatus(notify->SimId, notify->msgType, NULL);                        
             break;
         }
 
@@ -6175,6 +6279,7 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
               )
             {
                 KRIL_SendNotify(notify->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
+                KRIL_BroadcastCallStatus(notify->SimId, notify->msgType, notify->dataBuf);                            
             }
             break;
         }

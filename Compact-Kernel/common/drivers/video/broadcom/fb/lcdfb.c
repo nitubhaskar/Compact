@@ -1028,7 +1028,6 @@ static void lcdfb_late_resume(struct early_suspend *h)
 
 	if (h->level == EARLY_SUSPEND_LEVEL_STOP_DRAWING + 1)
 	{
-             printk("[LCD] lcdfb_late_resume==> EARLY_SUSPEND_LEVEL_STOP_DRAWING\n");
                gLcdfbEarlySuspendStopDraw = 0;
 	}
 	else if (h->level == EARLY_SUSPEND_LEVEL_DISABLE_FB) {
@@ -1042,7 +1041,6 @@ static void lcdfb_late_resume(struct early_suspend *h)
 			acquire_console_sem();
 			fb_set_suspend(fbinfo, FBINFO_STATE_RUNNING);
 			release_console_sem();
-                 printk("[LCD] lcdfb_late_resume==> EARLY_SUSPEND_LEVEL_DISABLE_FB\n");
 		}
 	}
 }

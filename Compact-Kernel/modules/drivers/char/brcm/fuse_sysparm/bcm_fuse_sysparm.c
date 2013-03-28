@@ -237,6 +237,8 @@ int SYSPARM_GetParmU32ByName(char *name, unsigned int *parm)
 
 int SYSPARM_GetPMURegSettings(int index, unsigned int *parm)
 {
+/* DLG start */
+#if defined(CONFIG_MFD_MAX8986)
 	UInt32  parm_addr;
 	UInt8   *parm_ptr;
 
@@ -267,6 +269,8 @@ int SYSPARM_GetPMURegSettings(int index, unsigned int *parm)
 	*parm = ioread8(parm_ptr + index);
 
 	iounmap(parm_ptr);
+#endif
+/* DLG end */
 	return 0;
 }
 

@@ -307,6 +307,13 @@ void AUDIO_Ctrl_Process(
 
             app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_MUSIC);
 
+            if(app_profile == AUDIO_APP_VOIP || app_profile == AUDIO_APP_VOIP_INCOMM)
+            {
+                new_mode = sgTableIDChannelOfDev[param_start->substream_number].speaker;
+            }
+
+            DEBUG("ACTION_AUD_StartPlay : substream_number -  %d, app_profile - %d, new_mode - %d\n",param_start->substream_number, app_profile, new_mode);
+
             AUDCTRL_SaveAudioModeFlag( new_mode,app_profile);
 
             AUDIO_DRIVER_Ctrl(param_start->drv_handle,AUDIO_DRIVER_START,NULL);
@@ -557,13 +564,17 @@ void AUDIO_Ctrl_Process(
             AudioMode_t cur_mode;
 
             BRCM_AUDIO_Param_Start_t* param_start = (BRCM_AUDIO_Param_Start_t*) arg_param;
-            DEBUG("ACTION_AUD_StartRecord : param_start->substream_number -  %d \n",param_start->substream_number);
 
 			prev_app_profile = AUDDRV_GetAudioApp();
             cur_mode = AUDCTRL_GetAudioMode();
 
+            DEBUG("ACTION_AUD_StartRecord : substream_number -  %d, prev_app_profile - %d, cur_mode - %d\n",param_start->substream_number, prev_app_profile, cur_mode);
+
             if ( cur_mode >= AUDIO_MODE_NUMBER )
                 cur_mode = (AudioMode_t) (cur_mode - AUDIO_MODE_NUMBER);
+
+            if (param_start->rate == AUDIO_SAMPLING_RATE_8000 || param_start->rate == AUDIO_SAMPLING_RATE_16000)
+                app_prof = AUDIO_APP_RECORDING_NB;
 
             if (param_start->substream_number == 6 || param_start->substream_number == 7) // record request with Google voice search profile
 			{
@@ -576,7 +587,13 @@ void AUDIO_Ctrl_Process(
             if (param_start->substream_number == 9 || param_start->substream_number == 10) // record request with voip profile
             {
 				app_prof = AUDIO_APP_VOIP;
-                new_mode = cur_mode; // use current mode based on earpiece or speaker
+                if(param_start->substream_number == 9)
+                {
+                    if(cur_mode == AUDIO_MODE_HANDSET)
+                    {
+                        new_mode = cur_mode;
+                    }
+                }
             }
             
             if (param_start->substream_number == 11 || param_start->substream_number == 12) // record request with voip incomm profile
@@ -593,6 +610,8 @@ void AUDIO_Ctrl_Process(
 
             new_mode = AUDIO_Policy_Get_Mode(new_mode);
 			
+            DEBUG("ACTION_AUD_StartRecord : app_profile - %d, new_mode - %d\n",app_profile, new_mode);
+
             AUDCTRL_SaveAudioModeFlag(new_mode,app_profile);
 
             AUDCTRL_EnableRecord(sgTableIDChannelOfCaptDev[param_start->substream_number].hw_id,

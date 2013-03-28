@@ -87,18 +87,18 @@ enum sdhc_platform_flags {
 	/* Indicate if card needs to be assumed to present if irq_cd = -1 */
 	SDHC_CARD_ALWAYS_PRESENT = 1 << 1,
 	/* flags[2:3] is used to indicate if SDHC is used for EMMC/SD/SDIO */
-	SDHC_DEVTYPE_EMMC = 0 << 2,
-	SDHC_DEVTYPE_SD = 1 << 2,
-	SDHC_DEVTYPE_SDIO = 2 << 2,
+	SDHC_DEVTYPE_EMMC = 1 << 2,
+	SDHC_DEVTYPE_SD = 1 << 3,
+	SDHC_DEVTYPE_SDIO = 1 << 4,
 	/*
 	 * Indicate if power to SDHC needs to be managed manually
 	 * Often needed for SDIO/WIFI
 	 */
-	SDHC_MANUAL_SUSPEND_RESUME = 1 << 4,
+	SDHC_MANUAL_SUSPEND_RESUME = 1 << 5,
 	/*
 	 * Disable entering into pedestral mode during transfers
 	 */
-	SDHC_DISABLE_PED_MODE = 1 << 5,
+	SDHC_DISABLE_PED_MODE = 1 << 6,
 };
 
 struct bcmsdhc_platform_data {

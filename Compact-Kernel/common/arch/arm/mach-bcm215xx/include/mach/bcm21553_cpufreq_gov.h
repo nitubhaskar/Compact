@@ -21,15 +21,11 @@
  */
 enum {
 	BCM21553_CORECLK_KHZ_312 = (312U * 1000),
-	BCM21553_CORECLK_KHZ_468 = (468U * 1000),
-	BCM21553_CORECLK_KHZ_624 = (624U * 1000),
 	BCM21553_CORECLK_KHZ_832 = (832U * 1000),
 };
 
 struct bcm21553_cpufreq_gov_plat {
 	unsigned int freq_turbo;
-	unsigned int freq_medb;
-	unsigned int freq_meda;
 	unsigned int freq_normal;
 };
 

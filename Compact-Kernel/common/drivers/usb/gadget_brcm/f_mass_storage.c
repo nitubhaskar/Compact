@@ -117,6 +117,24 @@ static const char gProductName4Kies[16] = "B5512 Card";
 static const char gProductName4Kies[16] = "S6102 Card";
 #elif defined(CONFIG_BOARD_TORINOK)
 static const char gProductName4Kies[16] = "S6102K Card";
+#elif defined(CONFIG_BOARD_AMAZING)
+#if defined (CONFIG_AMAZING_L_LTN_COMMON)
+static const char gProductName4Kies[16] = "S6802L Card";
+#elif defined (CONFIG_AMAZING_B_LTN_COMMON)
+static const char gProductName4Kies[16] = "S6802B Card";
+#else
+static const char gProductName4Kies[16] = "S6802 Card";
+#endif
+#elif defined(CONFIG_BOARD_AMAZING_SS)
+static const char gProductName4Kies[16] = "S6800 Card";
+#elif defined(CONFIG_BOARD_CORI_DS)
+#if defined(CONFIG_CORIDS_B_LTN_COMMON)
+static const char gProductName4Kies[16] = "S5302B Card";	// sec_cheong Change USB name for latin
+#elif defined(CONFIG_CORIDS_L_LTN_COMMON)
+static const char gProductName4Kies[16] = "S5302L Card";
+#else
+static const char gProductName4Kies[16] = "S5302 Card";
+#endif
 #elif defined(CONFIG_BOARD_TASSVE)
 static const char gProductName4Kies[16] = "S5570I Card";
 #elif defined(CONFIG_BOARD_COOPERVE)
@@ -1282,8 +1300,19 @@ static int do_inquiry(struct fsg_dev *fsg, struct fsg_buffhd *bh)
 	buf[3] = 2;		/* SCSI-2 INQUIRY data format */
 	buf[4] = 31;		/* Additional length */
 				/* No special options */
-	sprintf(buf + 8, "%-8s%-16s%04x", fsg->vendor,
+
+			
+	if (fsg->lun == 0) {
+		char fsgpdt[10] = {0,};
+
+		strncpy(fsgpdt, fsg->product, strlen(fsg->product)-4);
+		sprintf(buf + 8, "%-8s%-16s%04x", fsg->vendor,
+				fsgpdt, fsg->release);
+	} else if (fsg->lun == 1) {
+		sprintf(buf + 8, "%-8s%-16s%04x", fsg->vendor,
 			fsg->product, fsg->release);
+	}			
+			
 	return 36;
 }
 

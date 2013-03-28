@@ -112,16 +112,18 @@ typedef enum  AUDIO_INPUT_CHANNEL_t
 **/
 typedef enum {
 	AUDIO_APP_VOICE_CALL = 0,
-	AUDIO_APP_VOICE_CALL_WB,
-	AUDIO_APP_MUSIC,
-	AUDIO_APP_RECORDING,
-    AUDIO_APP_FM,
-	AUDIO_APP_RECORDING_GVS,
-    AUDIO_APP_VOIP,
-    AUDIO_APP_VOIP_INCOMM,
-    AUDIO_APP_VT_CALL,
-    AUDIO_APP_VT_CALL_WB
-} AudioApp_t; // Audio applications
+	AUDIO_APP_VOICE_CALL_WB = 1,
+	AUDIO_APP_MUSIC = 2,
+	AUDIO_APP_RECORDING = 3,
+	AUDIO_APP_FM = 4,
+	AUDIO_APP_RECORDING_GVS = 5,
+	AUDIO_APP_VOIP = 6,
+	AUDIO_APP_VOIP_INCOMM = 7,
+	AUDIO_APP_VT_CALL = 8,
+	AUDIO_APP_VT_CALL_WB = 9,
+	AUDIO_APP_RECORDING_NB = 10,
+	AUDIO_APP_TOTAL
+} AudioApp_t; // audio profiles (Audio applications)
 
 /**
 	audio modes (audio parameters profile)

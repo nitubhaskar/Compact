@@ -59,9 +59,9 @@ static int bcmblt_rfkill_set_power(void *data, bool blocked)
 			gpio_get_value(vreg_gpio) ? "High [POWER ON]" :
 			"Low [POWER_OFF]");
 	} else {		/* Transmitter OFF (Blocked) */
-		gpio_set_value(vreg_gpio, BCMBLT_VREG_OFF);
 		if (BCMBLT_UNUSED_GPIO != n_reset_gpio)
 			gpio_set_value(n_reset_gpio, BCMBLT_N_RESET_ON);
+		gpio_set_value(vreg_gpio, BCMBLT_VREG_OFF);
 		if (BCMBLT_UNUSED_GPIO != aux1_gpio)
 			gpio_set_value(aux1_gpio, BCMBLT_AUX1_OFF);
 		if (BCMBLT_UNUSED_GPIO != aux0_gpio)

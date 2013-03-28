@@ -130,6 +130,7 @@ static AUDIO_SAMPLING_RATE_t currInputSamplingRate = AUDIO_SAMPLING_RATE_UNDEFIN
 #ifdef SEPARATE_MODE_FOR_GVS_WTIH_RATE
 static void AUDDRV_RemapAudioModeForGVS ( void );
 #endif // SEPARATE_MODE_FOR_GVS_WTIH_RATE
+
 /////////////////////////////////////////////////////////////////////////////
 //!
 //! Function Name:	AUDIO_GetParmAccessPtr
@@ -287,7 +288,8 @@ void AUDDRV_Enable_Output (
 				AUDDRV_SPKR_Enum_t     mixer_speaker_selection,
 				Boolean                enable_speaker,
 				AUDIO_SAMPLING_RATE_t  sample_rate,
-				AUDIO_CHANNEL_NUM_t    input_to_mixer
+				AUDIO_CHANNEL_NUM_t    input_to_mixer,
+				void *                 callback
 				)
 {
 	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Enable_Output mixer %d, en %d input_path_to_mixer %d invoicecall %d, sample_rate %d *\n\r", 
@@ -307,7 +309,8 @@ void AUDDRV_Enable_Output (
 					enable_speaker,
 					sample_rate,
 					input_to_mixer,
-					AUDDRV_REASON_HW_CTRL );
+					AUDDRV_REASON_HW_CTRL,
+					(audio_HWEnabled_Cb_t)callback );
 				OSTASK_Sleep( 5 );  //sometimes BBC video has no audio. This delay may help the mixer filter and mixer gain loading.
 
 				//if inVoiceCall== TRUE, assume the telphony_init() function sends ENABLE and CONNECT_DL
@@ -336,7 +339,8 @@ void AUDDRV_Enable_Output (
 				enable_speaker,
 				sample_rate,
 				input_to_mixer,
-				AUDDRV_REASON_HW_CTRL );
+				AUDDRV_REASON_HW_CTRL,
+				(audio_HWEnabled_Cb_t)callback );
 			OSTASK_Sleep( 5 );  //sometimes BBC video has no audio. This delay may help the mixer filter and mixer gain loading.
 			break;
 
@@ -528,8 +532,6 @@ AudioApp_t AUDDRV_GetAudioApp( void )
 //
 //=============================================================================
 
-
-
 void AUDDRV_SaveAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 {
 	currAudioMode = (AudioMode_t)(audio_mode % AUDIO_MODE_NUMBER); //internally mode is protected between 0 to 8
@@ -544,7 +546,6 @@ void AUDDRV_SaveAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 		if (audio_app == AUDIO_APP_VOICE_CALL) currAudioApp = AUDIO_APP_VOICE_CALL_WB;
         else if (audio_app == AUDIO_APP_VT_CALL) currAudioApp = AUDIO_APP_VT_CALL_WB;
 	}
-
 }
 
 
@@ -764,7 +765,7 @@ void AUDDRV_SetMusicMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 	UInt16 AUDVOC_AEQPATHOFST[ EQPATH_SIZE];
 
 
-	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetMusicMode() audio_mode==%d\n\r", audio_mode );
+	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetMusicMode() audio_app=%d, audio_mode=%d\n\r", audio_app, audio_mode );
 
 	currAudioMode = (AudioMode_t)(audio_mode % AUDIO_MODE_NUMBER); // update mode
 	currMusicAudioMode = currAudioMode;
@@ -806,6 +807,19 @@ void AUDDRV_SetMusicMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 	//this sysparm at AP is not right. AUDDRV_SetFilter( AUDDRV_PEQPATHGAIN,	(const UInt16 *) & SYSPARM_GetAudioParmAccessPtr()->AUDVOC_PEQPATHGAIN[0][0] );
 	//AUDDRV_SetFilter( AUDDRV_PEQPATHOFST, & SYSPARM_GetAudioParmAccessPtr()->AUDVOC_PEQPATHOFST[0][0] );
 	AUDDRV_SetFilter( AUDDRV_PIIR,			(const UInt16 *) & AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).PR_DAC_IIR[0] );
+
+	if (currAudioApp == AUDIO_APP_VOIP || currAudioApp == AUDIO_APP_VOIP_INCOMM)
+	{
+		Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetMusicMode(): forced gain setting for VoIP\n\r");
+
+		// forced to set aslopgain loaded from sysparm, because VoIP is possibly detected at recording time.
+		AUDDRV_SetGain_Hex( AUDDRV_GAIN_AUDIO_OUTPUT_L, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_aslopgain );
+		AUDDRV_SetGain_Hex( AUDDRV_GAIN_AUDIO_OUTPUT_R, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_aslopgain );
+
+		// forced to set pslopgain loaded from sysparm, because VoIP is possibly detected at recording time.
+		AUDDRV_SetGain_Hex( AUDDRV_GAIN_RINGTONE_OUTPUT_L, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_pslopgain );
+		AUDDRV_SetGain_Hex( AUDDRV_GAIN_RINGTONE_OUTPUT_R, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_pslopgain );
+	}
 
 	AUDDRV_SetMPM( AUDDRV_Mixer_BIQUAD_CFG, AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).MPMbiquad_cfg );
 

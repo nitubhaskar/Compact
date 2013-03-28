@@ -332,7 +332,7 @@ config TOUCHSCREEN_TAT200A_LUISADS
 	help
 	  This enables support for Synaptics RMI over I2C based touchscreens.	  
 
-config TOUCHSCREEN_TMA340
+config TOUCHSCREEN_TMA140
 	tristate "Synaptics i2c touchscreen"
 	depends on I2C
 	help
@@ -746,5 +746,11 @@ config TOUCHSCREEN_MMS128_TASSCOOPER
 	depends on I2C
 	help
 	  This enables support for Melfas MMS128 touchscreens(TassVE&CooperVE Common).
+
+config TOUCHSCREEN_BT403
+	tristate "Zinitix touchscreen"
+	depends on I2C
+	help
+	  This enables support for Zinitix BT403 touchscreens(Zanin).	  
 
 endif

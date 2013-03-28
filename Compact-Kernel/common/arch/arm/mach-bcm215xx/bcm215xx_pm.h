@@ -18,6 +18,15 @@
 
 #include <asm/sizes.h>
 
+/* Counter value for busy-wait loop delay before WFI
+ * in the sleep sequence.
+ */
+#ifdef CONFIG_BCM21553_1GHZ
+#define BCM21553_WFI_DELAY            1500
+#else
+#define BCM21553_WFI_DELAY            1200
+#endif
+
 /* Enable/disable dormant mode time profiling code, define this as follows:
  * 1 - to enable profiling code in dormant sequence
  * 0 - to disable profiling code in dormant sequence
@@ -73,7 +82,7 @@
 #define PM_DORMANT_STORE_END          (22 << 2)
 #define PM_L2CACHE_INIT_FLAG          (23 << 2)
 #define PM_L2_EVICT_BUF               (24 << 2)
-#define PM_DORMANT_SCRATCH1           (25 << 2)
+#define PM_WFI_DELAY                  (25 << 2)
 #define PM_DORMANT_SCRATCH2           (26 << 2)
 #define PM_DORMANT_SCRATCH3           (27 << 2)
 /* This must be the last element of the above list */
@@ -159,7 +168,7 @@ struct bcm_pm_sleep {
 	 */
 	u32 l2cache_init_flag;
 	u32 l2_evict_buf;
-	u32 dormant_scratch1;
+	u32 wfi_delay;
 	u32 dormant_scratch2;
 	u32 dormant_scratch3;
 	u32 dormant_store[DOR_BUF_SZ - (PM_NUM_SLEEP_ELEMENTS * sizeof(u32))];

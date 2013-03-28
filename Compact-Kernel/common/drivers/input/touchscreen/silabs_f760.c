@@ -57,12 +57,12 @@
 
 #define SILABS_TS_NAME "silabs-f760"
 
-#define YTE_MODULE_VER11   0x11
+#define YTE_MODULE_VER0F   0x0F
 #define SYN_MODULE_VER01   0x01
 #define SYN_MODULE_VER02   0x02
 
-#define FW_VER01  0x01
 #define FW_VER02  0x02
+#define FW_VER05  0x05
 
 #define NUM_TX_CHANNEL 12
 #define NUM_RX_CHANNEL 9
@@ -211,7 +211,7 @@ int tsp_reset( void )
 	touch_ctrl_regulator(0);
 
 	gpio_direction_output(30, 0);
-      	gpio_direction_output(27, 0);
+  gpio_direction_output(27, 0);
 	gpio_direction_output(26, 0);
             
 	msleep(200);
@@ -222,13 +222,13 @@ int tsp_reset( void )
       TSP_forced_release_forkey();
 
 	gpio_direction_output(30, 1);
-      	gpio_direction_output(27, 1);
+  gpio_direction_output(27, 1);
 	gpio_direction_output(26, 1);
 
 	gpio_direction_input(30);
-      	gpio_direction_input(27);
+ 	gpio_direction_input(27);
 	gpio_direction_input(26);
-
+	
 	touch_ctrl_regulator(1);
 		
 	msleep(200);
@@ -702,61 +702,6 @@ static int silabs_ts_probe(struct i2c_client *client, const struct i2c_device_id
 	}
 	printk("[TSP] silabs_ts_probe %d, %d, %d\n", buf_firmware[0], buf_firmware[1], buf_firmware[2]);
 
-    if (( buf_firmware[2] == YTE_MODULE_VER11)&&(buf_firmware[0] < FW_VER01))
-    { 
-        TSP_MODULE_ID =  buf_firmware[2];
-        PHONE_VER = FW_VER01;
-	    local_irq_disable();
-		ret = Firmware_Download();	
-        printk("[TSP] enable_irq : %d\n", __LINE__ );
-	    local_irq_enable();
-
-		if(ret == 0)
-		{
-			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
-		}
-	}
-	else if (( buf_firmware[2] == SYN_MODULE_VER01)&&(buf_firmware[0] < FW_VER02))
-    { 
-        TSP_MODULE_ID =  buf_firmware[2];
-        PHONE_VER = FW_VER02;
-	    local_irq_disable();
-		ret = Firmware_Download();	
-        printk("[TSP] enable_irq : %d\n", __LINE__ );
-	    local_irq_enable();
-
-		if(ret == 0)
-		{
-			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
-		}
-	}
-    else if (( buf_firmware[2] == SYN_MODULE_VER02)&&(buf_firmware[0] < FW_VER02))
-    { 
-        TSP_MODULE_ID =  buf_firmware[2];
-        PHONE_VER = FW_VER02;
-	    local_irq_disable();
-		ret = Firmware_Download();	
-        printk("[TSP] enable_irq : %d\n", __LINE__ );
-	    local_irq_enable();
-
-		if(ret == 0)
-		{
-			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
-		}
-	}
-	else if (( buf_firmware[2] == 0xFF) || (ret<0))
-    { 
-        TSP_MODULE_ID =  buf_firmware[2];
-	    local_irq_disable();
-		ret = Firmware_Download();	
-        printk("[TSP] enable_irq : %d\n", __LINE__ );
-	    local_irq_enable();
-
-		if(ret == 0)
-		{
-			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
-		}
-	}	
 
        hrtimer_start(&ts->timer, ktime_set(2, 0), HRTIMER_MODE_REL);
 }
@@ -804,31 +749,24 @@ static int silabs_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 			printk("[TSP] cancel_work_sync for work timer error.\n", __func__ );
 	    }
 
-
-	    ret = cancel_work_sync(&ts->work);
-        if (ret <0)
-	    {
-			printk("[TSP] cancel_work_sync for work error.\n", __func__ );
-	    }
-            
         if(tsp_chheck==0)
 	    hrtimer_cancel(&ts->timer);
 
 	    touch_ctrl_regulator(TOUCH_OFF);
 
-		gpio_direction_output(30, 0);
-    	gpio_direction_output(27, 0);
-		gpio_direction_output(26, 0);
+	    gpio_direction_output(30, 0);
+    	    gpio_direction_output(27, 0);
+	    gpio_direction_output(26, 0);
 
-		bcm_gpio_pull_up(30, false);
-		bcm_gpio_pull_up_down_enable(30, true);
-		bcm_gpio_pull_up(27, false);
-		bcm_gpio_pull_up_down_enable(27, true);
-		bcm_gpio_pull_up(26, false);
-		bcm_gpio_pull_up_down_enable(26, true);
+	    bcm_gpio_pull_up(30, false);
+	    bcm_gpio_pull_up_down_enable(30, true);
+	    bcm_gpio_pull_up(27, false);
+	    bcm_gpio_pull_up_down_enable(27, true);
+	    bcm_gpio_pull_up(26, false);
+            bcm_gpio_pull_up_down_enable(26, true);
 
-        gpio_direction_input(30);
-      	gpio_direction_input(27);
+            gpio_direction_input(30);
+      	    gpio_direction_input(27);
 	    gpio_direction_input(26);
 
 	    msleep(400);    
@@ -837,8 +775,6 @@ static int silabs_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 		printk("[TSP] TSP isn't present.\n", __func__ );
 
     TSP_forced_release_forkey();
-
-	//board_sysconfig(SYSCFG_TOUCH, SYSCFG_ENABLE);
 
 	printk("[TSP] %s-\n", __func__ );
 	return 0;
@@ -854,11 +790,7 @@ static int silabs_ts_resume(struct i2c_client *client)
 	if( touch_present )
 	{ 
 
-		board_sysconfig(SYSCFG_TOUCH, SYSCFG_DISABLE);
-
-		gpio_direction_output(30, 1);
-    	gpio_direction_output(27, 1);
-		gpio_direction_output(26, 1);
+		board_sysconfig(SYSCFG_TOUCH, SYSCFG_INIT);
 
 		gpio_direction_input(30);
     	gpio_direction_input(27);
@@ -878,8 +810,7 @@ static int silabs_ts_resume(struct i2c_client *client)
 		set_tsp_for_ta_detect(tsp_charger_type_status);
 	}
     
- 
-    if(tsp_chheck==0)
+     if(tsp_chheck==0)
 	hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 
 	enable_irq(tsp_irq);
@@ -1041,6 +972,7 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 	if(testmode==1) return sprintf(buf, "-1");   
 
 	mdelay(300); 
+#if 0//temp
 
 	buffer1[0] = ESCAPE_ADDR;
 	buffer1[1] = JIG_MODE_COMMAND;
@@ -1092,7 +1024,7 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 		}
     }
 
-
+#endif
 	buf_firmware_show[0] = ESCAPE_ADDR;
 	buf_firmware_show[1] = TS_READ_VERSION_ADDR;
 	ret = i2c_master_send(ts_global->client, &buf_firmware_show, 2);
@@ -1108,10 +1040,12 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 	}
 	printk("[TSP] ver tsp=%x, HW=%x, SW=%x\n", buf_firmware_show[1], buf_firmware_show[2], buf_firmware_show[0]);
 
-     if ( buf_firmware_show[2] == YTE_MODULE_VER11)
-             PHONE_VER = FW_VER01;
-     else if (( buf_firmware_show[2] == SYN_MODULE_VER01)||( buf_firmware_show[2] == SYN_MODULE_VER02))
+     if ( buf_firmware_show[2] == YTE_MODULE_VER0F)
+             PHONE_VER = FW_VER05;
+     else if ( buf_firmware_show[2] == SYN_MODULE_VER01)
              PHONE_VER = FW_VER02;
+     else if ( buf_firmware_show[2] == SYN_MODULE_VER02)
+             PHONE_VER = FW_VER05;
 
 	if(buf_firmware_show[0]!=PHONE_VER)
 		return sprintf(buf, "0");
@@ -1366,10 +1300,10 @@ static ssize_t firmware_show(struct device *dev, struct device_attribute *attr, 
      else
 #endif
 
-     if ( buf_firmware_show[2] == YTE_MODULE_VER11)
+     if ( buf_firmware_show[2] == YTE_MODULE_VER0F)
      {
-       	PHONE_VER = FW_VER01;
-	   	sprintf(buf, "1%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+       	PHONE_VER = FW_VER05;
+	   	sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
      }
 	 else if ( buf_firmware_show[2] == SYN_MODULE_VER01)
 	 {
@@ -1378,7 +1312,7 @@ static ssize_t firmware_show(struct device *dev, struct device_attribute *attr, 
 	 }	
 	 else if ( buf_firmware_show[2] == SYN_MODULE_VER02)
 	 {
-	 	PHONE_VER = FW_VER02;
+	 	PHONE_VER = FW_VER05;
     	sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
 	 }
 	 
@@ -1474,7 +1408,7 @@ static ssize_t read_node(struct device *dev, struct device_attribute *attr, char
     {
     	for(i = 0 ; i < Tx_Channel; i++)
 		{
-			written_bytes += sprintf(buf+written_bytes, ",%d", baseline_node[i][j]) ;
+			written_bytes += sprintf(buf+written_bytes, ",%5d", baseline_node[i][j]) ;
     	}
 	}
 

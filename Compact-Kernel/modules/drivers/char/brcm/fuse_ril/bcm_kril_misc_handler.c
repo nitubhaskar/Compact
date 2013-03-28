@@ -58,20 +58,29 @@ Boolean gIsFlightModeOnBoot = TRUE;
 // In STK refresh reset case, it need to turn off then turn on SIM card.
 Boolean gIsStkRefreshReset = FALSE;
 
+Boolean gIsStkRefreshResetSTK2 = FALSE;   // gearn STK2 SIM refresh reset
+
+
 // Store whether Dual SIM boot up
 Boolean gDualSIMBoot = FALSE;
+
+int gpowerOffcard = 0;
 
 int gdataprefer = 0; // SIM1:0 SIM2:1
 
 // For STK
 //UInt8 terminal_profile_data[17] = {0xFF,0xDF,0xFF,0xFF,0x1F,0x80,0x00,0xDF,0xDF,0x00,0x00,
 //                                      0x00,0x00,0x10,0x20,0xA6,0x00};
-UInt8 terminal_profile_data[30] = {0xFF,0xFF,0xFF,0xFF,/*0xFF*/0x7F,0x81,0x00,/*0xDF*/0xDC,0xFF,0x00,0x00,
+UInt8 terminal_profile_data[30] =  {0xFF,0xFF,0xFF,0xFF,/*0xFF*/0x7F,0x81,0x00,/*0xDF*/0xDC,0xFF,0x00,0x00,
                                       0x00,0x00,0x10,0x20,0xA6,0x00,0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00}; // gearn TP fixed
 
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON)  //[latin_protocol] skh STK Issue
+Boolean radio_on_setupmenu= FALSE;
+#endif
 
 // For india
-#define MAX_MCCMNC_COUNT 127
+#define MAX_MCCMNC_COUNT 142
 char MCCMNC_CODES_HAVING_3DIGITS_MNC[MAX_MCCMNC_COUNT][7] = {"405025", "405026", "405027", "405028", "405029", "405030", "405031", "405032",
         "405033", "405034", "405035", "405036", "405037", "405038", "405039", "405040",
         "405041", "405042", "405043", "405044", "405045", "405046", "405047", "405750",
@@ -84,10 +93,12 @@ char MCCMNC_CODES_HAVING_3DIGITS_MNC[MAX_MCCMNC_COUNT][7] = {"405025", "405026",
         "405841", "405842", "405843", "405844", "405845", "405846", "405847", "405848",
         "405849", "405850", "405851", "405852", "405853", "405875", "405876", "405877",
         "405878", "405879", "405880", "405881", "405882", "405883", "405884", "405885",
-        "405886", "405908", "405909", "405910", "405911", "405925", "405926", "405927",
-        "405928", "405929", "405932"
+        "405886", "405908", "405909", "405910", "405911",
+        "405912", "405913", "405914", "405915", "405916", "405917", "405918", "405919",
+        "405920", "405921", "405922", "405923", "405924", 
+        "405925", "405926", "405927",
+        "405928", "405929", "405930", "405931", "405932"
     };
-
 // IMEI information
 #ifdef CONFIG_BRCM_SIM_SECURE_ENABLE
 static Boolean ProcessImei(UInt8* imeiStr, UInt8* imeiVal);
@@ -427,7 +438,7 @@ void KRIL_InitCmdHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         {
             CAPI2_MS_Element_t data;
             memset((UInt8*)&data, 0x00, sizeof(CAPI2_MS_Element_t));
-            data.inElemType = MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS;
+            data.inElemType = MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS;
             data.data_u.bData = FALSE;
             CAPI2_MsDbApi_SetElement(InitClientInfo(pdata->ril_cmd->SimId), &data);
             pdata->handler_state = BCM_SATK_SEND_SETUP_EVENT_LIST_CTR;
@@ -507,7 +518,7 @@ void KRIL_InitCmdHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 }
 
 
-static int RadioDuringRefresh = 0;
+
 void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
@@ -529,56 +540,90 @@ void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
     {
         case BCM_SendCAPI2Cmd:
         {
-            int *OnOff = (int *)(pdata->ril_cmd->data);
+            KrilRadioPower_t *tdata = (KrilRadioPower_t *)pdata->ril_cmd->data;
+			pdata->handler_state = BCM_RESPCAPI2Cmd;
+			gpowerOffcard = tdata->powerOffcard;
+ 			KRIL_DEBUG(DBG_ERROR, " KRIL_RadioPowerHandler 1 On-Off:%d, gIsStkRefreshReset: %d, SIM ID : %d powerOffcard:%d\n", tdata->onOff ,gIsStkRefreshReset, pdata->ril_cmd->SimId, tdata->powerOffcard);
 
-            KRIL_DEBUG(DBG_INFO, "On-Off:%d\n", *OnOff);
+			if((gIsStkRefreshReset == TRUE)||(gIsStkRefreshResetSTK2 == TRUE)){ // gearn STK2 SIM refresh reset
 
-			if(gIsStkRefreshReset == TRUE){
+
+                    if(gIsStkRefreshReset == TRUE)  
+                    {
+
+                        pdata->ril_cmd->SimId = SIM_DUAL_FIRST; 
+
+			KRIL_DEBUG(DBG_ERROR, " SET KRIL_RadioPowerHandler 2 gIsStkRefreshReset: %d\n" ,gIsStkRefreshReset); 
 				
-				RadioDuringRefresh ++;
-				KRIL_DEBUG(DBG_INFO, "Refresh : RadioDuringRefresh %d\n",RadioDuringRefresh);
-				if(RadioDuringRefresh >= 3){
-					if(RadioDuringRefresh == 4){
-						RadioDuringRefresh = 0;
-						gIsStkRefreshReset = FALSE;
 					}
-						
-					KRIL_DEBUG(DBG_INFO, "Skip power on-off - Refresh\n");
-					pdata->bcm_ril_rsp = NULL;
-					pdata->rsp_len = 0;
-					pdata->handler_state = BCM_FinishCAPI2Cmd;
-					break;
+                    else if(gIsStkRefreshResetSTK2 == TRUE)
+                    {
 
-				}
+                         pdata->ril_cmd->SimId = SIM_DUAL_SECOND; 
+                                                
+                         KRIL_DEBUG(DBG_ERROR, " SET KRIL_RadioPowerHandler 2 gIsStkRefreshResetSTK2: %d\n" ,gIsStkRefreshResetSTK2);
+
+                       }
+						
+
+
+
 				
-				if(*OnOff == 0){
-					KRIL_DEBUG(DBG_INFO, "Power off Sim card - Refresh\n");
+				if(tdata->onOff == 0){
+					KRIL_DEBUG(DBG_INFO, "Power off Sim card 1- Refresh SIM ID : %d\n", pdata->ril_cmd->SimId);
                     CAPI2_SimApi_PowerOnOffCard (InitClientInfo(pdata->ril_cmd->SimId), FALSE, SIM_POWER_ON_INVALID_MODE);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
 
 				}else{
-					KRIL_DEBUG(DBG_INFO, "Power on Sim card - Refresh\n");
+					KRIL_DEBUG(DBG_INFO, "Power on Sim card 2-Refresh SIM ID : %d\n", pdata->ril_cmd->SimId);
 					CAPI2_SimApi_PowerOnOffCard (InitClientInfo(pdata->ril_cmd->SimId), TRUE, SIM_POWER_ON_NORMAL_MODE);
 					pdata->handler_state = BCM_RESPCAPI2Cmd;
-					//gIsStkRefreshReset = FALSE;
+                                         if(gIsStkRefreshReset == TRUE)  
+                                       {
+					gIsStkRefreshReset = FALSE;
+                                        }
+                                         if(gIsStkRefreshResetSTK2 == TRUE)  
+                                       {
+					gIsStkRefreshResetSTK2 = FALSE;
+                                        }
 				}
 				break;
 
 			}
-			else {
+			else 
+			{
 
-            	if (*OnOff == 1)
+            	if (tdata->onOff == 1)
             	{
                 	CAPI2_PhoneCtrlApi_ProcessPowerUpReq(InitClientInfo(pdata->ril_cmd->SimId));
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
             	}
-				else{
+				else
+				{
+                    if (1 == tdata->powerOffcard)
+                    {
+                        KRIL_DEBUG(DBG_INFO, "Power off Sim card - power down!\n");
+                        CAPI2_SimApi_PowerOnOffCard (InitClientInfo(pdata->ril_cmd->SimId), FALSE, SIM_POWER_OFF_FORCE_MODE);
+                        pdata->handler_state = BCM_PowerOnOffCard;
+                    }
+                    else
+                    {					
                 	CAPI2_PhoneCtrlApi_ProcessNoRfReq(InitClientInfo(pdata->ril_cmd->SimId));
-                	pdata->handler_state = BCM_RESPCAPI2Cmd;
+                   	}
             	}
 				break;
 			}
         }
+        
+        case BCM_PowerOnOffCard:
+        {
+            KrilRadioPower_t *tdata = (KrilRadioPower_t *)pdata->ril_cmd->data;
+            KRIL_DEBUG(DBG_INFO, "On-Off:%d\n", tdata->onOff);
+            CAPI2_PhoneCtrlApi_ProcessNoRfReq(InitClientInfo(pdata->ril_cmd->SimId));
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            break;
+        }
+
         
         case BCM_RESPCAPI2Cmd:
         {
@@ -593,15 +638,18 @@ void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 KRIL_DEBUG(DBG_ERROR, "OnOff:%d\n", (int)pdata->bcm_ril_rsp);
             }
 	     //Irine_22June_airplanemode
-            int *OnOff = (int *)(pdata->ril_cmd->data);
+            KrilRadioPower_t *tdata = (KrilRadioPower_t *)pdata->ril_cmd->data;
 
             KRIL_DEBUG(DBG_TRACE, "handler state:%lu\n", pdata->handler_state);
             pdata->handler_state = BCM_FinishCAPI2Cmd;
 			
-            KRIL_DEBUG(DBG_INFO, "On-Off:%d\n", *OnOff);
-            if (1 == *OnOff)
+            KRIL_DEBUG(DBG_INFO, "On-Off:%d\n", tdata->onOff);
+            if (1 == tdata->onOff)
             {
-
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON)  //[latin_protocol] skh STK Issue
+                 radio_on_setupmenu= TRUE;
+#endif
 
                if((capi2_rsp->SimId) == SIM_DUAL_SECOND ){  //  gearn airplane mode control for SIMAT
                     KRIL_DEBUG(DBG_ERROR, "KRIL_RadioPowerHandler: Offline off\n");
@@ -1228,7 +1276,7 @@ void ParseIMSIData(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
     else
     {
         imsi_result->result = BCM_E_SUCCESS;
-        KRIL_DEBUG(DBG_INFO,"IMSI:%s\n", (char*)rsp);
+        // KRIL_DEBUG(DBG_INFO,"IMSI:%s\n", (char*)rsp);
         memcpy(imsi_result->imsi, (char*)rsp, (IMSI_DIGITS+1));
 
 	  //  ++JSHAN
@@ -1239,7 +1287,6 @@ void ParseIMSIData(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
 	  
       strncpy(MccMnc, (char*)rsp, 6);
 	  strncpy(Mcc, (char*)rsp, 3);
-      
       mncLength = 2;
       for(i = 0 ; i < MAX_MCCMNC_COUNT; i++)
       {
@@ -1248,9 +1295,7 @@ void ParseIMSIData(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
                  mncLength = 3;
             }
       }
-      
       strncpy(Mnc, (char*)rsp + 3, mncLength);
-  
 	  KRIL_DEBUG(DBG_INFO,"IMSI: MCC:%s , MNC:%s\n",Mcc,Mnc);
 	  
 	  Sim_MCC = ConvertStrToNum(Mcc);
@@ -1345,7 +1390,7 @@ static void ParseIMEIData(KRIL_CmdList_t* pdata, Kril_CAPI2Info_t* capi2_rsp)
             // MS database IMEI is not all 0's, so we use it
             strncpy(imei_result->imei, pMSDBImeiStr, IMEI_DIGITS);
             imei_result->imei[IMEI_DIGITS] = '\0';
-            KRIL_DEBUG(DBG_INFO,"Using MS DB IMEI:%s\n", pMSDBImeiStr );
+            KRIL_DEBUG(DBG_INFO,"Using MS DB IMEI\n");
         }
         else
         {
@@ -1358,7 +1403,7 @@ static void ParseIMEIData(KRIL_CmdList_t* pdata, Kril_CAPI2Info_t* capi2_rsp)
             if ( bFound )
             {
                 // got it from sysparms, so copy to the response struct
-                KRIL_DEBUG(DBG_INFO,"Using sysparm IMEI:%s\n", tmpImeiStr );
+                KRIL_DEBUG(DBG_INFO,"Using sysparm IMEI\n");
                 strncpy(imei_result->imei, tmpImeiStr, IMEI_STRING_LEN);
             }
             else

@@ -96,6 +96,8 @@ static enum hrtimer_restart hrtimer_callback( struct hrtimer *timer )
 static int gptimer_callback(void *dev_id)
 {
     tasklet_schedule(&(voip_task));
+
+    return 0;
 }
 
 #endif

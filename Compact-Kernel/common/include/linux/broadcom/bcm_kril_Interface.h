@@ -29,6 +29,12 @@
 #define RIL_SUPL_NOTIFICATION_ITEM_LEN                       50	/* LCS_SUPL_NOTIFICATION_ITEM_LEN */
 #define RIL_SUPL_WCHAR_NOTIFY_ITEM_LEN                       (RIL_SUPL_NOTIFICATION_ITEM_LEN*8/7 + 1)
 
+// BCM_EAP_SIM
+#ifdef BCM_RIL_FOR_EAP_SIM 
+#define  BCM_EAP_URIL_CLIENT 9
+#endif
+
+
 #ifndef _TASKMSGS_H_
 /**
 Structure : Sim Identifier Type

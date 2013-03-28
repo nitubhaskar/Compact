@@ -97,6 +97,9 @@ struct gether {
 int gether_setup(struct usb_gadget *g, u8 ethaddr[ETH_ALEN]);
 void gether_cleanup(void);
 
+int set_ether_addr(u8 ethaddr[ETH_ALEN]);
+
+
 /* connect/disconnect is handled by individual functions */
 struct net_device *gether_connect(struct gether *);
 void gether_disconnect(struct gether *);

@@ -597,18 +597,18 @@ static irqreturn_t v3d_isr(int irq, void *dev_id)
 #ifdef DEBUG_V3D_ISR
 			dbg_v3d_oom_blk2_usage_cnt++;
 #endif
-			KLOG_D("v3d oom blk 1 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
+			KLOG_V("v3d oom blk 1 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
 				flags, v3d_read(INTCTL), v3d_read(BPOA), v3d_read(BPOS), v3d_read(BPCA), v3d_read(BPCS));
 			iowrite32(v3d_bin_oom_block2,	v3d_base + BPOA);
 			iowrite32(v3d_bin_oom_size2,	v3d_base + BPOS);
 			v3d_oom_block_used = 2;
-			KLOG_D("v3d oom blk 2 given: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
+			KLOG_V("v3d oom blk 2 given: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
 				flags, v3d_read(INTCTL), v3d_read(BPOA), v3d_read(BPOS), v3d_read(BPCA), v3d_read(BPCS));
 		}else {
 #ifdef DEBUG_V3D_ISR
 			dbg_v3d_oom_fatal_cnt++;
 #endif
-			KLOG_E("v3d fatal: oom blk 2 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
+			KLOG_V("v3d fatal: oom blk 2 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
 				flags, v3d_read(INTCTL), v3d_read(BPOA), v3d_read(BPOS), v3d_read(BPCA), v3d_read(BPCS));
 			v3d_flags |= (1 << 5);
 			iowrite32(1 << 2, v3d_base + INTDIS);
@@ -622,7 +622,7 @@ static irqreturn_t v3d_isr(int irq, void *dev_id)
 		v3d_in_use = 0;
 		v3d_oom_block_used = 0;
 		if ((v3d_flags != 1) && (v3d_flags != 2)) {
-			KLOG_D("v3d isr signal, v3d_flags[0x%x]", v3d_flags);
+			KLOG_V("v3d isr signal, v3d_flags[0x%x]", v3d_flags);
 		}
 		wake_up_interruptible(&v3d_isr_done_q);
 	}
@@ -1311,7 +1311,7 @@ static int v3d_thread(void *data)
 			KLOG_V("wait exit, v3d_in_use[%d], timeout[%d]", v3d_in_use, timeout);
 			if (timeout && (timeout < timout_min)) {
 				timout_min = timeout;
-				KLOG_V("Minimum jiffies before timeout[%d]. Actual timeout set in jiffies[%d]",
+				KLOG_V("Minimum jiffies before timeout[%d]. Actual timeout set in jiffies[%d]", 
 					timout_min, (u32)msecs_to_jiffies(V3D_ISR_TIMEOUT_IN_MS));
 			}
 
@@ -1778,7 +1778,7 @@ static int v3d_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, u
 			}
 
 #ifdef CONFIG_BCM21553_V3D_SYNC_ENABLE
-			/*spin_lock_irqsave(&dev->lock, flags);*/
+			spin_lock_irqsave(&dev->lock, flags);
 #endif
 		if(reg_addr > 0xF23) {
 		    KLOG_E("reg_addr greater than the max V3D reg address space\n");
@@ -1786,7 +1786,7 @@ static int v3d_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, u
 		}
 		reg_value = v3d_read(reg_addr);
 #ifdef CONFIG_BCM21553_V3D_SYNC_ENABLE
-			/*spin_unlock_irqrestore(&dev->lock, flags);*/
+			spin_unlock_irqrestore(&dev->lock, flags);
 #endif
 
 			if (copy_to_user((u32 *)arg, &reg_value, sizeof(u32))) {
@@ -1949,15 +1949,6 @@ int __init v3d_opt_init(void)
 	KLOG_D("v3d bin oom2 phys[0x%08x], size[0x%08x] cpuaddr[0x%08x]", 
 		v3d_bin_oom_block2, v3d_bin_oom_size2, (int)v3d_bin_oom_cpuaddr2);
 
-	v3d_id = 1;
-	v3d_in_use = 0;
-	init_MUTEX(&v3d_sem);
-	INIT_ACQUIRE;
-	init_waitqueue_head(&v3d_isr_done_q);
-	init_waitqueue_head(&v3d_start_q);
-	v3d_job_head = NULL;
-	v3d_job_curr = NULL;
-
 	v3d_thread_task = kthread_run(&v3d_thread,v3d_dev,"v3d_thread");
 	if ((int)v3d_thread_task == -ENOMEM) {
 		KLOG_E("Kernel Thread did not start [0x%08x]", (int)v3d_thread_task);
@@ -1972,6 +1963,15 @@ int __init v3d_opt_init(void)
 		goto err;
 	}
 
+	v3d_id = 1;
+	v3d_in_use = 0;
+	init_MUTEX(&v3d_sem);
+	INIT_ACQUIRE;
+	init_waitqueue_head(&v3d_isr_done_q);
+	init_waitqueue_head(&v3d_start_q);
+	v3d_job_head = NULL;
+	v3d_job_curr = NULL;
+	
 #ifdef ENABLE_PROCFS
 	v3d_proc_file = create_proc_entry(V3D_DEV_NAME, 0644, NULL);
 	if (v3d_proc_file) {

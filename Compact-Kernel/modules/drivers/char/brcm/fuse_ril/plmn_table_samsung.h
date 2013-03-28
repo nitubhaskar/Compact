@@ -71,15 +71,15 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Greece ****
  ****************/
 /* COSMOTE */
-{ 202,   1, NETWK_TYPE_GSM_900, "COSMOTE", "COSMOTE" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 202,   1, NETWK_TYPE_GSM_900, "COSMOTE", "COSMOTE" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* COSMOTE */
-{ 202,   1, NETWK_TYPE_DCS_1800, "COSMOTE", "COSMOTE" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 202,   1, NETWK_TYPE_DCS_1800, "COSMOTE", "COSMOTE" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Vodafone */
 { 202,   5, NETWK_TYPE_GSM_900, "vodafone GR", "vodafone GR" },
 /* Info Quest - Commercial & Industrial SA */
-{ 202,   9, NETWK_TYPE_DCS_1800, "n/a", "n/a" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 202,   9, NETWK_TYPE_DCS_1800, "n/a", "n/a" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* STET HELLAS */
-{ 202,  10, NETWK_TYPE_GSM_900, "WIND GR", "WIND GR" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 202,  10, NETWK_TYPE_GSM_900, "WIND GR", "WIND GR" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 
 /*********************
  **** Netherlands ****
@@ -103,9 +103,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Belgium ****
  *****************/
 /* Belgacom Mobile */
-{ 206,   1, NETWK_TYPE_GSM_900, "PROXIMUS", "PROXIMUS" },
+{ 206,   1, NETWK_TYPE_GSM_900, "Proximus", "Proximus" },
 /* Belgacom Mobile */
-{ 206,   1, NETWK_TYPE_DCS_1800, "PROXIMUS", "PROXIMUS" },
+{ 206,   1, NETWK_TYPE_DCS_1800, "Proximus", "Proximus" },
+/* Telenet */
+{ 206,   5, NETWK_TYPE_GSM_900, "Telenet", "Telenet" },
 /* Mobistar S.A. */
 { 206,  10, NETWK_TYPE_GSM_900, "MOBISTAR", "MOBISTAR" },
 /* Mobistar S.A. */
@@ -113,7 +115,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Mobistar S.A. */
 { 206, 10, NETWK_TYPE_UMTS, "MOBISTAR", "MOBISTAR" }, 
 /* KPN Orange Belgium NV/SA */
-{ 206,  20, NETWK_TYPE_DCS_1800, "BASE", "BASE" },
+{ 206,  20, NETWK_TYPE_DCS_1800, "Base", "Base" },
 
 /****************
  **** France ****
@@ -166,6 +168,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 214,   3, NETWK_TYPE_UMTS, "Orange", "Orange" },  /* refer to selist20080115.xls for Orange [jm0122.yoon 20080122] */
 /* Xfera Moviles SA */
 { 214,   4, NETWK_TYPE_UMTS, "Yoigo", "Yoigo" },
+#if defined (CONFIG_LTN_COMMON)
+{ 214,   5, NETWK_TYPE_DCS_1800, "movistar", "movistar" },
+#endif
 /* Euskaltel */
 { 214,   6, NETWK_TYPE_GSM_900, "EUSKALTEL", "EUSKALTEL" },/* added for 214 8 display problem for Euskaltel*/
 /* Telefonica Moviles */
@@ -197,11 +202,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Bosnia ****
  ****************/
 /* Eronet Mobile Communications Ltd */
-{ 218,   3, NETWK_TYPE_GSM_900, "HT Eronet", "HT Eronet" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 218,   3, NETWK_TYPE_GSM_900, "HT Eronet", "HT Eronet" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* RS Telecommunications  JSC Banja Luka */
-{ 218,   5, NETWK_TYPE_GSM_900, "m:tel", "m:tel" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 218,   5, NETWK_TYPE_GSM_900, "m:tel", "m:tel" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Public Enterprise BH Telecom Sarajevo */
-{ 218,  90, NETWK_TYPE_GSM_900, "BH Mobile", "BH Mobile" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 218,  90, NETWK_TYPE_GSM_900, "BH Mobile", "BH Mobile" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 
 /*****************
  **** Croatia ****
@@ -211,12 +216,12 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Tele2 d.o.o za telekomunikacijske uluge */
 { 219, 2, NETWK_TYPE_DCS_1800, "TELE2", "TELE2" }, 
 /* Vip-NET GSM d.o.o. */
-{ 219,  10, NETWK_TYPE_GSM_900, "HR-VIP", "HR-VIP" },//[2009.01.21]sun.mi.jung ¿Ò»ç¾ç¼­ÀÇ PLMN nameÀ¸·Î ¼öÁ¤.
+{ 219,  10, NETWK_TYPE_GSM_900, "HR VIP", "HR VIP" },//[2009.01.21]sun.mi.jung Ò»ç¼­ PLMN name .
 
 /********************
  **** Yugoslavia ****
  ********************/
-/* Mobile Telecommunications */  //[proto]yjm0122 »ç¾÷ÀÚ ¿äÃ»À¸·Î diplayº¯°æ
+/* Mobile Telecommunications */  //[proto]yjm0122  Ã» diplay
 { 220,   1, NETWK_TYPE_GSM_900, "Telenor", "Telenor" },
 /* Mobile Telecommunications */
 { 220,   1, NETWK_TYPE_DCS_1800, "Telenor", "Telenor" },
@@ -237,10 +242,17 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /***************
  **** Italy ****
  ***************/
+#if defined (CONFIG_LTN_COMMON)
+/* Telecom Italia Mobile */
+{ 222,   1, NETWK_TYPE_GSM_900, "TIM", "TIM" },
+/* Telecom Italia Mobile */
+{ 222,   1, NETWK_TYPE_DCS_1800, "TIM", "TIM" },
+#else
 /* Telecom Italia Mobile */
 { 222,   1, NETWK_TYPE_GSM_900, "I TIM", "I TIM" },
 /* Telecom Italia Mobile */
 { 222,   1, NETWK_TYPE_DCS_1800, "I TIM", "I TIM" },
+#endif
 /* Omnitel Pronto Italia is Vodafone IT now */
 { 222,  10, NETWK_TYPE_GSM_900, "vodafone IT", "vodafone IT" },
 /* Omnitel Pronto Italia is Vodafone IT now*/
@@ -274,19 +286,19 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Switzerland ****
  *********************/
 /* Swisscom Mobile Ltd */
-{ 228,   1, NETWK_TYPE_GSM_900, "Swisscom", "Swisscom" },//[2007.09.19]wonki.ha °ËÁõÆÀ ¿äÃ»¿¡ ÀÇÇØ ¼Ò¹®ÀÚ·Î ¼öÁ¤
+{ 228,   1, NETWK_TYPE_GSM_900, "Swisscom", "Swisscom" },//[2007.09.19]wonki.ha  Ã»  Ò¹Ú· 
 /* Swisscom Mobile Ltd */
-{ 228,   1, NETWK_TYPE_DCS_1800, "Swisscom", "Swisscom" },//[2007.09.19]wonki.ha °ËÁõÆÀ ¿äÃ»¿¡ ÀÇÇØ ¼Ò¹®ÀÚ·Î ¼öÁ¤
+{ 228,   1, NETWK_TYPE_DCS_1800, "Swisscom", "Swisscom" },//[2007.09.19]wonki.ha  Ã»  Ò¹Ú· 
 /* TDC Switzerland AG */
-{ 228,   2, NETWK_TYPE_GSM_900, "Sunrise", "Sunrise" }, //2008.12.02 sunrise->Sunrise ÇöÃ¤ÀÎYves Piccand [y.piccand@samsung.com] ¿äÃ»»çÇ×
+{ 228,   2, NETWK_TYPE_GSM_900, "Sunrise", "Sunrise" }, //2008.12.02 sunrise->Sunrise Ã¤Yves Piccand [y.piccand@samsung.com] Ã»
 /* TDC Switzerland AG */
-{ 228,   2, NETWK_TYPE_DCS_1800, "Sunrise", "Sunrise" }, //2008.12.02 sunrise->Sunrise ÇöÃ¤ÀÎYves Piccand [y.piccand@samsung.com] ¿äÃ»»çÇ×
+{ 228,   2, NETWK_TYPE_DCS_1800, "Sunrise", "Sunrise" }, //2008.12.02 sunrise->Sunrise Ã¤Yves Piccand [y.piccand@samsung.com] Ã»
 /* Orange Communications S.A */
-{ 228,   3, NETWK_TYPE_DCS_1800, "orange CH", "orange CH" },//[2007.09.19]wonki.ha °ËÁõÆÀ ¿äÃ»¿¡ ÀÇÇØ ´ë¹®ÀÚ·Î  ¼öÁ¤
+{ 228,   3, NETWK_TYPE_DCS_1800, "orange CH", "orange CH" },//[2007.09.19]wonki.ha  Ã»  ë¹®Ú·  
 /* In &Phone SA */
 { 228, 7, NETWK_TYPE_DCS_1800, "In&Phone", "In&Phone" }, 
 /* Tele2 Telecommunications Services AG */
-{ 228, 8, NETWK_TYPE_DCS_1800, "Tele2", "Tele2" }, //[2007.09.19]wonki.ha °ËÁõÆÀ ¿äÃ»¿¡ ÀÇÇØ T2 ¿¡¼­ ¼öÁ¤ 
+{ 228, 8, NETWK_TYPE_DCS_1800, "Tele2", "Tele2" }, //[2007.09.19]wonki.ha  Ã»  T2   
 
 /************************
  **** Czech Republic ****
@@ -300,15 +312,15 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* EuroTel Praha Spol. sro */
 { 230,   2, NETWK_TYPE_DCS_1800, "O2 - CZ", "O2 - CZ" },
 /* Cesky Mobil a.s */
-{ 230,   3, NETWK_TYPE_GSM_900, "Vodafone CZ", "Vodafone CZ" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 230,   3, NETWK_TYPE_GSM_900, "Vodafone CZ", "Vodafone CZ" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Cesky Mobil a.s */
-{ 230,   3, NETWK_TYPE_DCS_1800, "Vodafone CZ", "Vodafone CZ" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 230,   3, NETWK_TYPE_DCS_1800, "Vodafone CZ", "Vodafone CZ" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 
 /*************************
  **** Slovak Republic ****
  *************************/
 /* Orange Slovensko a.s. */
-{ 231,   1, NETWK_TYPE_GSM_900, "Orange", "Orange" },  //2008.12.02 ÇöÃ¤ÀÎ ¿äÃ»»çÇ× Orange SK->Orange
+{ 231,   1, NETWK_TYPE_GSM_900, "Orange", "Orange" },  //2008.12.02 Ã¤ Ã» Orange SK->Orange
 /* Orange Slovensko a.s. */
 { 231,   1, NETWK_TYPE_DCS_1800, "Orange", "Orange" },    //2008.12.02 /* refer to selist20080115.xls for Orange [jm0122.yoon 20080122] */
 /* EuroTel Bratislava a.s */
@@ -318,7 +330,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* EuroTel Bratislava a.s */
 { 231,   4, NETWK_TYPE_UMTS, "T-Mobile SK", "T-Mobile SK" },
 /* Orange Slovensko a.s. */
-{ 231,   5, NETWK_TYPE_DCS_1800, "Orange", "Orange" }, //2008.12.02 ÇöÃ¤ÀÎ ¿äÃ»»çÇ× Orange SK->Orange  from Peter Makai [peter.makai@samsung.com]
+{ 231,   5, NETWK_TYPE_DCS_1800, "Orange", "Orange" }, //2008.12.02 Ã¤ Ã» Orange SK->Orange  from Peter Makai [peter.makai@samsung.com]
 /* Telefonica O2 Slovakia s.r.o. */
 { 231,   6, NETWK_TYPE_GSM_900, "O2 - SK", "O2 - SK" },
 /* Telefonica O2 Slovakia s.r.o. */
@@ -353,12 +365,12 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 232,	 11, NETWK_TYPE_DCS_1800, "bob", "bob" }, // 2009.04.09 Requirement Austria
 /* bob */
 { 232,	 11, NETWK_TYPE_UMTS, "bob", "bob" }, // 2009.04.09 Requirement Austria
-/* Connect Austria */
-{ 232,   12, NETWK_TYPE_GSM_900, "Orange A", "Orange AT" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
-/* Connect Austria */
-{ 232,   12, NETWK_TYPE_DCS_1800, "Orange A", "Orange AT" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
-/* Connect Austria */
-{ 232,   12, NETWK_TYPE_UMTS, "Orange A", "Orange AT" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
+/* yesss! Austria */
+{ 232,   12, NETWK_TYPE_GSM_900, "yesss!", "yesss!" },
+/* yesss! Austria */
+{ 232,   12, NETWK_TYPE_DCS_1800, "yesss!", "yesss!" },
+/* yesss! Austria */
+{ 232,   12, NETWK_TYPE_UMTS, "yesss!", "yesss!" },
 
 
 /************************
@@ -383,7 +395,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /*  T-Mobile (UK) Limited */
 { 234,  32, NETWK_TYPE_DCS_1800, "T-Mobile UK", "T-Mobile UK" },
 /* Orange PCS Ltd */
-{ 234,  33, NETWK_TYPE_DCS_1800, "Orange", "Orange" },
+{ 234,  33, NETWK_TYPE_DCS_1800, "T-Mobile Orange", "T-Mobile Orange" },
 /* Jersey Telecoms */
 { 234,  50, NETWK_TYPE_GSM_900, "JT GSM", "JT GSM" },
 /* Wave Telecom */
@@ -438,7 +450,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* COMVIQ GSM shared with TeliaSonera MobileNetworks */
 { 240,   5, NETWK_TYPE_UMTS, "Sweden 3G", "Sweden 3G" },
 /* Tele 2 AB */
-{ 240,   7, NETWK_TYPE_GSM_900, "Tele2comviq", "Tele2comviq" },   //2008.12.02 S COMVIQ-> Tele2comviq ÇöÃ¤ÀÎAndreas Bergqvist [andreas.bergqvist@samsung.se] ¿äÃ»
+{ 240,   7, NETWK_TYPE_GSM_900, "Tele2comviq", "Tele2comviq" },   //2008.12.02 S COMVIQ-> Tele2comviq Ã¤Andreas Bergqvist [andreas.bergqvist@samsung.se] Ã»
 /* Tele 2 AB */
 { 240,   7, NETWK_TYPE_DCS_1800, "Tele2comviq", "Tele2comviq" },  //2008.12.02 
 /* Europolitan AB */
@@ -465,12 +477,12 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 242,   2, NETWK_TYPE_DCS_1800, "N NetCom GSM", "N NetCom GSM" },
 /* Teletopia Mobile Communications AS */
 { 242, 3, NETWK_TYPE_DCS_1800, "T3", "T3" }, 
-/* Netwrok Norway */
-{ 242, 5, NETWK_TYPE_GSM_900, "Netwrok Norway", "Netwrok Norway" }, 
-/* Netwrok Norway */
-{ 242, 5, NETWK_TYPE_DCS_1800, "Netwrok Norway", "Netwrok Norway" }, 
-/* Netwrok Norway */
-{ 242, 5, NETWK_TYPE_UMTS, "Netwrok Norway", "Netwrok Norway" },  
+/* Mobile Norway*/
+{ 242, 5, NETWK_TYPE_GSM_900, "Mobile Norway", "Mobile Norway" }, 
+/* Mobile Norway */
+{ 242, 5, NETWK_TYPE_DCS_1800, "Mobile Norway", "Mobile Norway" }, 
+/* Mobile Norway */
+{ 242, 5, NETWK_TYPE_UMTS, "Mobile Norway", "Mobile Norway" },  
 
 /*****************
  **** Finland ****
@@ -486,11 +498,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Finnet Group */
 { 244,   9, NETWK_TYPE_DCS_1800, "Finnet", "Finnet" },
 /* Finnet Networks Ltd */
-{ 244,  12, NETWK_TYPE_GSM_900, "FI 2G", "FI 2G" },
+{ 244,  12, NETWK_TYPE_GSM_900, "DNA", "DNA" },
 /* Finnet Networks Ltd */
-{ 244,  12, NETWK_TYPE_DCS_1800, "FI 2G", "FI 2G" },
+{ 244,  12, NETWK_TYPE_DCS_1800, "DNA", "DNA" },
 /* Finnet Networks Ltd */
-{ 244,  12, NETWK_TYPE_UMTS, "FI 2G", "FI 2G" },
+{ 244,  12, NETWK_TYPE_UMTS, "DNA", "DNA" },
 /* Alands Mobiltelefon A.B */
 { 244,  14, NETWK_TYPE_GSM_900, "FI AMT", "FI AMT" },
 /* Sonera Mobile Networks Limited */
@@ -551,7 +563,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /****************
  **** Russia ****
  ****************/
- //S/W ±â¼ú°³¹ß ±×·ì ÀÌ¿µÈÆ »ç¿øÀÇ ¿äÃ»¿¡ ÀÇÇØ 2007.08.20 ¼öÁ¤ - Hongs
+ //S/W  ×· Ì¿  Ã»  2007.08.20  - Hongs
 /* Mobile Telesystems */
 { 250,   1, NETWK_TYPE_GSM_900, "MTS", "MTS" },
 /* North-West GSM */
@@ -630,7 +642,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 255,   5, NETWK_TYPE_DCS_1800, "GT", "GT" },	// 2008.06.11 kbs@CIS
 /* Astelit LLC */
 { 255, 6, NETWK_TYPE_DCS_1800, "Life:)", "life:)" }, 							// 2008.06.11 kbs@CIS
-/* Ukrainian New 3G network provider */  //[20071121 jm0122.yoon]»ç¾÷ÀÚ¿ä±¸»çÇ×À¸·Î Ãß°¡
+/* Ukrainian New 3G network provider */  //[20071121 jm0122.yoon]Ú¿ä±¸ ß°
 { 255, 7, NETWK_TYPE_UMTS, "Utel", "Utel" }, 
 
 /*****************
@@ -671,21 +683,21 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Polska Telefonia Cyfrowa */
 { 260,   2, NETWK_TYPE_DCS_1800, "T-Mobile.pl", "T-Mobile.pl" },
 /* PTK Centertel */
-{ 260,   3, NETWK_TYPE_GSM_900, "Orange", "Orange" },   // [2009.01.21] Orange PL¿¡¼­ Orange·Î º¯°æ
+{ 260,   3, NETWK_TYPE_GSM_900, "Orange", "Orange" },   // [2009.01.21] Orange PL Orange 
 /* PTK Centertel */
-{ 260,   3, NETWK_TYPE_DCS_1800, "Orange", "Orange" },  // [2009.01.21] Orange PL¿¡¼­ Orange·Î º¯°æ
+{ 260,   3, NETWK_TYPE_DCS_1800, "Orange", "Orange" },  // [2009.01.21] Orange PL Orange 
 /* PTK Centertel */
-{ 260,   3, NETWK_TYPE_UMTS, "Orange", "Orange" },   // [2009.01.21] Orange PL¿¡¼­ Orange·Î º¯°æ
+{ 260,   3, NETWK_TYPE_UMTS, "Orange", "Orange" },   // [2009.01.21] Orange PL Orange 
 /* Poland */
-{ 260,   6, NETWK_TYPE_UMTS, "Play", "Play" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 260,   6, NETWK_TYPE_UMTS, "Play", "Play" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Cyfrowy Polsat */
-{ 260,  12, NETWK_TYPE_GSM_900, "Cyfrowy Polsat", "Cyfrowy Polsat" }, // S5230 ¼öÁ¤¿äÃ».
+{ 260,  12, NETWK_TYPE_GSM_900, "Cyfrowy Polsat", "Cyfrowy Polsat" }, // S5230 Ã».
 /* Cyfrowy Polsat */
-{ 260,  12, NETWK_TYPE_DCS_1800, "Cyfrowy Polsat", "Cyfrowy Polsat" }, // S5230 ¼öÁ¤¿äÃ».
+{ 260,  12, NETWK_TYPE_DCS_1800, "Cyfrowy Polsat", "Cyfrowy Polsat" }, // S5230 Ã».
 /* Cyfrowy Polsat */
-{ 260,  12, NETWK_TYPE_UMTS, "Cyfrowy Polsat", "Cyfrowy Polsat" }, // S5230 ¼öÁ¤¿äÃ».
+{ 260,  12, NETWK_TYPE_UMTS, "Cyfrowy Polsat", "Cyfrowy Polsat" }, // S5230 Ã».
 /* Aero2 */
-{ 260,  17, NETWK_TYPE_UMTS, "Aero2", "Aero2" }, // S5230 ¼öÁ¤¿äÃ».
+{ 260,  17, NETWK_TYPE_UMTS, "Aero2", "Aero2" }, // S5230 Ã».
 
 
 /*****************
@@ -727,28 +739,33 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 268,   3, NETWK_TYPE_GSM_900, "P OPTIMUS", "P OPTIMUS" },
 /* Optimus Telecomunicacoes, S.A */
 { 268,   3, NETWK_TYPE_DCS_1800, "P OPTIMUS", "P OPTIMUS" },
+#if defined (CONFIG_LTN_COMMON)
+/* TMN */
+{ 268, 6, NETWK_TYPE_GSM_900, "TMN", "TMN" },
+#else
 /* Telecomunicacoes Moveis Nacionais S.A */
 { 268,   6, NETWK_TYPE_GSM_900, "P TMN", "P TMN" },
 /* Telecomunicacoes Moveis Nacionais S.A */
 { 268,   6, NETWK_TYPE_DCS_1800, "P TMN", "P TMN" },
 /* TMN */
-{ 268, 6, NETWK_TYPE_UMTS, "P TMN", "P TMN" }, 
+{ 268, 6, NETWK_TYPE_UMTS, "P TMN", "P TMN" },
+#endif
 
 /********************
  **** Luxembourg ****
  ********************/
  /* P & T Luxembourg */
-{ 270,   1, NETWK_TYPE_GSM_900, "LUXGSM", "LUXGSM" }, //[2009.01.21] L LUXGSM¿¡¼­ LUXGSMÀ¸·Î ¼öÁ¤
+{ 270,   1, NETWK_TYPE_GSM_900, "LUXGSM", "LUXGSM" }, //[2009.01.21] L LUXGSM LUXGSM 
  /* P & T Luxembourg */
-{ 270,   1, NETWK_TYPE_DCS_1800, "LUXGSM", "LUXGSM" },//[2009.01.21] L LUXGSM¿¡¼­ LUXGSMÀ¸·Î ¼öÁ¤
+{ 270,   1, NETWK_TYPE_DCS_1800, "LUXGSM", "LUXGSM" },//[2009.01.21] L LUXGSM LUXGSM 
 /* Tango S.A */
-{ 270,  77, NETWK_TYPE_GSM_900, "Tango", "Tango" },  //2008.12.02 L Tango -> Tango ÇöÃ¤ÀÎ Loris Beerten [l.beerten@samsung.com]¿äÃ»»çÇ× 
+{ 270,  77, NETWK_TYPE_GSM_900, "Tango", "Tango" },  //2008.12.02 L Tango -> Tango Ã¤ Loris Beerten [l.beerten@samsung.com]Ã» 
 /* Tango S.A */
-{ 270,  77, NETWK_TYPE_DCS_1800, "Tango", "Tango" }, //2008.12.02 L Tango -> Tango ÇöÃ¤ÀÎ Loris Beerten [l.beerten@samsung.com]¿äÃ»»çÇ× 
-/* VOXmobile S.A. */
-{ 270, 99, NETWK_TYPE_DCS_1800, "Orange", "Orange" }, //2008.12.02 VOX.LU -> Vox Mobile ÇöÃ¤ÀÎ Loris Beerten [l.beerten@samsung.com]¿äÃ»»çÇ×  
-/* VOXmobile S.A. */
-{ 270, 99, NETWK_TYPE_UMTS, "Orange", "Orange" },     //2008.12.02 VOX.LU -> Vox Mobile ÇöÃ¤ÀÎ Loris Beerten [l.beerten@samsung.com]¿äÃ»»çÇ×  
+{ 270,  77, NETWK_TYPE_DCS_1800, "Tango", "Tango" }, //2008.12.02 L Tango -> Tango Ã¤ Loris Beerten [l.beerten@samsung.com]Ã» 
+/* Orange LUX */
+{ 270, 99, NETWK_TYPE_DCS_1800, "Orange LUX", "Orange LUX" },
+/* Orange LUX */
+{ 270, 99, NETWK_TYPE_UMTS, "Orange LUX", "Orange LUX" },
 
 /*****************
  **** Ireland ****
@@ -766,7 +783,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Meteor Mobile Telecommunications Limited */
 { 272,   3, NETWK_TYPE_DCS_1800, "eMobile",  "eMobile" },  /* update EIR 20111010 */
 /* Hutchison NETWK_TYPE_UMTS Ireland limited */
-{ 272, 5, NETWK_TYPE_UMTS, "3", "3" }, //2008.12.02 3 IRL->3 ÃÖ³ªÇö»ç¿ø ¿ä±¸»çÇ×
+{ 272, 5, NETWK_TYPE_UMTS, "3", "3" }, //2008.12.02 3 IRL->3 Ö³ ä±¸
 
 /*****************
  **** Iceland ****
@@ -785,6 +802,8 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 274,   3, NETWK_TYPE_DCS_1800, "Og Vodafone", "Og Vodafone" },
 /* IMC Island ehf */
 { 274,   4, NETWK_TYPE_DCS_1800, "Viking", "Viking" },
+/* Nova ehf*/
+{ 274,  11, NETWK_TYPE_UMTS, "Nova", "Nova" },
 
 /*****************
  **** Albania ****
@@ -812,7 +831,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Cytamobile-Vodafone */
 { 280,   1, NETWK_TYPE_DCS_1800, "CYTAVODA", "CYTAVODA" }, //2009.01.15  
 /* Areeba LTD */
-{ 280, 10, NETWK_TYPE_GSM_900, "MTN", "MTN" }, //2008.12.02 Areeba-> MTN ÇöÃ¤ÀÎ¿äÃ» Polys Hadjikyriakos 
+{ 280, 10, NETWK_TYPE_GSM_900, "MTN", "MTN" }, //2008.12.02 Areeba-> MTN Ã¤Î¿Ã» Polys Hadjikyriakos 
 /* Areeba LTD */
 { 280, 10, NETWK_TYPE_DCS_1800, "MTN", "MTN" }, //2008.12.02
 
@@ -820,13 +839,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Georgia ****
  *****************/
 /* Geocell Limited */
-{ 282,   1, NETWK_TYPE_GSM_900, "GEO-GEOCELL", "GEO-GEOCELL" },
+{ 282,   1, NETWK_TYPE_GSM_900, "Geocell", "Geocell" },
 /* Geocell Limited */
-{ 282,   1, NETWK_TYPE_DCS_1800, "GEO-GEOCELL", "GEO-GEOCELL" },
+{ 282,   1, NETWK_TYPE_DCS_1800, "Geocell", "Geocell" },
 /* Magti GSM */
-{ 282,   2, NETWK_TYPE_GSM_900, "MAGTI-GSM-GEO", "MAGTI-GSM-GEO" },
+{ 282,   2, NETWK_TYPE_GSM_900, "Magticom", "Magticom" },
 /* Magti GSM */
-{ 282,   2, NETWK_TYPE_DCS_1800, "MAGTI-GSM-GEO", "MAGTI-GSM-GEO" },
+{ 282,   2, NETWK_TYPE_DCS_1800, "Magticom", "Magticom" },
 
 /*****************
  **** Armenia ****
@@ -836,9 +855,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Karabakh Telecom */
 { 283,   4, NETWK_TYPE_GSM_900, "RA 04", "RA 04" },
 /* K Telecom CJSC */
-{ 283, 5, NETWK_TYPE_GSM_900, "RA 05", "RA 05" }, 
+{ 283, 5, NETWK_TYPE_GSM_900, "VivaCell-MTS", "VivaCell-MTS" }, 
 /* K Telecom CJSC */
-{ 283, 5, NETWK_TYPE_DCS_1800, "RA 05", "RA 05" }, 
+{ 283, 5, NETWK_TYPE_DCS_1800, "VivaCell-MTS", "VivaCell-MTS" }, 
+/* Orange */
+{ 283, 10, NETWK_TYPE_GSM_900, "Orange", "Orange" }, 
+/* Orange */
+{ 283, 10, NETWK_TYPE_DCS_1800, "Orange", "Orange" },
 
 /******************
  **** Bulgaria ****
@@ -846,21 +869,21 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* MobilTEL AD */
 { 284,   1, NETWK_TYPE_GSM_900, "M-Tel BG", "M-Tel BG" },
 /* BTC Mobile EOOD */
-{ 284,   3, NETWK_TYPE_GSM_900, "vivatel", "vivatel" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 284,   3, NETWK_TYPE_GSM_900, "vivatel", "vivatel" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Cosmo Bulgaria Mobile EAD */
-{ 284,   5, NETWK_TYPE_GSM_900, "BG GLOBUL", "BG GLOBUL" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 284,   5, NETWK_TYPE_GSM_900, "BG GLOBUL", "BG GLOBUL" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Cosmo Bulgaria Mobile EAD */
-{ 284,   5, NETWK_TYPE_DCS_1800, "BG GLOBUL", "BG GLOBUL" },//[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 284,   5, NETWK_TYPE_DCS_1800, "BG GLOBUL", "BG GLOBUL" },//[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 
 /****************
  **** Turkey ****
  ****************/
 /* TR Turkcell */
-{ 286,   1, NETWK_TYPE_GSM_900, "TR Turkcell", "TR Turkcell" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 286,   1, NETWK_TYPE_GSM_900, "TR Turkcell", "TR Turkcell" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* VODAFONE TR */
-{ 286,   2, NETWK_TYPE_GSM_900, "VODAFONE TR", "VODAFONE TR" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 286,   2, NETWK_TYPE_GSM_900, "VODAFONE TR", "VODAFONE TR" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* IS-TIM Telekomunikasyon Hizmetleri Anonim Sirketi */
-{ 286,   3, NETWK_TYPE_DCS_1800, "TR AVEA", "TR AVEA" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 286,   3, NETWK_TYPE_DCS_1800, "TR AVEA", "TR AVEA" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Turk Telekomunikasyon A.S. */
 { 286,   4, NETWK_TYPE_DCS_1800, "TR AYCELL", "TR AYCELL" },
 
@@ -882,29 +905,29 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Slovenia ****
  ******************/
 /* SI.Mobil d.d */
-{ 293,	 30, NETWK_TYPE_GSM_900, "Si.mobil", "Si.mobil" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 30, NETWK_TYPE_GSM_900, "Si.mobil", "Si.mobil" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* SI.Mobil d.d */
-{ 293,	 30, NETWK_TYPE_DCS_1800, "Si.mobil", "Si.mobil" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 30, NETWK_TYPE_DCS_1800, "Si.mobil", "Si.mobil" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* Mobitel d.d */
-{ 293,	 31, NETWK_TYPE_GSM_900, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 31, NETWK_TYPE_GSM_900, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* Mobitel d.d */
-{ 293,	 31, NETWK_TYPE_DCS_1800, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 31, NETWK_TYPE_DCS_1800, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* SI.Mobil d.d */
-{ 293,  40, NETWK_TYPE_GSM_900, "Si.mobil", "Si.mobil" }, //[2009.02.09] Loches voda Opcos issue¿¡¼­ ¼öÁ¤ ¿äÃ».
+{ 293,  40, NETWK_TYPE_GSM_900, "Si.mobil", "Si.mobil" }, //[2009.02.09] Loches voda Opcos issue  Ã».
 /* SI.Mobil d.d */
-{ 293,  40, NETWK_TYPE_DCS_1800, "Si.mobil", "Si.mobil" }, //[2009.02.09] Loches voda Opcos issue¿¡¼­ ¼öÁ¤ ¿äÃ».
+{ 293,  40, NETWK_TYPE_DCS_1800, "Si.mobil", "Si.mobil" }, //[2009.02.09] Loches voda Opcos issue  Ã».
 /* Mobitel d.d */
-{ 293,  41, NETWK_TYPE_GSM_900, "Mobitel", "Mobitel" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 293,  41, NETWK_TYPE_GSM_900, "Mobitel", "Mobitel" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Mobitel d.d */
-{ 293,  41, NETWK_TYPE_DCS_1800, "Mobitel", "Mobitel" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 293,  41, NETWK_TYPE_DCS_1800, "Mobitel", "Mobitel" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /* Mobitel d.d */
-{ 293,	 51, NETWK_TYPE_GSM_900, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 51, NETWK_TYPE_GSM_900, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* Mobitel d.d */
-{ 293,	 51, NETWK_TYPE_DCS_1800, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 51, NETWK_TYPE_DCS_1800, "Mobitel", "Mobitel" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* Western Wireless International d.o.o. */
-{ 293,	 64, NETWK_TYPE_DCS_1800, "T-2", "T-2" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,	 64, NETWK_TYPE_DCS_1800, "T-2", "T-2" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 /* Western Wireless International d.o.o. */
-{ 293,  70, NETWK_TYPE_DCS_1800, "Tusmobil", "Tusmobil" }, //[2010.01.07] Delfi_Wifi PLÅëÇØ ÇöÃ¤ÀÎ ¿äÃ»ÇÔ.
+{ 293,  70, NETWK_TYPE_DCS_1800, "Tusmobil", "Tusmobil" }, //[2010.01.07] Delfi_Wifi PL Ã¤ Ã».
 
 /*******************
  **** Macedonia ****
@@ -912,11 +935,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* T-Mobile Macedonia */
 { 294,   1, NETWK_TYPE_GSM_900, "T-Mobile MK", "T-Mobile MK" },
 /* COSMOFON AD Skopje */
-{ 294,   2, NETWK_TYPE_GSM_900, "Cosmofon", "Cosmofon" }, //[2007.10.02]sungeun.lim ¼öÃâºÎ¿¡¼­ ÀÔ¼öÇÑ »ç¾÷ÀÚ ¿äÃ» ¹× ÇöÃ¤ÀÎ È®ÀÎ ÃÖÁ¾ PLMN nameÀ¸·Î update.
+{ 294,   2, NETWK_TYPE_GSM_900, "Cosmofon", "Cosmofon" }, //[2007.10.02]sungeun.lim Î¿ Ô¼  Ã»  Ã¤ È®  PLMN name update.
 /*VIP OPERATOR DOOEL Skopje*/
-{ 294,   3, NETWK_TYPE_GSM_900, "Vip MK", "Vip MK" }, //[2009.02.05] ÇöÃ¤ÀÎ ¿äÃ»¿¡ ÀÇÇØ Ãß°¡ÇÔ.
+{ 294,   3, NETWK_TYPE_GSM_900, "Vip MK", "Vip MK" }, //[2009.02.05] Ã¤ Ã»  ß°.
 /*VIP OPERATOR DOOEL Skopje*/
-{ 294,   3, NETWK_TYPE_DCS_1800, "Vip MK", "Vip MK" }, //[2009.02.05] ÇöÃ¤ÀÎ ¿äÃ»¿¡ ÀÇÇØ Ãß°¡ÇÔ.
+{ 294,   3, NETWK_TYPE_DCS_1800, "Vip MK", "Vip MK" }, //[2009.02.05] Ã¤ Ã»  ß°.
 
 /***********************
  **** Liechtenstein ****
@@ -1016,6 +1039,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 310,  41, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" }, /*M627500000468*/
 /* TMP Corp */
 { 310,  46, NETWK_TYPE_PCS_1900, "TMP", "TMP" },
+#if defined (CONFIG_LTN_COMMON)
+{ 310,  49, NETWK_TYPE_GSM_850, "Suncom", "Suncom" },
+#endif
 /* DIGICEL */
 { 310,  50, NETWK_TYPE_PCS_1900, "JAM DC", "JAM DC" }, /* M625000000623 */
 /* Key Communications, LLC */
@@ -1090,8 +1116,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 310, 450, NETWK_TYPE_PCS_1900, "Viaero Wireless", "Viaero Wireless" }, /* M625000000623 */
 /* USA ONELINK */
 { 310, 460, NETWK_TYPE_PCS_1900, "USA ONELINK", "USA ONELINK" }, /* M625000000623 */
+#if defined (CONFIG_LTN_COMMON)
+/* SunCom */
+{ 310, 490, NETWK_TYPE_PCS_1900, "Suncom", "Suncom" }, /* M625000000623 */
+#else
 /* SunCom */
 { 310, 490, NETWK_TYPE_PCS_1900, "SunCom", "SunCom" }, /* M625000000623 */
+#endif
 /* Public Service Cellular, Inc */
 { 310, 500, NETWK_TYPE_GSM_850, "PSC Wireless", "PSC Wireless" },
 /* Key Communications, LLC */
@@ -1190,11 +1221,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 ****************/
 /*America Movil*/  
 #if defined (FEATURE_SAMSUNG_MXTELCEL) 
-{330, 11, NETWK_TYPE_PCS_1900, "PRClaro", "PR Claro"},  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{330, 110, NETWK_TYPE_PCS_1900, "PRClaro", "PR Claro"},  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{330, 11, NETWK_TYPE_PCS_1900, "PRClaro", "PR Claro"},  // 2009.09.01 ß³  ×· Èº  Ã»
+{330, 110, NETWK_TYPE_PCS_1900, "PRClaro", "PR Claro"},  // 2009.09.01 ß³  ×· Èº  Ã»
 #else
-{330, 11, NETWK_TYPE_PCS_1900, "CLARO P.R.", "CLARO P.R."},  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{330, 110, NETWK_TYPE_PCS_1900, "CLARO P.R.", "CLARO P.R."},  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{330, 11, NETWK_TYPE_PCS_1900, "CLARO P.R.", "CLARO P.R."},  // 2009.09.01 ß³  ×· Èº  Ã»
+{330, 110, NETWK_TYPE_PCS_1900, "CLARO P.R.", "CLARO P.R."},  // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /****************
 **** Blue Sky****
@@ -1206,45 +1237,48 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Mexico ****
  ****************/
 #if defined(FEATURE_SAMSUNG_ARCTI)       
-{ 334,  2, NETWK_TYPE_PCS_1900, "Telcel", "Telcel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  2, NETWK_TYPE_PCS_1900, "Telcel", "Telcel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #elif defined (FEATURE_SAMSUNG_MXTELCEL)
-{ 334,  2, NETWK_TYPE_PCS_1900, "TELCEL", "TELCEL GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  2, NETWK_TYPE_PCS_1900, "TELCEL", "TELCEL GSM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #else
-{ 334,  2, NETWK_TYPE_PCS_1900, "TELCEL GSM", "TELCEL GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  2, NETWK_TYPE_PCS_1900, "TELCEL GSM", "TELCEL GSM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
 /* Pegaso Comunicaciones y Sistemas, S.A. De C.V */
-{ 334,  3, NETWK_TYPE_GSM_850, "movistar", "movistar" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  3, NETWK_TYPE_GSM_850, "movistar", "movistar" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Telcel GSM */
 
 #if defined(FEATURE_SAMSUNG_ARCTI)
-{ 334,  20, NETWK_TYPE_PCS_1900, "Telcel", "Telcel" }, /* M625000000623 */// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  20, NETWK_TYPE_PCS_1900, "Telcel", "Telcel" }, /* M625000000623 */// 2009.09.01 ß³  ×· Èº  Ã»
 #elif defined (FEATURE_SAMSUNG_MXTELCEL)
-{ 334,  20, NETWK_TYPE_PCS_1900, "TELCEL", "TELCEL GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  20, NETWK_TYPE_PCS_1900, "TELCEL", "TELCEL GSM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #else
-{ 334,  20, NETWK_TYPE_PCS_1900, "TELCEL GSM", "TELCEL GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  20, NETWK_TYPE_PCS_1900, "TELCEL GSM", "TELCEL GSM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
-{ 334,  30, NETWK_TYPE_PCS_1900, "movistar", "movistar" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 334,  30, NETWK_TYPE_PCS_1900, "movistar", "movistar" },
+#if defined (CONFIG_LTN_COMMON)
+{ 334,  50, NETWK_TYPE_PCS_1900, "Iusacell 3.5G", "Iusacell 3.5G" },
+#endif
 
 /*****************
  **** Jamaica ****
  *****************/
 /* Mossel Limited T/A Digicel */
-{ 338,   5, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   5, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },// 2009.09.01 ß³  ×· Èº  Ã»
 #if defined (FEATURE_SAMSUNG_MXTELCEL)
-{ 338,   7, NETWK_TYPE_GSM_900, "Claro JAM", "Claro JAM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   7, NETWK_TYPE_GSM_900, "Claro JAM", "Claro JAM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #else
-{ 338,   7, NETWK_TYPE_GSM_900, "Claro", "Claro" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   7, NETWK_TYPE_GSM_900, "Claro", "Claro" },// 2009.09.01 ß³  ×· Èº  Ã»
 #endif
-{ 338,   18, NETWK_TYPE_GSM_900, "LIME", "LIME" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 338,   50, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   18, NETWK_TYPE_GSM_900, "LIME", "LIME" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 338,   50, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },// 2009.09.01 ß³  ×· Èº  Ã»
 #if defined (FEATURE_SAMSUNG_MXTELCEL)
-{ 338,   70, NETWK_TYPE_GSM_900, "Claro JAM", "Claro JAM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   70, NETWK_TYPE_GSM_900, "Claro JAM", "Claro JAM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #else
-{ 338,   70, NETWK_TYPE_GSM_900, "Claro", "Claro" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   70, NETWK_TYPE_GSM_900, "Claro", "Claro" },// 2009.09.01 ß³  ×· Èº  Ã»
 #endif
-{ 338,   180, NETWK_TYPE_GSM_900, "LIME", "LIME" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 338,   180, NETWK_TYPE_GSM_900, "LIME", "LIME" },// 2009.09.01 ß³  ×· Èº  Ã»
 
 /****************************
  **** French West Indies ****
@@ -1260,9 +1294,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Dauphin Telecom */
 { 340,   8, NETWK_TYPE_DCS_1800, "AMIGO", "AMIGO" },
 /* Bouygues Telecom Caraibe */
-{ 340,  20, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 340,  20, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 ß³  ×· Èº  Ã»
 /* Bouygues Telecom Caraibe */
-{ 340,  20, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 340,  20, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.09 ß³  ×· Èº  Ã»
 
 /*****************
  **** Barbados ****
@@ -1271,57 +1305,92 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 342,  50, NETWK_TYPE_GSM_900, "JM Digicel", "JM Digicel" },
 /* Digicel (Barbados) Limited */
 { 342,  50, NETWK_TYPE_DCS_1800, "JM Digicel", "JM Digicel" },
+#if defined (CONFIG_LTN_COMMON)
+/* Cable & Wireless Barbados Ltd. */
+{ 342,  60, NETWK_TYPE_PCS_1900, "LIME", "LIME" },//byahn 090908
+#else
 /* Cable & Wireless Barbados Ltd. */
 { 342,  60, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" },//byahn 090908
+#endif
+
 /* Digicel (Barbados) Limited */
-{ 342,  75, NETWK_TYPE_GSM_900,   "Digicel", "Digicel" }, //  2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342,  75, NETWK_TYPE_GSM_900,   "Digicel", "Digicel" }, //  2009.09.09 ß³  ×· Èº  Ã»
 /* Cellular Communications Barbados */
-{ 342,  81, NETWK_TYPE_GSM_900, "AT&T Wireless", "AT&T Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342,  81, NETWK_TYPE_GSM_900, "AT&T Wireless", "AT&T Wireless" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Barbados Ltd. */
-{ 342,  600, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342,  600, NETWK_TYPE_PCS_1900, "LIME", "LIME" },
+#else
+/* Cable & Wireless Barbados Ltd. */
+{ 342,  600, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" },
+#endif
 /* Digicel (Barbados) Limited */
-{ 342, 750, NETWK_TYPE_GSM_900,   "Digicel", "Digicel" },  // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342, 750, NETWK_TYPE_GSM_900,   "Digicel", "Digicel" },  // 2009.09.09 ß³  ×· Èº  Ã»
 /* Digicel (Barbados) Limited */
-{ 342, 750, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },  // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342, 750, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },  // 2009.09.09 ß³  ×· Èº  Ã»
 /* Cellular Communications Barbados */
-{ 342, 810, NETWK_TYPE_GSM_900, "AT&T Wireless", "AT&T Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342, 810, NETWK_TYPE_GSM_900, "AT&T Wireless", "AT&T Wireless" }, // 2009.09.09 ß³  ×· Èº  Ã»
 /* Cellular Communications Barbados */
-{ 342, 810, NETWK_TYPE_PCS_1900, "AT&T Wireless", "AT&T Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 342, 810, NETWK_TYPE_PCS_1900, "AT&T Wireless", "AT&T Wireless" }, // 2009.09.09 ß³  ×· Èº  Ã»
 
 
 /*****************
  **** Antigua ****
  *****************/
 /* Antigua Public Utilities Authority-APUA */
-{ 344,  3, NETWK_TYPE_PCS_1900, "APUA PCS", "APUA PCS" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 344,  3, NETWK_TYPE_PCS_1900, "APUA PCS", "APUA PCS" }, // 2009.09.09 ß³  ×· Èº  Ã»
 /* Antigua Public Utilities Authority-APUA */
-{ 344,  30, NETWK_TYPE_PCS_1900, "APUA PCS", "APUA PCS" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 344,  30, NETWK_TYPE_PCS_1900, "APUA PCS", "APUA PCS" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Caribbean Cellular (Antigua) Limited */
-{ 344,  92, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 344,  92, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless Caribbean Cellular (Antigua) Limited */
-{ 344,  920, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-/* Antigua Wireless Ventures Limited */
-{ 344, 930, NETWK_TYPE_GSM_900, "AT&T", "AT&T" }, 
+{ 344,  920, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless Caribbean Cellular (Antigua) Limited */
+{ 344,  92, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless Caribbean Cellular (Antigua) Limited */
+{ 344,  920, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 ß³  ×· Èº  Ã»
+#endif
+   /* Antigua Wireless Ventures Limited */
+   { 344, 930, NETWK_TYPE_GSM_900, "AT&T", "AT&T" },
 
 /*********************
  **** Cayman Islands ****
  *********************/
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless (Cayman Islands) Limited */
-{ 346,  14, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 346,  14, NETWK_TYPE_PCS_1900, "LIME", "LIME" },
 /* Cable & Wireless (Cayman Islands) Limited */
-{ 346,  14, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 346,  14, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless (Cayman Islands) Limited */
-{ 346,  140, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 346,  140, NETWK_TYPE_PCS_1900, "LIME", "LIME" },
 /* Cable & Wireless (Cayman Islands) Limited */
-{ 346,  140, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 346,  140, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless (Cayman Islands) Limited */
-{ 348,  17, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 348,  17, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+/* British Virgin Islands Digicel */
+{ 348,   77, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },
 /* Cable & Wireless (Cayman Islands) Limited */
-{ 348,  170, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 348,  170, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+{ 348,  770, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },  // [SW3_PROTOCOL] seojeong.kim 20111117_JDI requirement - integ C: 741095
+#else
+/* Cable & Wireless (Cayman Islands) Limited */
+{ 346,  14, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless (Cayman Islands) Limited */
+{ 346,  14, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless (Cayman Islands) Limited */
+{ 346,  140, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless (Cayman Islands) Limited */
+{ 346,  140, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless (Cayman Islands) Limited */
+{ 348,  17, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless (Cayman Islands) Limited */
+{ 348,  170, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
+{ 348, 570, NETWK_TYPE_GSM_900, "CCTBVI", "CCTBVI" },
 /* Caribbean Cellular Telephone  */
-{ 348, 570, NETWK_TYPE_GSM_900, "CCTBVI", "CCTBVI" }, 
-/* Caribbean Cellular Telephone  */
-{ 348, 570, NETWK_TYPE_PCS_1900, "CCTBVI", "CCTBVI" }, 
+{ 348, 570, NETWK_TYPE_PCS_1900, "CCTBVI", "CCTBVI" },
 
 /*****************
  **** Bermuda ****
@@ -1337,65 +1406,108 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Grenada ****
  ***************/
 /* Grenada Wireless Holdings Ltd */
-{ 352, 3, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },  // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 352, 3, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Caribbean Cellular (Grenada) Limited */
-{ 352,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 352,  11, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless Caribbean Cellular (Grenada) Limited */
+{ 352,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 /* Grenada Wireless Holdings Ltd */
-{ 352, 30, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 352, 30, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Caribbean Cellular (Grenada) Limited */
-{ 352,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },   // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 352,  110, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless Caribbean Cellular (Grenada) Limited */
-{ 354, 86, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 354, 86, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless Caribbean Cellular (Grenada) Limited */
-{ 354, 860, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-
+{ 354, 860, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless Caribbean Cellular (Grenada) Limited */
+{ 352,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless Caribbean Cellular (Grenada) Limited */
+{ 354, 86, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless Caribbean Cellular (Grenada) Limited */
+{ 354, 860, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 /*********************
  **** St Kitts & Nevis ****
  *********************/
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless St Kitts & Nevis Limited */
-{ 356,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 356,  11, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless St Kitts & Nevis Limited */
-{ 356,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 356,  110, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless St Kitts & Nevis Limited */
-{ 356, 110, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" },  // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 356, 110, NETWK_TYPE_PCS_1900, "LIME", "LIME" },
+#else
+/* Cable & Wireless St Kitts & Nevis Limited */
+{ 356,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless St Kitts & Nevis Limited */
+{ 356,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless St Kitts & Nevis Limited */
+{ 356, 110, NETWK_TYPE_PCS_1900, "Cable&Wireless", "Cable&Wireless" },
+#endif
 
 /***************
  **** St Lucia ****
  ***************/
 /* Digicel (St Lucia) Limited */
-{ 358, 5, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 358, 5, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Caribbean Cellular (St Lucia) Limited */
-{ 358, 11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },  // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-/* Wireless Ventures (St. Lucia) Limited */
-{ 358, 30, NETWK_TYPE_GSM_900, "AT&T", "AT&T" }, 
-/* Wireless Ventures (St. Lucia) Limited */
-{ 358, 30, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" }, 
-/* Digicel (St Lucia) Limited */
-{ 358, 50, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-/* Digicel (St Lucia) Limited */
-{ 358, 50, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-/* Digicel (St Lucia) Limited */
-{ 358, 50, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 358, 11, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
 /* Cable & Wireless Caribbean Cellular (St Lucia) Limited */
-{ 358, 110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 358, 11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
+/* Wireless Ventures (St. Lucia) Limited */
+{ 358, 30, NETWK_TYPE_GSM_900, "AT&T", "AT&T" },
+/* Wireless Ventures (St. Lucia) Limited */
+{ 358, 30, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" },
+/* Digicel (St Lucia) Limited */
+{ 358, 50, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 ß³  ×· Èº  Ã»
+/* Digicel (St Lucia) Limited */
+{ 358, 50, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.09 ß³  ×· Èº  Ã»
+/* Digicel (St Lucia) Limited */
+{ 358, 50, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },
+#if defined (CONFIG_LTN_COMMON)
+/* Cable & Wireless Caribbean Cellular (St Lucia) Limited */
+{ 358, 110, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless Caribbean Cellular (St Lucia) Limited */
+{ 358, 110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 
 /*********************************
  **** St. Vincent & the Grenadines ****
  ********************************/
 /* Digicel (St. Vincent and the Grenadines) Limited */
-{ 360, 7, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 360, 7, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 ß³  ×· Èº  Ã»
 /* Wireless Ventures (St. Vincent) Limited */
-{ 360, 10, NETWK_TYPE_GSM_900, "AT&T", "AT&T" }, 
+{ 360, 10, NETWK_TYPE_GSM_900, "AT&T", "AT&T" },
 /* Wireless Ventures (St. Vincent) Limited */
-{ 360, 10, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" }, 
+{ 360, 10, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Caribbean Cellular (St. Vincent & the Grenadines) Ltd */
-{ 360,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-/* Digicel (St. Vincent and the Grenadines) Limited */
-{ 360, 70, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-/* Digicel (St. Vincent and the Grenadines) Limited */
-{ 360, 70, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 360,  11, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
 /* Cable & Wireless Caribbean Cellular (St. Vincent & the Grenadines) Ltd */
-{ 360,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 360,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
+/* Digicel (St. Vincent and the Grenadines) Limited */
+{ 360, 70, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.09 ß³  ×· Èº  Ã»
+/* Digicel (St. Vincent and the Grenadines) Limited */
+{ 360, 70, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },
+#if defined (CONFIG_LTN_COMMON)
+/* Cable & Wireless Caribbean Cellular (St. Vincent & the Grenadines) Ltd */
+{ 360,  110, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless Caribbean Cellular (St. Vincent & the Grenadines) Ltd */
+{ 360,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
+
 
 /******************************
  **** Netherlands Antilles ****
@@ -1403,15 +1515,15 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Telcell N.V. */
 { 362,  51, NETWK_TYPE_GSM_900, "Telcell GSM", "Telcell GSM" },
 /* Curacao Telecom N.V. */
-{ 362,  69, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 362,  69, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },// 2009.09.09 ß³  ×· Èº  Ã»
 /* Curacao Telecom N.V. */
-{ 362,  69, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 362,  69, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },// 2009.09.09 ß³  ×· Èº  Ã»
 /* Setel NV */
 { 362,  91, NETWK_TYPE_GSM_900, "Setel", "Setel" },
 /* Communications Systems Curacao N.V. */
 { 362, 630, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" }, 
 /* Curacao Telecom N.V. */
-{ 362,  695, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 362,  695, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },// 2009.09.09 ß³  ×· Èº  Ã»
 /* Setel NV */
 { 362, 951, NETWK_TYPE_GSM_900, "CHIPPIE", "CHIPPIE" }, 
 
@@ -1419,17 +1531,17 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  *** Aruba ***
  **************/
 /* SETAR (Servicio di Telecomunicacion di Aruba) */
-{ 363,   1, NETWK_TYPE_GSM_900, "SETAR GSM", "SETAR GSM" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 363,   1, NETWK_TYPE_GSM_900, "SETAR GSM", "SETAR GSM" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* SETAR (Servicio di Telecomunicacion di Aruba) */
-{ 363,   1, NETWK_TYPE_PCS_1900, "SETAR GSM", "SETAR GSM" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 363,   1, NETWK_TYPE_PCS_1900, "SETAR GSM", "SETAR GSM" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* New Millenium Telecom Services (NMTS) */
-{ 363,  2, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 363,  2, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* New Millenium Telecom Services (NMTS) */
-{ 363, 2, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 363, 2, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* New Millenium Telecom Services (NMTS) */
-{ 363, 20, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 363, 20, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* New Millenium Telecom Services (NMTS) */
-{ 363, 20, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 363, 20, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 
 /**************
  **** BAHMAS ***
@@ -1441,52 +1553,80 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /***************
  **** Anguilla ****
  ***************/
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless (West Indies) Ltd. Anguilla */
-{ 365,  84, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 365,  84, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless (West Indies) Ltd. Anguilla */
-{ 365,  840, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-
+{ 365,  840, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless (West Indies) Ltd. Anguilla */
+{ 365,  84, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless (West Indies) Ltd. Anguilla */
+{ 365,  840, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 
 /****************
  **** Dominica ****
  ****************/
+#if defined (CONFIG_LTN_COMMON)
  /* Cable & Wireless Dominica Ltd. */
-{ 366,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 366,  11, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+ /* Cable & Wireless Dominica Ltd. */
+{ 366,  11, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 /* Wireless Ventures (Dominica) Ltd. */
-{ 366, 20, NETWK_TYPE_GSM_900, "AT&T", "AT&T" }, 
+{ 366, 20, NETWK_TYPE_GSM_900, "AT&T", "AT&T" },
 /* Wireless Ventures (Dominica) Ltd. */
-{ 366, 20, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" }, 
+{ 366, 20, NETWK_TYPE_PCS_1900, "AT&T", "AT&T" },
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless Dominica Ltd. */
-{ 366,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-
+{ 366,  110, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless Dominica Ltd. */
+{ 366,  110, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 
 /**************
  **** Cuba ****
  **************/
 /* "Empresa de Telecommunicaciones de Cuba, SA (ETECSA)" */
-{ 368, 1, NETWK_TYPE_GSM_900, "Cubacel", "Cubacel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 368, 1, NETWK_TYPE_GSM_900, "Cubacel", "Cubacel" }, // 2009.09.09 ß³  ×· Èº  Ã»
 /****************************
  **** Dominican Republic ****
  ****************************/
+#if defined (CONFIG_LTN_COMMON)
 /* Orange Dominicana S.A. */
-{ 370,   1, NETWK_TYPE_GSM_900, "orange", "orange" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
+{ 370,   1, NETWK_TYPE_GSM_900, "Orange", "Orange" },
 /* Orange Dominicana S.A. */
-{ 370,   1, NETWK_TYPE_DCS_1800, "orange", "orange" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
+{ 370,   1, NETWK_TYPE_DCS_1800, "Orange", "Orange" },
 /* Orange Dominicana S.A. */
-{ 370,   1, NETWK_TYPE_PCS_1900, "orange", "orange" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
-#if defined (FEATURE_SAMSUNG_MXTELCEL)
-{ 370,   2, NETWK_TYPE_PCS_1900, "ClaroDOM", "Claro DOM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 370,   1, NETWK_TYPE_PCS_1900, "Orange", "Orange" },
 #else
-{ 370,   2, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+/* Orange Dominicana S.A. */
+{ 370,   1, NETWK_TYPE_GSM_900, "orange", "orange" },
+/* Orange Dominicana S.A. */
+{ 370,   1, NETWK_TYPE_DCS_1800, "orange", "orange" },
+/* Orange Dominicana S.A. */
+{ 370,   1, NETWK_TYPE_PCS_1900, "orange", "orange" },
 #endif
-{ 370,   4, NETWK_TYPE_PCS_1900, "VIVA", "VIVA" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+#if defined (FEATURE_SAMSUNG_MXTELCEL)
+{ 370,   2, NETWK_TYPE_PCS_1900, "ClaroDOM", "Claro DOM" }, // 2009.09.01 ß³  ×· Èº  Ã»
+#else
+{ 370,   2, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 ß³  ×· Èº  Ã»
+#endif
+{ 370,   4, NETWK_TYPE_PCS_1900, "VIVA", "VIVA" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* ORANGE */
 { 370,  10, NETWK_TYPE_PCS_1900, "ORANGE", "ORANGE" },
 /* Orange Dominicana S.A. */
-{ 370,   11, NETWK_TYPE_PCS_1900, "Orange", "Orange" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 370,   11, NETWK_TYPE_PCS_1900, "Orange", "Orange" },// 2009.09.01 ß³  ×· Èº  Ã»
 
 /* Communication Cellulaire d'Haiti SA */
+#if defined (CONFIG_LTN_COMMON)
+{ 372, 1, NETWK_TYPE_GSM_850, "Voila", "Voila" },
+#else
 { 372, 1, NETWK_TYPE_GSM_850, "VOILA", "VOILA" }, 
+#endif
 { 372, 2, NETWK_TYPE_DCS_1800, "Digicel", "Digicel " }, 
 { 372, 20, NETWK_TYPE_DCS_1800, "Digicel", "Digicel " }, 
 
@@ -1494,30 +1634,42 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Trinidad and Tobaga ****
  *****************************/
 /* Telcommunications Services of Trinidad and Tobago Ltd */
-{ 374,  12, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 374,  12, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Trinidad and Tobago Ltd */  
-{ 374,  13, NETWK_TYPE_GSM_850, "Digicel", "Digicel" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 374,  13, NETWK_TYPE_GSM_850, "Digicel", "Digicel" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* Trinidad and Tobago Ltd */
-{ 374,  13, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 374,  120, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 374,  125, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 374,  129, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 374,  130, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 374,  13, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 374,  120, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 374,  125, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 374,  129, NETWK_TYPE_DCS_1800, "bmobile", "bmobile" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 374,  130, NETWK_TYPE_PCS_1900, "Digicel", "Digicel" },// 2009.09.01 ß³  ×· Èº  Ã»
 
 /**********************
  **** Turks & Caicos ****
  **********************/
+#if defined (CONFIG_LTN_COMMON)
 /* Cable & Wireless West Indies Ltd (Turks & Caicos) */
-{ 376, 35, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 376, 35, NETWK_TYPE_GSM_850, "LIME", "LIME" },
 /* Cable & Wireless West Indies Ltd (Turks & Caicos) */
-{ 376, 350, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 376, 350, NETWK_TYPE_GSM_850, "LIME", "LIME" },
+#else
+/* Cable & Wireless West Indies Ltd (Turks & Caicos) */
+{ 376, 35, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+/* Cable & Wireless West Indies Ltd (Turks & Caicos) */
+{ 376, 350, NETWK_TYPE_GSM_850, "Cable&Wireless", "Cable&Wireless" },
+#endif
 /********************
  **** Azerbaijan ****
  ********************/
 /* Azercell Telekom B.M. */
-{ 400,   1, NETWK_TYPE_GSM_900, "AZE - AZERCELL GSM", "AZE - AZERCELL GSM" },
+{ 400,   1, NETWK_TYPE_GSM_900, "Azercell", "Azercell" },
+{ 400,   1, NETWK_TYPE_DCS_1800, "Azercell", "Azercell" },
 /* Bakcell */
-{ 400,   2, NETWK_TYPE_GSM_900, "BAKCELL GSM 2000", "BAKCELL GSM 2000" },
+{ 400,   2, NETWK_TYPE_GSM_900, "Bakcell", "Bakcell" },
+{ 400,   2, NETWK_TYPE_DCS_1800, "Bakcell", "Bakcell" },
+/* Nar */
+{ 400,   4, NETWK_TYPE_GSM_900, "Nar", "Nar" },
+{ 400,   4, NETWK_TYPE_DCS_1800, "Nar", "Nar" },
 
 /********************
  **** Kazakhstan ****
@@ -1527,7 +1679,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* GSM Kazakhstan Ltd */
 { 401,   2, NETWK_TYPE_GSM_900, "Kcell", "Kcell" },	// 2008.06.11 kbs@CIS
 /* NEO */
-{ 401,  77, NETWK_TYPE_GSM_900, "NEO", "NEO" },	  // 2009.01.16 kbs@CIS - ½Å±Ô »ç¾÷ÀÚ Ãß°¡
+{ 401,  77, NETWK_TYPE_GSM_900, "NEO", "NEO" },	  // 2009.01.16 kbs@CIS - Å±  ß°
 
 /********************
  **** *********** ****
@@ -1535,7 +1687,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* B-Mobile */
 { 402,   11, NETWK_TYPE_GSM_900, "BT B-Mobile", "BT B-Mobile" },
 
-/*2008.10.14 ¼­³²¾Æ¿äÃ»»çÇ×Àû¿ë*/ 
+/*2008.10.14 Æ¿Ã»*/ 
 /***************
  **** India ****
  ***************/
@@ -2218,25 +2370,25 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Videocon */
 { 405, 932, NETWK_TYPE_DCS_1800, "Videocon", "Videocon" },
 /* <<< SWA_seol _SHP_SWA_PLMN for India PLMN end <<< */
-/*2008.10.14 ¼­³²¾Æ¿äÃ»»çÇ×Àû¿ë*/ 
+/*2008.10.14 Æ¿Ã»*/ 
  
 /******************
  **** Pakistan ****
  ******************/
 /* Mobilink */
-{ 410,   1, NETWK_TYPE_GSM_900, "Mobilink", "Mobilink" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 410,   1, NETWK_TYPE_DCS_1800, "Mobilink", "Mobilink" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 410,   1, NETWK_TYPE_GSM_900, "Mobilink", "Mobilink" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 410,   1, NETWK_TYPE_DCS_1800, "Mobilink", "Mobilink" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Ufone */
-{ 410,   3, NETWK_TYPE_GSM_900, "Ufone", "Ufone" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 410,   3, NETWK_TYPE_GSM_900, "Ufone", "Ufone" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Paktel  */
-{ 410, 4, NETWK_TYPE_GSM_900, "ZONG", "ZONG" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 410, 4, NETWK_TYPE_DCS_1800, "ZONG", "ZONG" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 410, 4, NETWK_TYPE_GSM_900, "ZONG", "ZONG" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 410, 4, NETWK_TYPE_DCS_1800, "ZONG", "ZONG" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Telenor Pakistan */
-{ 410, 6, NETWK_TYPE_GSM_900, "Telenor", "Telenor" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 410, 6, NETWK_TYPE_DCS_1800, "Telenor", "Telenor" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 410, 6, NETWK_TYPE_GSM_900, "Telenor", "Telenor" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 410, 6, NETWK_TYPE_DCS_1800, "Telenor", "Telenor" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Warid Telecom */
-{ 410, 7, NETWK_TYPE_GSM_900, "Warid", "Warid" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 410, 7, NETWK_TYPE_DCS_1800, "Warid", "Warid" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 410, 7, NETWK_TYPE_GSM_900, "Warid", "Warid" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 410, 7, NETWK_TYPE_DCS_1800, "Warid", "Warid" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /******************
  **** Afghanistan ****
@@ -2272,31 +2424,31 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Lebanon ****
  *****************/
 /* Alfa */
-{ 415,   1, NETWK_TYPE_GSM_900, "Alfa", "Alfa" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 415,   1, NETWK_TYPE_GSM_900, "Alfa", "Alfa" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* MTC Touch */
-{ 415,   3, NETWK_TYPE_GSM_900, "MTC Touch", "MTC Touch" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 415,   3, NETWK_TYPE_GSM_900, "MTC Touch", "MTC Touch" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /****************
  **** Jordan ****
  ****************/
 /* Fastlink */
-{ 416,   1, NETWK_TYPE_GSM_900, "zain JO", "zain JO" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 416,   1, NETWK_TYPE_GSM_900, "zain JO", "zain JO" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Umniah */
-{ 416,   3, NETWK_TYPE_DCS_1800, "Umniah", "Umniah" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 416,   3, NETWK_TYPE_DCS_1800, "Umniah", "Umniah" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* MOBILECOM */
-{ 416,  77, NETWK_TYPE_GSM_900, "Orange JO", "Orange JO" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 416,  77, NETWK_TYPE_GSM_900, "Orange JO", "Orange JO" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /***************
  **** Syria ****
  ***************/
  /* SYRIATEL */
-{ 417,   1, NETWK_TYPE_GSM_900, "SYRIATEL", "SYRIATEL" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 417,   1, NETWK_TYPE_DCS_1800, "SYRIATEL", "SYRIATEL" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 417,   1, NETWK_TYPE_GSM_900, "SYRIATEL", "SYRIATEL" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 417,   1, NETWK_TYPE_DCS_1800, "SYRIATEL", "SYRIATEL" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
  /* MTN Syria */
-{ 417,   2, NETWK_TYPE_GSM_900, "MTN Syria", "MTN Syria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 417,   2, NETWK_TYPE_DCS_1800, "MTN Syria", "MTN Syria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 417,   2, NETWK_TYPE_GSM_900, "MTN Syria", "MTN Syria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 417,   2, NETWK_TYPE_DCS_1800, "MTN Syria", "MTN Syria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* MOBILE SYRIA */
-{ 417,   9, NETWK_TYPE_GSM_900, "MOBILE SYRIA", "MOBILE SYRIA" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 417,   9, NETWK_TYPE_GSM_900, "MOBILE SYRIA", "MOBILE SYRIA" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Syriatel Holdings S.A */
 { 417,  93, NETWK_TYPE_GSM_900, "Syriatel", "Syriatel" },
 /* Syriatel Holdings S.A */
@@ -2306,32 +2458,32 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Iraq ****
  ****************/
 /* Asia Cell Telecommunications Company Ltd */
-{ 418, 0, NETWK_TYPE_GSM_900, "ASIACELL", "ASIACELL" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418, 0, NETWK_TYPE_GSM_900, "ASIACELL", "ASIACELL" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* SanaTel */
-{ 418, 2, NETWK_TYPE_GSM_900, "SanaTel", "SanaTel" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418, 2, NETWK_TYPE_GSM_900, "SanaTel", "SanaTel" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* ASIACELL */
-{ 418,   5, NETWK_TYPE_GSM_900, "ASIACELL", "ASIACELL" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418,   5, NETWK_TYPE_GSM_900, "ASIACELL", "ASIACELL" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* SanaTel */
-{ 418, 8, NETWK_TYPE_GSM_900, "SanaTel", "SanaTel" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418, 8, NETWK_TYPE_GSM_900, "SanaTel", "SanaTel" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Atheer */
-{ 418,   20, NETWK_TYPE_GSM_900, "Zain Iraq", "Zain Iraq" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418,   20, NETWK_TYPE_GSM_900, "Zain Iraq", "Zain Iraq" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Zain Iraq */
-{ 418,   30, NETWK_TYPE_GSM_900, "Zain Iraq", "Zain Iraq" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418,   30, NETWK_TYPE_GSM_900, "Zain Iraq", "Zain Iraq" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Korek Telecom */
-{ 418,   40, NETWK_TYPE_GSM_900, "Korek Telecom", "Korek Telecom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418,   40, NETWK_TYPE_GSM_900, "Korek Telecom", "Korek Telecom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* mobitel */
-{ 418,   45, NETWK_TYPE_UMTS, "mobitel", "mobitel" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 418,   45, NETWK_TYPE_UMTS, "mobitel", "mobitel" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /****************
  **** Kuwait ****
  ****************/
 /* MTCNet */
-{ 419,   2, NETWK_TYPE_GSM_900, "zain KW", "zain KW" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 419,   2, NETWK_TYPE_DCS_1800, "zain KW", "zain KW" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 419,   2, NETWK_TYPE_UMTS, "zain KW", "zain KW" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 419,   2, NETWK_TYPE_GSM_900, "zain KW", "zain KW" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 419,   2, NETWK_TYPE_DCS_1800, "zain KW", "zain KW" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 419,   2, NETWK_TYPE_UMTS, "zain KW", "zain KW" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Wataniya Telecom */
-{ 419,   3, NETWK_TYPE_GSM_900, "WATANIYA", "WATANIYA" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 419,   3, NETWK_TYPE_DCS_1800, "WATANIYA", "WATANIYA" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 419,   3, NETWK_TYPE_GSM_900, "WATANIYA", "WATANIYA" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 419,   3, NETWK_TYPE_DCS_1800, "WATANIYA", "WATANIYA" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* VIVA */
 { 419,   4, NETWK_TYPE_GSM_900, "VIVA", "VIVA" }, 
 { 419,   4, NETWK_TYPE_DCS_1800, "VIVA", "VIVA" }, 
@@ -2341,43 +2493,43 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Saudi Arabia ****
  **********************/
 /* Al JAWAL */
-{ 420,   1, NETWK_TYPE_GSM_900, "SA Al Jawal", "SA Al Jawal" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 420,   1, NETWK_TYPE_UMTS, "SA Al Jawal", "SA Al Jawal" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 420,   1, NETWK_TYPE_GSM_900, "SA Al Jawal", "SA Al Jawal" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 420,   1, NETWK_TYPE_UMTS, "SA Al Jawal", "SA Al Jawal" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Mobily */
-{ 420, 3, NETWK_TYPE_GSM_900, "mobily", "mobily" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 420, 3, NETWK_TYPE_UMTS, "mobily", "mobily" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 420, 3, NETWK_TYPE_GSM_900, "mobily", "mobily" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 420, 3, NETWK_TYPE_UMTS, "mobily", "mobily" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* zain SA */
-{ 420, 4, NETWK_TYPE_GSM_900, "zain SA", "zain SA" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 420, 4, NETWK_TYPE_DCS_1800, "zain SA", "zain SA" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 420, 4, NETWK_TYPE_UMTS, "zain SA", "zain SA" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 420, 4, NETWK_TYPE_GSM_900, "zain SA", "zain SA" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 420, 4, NETWK_TYPE_DCS_1800, "zain SA", "zain SA" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 420, 4, NETWK_TYPE_UMTS, "zain SA", "zain SA" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 { 420,   7, NETWK_TYPE_GSM_900, "EAE", "EAE" },
 
 /***************
  **** Yemen ****
  ***************/
 /* SABAFON */
-{ 421,   1, NETWK_TYPE_GSM_900, "SABAFON", "SABAFON" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 421,   1, NETWK_TYPE_GSM_900, "SABAFON", "SABAFON" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Spacetel */
-{ 421,   2, NETWK_TYPE_GSM_900, "MTN", "MTN" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 421,   2, NETWK_TYPE_GSM_900, "MTN", "MTN" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /**************
  **** Oman ****
  **************/
 /* OMANTEL */
-{ 422,   2, NETWK_TYPE_GSM_900, "OMAN MOBILE", "OMAN MOBILE" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 422,   2, NETWK_TYPE_GSM_900, "OMAN MOBILE", "OMAN MOBILE" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* nawras  */
-{ 422, 3, NETWK_TYPE_GSM_900, "nawras", "nawras" },  // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 422, 3, NETWK_TYPE_GSM_900, "nawras", "nawras" },  // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /******************************
  **** United Arab Emirates ****
  ******************************/
 /* UAE Etisalat */
-{ 424,   2, NETWK_TYPE_GSM_900, "ETISALAT", "ETISALAT" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 424,   2, NETWK_TYPE_UMTS, "ETISALAT", "ETISALAT" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 424,   2, NETWK_TYPE_GSM_900, "ETISALAT", "ETISALAT" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 424,   2, NETWK_TYPE_UMTS, "ETISALAT", "ETISALAT" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* du */
-{ 424,   3, NETWK_TYPE_GSM_900, "du", "du" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 424,   3, NETWK_TYPE_DCS_1800, "du", "du" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 424,   3, NETWK_TYPE_UMTS, "du", "du" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 424,   3, NETWK_TYPE_GSM_900, "du", "du" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 424,   3, NETWK_TYPE_DCS_1800, "du", "du" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 424,   3, NETWK_TYPE_UMTS, "du", "du" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /****************
  **** Israel ****
@@ -2410,11 +2562,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Bahrain ****
  *****************/
 /* Bahrain Telecommunications Company */
-{ 426,   1, NETWK_TYPE_GSM_900, "BATELCO", "BATELCO" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 426,   1, NETWK_TYPE_GSM_900, "BATELCO", "BATELCO" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* MTC-Vodafone */
-{ 426,   2, NETWK_TYPE_GSM_900, "zain BH", "zain BH" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 426,   2, NETWK_TYPE_DCS_1800, "zain BH", "zain BH" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 426,   2, NETWK_TYPE_UMTS, "zain BH", "zain BH" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 426,   2, NETWK_TYPE_GSM_900, "zain BH", "zain BH" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 426,   2, NETWK_TYPE_DCS_1800, "zain BH", "zain BH" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 426,   2, NETWK_TYPE_UMTS, "zain BH", "zain BH" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 { 426,   4, NETWK_TYPE_GSM_900, "VIVA", "VIVA" },
 { 426,	 4, NETWK_TYPE_DCS_1800, "VIVA", "VIVA" },
 { 426,	 4, NETWK_TYPE_UMTS, "VIVA", "VIVA" },
@@ -2423,8 +2575,8 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Qatar ****
  ***************/
 /* Q-Tel */
-{ 427,   1, NETWK_TYPE_GSM_900, "Qatarnet", "Qatarnet" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 427,   1, NETWK_TYPE_DCS_1800, "Qatarnet", "Qatarnet" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 427,   1, NETWK_TYPE_GSM_900, "Qatarnet", "Qatarnet" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 427,   1, NETWK_TYPE_DCS_1800, "Qatarnet", "Qatarnet" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 { 427,   2, NETWK_TYPE_GSM_900, "Vodafone Qatar", "Vodafone Qatar" },
 { 427,   2, NETWK_TYPE_DCS_1800, "Vodafone Qatar", "Vodafone Qatar" },
 { 427,   2, NETWK_TYPE_UMTS, "Vodafone Qatar", "Vodafone Qatar" },
@@ -2450,14 +2602,14 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 432,  11, NETWK_TYPE_GSM_900, "IR MCI", "IR MCI" },
 { 432,  11, NETWK_TYPE_DCS_1800, "IR MCI", "IR MCI" },
 /* TKC */
-{ 432,  14, NETWK_TYPE_GSM_900, "TKC", "TKC" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 432,  14, NETWK_TYPE_GSM_900, "TKC", "TKC" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* MTCE */
-{ 432,  19, NETWK_TYPE_GSM_900, "MTCE", "MTCE" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 432,  19, NETWK_TYPE_GSM_900, "MTCE", "MTCE" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Taliya */
-{ 432, 32, NETWK_TYPE_GSM_900, "Taliya", "Taliya" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 432, 32, NETWK_TYPE_GSM_900, "Taliya", "Taliya" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Irancell */
-{ 432, 35, NETWK_TYPE_GSM_900, "Irancell", "Irancell" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 432, 35, NETWK_TYPE_DCS_1800, "Irancell", "Irancell" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 432, 35, NETWK_TYPE_GSM_900, "Irancell", "Irancell" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 432, 35, NETWK_TYPE_DCS_1800, "Irancell", "Irancell" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /********************
  **** Uzbekistan ****
@@ -2687,13 +2839,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Grameen Phone Ltd */
 { 470,	 1, NETWK_TYPE_GSM_900, "Grameenphone", "Grameenphone" },
 /* TM International (Bangladesh) Ltd */
-{ 470,	 2, NETWK_TYPE_GSM_900, "Robi", "Robi" }, // yg7948.park@samsung.com - PLMN Name º¯°æ »çÇ× Àû¿ë°Ç( AKTEL -> Robi, WARID -> Airtel )
+{ 470,	 2, NETWK_TYPE_GSM_900, "Robi", "Robi" }, // yg7948.park@samsung.com - PLMN Name   ( AKTEL -> Robi, WARID -> Airtel )
 /* Sheba Telecom (Pvt.) Ltd. */
 { 470,	 3, NETWK_TYPE_GSM_900, "Banglalink", "Banglalink" }, 
 /* Teletalk Bangladesh Ltd */
 { 470,	 4, NETWK_TYPE_GSM_900, "Teletalk", "Teletalk" }, 
 /* Warid */
-{ 470,	 7, NETWK_TYPE_GSM_900, "Airtel", "Airtel" }, // yg7948.park@samsung.com - PLMN Name º¯°æ »çÇ× Àû¿ë°Ç( AKTEL -> Robi, WARID -> Airtel )
+{ 470,	 7, NETWK_TYPE_GSM_900, "Airtel", "Airtel" }, // yg7948.park@samsung.com - PLMN Name   ( AKTEL -> Robi, WARID -> Airtel )
 /* Sheba Telecom (PVT) Ltd */
 { 470,	 19, NETWK_TYPE_GSM_900, "BD ShebaWorld", "BD ShebaWorld" },
 
@@ -2810,6 +2962,8 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /******************
  **** Thailand ****
  ******************/
+ /* Thailand TRUE-H 3G */
+{ 520,   0, NETWK_TYPE_UMTS, "TRUE-H/CAT 3G", "TRUE-H/CAT 3G" },
 /* Advanced Info Service Plc */
 { 520,   1, NETWK_TYPE_GSM_900, "TH GSM", "TH GSM" },
 /* Wireless Comm. Services Co. */
@@ -2868,11 +3022,20 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Pacific Mobile Communications */
 { 537,   1, NETWK_TYPE_GSM_900, "PNGBMobile", "PNGBMobile" },
 
+#if defined (CONFIG_LTN_COMMON)
+/* Papua New Guinea Digicel */
+{ 537,   3, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },
+#endif
+
 /***************
  **** Tonga ****
  ***************/
 /* Tonga Communications Corporation */
 { 539,   1, NETWK_TYPE_GSM_900, "U-CALL", "U-CALL" },
+#if defined (CONFIG_LTN_COMMON)
+/* Tonga Digicel */
+{ 539,   88, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },
+#endif
 
 /***************
  ****       ****
@@ -2891,12 +3054,20 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  *****************/
 /* Telecom Vanuatu Ltd */
 { 541,   1, NETWK_TYPE_GSM_900, "VUT SMILE", "VUT SMILE" },
+#if defined (CONFIG_LTN_COMMON)
+/* Vanuatu Digicel */
+{ 541,   5, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },
+#endif
 
 /**************
  **** Fiji ****
  **************/
 /* Vodafone Fiji Limited */
 { 542,   1, NETWK_TYPE_GSM_900, "FJ VODAFONE", "FJ VODAFONE" },
+#if defined (CONFIG_LTN_COMMON)
+/* Fiji Digicel */
+{ 542,   2, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },
+#endif
 
 /************************
  **** American Samoa ****
@@ -2944,33 +3115,33 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Egypt ****
  ***************/
 /* Mobinil */
-{ 602,   1, NETWK_TYPE_GSM_900, "MobiNiL", " EGY MobiNiL" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
+{ 602,   1, NETWK_TYPE_GSM_900, "MobiNiL", " EGY MobiNiL" },// D0100306029 2011/9/16 Orange  Ã»
 /* Vodafone */
-{ 602,   2, NETWK_TYPE_GSM_900, "vodafone", "vodafone" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 602,   2, NETWK_TYPE_UMTS, "vodafone", "vodafone" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 602,   2, NETWK_TYPE_GSM_900, "vodafone", "vodafone" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 602,   2, NETWK_TYPE_UMTS, "vodafone", "vodafone" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Etisalat */
-{ 602,   3, NETWK_TYPE_GSM_900, "Etisalat", "Etisalat" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 602,   3, NETWK_TYPE_DCS_1800, "Etisalat", "Etisalat" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 602,   3, NETWK_TYPE_UMTS, "Etisalat", "Etisalat" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 602,   3, NETWK_TYPE_GSM_900, "Etisalat", "Etisalat" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 602,   3, NETWK_TYPE_DCS_1800, "Etisalat", "Etisalat" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 602,   3, NETWK_TYPE_UMTS, "Etisalat", "Etisalat" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /*****************
  **** Algeria ****
  *****************/
 /* Algerie Telecom */
-{ 603,   1, NETWK_TYPE_GSM_900, "Mobilis", "Mobilis" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 603,   1, NETWK_TYPE_GSM_900, "Mobilis", "Mobilis" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Orascom Telecom Algerie Spa */
-{ 603,   2, NETWK_TYPE_GSM_900, "Djezzy", "Djezzy" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 603,   2, NETWK_TYPE_DCS_1800, "Djezzy", "Djezzy" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 603,   2, NETWK_TYPE_GSM_900, "Djezzy", "Djezzy" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 603,   2, NETWK_TYPE_DCS_1800, "Djezzy", "Djezzy" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Wataniya Telecom Algerie */
-{ 603, 3, NETWK_TYPE_GSM_900, "Nedjma", "Nedjma" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 603, 3, NETWK_TYPE_DCS_1800, "Nedjma", "Nedjma" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 603, 3, NETWK_TYPE_GSM_900, "Nedjma", "Nedjma" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 603, 3, NETWK_TYPE_DCS_1800, "Nedjma", "Nedjma" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /*****************
  **** Morocco ****
  *****************/
 /* Medi Telecom */
-{ 604,   0, NETWK_TYPE_GSM_900, "Meditel", "Meditel" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 604,   0, NETWK_TYPE_GSM_900, "Meditel", "Meditel" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Itissalat Al-Maghrib S.A */
-{ 604,   1, NETWK_TYPE_GSM_900, "IAM", "IAM" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 604,   1, NETWK_TYPE_GSM_900, "IAM", "IAM" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* WANA GSM */
 { 604,   2, NETWK_TYPE_GSM_900, "WANA GSM", "WANA GSM" },
 
@@ -2986,10 +3157,10 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 
 
 /* Libyana Mobile Phone  */
-{ 606, 0, NETWK_TYPE_GSM_900, "Libyana", "Libyana" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 606, 0, NETWK_TYPE_DCS_1800, "Libyana", "Libyana" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 606, 0, NETWK_TYPE_GSM_900, "Libyana", "Libyana" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 606, 0, NETWK_TYPE_DCS_1800, "Libyana", "Libyana" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* AL MADAR Telecomm Company */
-{ 606, 1, NETWK_TYPE_GSM_900, "Almadar", "Almadar" }, // 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 606, 1, NETWK_TYPE_GSM_900, "Almadar", "Almadar" }, // 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 
 /****************
@@ -3124,34 +3295,34 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Ghana ****
  ***************/
 /* ScanCom Ltd */
-{ 620,   1, NETWK_TYPE_GSM_900, "MTN", "MTN" },//2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 620,   1, NETWK_TYPE_GSM_900, "MTN", "MTN" },//2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Ghana Telecommunications Company Ltd */
-{ 620,   2, NETWK_TYPE_GSM_900, "GH Onetouch", "GH Onetouch" },//2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 620,   2, NETWK_TYPE_GSM_900, "GH Onetouch", "GH Onetouch" },//2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Millicom Ghana Limited */
-{ 620,   3, NETWK_TYPE_GSM_900, "Tigo", "Tigo" },//2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 620,   3, NETWK_TYPE_GSM_900, "Tigo", "Tigo" },//2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Zain Gh */
-{ 620,   6, NETWK_TYPE_GSM_900, "Zain Gh", "Zain Gh" },//2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 620,   6, NETWK_TYPE_DCS_1800, "Zain Gh", "Zain Gh" },//2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 620,   6, NETWK_TYPE_GSM_900, "Zain Gh", "Zain Gh" },//2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 620,   6, NETWK_TYPE_DCS_1800, "Zain Gh", "Zain Gh" },//2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /*****************
  **** Nigeria ****
  *****************/
 /* Globacom Limited */
-{ 621,  20, NETWK_TYPE_GSM_900, "Celtel Nigeria", "Celtel Nigeria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 621,  20, NETWK_TYPE_DCS_1800, "Celtel Nigeria", "Celtel Nigeria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 621,  20, NETWK_TYPE_UMTS, "Celtel Nigeria", "Celtel Nigeria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 621,  20, NETWK_TYPE_GSM_900, "Celtel Nigeria", "Celtel Nigeria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 621,  20, NETWK_TYPE_DCS_1800, "Celtel Nigeria", "Celtel Nigeria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 621,  20, NETWK_TYPE_UMTS, "Celtel Nigeria", "Celtel Nigeria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* MTN Nigeria Communications Limited */
-{ 621,  30, NETWK_TYPE_GSM_900, "MTN Nigeria", "MTN Nigeria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 621,  30, NETWK_TYPE_DCS_1800, "MTN Nigeria", "MTN Nigeria" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 621,  30, NETWK_TYPE_GSM_900, "MTN Nigeria", "MTN Nigeria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 621,  30, NETWK_TYPE_DCS_1800, "MTN Nigeria", "MTN Nigeria" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* Nigerian Mobile Telecommunications Limited (MTEL) */
-{ 621,  40, NETWK_TYPE_GSM_900, "Mtel", "Mtel" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 621,  40, NETWK_TYPE_DCS_1800, "Mtel", "Mtel" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 621,  40, NETWK_TYPE_GSM_900, "Mtel", "Mtel" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 621,  40, NETWK_TYPE_DCS_1800, "Mtel", "Mtel" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* Celtel Nigeria Limited */
-{ 621,  50, NETWK_TYPE_GSM_900, "Glo Mobile", "Glo Mobile" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 621,  50, NETWK_TYPE_DCS_1800, "Glo Mobile", "Glo Mobile" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 621,  50, NETWK_TYPE_GSM_900, "Glo Mobile", "Glo Mobile" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 621,  50, NETWK_TYPE_DCS_1800, "Glo Mobile", "Glo Mobile" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* Emerging Markets Telecommunication */
 { 621,  60, NETWK_TYPE_GSM_900, "Etisalat", "Etisalat" },
@@ -3230,8 +3401,8 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* UNITEL S.a.r.l. */
 { 631,   1, NETWK_TYPE_GSM_900, "UNITEL", "UNITEL" },
 /* UNITEL */
-{ 631,   2, NETWK_TYPE_GSM_900, "UNITEL", "UNITEL" }, //angola 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 631,   2, NETWK_TYPE_DCS_1800, "UNITEL", "UNITEL" }, //angola 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 631,   2, NETWK_TYPE_GSM_900, "UNITEL", "UNITEL" }, //angola 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 631,   2, NETWK_TYPE_DCS_1800, "UNITEL", "UNITEL" }, //angola 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Telsom Mobile Somalia */
 { 631,  82, NETWK_TYPE_GSM_900, "telsom", "telsom" },
 
@@ -3299,35 +3470,35 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Kenya ****
  ***************/
 /* Safaricom Limited */
-{ 639,   2, NETWK_TYPE_GSM_900, "Safaricom", "Safaricom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 639,   2, NETWK_TYPE_DCS_1800, "Safaricom", "Safaricom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 639,   2, NETWK_TYPE_GSM_900, "Safaricom", "Safaricom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 639,   2, NETWK_TYPE_DCS_1800, "Safaricom", "Safaricom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Celtel Kenya Limited */
-{ 639,   3, NETWK_TYPE_GSM_900, "ZAIN KE", "ZAIN KE" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 639,   3, NETWK_TYPE_GSM_900, "ZAIN KE", "ZAIN KE" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Econet */
-{ 639,   5, NETWK_TYPE_GSM_900, "Econet", "Econet" },//½Å±Ô»ç¾÷ÀÚ 09³â 1¿ù ·±Äª¿¹Á¤ , 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 639,   5, NETWK_TYPE_GSM_900, "Econet", "Econet" },//Å±Ô» 09 1 Äª , 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Telkom Kenya Limited */
-{ 639,   7, NETWK_TYPE_GSM_900, "Orange", "Orange" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 639,   7, NETWK_TYPE_DCS_1800, "Orange", "Orange" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 639,   7, NETWK_TYPE_GSM_900, "Orange", "Orange" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 639,   7, NETWK_TYPE_DCS_1800, "Orange", "Orange" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /******************
  **** Tanzania ****
  ******************/
 /* Tritel (T) Ltd */
 { 640,   1, NETWK_TYPE_GSM_900, "TRITEL-TZ", "TRITEL-TZ" },
 /* MIC Tanzania Ltd */
-{ 640,   2, NETWK_TYPE_GSM_900, "Tigo", "Tigo" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 640,   2, NETWK_TYPE_DCS_1800, "Tigo", "Tigo" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 640,   2, NETWK_TYPE_GSM_900, "Tigo", "Tigo" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 640,   2, NETWK_TYPE_DCS_1800, "Tigo", "Tigo" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* Zanzibar Telecom */
-{ 640,   3, NETWK_TYPE_GSM_900, "ZANTEL", "ZANTEL" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 640,   3, NETWK_TYPE_DCS_1800, "ZANTEL", "ZANTEL" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 640,   3, NETWK_TYPE_GSM_900, "ZANTEL", "ZANTEL" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 640,   3, NETWK_TYPE_DCS_1800, "ZANTEL", "ZANTEL" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* Vodacom Tanzania Ltd */
-{ 640,   4, NETWK_TYPE_GSM_900, "Vodacom", "Vodacom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 640,   4, NETWK_TYPE_DCS_1800, "Vodacom", "Vodacom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 640,   4, NETWK_TYPE_GSM_900, "Vodacom", "Vodacom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 640,   4, NETWK_TYPE_DCS_1800, "Vodacom", "Vodacom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* Celtel Tanzania Limited */
-{ 640,   5, NETWK_TYPE_GSM_900, "ZAIN TZ", "ZAIN TZ" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 640,   5, NETWK_TYPE_DCS_1800, "ZAIN TZ", "ZAIN TZ" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 640,   5, NETWK_TYPE_GSM_900, "ZAIN TZ", "ZAIN TZ" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 640,   5, NETWK_TYPE_DCS_1800, "ZAIN TZ", "ZAIN TZ" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Celtel Tanzania Limited ******
 { 640, 5, NETWK_TYPE_GSM_400, "celtel", "celtel" }, *****/
 
@@ -3341,9 +3512,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Uganda Telecom Ltd */
 { 641,  11, NETWK_TYPE_GSM_900, "mango", "mango" },
 /* Orange Uganda Limited */
-{ 641,  14, NETWK_TYPE_GSM_900, "OUL", "ORANGE UGANDA" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
+{ 641,  14, NETWK_TYPE_GSM_900, "OUL", "ORANGE UGANDA" },// D0100306029 2011/9/16 Orange  Ã»
 /* Orange Uganda Limited */
-{ 641,  14, NETWK_TYPE_DCS_1800, "OUL", "ORANGE UGANDA" },// D0100306029 2011/9/16 Orange »ç¾÷ÀÚ ¿äÃ»
+{ 641,  14, NETWK_TYPE_DCS_1800, "OUL", "ORANGE UGANDA" },// D0100306029 2011/9/16 Orange  Ã»
 
 /*****************
  **** Burundi ****
@@ -3363,13 +3534,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  ********************/
 /* SS_Protocol park071 20090811 - Mozambique PLMN fix (L760 JC version) */
 /* Mozambique Celluar S.A.R.L. */
-{ 643,   1, NETWK_TYPE_GSM_900, "mCel", "mCel" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 643,   1, NETWK_TYPE_GSM_900, "mCel", "mCel" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* Mozambique Celluar S.A.R.L. */
-{ 643,   1, NETWK_TYPE_DCS_1800, "mCel", "mCel" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 643,   1, NETWK_TYPE_DCS_1800, "mCel", "mCel" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* VM, S.A.R.L. */
-{ 643,   4, NETWK_TYPE_GSM_900, "Vodacom", "Vodacom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 643,   4, NETWK_TYPE_GSM_900, "Vodacom", "Vodacom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 /* VM, S.A.R.L. */
-{ 643,   4, NETWK_TYPE_DCS_1800, "Vodacom", "Vodacom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 643,   4, NETWK_TYPE_DCS_1800, "Vodacom", "Vodacom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /****************
  **** Zambia ****
@@ -3397,7 +3568,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Outremer Telecom */
 { 647,   2, NETWK_TYPE_DCS_1800, "F-OMT", "F-OMT" },
 /* Societe Reunionnaise */
-{ 647,  10, NETWK_TYPE_GSM_900, "SFR RU", "SFR RU" },  //2008.12.01 ÇöÃ¤ÀÎ Zineb ¿äÃ» »çÇ×
+{ 647,  10, NETWK_TYPE_GSM_900, "SFR RU", "SFR RU" },  //2008.12.01 Ã¤ Zineb Ã» 
 
 /******************
  **** Zimbabwe ****
@@ -3455,22 +3626,22 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **********************/
 /* request from vodacom (south africa) 7 Jan 2005 */
 /* Vodacom (Pty) Ltd */
-{ 655,   1, NETWK_TYPE_GSM_900, "RSA Vodacom", "RSA Vodacom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 655,   1, NETWK_TYPE_UMTS, "RSA Vodacom", "RSA Vodacom" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 655,   1, NETWK_TYPE_GSM_900, "RSA Vodacom", "RSA Vodacom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 655,   1, NETWK_TYPE_UMTS, "RSA Vodacom", "RSA Vodacom" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /*Telkom ,Ltd */
-{ 655,   2, NETWK_TYPE_GSM_900, "RSA 8ta", "RSA 8ta" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ÀÌ¿ë±¸ Ã¥ÀÓ ¿äÃ»
-{ 655,   2, NETWK_TYPE_DCS_1800,  "RSA 8ta", "RSA 8ta" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ÀÌ¿ë±¸ Ã¥ÀÓ ¿äÃ»
-{ 655,   2, NETWK_TYPE_UMTS,  "RSA 8ta", "RSA 8ta" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ÀÌ¿ë±¸ Ã¥ÀÓ ¿äÃ»
+{ 655,   2, NETWK_TYPE_GSM_900, "RSA 8ta", "RSA 8ta" },// 2009.9.1 ß¾Æ°ß±×· Ì¿ë±¸ Ã¥ Ã»
+{ 655,   2, NETWK_TYPE_DCS_1800,  "RSA 8ta", "RSA 8ta" },// 2009.9.1 ß¾Æ°ß±×· Ì¿ë±¸ Ã¥ Ã»
+{ 655,   2, NETWK_TYPE_UMTS,  "RSA 8ta", "RSA 8ta" },// 2009.9.1 ß¾Æ°ß±×· Ì¿ë±¸ Ã¥ Ã»
 
 /* Cell C (Pty) Ltd */
-{ 655,   7, NETWK_TYPE_GSM_900, "RSA CELL C", "RSA CELL C" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 655,   7, NETWK_TYPE_DCS_1800, "RSA CELL C", "RSA CELL C" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 655,   7, NETWK_TYPE_GSM_900, "RSA CELL C", "RSA CELL C" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 655,   7, NETWK_TYPE_DCS_1800, "RSA CELL C", "RSA CELL C" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /* MTN - Mobile Telephone Networks (Pty) Ltd. */
-{ 655,  10, NETWK_TYPE_GSM_900, "RSA MTN", "RSA MTN" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 655,  10, NETWK_TYPE_DCS_1800, "RSA MTN", "RSA MTN" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
-{ 655,  10, NETWK_TYPE_UMTS, "RSA MTN", "RSA MTN" },// 2009.9.1 Áß¾Æ°³¹ß±×·ì ¹Ú¿µ±â ¼±ÀÓ ¿äÃ». CR B0100230341
+{ 655,  10, NETWK_TYPE_GSM_900, "RSA MTN", "RSA MTN" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 655,  10, NETWK_TYPE_DCS_1800, "RSA MTN", "RSA MTN" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
+{ 655,  10, NETWK_TYPE_UMTS, "RSA MTN", "RSA MTN" },// 2009.9.1 ß¾Æ°ß±×· Ú¿  Ã». CR B0100230341
 
 /*********************
  ****            ****
@@ -3491,15 +3662,15 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 704, 1, NETWK_TYPE_PCS_1900, "SERCOM", "SERCOM" },
 #else
 /* SERCOM S.A. (Guatemala) */
-{ 704, 1, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 704, 1, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* COMCEL-Communicaciones Celulares Sociedad Anonima */
-{ 704, 2, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 704, 3, NETWK_TYPE_PCS_1900, "movistar", "movistar" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 704, 2, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.01 ß³  ×· Èº  Ã»
+{ 704, 3, NETWK_TYPE_PCS_1900, "movistar", "movistar" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #if defined (FEATURE_SAMSUNG_ARCTI)
 { 704, 12, NETWK_TYPE_PCS_1900, "SERCOM", "SERCOM" }, 
 #else
-{ 704, 12, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 704, 12, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
 /*********************
@@ -3514,12 +3685,12 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 706,   1, NETWK_TYPE_PCS_1900, "Claro SLV", "Claro SLV" },
 #else
 /* CTE Telecom Personal SA de CV */
-{ 706,   1, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 706,   1, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* DIGICEL, S.A. de C.V. */
-{ 706,   2, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 706,   2, NETWK_TYPE_GSM_900, "Digicel", "Digicel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Telemovil EL Salvador S.A */
-{ 706,  3, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 706,  3, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* "Telefonica Moviles El Salvador, S.A de c.v" */
 { 706, 4, NETWK_TYPE_GSM_850, "movistar", "movistar" }, 
 /* PERSONAL */
@@ -3540,67 +3711,77 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 708,   1, NETWK_TYPE_PCS_1900, "Claro HND", "Claro HND" },
 #else
 /* Megatel S.A. de C.V. */
-{ 708,   0, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 708,   1, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 708,   0, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 708,   1, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* Telefonica Celular S.A (CELTEL) */
-{ 708,   2, NETWK_TYPE_GSM_900, "TIGO", "TIGO" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 708,   2, NETWK_TYPE_GSM_900, "TIGO", "TIGO" },// 2009.09.01 ß³  ×· Èº  Ã»
+#if defined (CONFIG_LTN_COMMON)
+/* Honduras Digicel */
+{ 708,   4, NETWK_TYPE_GSM_900,  "Digicel", "Digicel" },
+#endif
 /* Empresa Hondurena de Telecomunicaciones HONDUTEL */
-{ 708, 30, NETWK_TYPE_PCS_1900, "HT - 200", "HT - 200" }, 
-
+{ 708, 30, NETWK_TYPE_PCS_1900, "HT - 200", "HT - 200" },
+#if defined (CONFIG_LTN_COMMON)
+{ 708, 40, NETWK_TYPE_DCS_1800,  "Digicel", "Digicel" }, // jyk_2010.10.11
+#endif
 /*********************
  **** Nicaragua ****
  *********************/
-#if defined(FEATURE_SAMSUNG_MXTELCEL) 
+#if defined(FEATURE_SAMSUNG_MXTELCEL)
 /* Claro NIC */
-{ 710, 21, NETWK_TYPE_PCS_1900, "ClaroNIC", "Claro NIC" }, 
-#elif defined(FEATURE_SAMSUNG_ARCTI) 
-{ 710, 21, NETWK_TYPE_PCS_1900, "ENITEL", "ENITEL" }, 
+{ 710, 21, NETWK_TYPE_PCS_1900, "ClaroNIC", "Claro NIC" },
+#elif defined(FEATURE_SAMSUNG_ARCTI)
+{ 710, 21, NETWK_TYPE_PCS_1900, "ENITEL", "ENITEL" },
 #else
-{ 710, 21, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 710, 21, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* Telefonica Moviles S.A. */
-{ 710, 30, NETWK_TYPE_GSM_850, "movistar", "Movistar" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 710, 30, NETWK_TYPE_GSM_850, "movistar", "Movistar" },// 2009.09.01 ß³  ×· Èº  Ã»
 #if defined(FEATURE_SAMSUNG_ARCTI)
 /* SERCOM S.A. (Nicaragua) */
 { 710, 73, NETWK_TYPE_PCS_1900, "SERCOM", "SERCOM" }, 
 { 710, 300, NETWK_TYPE_GSM_850, "movistar", "Movistar" },
 { 710, 730, NETWK_TYPE_PCS_1900, "SERCOM", "SERCOM" }, 
 #else
-{ 710, 73, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 710, 300, NETWK_TYPE_GSM_850, "movistar", "movistar" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 710, 730, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 710, 73, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
+{ 710, 300, NETWK_TYPE_GSM_850, "movistar", "movistar" },// 2009.09.01 ß³  ×· Èº  Ã»
+{ 710, 730, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
 /***********************
  ****   Costarica   ****
  **********************/
 /* Belize Telecommunications Ltd */
-{ 712,   1, NETWK_TYPE_DCS_1800, "ICE", "ICE" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 712,   1, NETWK_TYPE_DCS_1800, "ICE", "ICE" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* I.C.E. (Instituto Costarricense de Electricidad) */
-{ 712, 2, NETWK_TYPE_DCS_1800, "ICE", "ICE" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 712, 2, NETWK_TYPE_DCS_1800, "ICE", "ICE" },
+#if defined (CONFIG_LTN_COMMON)
+{ 712, 3, NETWK_TYPE_DCS_1800, "Claro", "Claro" },
+{ 712, 4, NETWK_TYPE_DCS_1800, "movistar", "movistar" },
+#endif
 /* Belize Telecommunications Ltd */
-{ 712,   10, NETWK_TYPE_DCS_1800, "ICE", "ICE" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 712,   10, NETWK_TYPE_DCS_1800, "ICE", "ICE" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* I.C.E. (Instituto Costarricense de Electricidad) */
-{ 712, 21, NETWK_TYPE_DCS_1800, "ICE", "ICE" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 712, 21, NETWK_TYPE_DCS_1800, "ICE", "ICE" }, // 2009.09.01 ß³  ×· Èº  Ã»
 
 /*********************
  **** Panama ****
  *********************/
 /* Cable & Wireless Panama */
-{ 714,  1, NETWK_TYPE_GSM_850, "+Movil", "+Movil" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 714,  1, NETWK_TYPE_GSM_850, "+Movil", "+Movil" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* "TELEFONICA MOVILES PANAMA, S.A." */
-{ 714,  2, NETWK_TYPE_GSM_850, "movistar", "movistar" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 714,  2, NETWK_TYPE_GSM_850, "movistar", "movistar" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #if defined(FEATURE_SAMSUNG_MXTELCEL) 
 { 714,  3, NETWK_TYPE_GSM_850, "CLARO PA", "CLARO PA" }, 
 #elif defined (FEATURE_SAMSUNG_COMCEL) 
 { 714,  3, NETWK_TYPE_GSM_850, "Claro Pa", "Claro Pa" }, 
 #else
-{ 714,  3, NETWK_TYPE_GSM_850, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 714,  3, NETWK_TYPE_GSM_850, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
-{ 714,  4, NETWK_TYPE_GSM_850, "Digicel", "Digicel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 714,  4, NETWK_TYPE_GSM_850, "Digicel", "Digicel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Cable & Wireless Panama */
-{ 714,  11, NETWK_TYPE_GSM_850, "+Movil", "+Movil" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 714,  11, NETWK_TYPE_GSM_850, "+Movil", "+Movil" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* "TELEFONICA MOVILES PANAMA, S.A." */
 { 714, 20, NETWK_TYPE_GSM_850, "movistar", "movistar" }, 
 
@@ -3613,14 +3794,14 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Claro Peru */
 { 716,  10, NETWK_TYPE_PCS_1900, "Claro PER", "Claro PER" },
 #else
-{ 716,  10, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 716,  10, NETWK_TYPE_PCS_1900, "Claro", "Claro" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
 /*******************
  **** Argentina ****
  *******************/
 /* UNIFON */
-{ 722,   7, NETWK_TYPE_PCS_1900, "movistar", "movistar" },  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
+{ 722,   7, NETWK_TYPE_PCS_1900, "movistar", "movistar" },  // 2009.09.01 ß³  ×· Èº  Ã» 
 /* CTI Movil ARG */
 #if defined( FEATURE_SAMSUNG_MXTELCEL)
 /* CTI Movil ARG */
@@ -3629,14 +3810,14 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* CTI Movil ARG */
 { 722,  31, NETWK_TYPE_PCS_1900, "CTI Movil", "CTI Movil" },
 #else
-{ 722,  31, NETWK_TYPE_GSM_850, "Claro AR", "Claro AR" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
-{ 722,  31, NETWK_TYPE_PCS_1900, "Claro AR", "Claro AR" },  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
+{ 722,  31, NETWK_TYPE_GSM_850, "Claro AR", "Claro AR" }, // 2009.09.01 ß³  ×· Èº  Ã» 
+{ 722,  31, NETWK_TYPE_PCS_1900, "Claro AR", "Claro AR" },  // 2009.09.01 ß³  ×· Èº  Ã» 
 #endif
 /* Telecom Personal S.A. */
-{ 722,  34, NETWK_TYPE_PCS_1900, "Personal", "Personal" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
+{ 722,  34, NETWK_TYPE_PCS_1900, "Personal", "Personal" }, // 2009.09.01 ß³  ×· Èº  Ã» 
 /* PORT-HABLE */
 { 722,  35, NETWK_TYPE_GSM_900, "PORT-HABLE", "PORT-HABLE" },
-{ 722,   71, NETWK_TYPE_PCS_1900, "movistar", "movistar" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
+{ 722,   71, NETWK_TYPE_PCS_1900, "movistar", "movistar" },// 2009.09.01 ß³  ×· Èº  Ã» 
 
 #if defined( FEATURE_SAMSUNG_MXTELCEL)
 /* CTI Movil ARG */
@@ -3646,16 +3827,20 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 722,  310, NETWK_TYPE_PCS_1900, "CTI Movil", "CTI Movil" },
 #else
 /* CTI Compania de Telefonos del Interior S.A. */
-{ 722,  310, NETWK_TYPE_GSM_850, "Claro AR", "Claro AR" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
+{ 722,  310, NETWK_TYPE_GSM_850, "Claro AR", "Claro AR" }, // 2009.09.01 ß³  ×· Èº  Ã» 
 /* CTI PCS S.A. */
-{ 722,  310, NETWK_TYPE_PCS_1900, "Claro AR", "Claro AR" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»   
+{ 722,  310, NETWK_TYPE_PCS_1900, "Claro AR", "Claro AR" }, // 2009.09.01 ß³  ×· Èº  Ã»   
 #endif
 /* Telecom Personal S.A. */
-{ 722,  341, NETWK_TYPE_PCS_1900, "Personal", "Personal" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»   
+{ 722,  341, NETWK_TYPE_PCS_1900, "Personal", "Personal" },// 2009.09.01 ß³  ×· Èº  Ã»   
 
 /***************
  **** Brasil ****
  ***************/
+#if defined(CONFIG_LTN_COMMON)
+/* TIM Celular S.A. */
+{ 724, 0, NETWK_TYPE_DCS_1800, "Nextel", "Nextel" }, 
+#endif 
 /* TIM Celular S.A. */
 { 724, 2, NETWK_TYPE_DCS_1800, "TIM", "TIM" }, 
 /* TIM Celular S.A. */
@@ -3676,65 +3861,72 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 * Dependencies           : QmochaNw_fnc.c QmochaNw_table.h
 **********************************************************************/
 /* VIVO */
-{ 724, 6, NETWK_TYPE_GSM_850, "VIVO", "VIVO" },   //Ç×¸ñ Ãß°¡ 
+{ 724, 6, NETWK_TYPE_GSM_850, "VIVO", "VIVO" },   //×¸ ß° 
 /* VIVO */
-{ 724, 6, NETWK_TYPE_PCS_1900, "VIVO", "VIVO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 6, NETWK_TYPE_PCS_1900, "VIVO", "VIVO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* VIVO */
-{ 724, 10, NETWK_TYPE_GSM_850, "VIVO", "VIVO" },   //Ç×¸ñ Ãß°¡ 
+{ 724, 10, NETWK_TYPE_GSM_850, "VIVO", "VIVO" },   //×¸ ß° 
 /* VIVO */
-{ 724, 10, NETWK_TYPE_PCS_1900, "VIVO", "VIVO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 10, NETWK_TYPE_PCS_1900, "VIVO", "VIVO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* VIVO */
-{ 724, 11, NETWK_TYPE_GSM_850, "VIVO", "VIVO" },   //Ç×¸ñ Ãß°¡ 
+{ 724, 11, NETWK_TYPE_GSM_850, "VIVO", "VIVO" },   //×¸ ß° 
 /* VIVO */
-{ 724, 11, NETWK_TYPE_PCS_1900, "VIVO", "VIVO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 11, NETWK_TYPE_PCS_1900, "VIVO", "VIVO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 
 /* Sercomtel Celular S/A */
-{ 724, 15, NETWK_TYPE_GSM_900, "Sercomtel", "Sercomtel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 15, NETWK_TYPE_GSM_900, "Sercomtel", "Sercomtel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Sercomtel Celular S/A */
-{ 724, 15, NETWK_TYPE_DCS_1800, "Sercomtel", "Sercomtel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 15, NETWK_TYPE_DCS_1800, "Sercomtel", "Sercomtel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 
 #if defined(FEATURE_SAMSUNG_ARCTI)
 /* 14 Brasil Telecom Celular S.A */
 { 724, 16, NETWK_TYPE_DCS_1800, "Telecom", "Telecom" },
+#elif defined(CONFIG_LTN_COMMON)
+{ 724, 16, NETWK_TYPE_DCS_1800, "Oi", "Oi" },  // 2009.09.01 ß³  ×· Èº  Ã»
 #else
-{ 724, 16, NETWK_TYPE_DCS_1800, "Brasil Telecom", "Brasil Telecom" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 16, NETWK_TYPE_DCS_1800, "Brasil Telecom", "Brasil Telecom" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
-/* TIM Celular S.A. */           
-{ 724, 21, NETWK_TYPE_DCS_1800, "TIM", "TIM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+/* TIM Celular S.A. */
+{ 724, 21, NETWK_TYPE_DCS_1800, "TIM", "TIM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 
 /* Telemig Celular S/A */
-{ 724, 23, NETWK_TYPE_GSM_900, "VIVO", "VIVO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 23, NETWK_TYPE_GSM_900, "VIVO", "VIVO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Telemig Celular S/A */
-{ 724, 23, NETWK_TYPE_DCS_1800, "VIVO", "VIVO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-
+{ 724, 23, NETWK_TYPE_DCS_1800, "VIVO", "VIVO" },
+#if defined(CONFIG_LTN_COMMON)
 /* Amazonia Celular S/A */
-{ 724, 24, NETWK_TYPE_GSM_900, "Amaz" "\xF4\x6E" "ia Cel", "Amaz" "\xF4\x6E" "ia Cel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 724, 24, NETWK_TYPE_GSM_900, "Oi", "Oi" },
 /* Amazonia Celular S/A */
-{ 724, 24, NETWK_TYPE_DCS_1800, "Amaz" "\xF4\x6E" "ia Cel", "Amaz" "\xF4\x6E" "ia Cel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ» 
-
+{ 724, 24, NETWK_TYPE_DCS_1800, "Oi", "Oi" },
+#else
+/* Amazonia Celular S/A */
+{ 724, 24, NETWK_TYPE_GSM_900, "Amaz" "\xF4\x6E" "ia Cel", "Amaz" "\xF4\x6E" "ia Cel" },
+/* Amazonia Celular S/A */
+{ 724, 24, NETWK_TYPE_DCS_1800, "Amaz" "\xF4\x6E" "ia Cel", "Amaz" "\xF4\x6E" "ia Cel" },
+#endif
 /* TNL PCS S.A. */
-{ 724, 31, NETWK_TYPE_DCS_1800, "Oi", "Oi" }, 
+{ 724, 31, NETWK_TYPE_DCS_1800, "Oi", "Oi" },
 
 /* Triangulo Celular S.A */
-{ 724, 32, NETWK_TYPE_GSM_900, "CTBC", "CTBC" }, 
+{ 724, 32, NETWK_TYPE_GSM_900, "CTBC", "CTBC" },
 /* Triangulo Celular S.A */
-{ 724, 32, NETWK_TYPE_DCS_1800, "CTBC", "CTBC" }, 
+{ 724, 32, NETWK_TYPE_DCS_1800, "CTBC", "CTBC" },
 /* Triangulo Celular S.A */
-{ 724, 33, NETWK_TYPE_GSM_900, "CTBC", "CTBC" }, 
+{ 724, 33, NETWK_TYPE_GSM_900, "CTBC", "CTBC" },
 /* Triangulo Celular S.A */
-{ 724, 33, NETWK_TYPE_DCS_1800, "CTBC", "CTBC" }, 
+{ 724, 33, NETWK_TYPE_DCS_1800, "CTBC", "CTBC" },
 /* Triangulo Celular S.A */
-{ 724, 34, NETWK_TYPE_GSM_900, "CTBC", "CTBC" }, 
+{ 724, 34, NETWK_TYPE_GSM_900, "CTBC", "CTBC" },
 /* Triangulo Celular S.A */
-{ 724, 34, NETWK_TYPE_DCS_1800, "CTBC", "CTBC" }, 
+{ 724, 34, NETWK_TYPE_DCS_1800, "CTBC", "CTBC" },
 
-{ 724, 37, NETWK_TYPE_DCS_1800, "AEIOU", "AEIOU" }, 
+{ 724, 37, NETWK_TYPE_DCS_1800, "AEIOU", "AEIOU" },
 
 /* TIM Celular S.A. */
-{ 724, 40, NETWK_TYPE_DCS_1800, "TIM", "TIM" },        
+{ 724, 40, NETWK_TYPE_DCS_1800, "TIM", "TIM" },
 /* Telet S.A. */
-{ 724, 51, NETWK_TYPE_DCS_1800, "Claro", "Claro" }, 
+{ 724, 51, NETWK_TYPE_DCS_1800, "Claro", "Claro" },
 #if defined(FEATURE_SAMSUNG_ARCTI)
 /* 14 Brasil Telecom Celular S.A */
 { 724, 160, NETWK_TYPE_DCS_1800, "Telecom", "Brasil Telecom" },
@@ -3748,31 +3940,42 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Chile ****
  ***************/
 /* Entel Telefonia Movil S.A */
+#if defined (CONFIG_LTN_COMMON)
+{ 730,   1, NETWK_TYPE_PCS_1900, "Entel", "Entel" },
+#else
 { 730,   1, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" },
+#endif
 #if defined(FEATURE_SAMSUNG_ARCTI)
 /* Telefonica  Movil de Chile */
 { 730,   2, NETWK_TYPE_PCS_1900, "Telefonica", "Telefonica" },
 #else
-{ 730,   2, NETWK_TYPE_PCS_1900, "movistar", "movistar" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 730,   2, NETWK_TYPE_PCS_1900, "movistar", "movistar" },// 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 #if defined(FEATURE_SAMSUNG_MXTELCEL)
 /* Claro CHL */
-{ 730, 3, NETWK_TYPE_PCS_1900, "ClaroCHL", "Claro CHL" }, 
+{ 730, 3, NETWK_TYPE_PCS_1900, "ClaroCHL", "Claro CHL" },
 #else
-{ 730, 3, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 730, 3, NETWK_TYPE_PCS_1900, "Claro", "Claro" },// 2009.09.01 ß³  ×· Èº  Ã»
+#endif
+#if defined (CONFIG_LTN_COMMON)
+{ 730,   8, NETWK_TYPE_PCS_1900, "Vtr", "Vtr" },
 #endif
 
 /* Entel PCS Telecomunicaciones S.A */
-{ 730,  10, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" },
-{ 730,   11, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-#if  defined (FEATURE_SAMSUNG_ARCTI)   
-/* Telefonica  Movil de Chile */
-{ 730,   23, NETWK_TYPE_PCS_1900, "Telefonica", "Telefonica" },
+#if defined (CONFIG_LTN_COMMON)
+{ 730,  10, NETWK_TYPE_PCS_1900, "Entel", "Entel" },
+{ 730,   11, NETWK_TYPE_PCS_1900, "Entel", "Entel" },
 #else
-{ 730,   23, NETWK_TYPE_PCS_1900, "movistar", "movistar" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 730,  10, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" },
+{ 730,   11, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" },
 #endif
-{ 730,   101, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-
+/* Telefonica  Movil de Chile */
+{ 730,   23, NETWK_TYPE_PCS_1900, "movistar", "movistar" },
+#if defined (CONFIG_LTN_COMMON)
+{ 730,   101, NETWK_TYPE_PCS_1900, "Entel", "Entel" },
+#else
+{ 730,   101, NETWK_TYPE_PCS_1900, "ENTEL PCS", "ENTEL PCS" },
+#endif
 /*****************
  **** Colombia ****
  *****************/
@@ -3781,103 +3984,129 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 732,  101, NETWK_TYPE_PCS_1900, "Comcel", "Comcel" },
 #elif defined(FEATURE_SAMSUNG_MXTELCEL)
 /* Occidente y Caribe Celular SA Occel SA */
-{ 732,  101, NETWK_TYPE_GSM_850, "COMCEL", "Comcel 3GSM" }, 
+{ 732,  101, NETWK_TYPE_GSM_850, "COMCEL", "Comcel 3GSM" },
 /* Comunicacion Celular SA Comcel SA */
 { 732,  101, NETWK_TYPE_PCS_1900, "COMCEL", "Comcel 3GSM" },
+#elif defined (CONFIG_LTN_COMMON)
+/* Occidente y Caribe Celular SA Occel SA */
+{ 732,  101, NETWK_TYPE_GSM_850, "Claro", "Claro" },
+/* Comunicacion Celular SA Comcel SA */
+{ 732,  101, NETWK_TYPE_PCS_1900, "Claro", "Claro" },
 #else
 /* Occidente y Caribe Celular SA Occel SA */
-{ 732,  101, NETWK_TYPE_GSM_850, "COMCEL 3GSM", "COMCEL 3GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 732,  101, NETWK_TYPE_GSM_850, "COMCEL 3GSM", "COMCEL 3GSM" },
 /* Comunicacion Celular SA Comcel SA */
-{ 732,  101, NETWK_TYPE_PCS_1900, "COMCEL 3GSM", "COMCEL 3GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 732,  101, NETWK_TYPE_PCS_1900, "COMCEL 3GSM", "COMCEL 3GSM" },
 #endif
-
 /* Colombia Movil SA */
-{ 732,   103, NETWK_TYPE_PCS_1900, "TIGO", "TIGO" },// 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 732,   103, NETWK_TYPE_PCS_1900, "TIGO", "TIGO" },// 2009.09.01 ß³  ×· Èº  Ã»
 /* Colombia Movil SA */
-{ 732,  111, NETWK_TYPE_PCS_1900, "TIGO", "TIGO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 732,  111, NETWK_TYPE_PCS_1900, "TIGO", "TIGO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Colombia Telecomunicaciones S.A. ESP */
-{ 732,  111, NETWK_TYPE_GSM_900, "TIGO", "TIGO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 732,  111, NETWK_TYPE_GSM_900, "TIGO", "TIGO" },
+#if defined (CONFIG_LTN_COMMON)
+/* Telefonica Moviles Colombia S.A. */
+{ 732,  123, NETWK_TYPE_GSM_850, "movistar", "movistar" },
+/* Telefonica Moviles Colombia S.A. */
+{ 732,  123, NETWK_TYPE_PCS_1900, "movistar", "movistar" },
+#else
 /* Telefonica Moviles Colombia S.A. */
 { 732,  123, NETWK_TYPE_GSM_850, "COL Movistar", "COL Movistar" }, // 2010.09.13, O2 lifecard TC 4.1.1.3
 /* Telefonica Moviles Colombia S.A. */
 { 732,  123, NETWK_TYPE_PCS_1900, "COL Movistar", "COL Movistar" }, // 2010.09.13, O2 lifecard TC 4.1.1.3
+#endif
 
 /*******************
    **** Venezuela ****
  *******************/
-#if defined(FEATURE_SAMSUNG_ARCTI)   
+#if defined(FEATURE_SAMSUNG_ARCTI)
 /* Infonet, Redes De Informacion C.A */
 { 734,   1, NETWK_TYPE_GSM_900, "Infonet", "Infonet" },
 #else
-{ 734,   1, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 734,   1, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* Corporacion Digitel C.A */
-{ 734,   2, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 734,   2, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Corporacion Digitel C.A */
-{ 734,   3, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 734,   3, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* movistar */
-{ 734,   4, NETWK_TYPE_GSM_850, "movistar", "movistar" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 734,   6, NETWK_TYPE_GSM_850, "Movilnet", "Movilnet" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-{ 734,   21, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 734,   4, NETWK_TYPE_GSM_850, "movistar", "movistar" }, // 2009.09.01 ß³  ×· Èº  Ã»
+{ 734,   6, NETWK_TYPE_GSM_850, "Movilnet", "Movilnet" }, // 2009.09.01 ß³  ×· Èº  Ã»
+{ 734,   21, NETWK_TYPE_GSM_900, "Digitel", "Digitel" }, // 2009.09.01 ß³  ×· Èº  Ã»
 
 /*****************
  **** Bolivia ****
  *****************/
+#if defined (CONFIG_LTN_COMMON)
 /* Nuevatel PCS De Bolivia SA */
-{ 736,   1, NETWK_TYPE_PCS_1900, "NUEVATEL", "NUEVATEL" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-#if defined(FEATURE_SAMSUNG_ARCTI)
+{ 736,   1, NETWK_TYPE_PCS_1900, "Viva", "Viva" },
 /* Entel SA */
-{ 736,   2, NETWK_TYPE_PCS_1900, "Entel", "Entel" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-#else
-/* Entel SA */
-{ 736,   2, NETWK_TYPE_PCS_1900, "MOVIL-E", "MOVIL-E" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-#endif
+{ 736,   2, NETWK_TYPE_PCS_1900, "entel movil", "entel movil" },
 /* Telefonica Celular De Bolivia S.A. */
-{ 736, 3, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 736, 3, NETWK_TYPE_GSM_850, "Tigo", "Tigo" },
+#else
+/* Nuevatel PCS De Bolivia SA */
+{ 736,   1, NETWK_TYPE_PCS_1900, "NUEVATEL", "NUEVATEL" },
+/* Entel SA */
+{ 736,   2, NETWK_TYPE_PCS_1900, "MOVIL-E", "MOVIL-E" },
+/* Telefonica Celular De Bolivia S.A. */
+{ 736, 3, NETWK_TYPE_GSM_850, "TIGO", "TIGO" },
+#endif
 
 /****************
  **** Guyana ****
  ****************/
 /* Cel*Star Guyana Inc */
-{ 738, 1, NETWK_TYPE_GSM_900, "Cel*Star", "Cel*Star" }, // 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+#if defined (CONFIG_LTN_COMMON)
+{ 738, 1, NETWK_TYPE_GSM_900, "Digicel", "Digicel" },
+#else
+{ 738, 1, NETWK_TYPE_GSM_900, "Cel*Star", "Cel*Star" },
+#endif
 /* Guyana Telephone & Telegraph Co. */
-{ 738, 2, NETWK_TYPE_GSM_900, "CLNK PLS", "CLNK PLS" }, 
+{ 738, 2, NETWK_TYPE_GSM_900, "CLNK PLS", "CLNK PLS" },
 
 /**************
  **** ECU  ****
  **************/
 /* OTECEL S.A. */
-{ 740, 0, NETWK_TYPE_GSM_850, "movistar", "movistar" }, 
-#if defined (FEATURE_SAMSUNG_ARCTI)  
-{ 740, 1, NETWK_TYPE_GSM_850, "Conecel", "Conecel" }, 
+{ 740, 0, NETWK_TYPE_GSM_850, "movistar", "movistar" },
+#if defined (FEATURE_SAMSUNG_ARCTI)
+{ 740, 1, NETWK_TYPE_GSM_850, "Conecel", "Conecel" },
 #elif defined (FEATURE_SAMSUNG_COMCEL)
 /* Porta GSM */
-{ 740, 1, NETWK_TYPE_PCS_1900, "PORTA GSM", "PORTA GSM" }, 
-#elif defined (FEATURE_SAMSUNG_MXTELCEL) 
+{ 740, 1, NETWK_TYPE_PCS_1900, "PORTA GSM", "PORTA GSM" },
+#elif defined (FEATURE_SAMSUNG_MXTELCEL)
 /* Porta GSM */
-{ 740, 1, NETWK_TYPE_PCS_1900, "PORTAGSM", "PORTA GSM" }, 
+{ 740, 1, NETWK_TYPE_PCS_1900, "PORTAGSM", "PORTA GSM" },
+#elif defined (CONFIG_LTN_COMMON)
+/* Porta GSM */
+{ 740, 1, NETWK_TYPE_GSM_850, "Claro", "Claro" }, //2011.02.09 ECO changed its name from porta to claro
 #else
 /* Porta GSM */
-{ 740, 1, NETWK_TYPE_GSM_850, "Porta GSM", "Porta GSM" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 740, 1, NETWK_TYPE_GSM_850, "Porta GSM", "Porta GSM" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* Latin Open */
-{ 740, 2, NETWK_TYPE_GSM_850, "ALEGRO", "ALEGRO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 740, 2, NETWK_TYPE_GSM_850, "ALEGRO", "ALEGRO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /******************
  **** Paraguay ****
  ******************/
+#if defined (CONFIG_LTN_COMMON)
 /* Hola Paraguay S.A. */
-{ 744, 1, NETWK_TYPE_PCS_1900, "HPGYSA", "HPGYSA" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 744, 1, NETWK_TYPE_PCS_1900, "VOX", "VOX" },
+#else
+{ 744, 1, NETWK_TYPE_PCS_1900, "HPGYSA", "HPGYSA" },
+#endif
 #if defined(FEATURE_SAMSUNG_MXTELCEL)
 /* CTI  Movil PRY */
 { 744, 2, NETWK_TYPE_PCS_1900, "CLARO PY", "CLARO PY" },
-#elif defined(FEATURE_SAMSUNG_COMCEL)	
-{ 744, 2, NETWK_TYPE_PCS_1900, "CTI Movil", "CTI Movil" }, 
+#elif defined(FEATURE_SAMSUNG_COMCEL)
+{ 744, 2, NETWK_TYPE_PCS_1900, "CTI Movil", "CTI Movil" },
 #else
 /* AMX Paraguay Sociedad Anonima */
-{ 744, 2, NETWK_TYPE_PCS_1900, "Claro PY", "Claro PY" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 744, 2, NETWK_TYPE_PCS_1900, "Claro PY", "Claro PY" }, // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 /* Telefonica Celular Del Paraguay S.A. (Telecel S.A.) */
-{ 744, 4, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 744, 4, NETWK_TYPE_GSM_850, "TIGO", "TIGO" }, // 2009.09.01 ß³  ×· Èº  Ã»
 /* Nucleo S.A */
 { 744, 5, NETWK_TYPE_GSM_850, "Personal", "Personal" }, 
 /* Nucleo S.A */
@@ -3888,33 +4117,48 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  *****************/
 /* NV ICMS */
 { 746,   1, NETWK_TYPE_GSM_900, "ICMS", "ICMS" },
+#if defined (CONFIG_LTN_COMMON)
 /* Telesur */
-{ 746,   2, NETWK_TYPE_GSM_900, "Telesur", "Telesur" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 746,   2, NETWK_TYPE_GSM_900, "TeleG", "SR.TELESUR.GSM" },
+#else
+/* Telesur */
+{ 746,   2, NETWK_TYPE_GSM_900, "Telesur", "Telesur" },
 /* NV ICMS */
-{ 746,   2, NETWK_TYPE_DCS_1800, "Telesur", "Telesur" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 746,   2, NETWK_TYPE_DCS_1800, "Telesur", "Telesur" },
+#endif
 /* Digitel */
-{ 746,   3, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },// 2009.09.09 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 746,   3, NETWK_TYPE_DCS_1800, "Digicel", "Digicel" },// 2009.09.09 ß³  ×· Èº  Ã»
 /*****************
  **** Uruguay ****
  *****************/
+#if defined (CONFIG_LTN_COMMON)
 /* ANCEL */
-{ 748, 1, NETWK_TYPE_GSM_900, "ANTEL", "ANTEL" },  // 2011.07.22 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 748, 1, NETWK_TYPE_GSM_900, "ANTEL", "ANTEL" },  // 2011.07.22 ß³  ×· Èº  Ã»
 /* ANCEL */
-{ 748, 1, NETWK_TYPE_DCS_1800, "ANTEL", "ANTEL" },  // 2011.07.22 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 748, 1, NETWK_TYPE_DCS_1800, "ANTEL", "ANTEL" },  // 2011.07.22 ß³  ×· Èº  Ã»
 /* ANCEL */
-{ 748, 1, NETWK_TYPE_UMTS, "ANTEL", "ANTEL" },   // 2011.07.22 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 748, 1, NETWK_TYPE_UMTS, "ANTEL", "ANTEL" },
+#else
+ /* Antel Movil
+ */
+{ 748, 1, NETWK_TYPE_GSM_900, "ANCEL", "ANCEL" },
+/* ANCEL */
+{ 748, 1, NETWK_TYPE_DCS_1800, "ANTEL", "ANTEL" },
+/* ANCEL */
+{ 748, 1, NETWK_TYPE_UMTS, "ANCEL", "ANCEL" },
+#endif
 /* Abiatar S.A. */
-{ 748, 7, NETWK_TYPE_GSM_850, "movistar", "movistar" },   // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 748, 7, NETWK_TYPE_GSM_850, "movistar", "movistar" },   // 2009.09.01 ß³  ×· Èº  Ã»
 /* Abiatar S.A. */
-{ 748, 7, NETWK_TYPE_PCS_1900, "movistar", "movistar" }, // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
-#if defined(FEATURE_SAMSUNG_MXTELCEL) 
+{ 748, 7, NETWK_TYPE_PCS_1900, "movistar", "movistar" }, // 2009.09.01 ß³  ×· Èº  Ã»
+#if defined(FEATURE_SAMSUNG_MXTELCEL)
 /* CTI Movil URY */
-{ 748, 10, NETWK_TYPE_PCS_1900, "CLARO UY", "CLARO URUGUAY" }, 
-#elif defined (FEATURE_SAMSUNG_COMCEL)  
-{ 748, 10, NETWK_TYPE_PCS_1900, "CTI Movil", "CTI Movil" }, 
+{ 748, 10, NETWK_TYPE_PCS_1900, "CLARO UY", "CLARO URUGUAY" },
+#elif defined (FEATURE_SAMSUNG_COMCEL)
+{ 748, 10, NETWK_TYPE_PCS_1900, "CTI Movil", "CTI Movil" },
 #else
 /* AM Wireless Uruguay S.A. */
-{ 748, 10, NETWK_TYPE_PCS_1900, "Claro UY", "Claro UY" },  // 2009.09.01 Áß³²¹Ì °³¹ß ±×·ì ¾Èº´¿ì ¼±ÀÓ ¿äÃ»
+{ 748, 10, NETWK_TYPE_PCS_1900, "Claro UY", "Claro UY" },  // 2009.09.01 ß³  ×· Èº  Ã»
 #endif
 
 /*******************

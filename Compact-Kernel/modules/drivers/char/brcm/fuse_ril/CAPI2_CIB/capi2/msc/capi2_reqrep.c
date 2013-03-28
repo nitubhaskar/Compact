@@ -82,7 +82,6 @@ the GPL, without Broadcom's express prior written consent.
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
-#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -127,9 +126,6 @@ static void CAPI2_InitDialogId(ClientInfo_t* clientInfo);
 
 
 static const RPC_XdrInfo_t CAPI2_ReqRep_dscrm[] = {
-	
-	/* Add phonebook message serialize/deserialize routine map */
-	{ MSG_PBK_READY_IND,_T("MSG_PBK_READY_IND"), (xdrproc_t)xdr_default_proc, REQRSP_MSG_EXT(0,NULL,NULL,0) },
 	
 #include "capi2_gen_union_map.h"
 	

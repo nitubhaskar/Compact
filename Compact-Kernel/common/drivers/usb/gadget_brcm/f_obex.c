@@ -29,12 +29,11 @@
 #include "u_serial.h"
 #include "gadget_chips.h"
 
-/*
 #include <linux/unistd.h> 
 #include <asm/uaccess.h>
 #include <linux/fcntl.h>
 #include <linux/syscalls.h>
-*/
+
 
 
 
@@ -604,42 +603,66 @@ void obex_interface_enable(int enable)
 	pr_info("obex_interface_enable---\n");
 }
 
-//----------API for Obex status control by aijie.zhao@samsung.com--------------//
-/*
-extern int Obex_Status_Option (void) 
+/*-------------------------API for Obex status control ----------------------------*/
+static int obex_state = -1;
+int Obex_Status_Option (void) 
 { 
+       return 0; // To avoid Kernel Panic temporarily
+       
 	mm_segment_t old_fs;
-	old_fs = get_fs(); //Virtual Address space represented by mm_segment_t, The get_fs() retrieve this boundary
-    set_fs(get_ds()); 
+	char serialOut[6]="";
+	struct file *fp = NULL;
+	
+	pr_info("obex_status_option+++\n");
 
-	int state = 0;
-	char serialOut[6];
-	char *obex_status;
-	obex_status = &serialOut;
-	int *fp;
-	fp = sys_open("/mnt/.lfs/serial_out.inf",O_RDONLY, 0);
-	//-----For Debugging-----//
-	if (fp < 0) {
-		pr_info("%s: Invalid sys_open /mnt/.lfs/serial_out.inf\n", 
-				__func__);
-		return 0; 
+	if (obex_state >=0) //to allow to modifiy the OBEX status only once for developers
+	{
+		return obex_state;
 	}
-	//------END-----//
-	sys_read(fp, obex_status, 5);
+	
+	old_fs = get_fs(); //Virtual Address space represented by mm_segment_t, The get_fs() retrieve this boundary
+    set_fs(KERNEL_DS);
+		
+	fp = filp_open("/mnt/.lfs/serial_out.inf",O_RDONLY, 0);	
+	if (fp == NULL) {
+		pr_info("%s: Invalid filp_open /mnt/.lfs/serial_out.inf!!!\n", 
+				__func__);
+		return 0; //need to check the error code
+	}	
+		
+	if (fp->f_op->read == NULL) {
+		pr_info("%s: Invalid reading the file /mnt/.lfs/serial_out.inf!!!\n", 
+				__func__);
+		filp_close(fp,NULL);
+		set_fs(old_fs);
+		return 0;//need to check the error code
+	}	
+	fp->f_op->read(fp, serialOut, 5, &fp->f_pos);
+	
+	filp_close(fp,NULL);
+	set_fs(old_fs); //Set the address limit back to the original limit that was stored in the old_fs variable
+
 	if(strncmp(serialOut, "SOENA", 5)== 0)	
 	{
-		state = 1;
+		obex_state = 1;
 	}
 	else
 	{
-		state = 0;
+		obex_state = 0;
 	} 
-	//pr_info("state(%d)\n", state);//for debugging
-    set_fs(old_fs);   //Set the address limit back to the original limit that was stored in the old_fs variable
-    return state; 
+	
+	pr_info("%s: obex_status_option(%s)\n", __func__, obex_state ? "ENABLE" : "DISABLE");
+	pr_info("obex_status_option---\n");
+    
+    return obex_state; 
 } 
-*/
-//----------------------------END-----------------------------//
+
+/**
+ * Obex_Status_Option() - use keystring "#*7688#" to choose the Obex status: enable/disable
+ * obex_state: 1->enable; 0->disable
+ *
+ */
+/*----------------------------END-----------------------------*/
 
 MODULE_AUTHOR("Felipe Balbi");
 MODULE_LICENSE("GPL");

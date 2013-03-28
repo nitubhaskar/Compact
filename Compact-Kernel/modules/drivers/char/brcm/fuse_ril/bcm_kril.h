@@ -257,6 +257,12 @@ typedef struct {
 
 
 typedef struct {
+    int  onOff;
+    int  powerOffcard;
+} KrilRadioPower_t;
+
+
+typedef struct {
     int  index;
 } KrilSeparate_t;
 
@@ -435,7 +441,20 @@ typedef enum {
     BRIL_HOOK_QUERY_SIM_PIN_REMAINING,
     BRIL_HOOK_GET_SIM_VOLTAGE,
     BRIL_HOOK_SET_BPM_MODE,
-    BRIL_HOOK_GENERIC_SIM_ACCESS
+    BRIL_HOOK_GENERIC_SIM_ACCESS,
+    BRIL_HOOK_EAP_SIM_AUTHENTICATION,
+    BRIL_HOOK_EAP_AKA_AUTHENTICATION,
+    BRIL_HOOK_SET_PDP_ACTIVATION_FDN_CONTROL, // config ms database element MS_LOCAL_PCH_ELEM_PDP_ACTIVATION_FDN_CONTROL
+    BRIL_HOOK_QUERY_NETWORK_LOCK,          // Query network lock information(includes lock indicator, remain attempts and lock code)
+    BRIL_HOOK_QUERY_NETWORK_SUBSET_LOCK,   // Query network subset lock information(includes lock indicator, remain attempts and lock code)
+    BRIL_HOOK_QUERY_SERVICE_PROVIDE_LOCK,  // Query service provide lock information(includes lock indicator, remain attempts and lock code)
+    BRIL_HOOK_QUERY_CORPORATE_LOCK,        // Query corporate lock information(includes lock indicator, remain attempts and lock code)
+    BRIL_HOOK_QUERY_PHONE_LOCK,            // Query phone lock information (includes lock status and IMSI)
+    BRIL_HOOK_QUERY_ENG_MODE,              // Query Engineer Mode
+    BRIL_HOOK_QUERY_FLASH_OTP_TOTAL_PAGES,	// Query total pages of flash otp
+    BRIL_HOOK_QUERY_FLASH_OTP_FREE_PAGES,		// Query free pages of flash otp
+    BRIL_HOOK_QUERY_ENG_MODE_SET_AMR_TYPE,     // Set AMR Type in Eng Mode, NB-AMR or WB-AMR, 0 for NB-AMR , 1 for WB-AMR and 2 for Invalid AMR Mode
+    BRIL_HOOK_FDN_SKIP
 } HOOK_msgType;
 
 
@@ -454,7 +473,7 @@ typedef struct {
     char            name[BCM_MAX_DIGITS*2];
     size_t          namelen;
     char            namePresentation;
-    char            number[PHONE_NUMBER_LENGTH_MAX];     /* phone number */
+    char            number[BCM_MAX_DIGITS+1];     /* phone number */
     size_t          numlen;     /* phone number length*/
     char            numberPresentation; /* 0 = Allowed, 
                                            1 = Restricted,
@@ -854,7 +873,8 @@ typedef struct {
 typedef enum {
     BRIL_HOOK_UNSOL_SIM_ERROR,        // Notify user SIM Card is error.
     BRIL_HOOK_UNSOL_SIM_DATA,          // Notify user SIM Data for IMSI/GID1/GID2
-    BRIL_HOOK_UNSOL_MASTER_SIM_MODE    // Notify if the Master SIM mode is invoked
+    BRIL_HOOK_UNSOL_MASTER_SIM_MODE,    // Notify if the Master SIM mode is invoked
+    BRIL_HOOK_UNSOL_SIM_MSISDN_DATA     //Notify user SIM Data for MSISDN
 } HOOK_unsol_msgType;
 
 

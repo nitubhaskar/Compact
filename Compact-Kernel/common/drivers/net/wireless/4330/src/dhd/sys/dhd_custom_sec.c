@@ -292,8 +292,27 @@ int CheckRDWR_Macaddr(	struct dhd_info *dhd, dhd_pub_t *dhdp, struct ether_addr 
 		buf[17] ='\0';   // to prevent abnormal string display when mac address is displayed on the screen. 
 		DHD_ERROR(("Read MAC : [%s] [%d] \r\n" , buf, strncmp(buf , "00:00:00:00:00:00" , 17)));
 		if(strncmp(buf , "00:00:00:00:00:00" , 17) == 0) {
+			fp_mac = filp_open(filepath, O_RDONLY, 0);
+			if(!IS_ERR(fp_mac)) {  //file is exist
+				ret = kernel_read(fp_mac, 0, buf, 18);
+				if(strncmp(buf , "12:34:56" , 8) == 0) {
+					sscanf(buf,"%02X:%02X:%02X:%02X:%02X:%02X",
+					   &(mac->octet[0]), &(mac->octet[1]), &(mac->octet[2]), 
+					   &(mac->octet[3]), &(mac->octet[4]), &(mac->octet[5]));
+					/* Writing Newly generated MAC ID to the Dongle */
+					if (0 == _dhd_set_mac_address(dhd, 0, mac)) {
+						DHD_INFO(("dhd_bus_start: MACID is overwritten\n"));
+						g_iMacFlag = MACADDR_COB;
+					}
+					else {
+						DHD_ERROR(("dhd_bus_start: _dhd_set_mac_address() failed\n"));
+					}
+				}
+				filp_close(fp_mac, NULL);
+			}else{
 			filp_close(fp_nvm, NULL);
 			g_iMacFlag = MACADDR_COB_RANDOM;
+		}
 		}
 		else {
 			sscanf(buf,"%02X:%02X:%02X:%02X:%02X:%02X",

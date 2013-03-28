@@ -1150,20 +1150,30 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
             case 121:
             {
                 
-                UInt32 ext_preamp_gain;
-                UInt32 amp_id;
+                UInt32 param_value;
+                UInt32 param_id;
                 
-                amp_id = voip.val2;
-                ext_preamp_gain = voip.val3;
-                if(amp_id == 1)
+                param_id = voip.val2;
+                param_value = voip.val3;
+                if(param_id == 1)
                 {
-                    DEBUG("AUD:  SetPreamp gain	ext_preamp_gain=%d  \r\n", ext_preamp_gain);
-                    setExternalPreAmpGain(ext_preamp_gain);
+                    DEBUG("AUD:  SetPreamp gain	ext_preamp_gain=%d  \r\n", param_value);
+                    setExternalPreAmpGain(param_value);
 
                 }
+				else if( (param_id >= 2) && (param_id <= 5))
+				{
+				    DEBUG("AUD:  set external parameter param%d=%d  \r\n",param_id, param_value);
+					setExternalParameter(param_id,param_value);
+				}
+				else
+				{
+					DEBUG("AUD:  Inavlid paramid %d  \r\n",param_id);
+				}
                 
             }
             return 1; 
+            
             case 29000:
             {
                 DEBUG("VoIF Test \n");
@@ -1172,6 +1182,24 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
             }
             return 1; 
    
+#if (defined(CONFIG_MFD_D2041) && (defined(D2041_USE_OWN_TUNING_TOOL)))
+           case AUDIO_D2041_GAIN_CONTROL:
+           {
+                arg_t d2041arg;
+
+                error = copy_from_user(&d2041arg,(const void*)arg, sizeof(arg_t));
+
+                d2041_gain_control((void *)d2041arg);
+
+                if(d2041arg.val1 < 10)
+                {
+                    copy_to_user((UInt32 *)arg, &d2041arg, sizeof(arg_t));
+                }
+
+                rtn=1;
+           }
+           return 1;
+#endif           
            default:
                DEBUG("Invalid ioctl: '0x%x'  \n", voip.val1);
             return 0; 

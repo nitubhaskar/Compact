@@ -20,6 +20,7 @@ Broadcom's express prior written consent.
 //=============================================================================
 // Include directives
 //=============================================================================
+
 #include <linux/module.h>
 #include "mobcom_types.h"
 #include "audio_consts.h"
@@ -603,15 +604,22 @@ void AUDDRV_EnableHWOutput (
 			Boolean                 enable_speaker,
 			AUDIO_SAMPLING_RATE_t   sample_rate,
 			AUDIO_CHANNEL_NUM_t     input_to_mixer,
-			AUDDRV_REASON_Enum_t    reason
+			AUDDRV_REASON_Enum_t    reason,
+			audio_HWEnabled_Cb_t    callback
 			)
 {
 	static AUDDRV_SPKR_Enum_t   local_mixer_speaker_voice, local_mixer_speaker_audio, local_mixer_speaker_poly;
 	static Boolean              local_enable_speaker_voice, local_enable_speaker_audio, local_enable_speaker_poly;
 	static AUDIO_SAMPLING_RATE_t  local_sample_rate_voice, local_sample_rate_audio, local_sample_rate_poly;
+	static audio_HWEnabled_Cb_t	audio_HWEnabled_Cb;
 
-	Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_EnableHWOutput path %d, mixer %d, sample_rate %d input_to_mixer %d, reason %d \n\r",
-		input_path_to_mixer, mixer_speaker, sample_rate, input_to_mixer, reason );
+	if (callback != NULL)  
+	{
+		audio_HWEnabled_Cb = callback;
+	}
+
+	Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_EnableHWOutput path %d, mixer %d, sample_rate %d input_to_mixer %d, reason %d, callback %d \n\r",
+		input_path_to_mixer, mixer_speaker, sample_rate, input_to_mixer, reason, callback );
 
 	  // for reason AUDDRV_REASON_HW_LOOPBACK, we only need loopback from voice in to voice out.
 
@@ -747,6 +755,12 @@ void AUDDRV_EnableHWOutput (
 			// after enable digital HW, load MPM filters and set MPG DGA gains.
 			client_SetAudioMode( client_GetAudioMode(), client_GetAudioApp());
 
+			if(audio_HWEnabled_Cb != NULL)
+			{
+				Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_EnableHWOutput callback from voice path \n\r");
+				audio_HWEnabled_Cb();
+				audio_HWEnabled_Cb = NULL;
+			}
 			break;
 
 		case AUDDRV_AUDIO_OUTPUT:
@@ -788,6 +802,12 @@ void AUDDRV_EnableHWOutput (
 			chal_audioaopath_SetSlopeGainLeftHex(aopath_handle, aopath_slopgain_l_hex);
 			chal_audioaopath_SetSlopeGainRightHex(aopath_handle, aopath_slopgain_r_hex);
 			
+			if(audio_HWEnabled_Cb != NULL)
+			{
+				Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_EnableHWOutput callback from audio path \n\r");
+				audio_HWEnabled_Cb();
+				audio_HWEnabled_Cb = NULL;
+			}
 			break;
 
 		case AUDDRV_RINGTONE_OUTPUT:
@@ -823,6 +843,12 @@ void AUDDRV_EnableHWOutput (
 			chal_audiopopath_SetSlopeGainLeftHex(popath_handle, popath_slopgain_l_hex);
 			chal_audiopopath_SetSlopeGainRightHex(popath_handle, popath_slopgain_r_hex);	
 			
+			if(audio_HWEnabled_Cb != NULL)
+			{
+				Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_EnableHWOutput callback from poly path \n\r");
+				audio_HWEnabled_Cb();
+				audio_HWEnabled_Cb = NULL;
+			}
 			break;
 
 		default:
@@ -1435,7 +1461,8 @@ void AUDDRV_Set_I2sMuxToAudio ( Boolean   on )
 					FALSE,	//this param bears no meaning in this context.
 					AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 					AUDIO_CHANNEL_STEREO,
-					AUDDRV_REASON_DATA_DRIVER
+					AUDDRV_REASON_DATA_DRIVER,
+					NULL
 			  );
 	}
 	else
@@ -2180,7 +2207,7 @@ void AUDDRV_SetAudioLoopback(
 	{
 		AUDDRV_EnableHWOutput ( AUDDRV_VOICE_OUTPUT, speaker, TRUE, AUDIO_SAMPLING_RATE_8000,
 				AUDIO_CHANNEL_STEREO,
-				AUDDRV_REASON_HW_LOOPBACK );
+				AUDDRV_REASON_HW_LOOPBACK, NULL );
 		AUDDRV_EnableHWInput ( AUDDRV_VOICE_INPUT, mic, AUDIO_SAMPLING_RATE_8000,
 				AUDDRV_REASON_HW_LOOPBACK );
 		chal_audiovipath_EnableLoopback( vipath_handle, 1, chal_mic );

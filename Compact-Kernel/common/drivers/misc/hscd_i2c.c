@@ -1,3 +1,19 @@
+/* alps-input.c
+ *
+ * Input device driver for alps sensor
+ *
+ * Copyright (C) 2011 ALPS ELECTRIC CO., LTD. All Rights Reserved.
+ *
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
 
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -24,7 +40,7 @@
 #define HSCD_I2C_RETRIES		5
 
 #define I2C_HSCD_ADDR (0x0c)	/* 000 1100	*/
-#define I2C_BUS_NUMBER	6
+#define I2C_BUS_NUMBER	5
 
 #define HSCD_DRIVER_NAME "hscd_i2c"
 
@@ -544,13 +560,13 @@ static int __init hscd_init(void)
 	{
 		return PTR_ERR(dev_t);
 	}
-
+#if 0
         gpio_request(GEO_RST, "GEO_RST");
         gpio_direction_output(GEO_RST, 0);
         mdelay(50);
 
 	printk(KERN_INFO "[HSCD] gpio_get_value of GEO_RST is %d\n",gpio_get_value(GEO_RST));
-    
+#endif    
 	atomic_set(&flgEna, 0);
 	atomic_set(&delay, 200);
 

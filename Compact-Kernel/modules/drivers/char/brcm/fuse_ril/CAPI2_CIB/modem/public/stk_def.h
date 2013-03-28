@@ -755,7 +755,7 @@ typedef struct
 
 	gsm_TON_t ton;	///< Called party type of number
 	gsm_NPI_t npi;	///< Called party nuber plan identifier
-	char number[MAX_DIGITS + 1];	///< ASCII encoded dialling number 
+	char number[MAX_DIGITS + 2];	///< ASCII encoded dialling number 
 
 } StkCallControlDisplay_t;
 

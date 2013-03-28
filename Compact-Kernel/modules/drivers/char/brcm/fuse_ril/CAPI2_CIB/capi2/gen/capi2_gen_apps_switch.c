@@ -142,7 +142,6 @@
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
-#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"

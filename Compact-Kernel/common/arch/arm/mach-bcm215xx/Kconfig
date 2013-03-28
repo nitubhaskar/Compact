@@ -131,6 +131,25 @@ config BOARD_TORINOK
 	  Configure this option to specify the whether the used
 	  for development is a BCM21553 TorinoK board.
 	    	    
+config BOARD_AMAZING
+	bool "Samsung BCM2155x AMAZING board"
+	help
+	  Configure this option to specify the whether the used
+	  for development is a BCM21553 Torino board.
+
+config BOARD_AMAZING_SS
+	bool "Samsung BCM2155x AMAZING_SS board"
+	help
+	  Configure this option to specify the whether the used
+	  for development is a BCM21553 amazing_ss board.
+
+config BOARD_CORI_DS
+	bool "Samsung BCM2155x CORI_DS board"
+	help
+	  Configure this option to specify the whether the used
+	  for development is a BCM21553 cori_ds board.
+
+	  	    	    
 endchoice
 
 config SDRAM_BASE_ADDR

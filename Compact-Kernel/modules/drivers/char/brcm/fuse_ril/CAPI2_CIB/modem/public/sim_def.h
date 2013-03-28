@@ -443,6 +443,7 @@ typedef enum
 {
     SIM_POWER_ON_GENERIC_MODE,			///< For generic application, e.g. BT-SAP
     SIM_POWER_ON_NORMAL_MODE,			///< For normal application, e.g. phone application and Java application
+	SIM_POWER_OFF_FORCE_MODE,           ///< Force power off even if PDP or CSD is active
     SIM_POWER_ON_INVALID_MODE = 0xff	///< Invalid power on mode
 }SIM_POWER_ON_MODE_t;
 

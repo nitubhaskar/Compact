@@ -100,6 +100,8 @@ typedef struct
 	#include "pmu_bcm59001.h"
 #elif defined STACK_WIN32_BUILD
 	#include "hw_sdtenv.h"
+#elif defined(CONFIG_MFD_D2041)
+	#include "pmu_d2041.h"
 #else
     #include "pmu_stubs.h"
 #endif
@@ -139,6 +141,18 @@ typedef enum {
       PMU_SIM1P8Volt,
       PMU_SIM0P0Volt
 } PMU_SIMVolt_t;
+
+/* DLG start */
+// TODO check this one
+#elif defined(CONFIG_MFD_D2041) //DLG TODO: change to PMU_D2041
+typedef enum {
+      PMU_SIM3P0Volt = 0,
+      PMU_SIM2P5Volt,
+      PMU_SIM3P1Volt,
+      PMU_SIM1P8Volt,
+      PMU_SIM0P0Volt
+} PMU_SIMVolt_t;
+/* DLG end */
 
 #elif (defined(PMU_BCM59035) && defined(BCM59035_REV_B0)) || defined(PMU_BCM59036)
 

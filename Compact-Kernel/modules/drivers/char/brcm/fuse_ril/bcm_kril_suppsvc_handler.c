@@ -26,6 +26,8 @@ extern CallIndex_t gUssdID[DUAL_SIM_SIZE];
 extern CallIndex_t gPreviousUssdID[DUAL_SIM_SIZE];
 extern UInt32      gDialogID; // To use the same dialogID in the same USSD session
 
+extern Boolean gFdnSkip[DUAL_SIM_SIZE];
+
 typedef struct
 {
     UInt8                         *name;
@@ -888,6 +890,13 @@ void KRIL_SendUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     ussdSrvReq->operation = SS_OPERATION_CODE_PROCESS_UNSTRUCTURED_SS_REQ;
                     ussdSrvReq->ussdInfo.dcs = 0xF;    // UTF-8
                     ussdSrvReq->ussdInfo.length = tdata->StringSize;
+                    
+                    if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                    {
+                        gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                        ussdSrvReq->fdnCheck = CONFIG_MODE_SUPPRESS;
+                    }
+                
                     memcpy( ussdSrvReq->ussdInfo.data,
                             tdata->USSDString,
                             tdata->StringSize);
@@ -925,6 +934,10 @@ void KRIL_SendUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             if (capi2_rsp->result != RESULT_OK)
             {
                 KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd:: capi2_rsp->result=%d !=RESULT_OK\n", capi2_rsp->result);
+                pdata->result = RILErrorResult(capi2_rsp->result);
+                // The USSD session is released. Reset the session related global variables.
+                gDialogID = 0;
+                gUssdID[pdata->ril_cmd->SimId] = CALLINDEX_INVALID;
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
             else if (capi2_rsp->msgType == MSG_STK_CC_SETUPFAIL_IND)
@@ -1095,6 +1108,13 @@ void KRIL_GetCLIRHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 ssSrvReqPtr->operation = SS_OPERATION_CODE_INTERROGATE;
                 ssSrvReqPtr->basicSrv.type = BASIC_SERVICE_TYPE_UNSPECIFIED;
                 ssSrvReqPtr->ssCode = SS_CODE_CLIR;    
+                
+                if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                {
+                    gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                    ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+                }
+              
                 KRIL_SetSsSrvReqTID(GetTID());  // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0
                 CAPI2_SsApi_SsSrvReq(&clientInfo, &ssApiSrvReq);    
                 pdata->handler_state = BCM_SS_GetElement;
@@ -1280,6 +1300,12 @@ void KRIL_SetCLIRHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             ssSrvReqPtr->basicSrv.type = BASIC_SERVICE_TYPE_UNSPECIFIED;
             ssSrvReqPtr->ssCode = SS_CODE_CLIR;
 
+            if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+            {
+                gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+            }
+
             // In this specific case, TID should be stored before calling CAPI2. Otherwise, MSG_MS_LOCAL_ELEM_NOTIFY_IND will be returned with tid 0 (due to OS scheduling).
             KRIL_SetSsSrvReqTID(GetTID()); // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0
             CAPI2_SsApi_SsSrvReq(&clientInfo, &ssApiSrvReq);
@@ -1369,6 +1395,12 @@ void KRIL_QueryCallForwardStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
                 ssSrvReqPtr->operation = SS_OPERATION_CODE_INTERROGATE;
                 ssSrvReqPtr->ssCode = Kril_FwdReasonCode[tdata->reason];
                 SS_SvcCls2BasicSrvGroup(tdata->ss_class, &(ssSrvReqPtr->basicSrv));
+    
+                if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                {
+                    gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                    ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+                }
     
                 KRIL_DEBUG(DBG_INFO, "Kril_FwdReasonCode[%d]:%d ss_class:%d\n", tdata->reason, Kril_FwdReasonCode[tdata->reason], GetServiceClass(tdata->ss_class));
                 KRIL_DEBUG(DBG_INFO, "GetServiceClass(%d): type:%d content:%d\n", tdata->ss_class, ssSrvReqPtr->basicSrv.type, ssSrvReqPtr->basicSrv.content);
@@ -1481,6 +1513,16 @@ void KRIL_QueryCallForwardStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
                             fwdInfoPtr++;
                         }
+                        /* if ss_class is '0' when service is deactivated, set the ss_class for all services to display properly */
+                        if( (rdata->call_forward_class_info_list[0].activated == FALSE) 
+                             && (rdata->call_forward_class_info_list[0].ss_class == ATC_NOT_SPECIFIED) )
+                        {
+                            if( KRIL_GetServiceClassValue() != 0 )
+                                rdata->call_forward_class_info_list[0].ss_class = KRIL_GetServiceClassValue();
+                            else                           
+                                rdata->call_forward_class_info_list[0].ss_class = 0xff;  // all services
+                        }
+                        
                         KRIL_SetServiceClassValue(0);            
                         break;
                     }
@@ -1666,6 +1708,12 @@ void KRIL_SetCallForwardStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
                 ssSrvReqPtr->param.cfwInfo.noReplyTime = tdata->timeSeconds;
             }
 
+            if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+            {
+                gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+            }
+
             KRIL_DEBUG(DBG_INFO, "GetServiceClass(%d): type:%d content:%d\n", tdata->ss_class, ssSrvReqPtr->basicSrv.type, ssSrvReqPtr->basicSrv.content);
             KRIL_DEBUG(DBG_INFO, "Kril_FwdModeToOp[%d]:%d Kril_FwdReasonCode[%d]:%d ss_class:%d BasicSrv.type:%d BasicSrv.content:%d timeSeconds:%d number:%s\n", tdata->mode, Kril_FwdModeToOp[tdata->mode], tdata->reason, Kril_FwdReasonCode[tdata->reason], tdata->ss_class, ssSrvReqPtr->basicSrv.type, ssSrvReqPtr->basicSrv.content, tdata->timeSeconds, tdata->number);
             KRIL_DEBUG(DBG_INFO, "cfwInfo.include:%d \n", ssSrvReqPtr->param.cfwInfo.include);
@@ -1783,6 +1831,12 @@ void KRIL_QueryCallWaitingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 ssSrvReqPtr->ssCode = SS_CODE_CW;
     
                 SS_SvcCls2BasicSrvGroup(tdata->ss_class, &(ssSrvReqPtr->basicSrv));
+    
+                if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                {
+                    gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                    ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+                }
     
                 KRIL_DEBUG(DBG_INFO, "GetServiceClass(%d): type:%d content:%d\n", tdata->ss_class, ssSrvReqPtr->basicSrv.type, ssSrvReqPtr->basicSrv.content);
                 KRIL_SetSsSrvReqTID(GetTID()); // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0
@@ -1978,6 +2032,12 @@ void KRIL_SetCallWaitingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             else
                 ssSrvReqPtr->operation = SS_OPERATION_CODE_DEACTIVATE;
 
+            if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+            {
+                gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+            }
+            
             KRIL_DEBUG(DBG_INFO, "GetServiceClass(%d): type:%d content:%d\n", tdata->ss_class, ssSrvReqPtr->basicSrv.type, ssSrvReqPtr->basicSrv.content);
 
             KRIL_SetSsSrvReqTID(GetTID()); // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0
@@ -2082,6 +2142,12 @@ void KRIL_ChangeBarringPasswordHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             {
                 memcpy((void*)ssPwdPtr->newPwd, (void*)tdata->NewPasswd, SS_PASSWORD_LENGTH);
                 memcpy((void*)ssPwdPtr->reNewPwd, (void*)tdata->NewPassConfirm, SS_PASSWORD_LENGTH);
+            }
+
+            if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+            {
+                gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
             }
 
             KRIL_SetSsSrvReqTID(GetTID());  // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0
@@ -2197,6 +2263,13 @@ void KRIL_QueryCLIPHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 ssSrvReqPtr->operation = SS_OPERATION_CODE_INTERROGATE;
                 ssSrvReqPtr->basicSrv.type = BASIC_SERVICE_TYPE_UNSPECIFIED;
                 ssSrvReqPtr->ssCode = SS_CODE_CLIP;
+                
+                if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                {
+                    gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                    ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+                }
+                
                 KRIL_DEBUG(DBG_INFO, "Query CLIP\n");
     
                 KRIL_SetSsSrvReqTID(GetTID());  // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0

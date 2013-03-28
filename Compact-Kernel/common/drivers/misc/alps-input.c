@@ -1,3 +1,20 @@
+/* alps-input.c
+ *
+ * Input device driver for alps sensor
+ *
+ * Copyright (C) 2011 ALPS ELECTRIC CO., LTD. All Rights Reserved.
+ *
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -102,11 +119,16 @@ static long alps_ioctl( struct file* filp, unsigned int cmd, unsigned long arg)
 
 			ALPSDBG("[ALPS] ioctl(cmd = ALPSIO_SET_DELAY), delay=%d\n", tmpval);
 
-			if      (tmpval <=  10) tmpval =  10;
-			else if (tmpval <=  20) tmpval =  20;
-			else if (tmpval <=  60) tmpval =  50;
-			else                    tmpval = 100;
-			mutex_lock(&alps_lock);
+                        mutex_lock(&alps_lock);
+                        if (flgM) {
+                            if      (tmpval <=  10) tmpval =  10;
+                            else if (tmpval <=  20) tmpval =  20;
+                            else if (tmpval <=  60) tmpval =  50;
+                            else                    tmpval = 100;
+                        }
+                        else {
+                            if      (tmpval <=  10) tmpval =  10;
+                        }
 			delay = tmpval;
 			/*poll_stop_cnt = POLL_STOP_TIME / tmpval;*/
 			hscd_activate(1, flgM, delay);

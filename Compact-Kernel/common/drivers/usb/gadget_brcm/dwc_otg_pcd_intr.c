@@ -1340,7 +1340,7 @@ static inline void do_set_feature( dwc_otg_pcd_t *_pcd )
 	    		}
 	  		else 
 	    		{
-	      			ep0_do_stall( _pcd, -EOPNOTSUPP);
+//	      			ep0_do_stall( _pcd, -EOPNOTSUPP);
 	    		}						 
 	  		break;
 
@@ -1354,7 +1354,7 @@ static inline void do_set_feature( dwc_otg_pcd_t *_pcd )
 	    		} 
 	  		else 
 	    		{
-	      			ep0_do_stall( _pcd, -EOPNOTSUPP);
+//	      			ep0_do_stall( _pcd, -EOPNOTSUPP);
 	    		}						 
 	  		break;
 

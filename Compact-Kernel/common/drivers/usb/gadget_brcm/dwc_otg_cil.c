@@ -85,7 +85,9 @@ Broadcom's express prior written consent.
 #include <mach/irqs.h>
 #include <mach/hardware.h>
 #include <plat/syscfg.h>
+#if 1//defined(CONFIG_MFD_MAX8986) sehyoung
 #include <linux/mfd/max8986/max8986.h>
+#endif
 
 #ifdef CONFIG_ARCH_BCM215XX
 #include <mach/usbctl.h>
@@ -141,16 +143,26 @@ static USB_Charger_Type_t USB_CHGR_TYPE;
 static dwc_otg_core_if_t * g_core_if;
 
 /* external PMU functions */
+/* DLG start */
+#if 1//defined(CONFIG_MFD_MAX8986) sehyoung
 extern void Pm_battmgr_CancelWorkq(void);
 extern void pmu_usb_enum_started(void);
 extern int pmu_get_usb_enum_current(void);
 extern void pmu_set_usb_enum_current(bool pre_enum);
 extern void pmu_usb_driver_initialized(void);
+#endif
+/* DLG end */
 extern int init_suspend_resume_workqueue(void );
 extern void cleanup_suspend_resume_workqueue( void );
 
 /* Global variables */
+#if 1//defined(CONFIG_MFD_MAX8986) sehyoung
 static pmu_muic_chgtyp bc11_charger_type = PMU_MUIC_CHGTYP_USB;
+#elif defined(CONFIG_MFD_D2041)
+// DLG TODO change this when we will have knowledge about charger
+typedef int pmu_muic_chgtyp;
+static pmu_muic_chgtyp bc11_charger_type = 0;
+#endif
 struct delayed_work g_delay_workq_set_preenum_current;
 
 //*********************************************************************
@@ -370,7 +382,10 @@ void dwc_otg_cil_SetPostConfigCurrent(void)
 	}	
 	
 #else
+#ifndef CONFIG_MFD_D2041
+// DLG TODO charger work
 	pmu_set_usb_enum_current(false);
+#endif /* CONFIG_MFD_D2041 */
 #endif
 }
 
@@ -393,7 +408,11 @@ void dwc_otg_cil_USBInitialized(void)
 {	
 	pr_info("%s\n",__func__);
 #ifdef CONFIG_USB_DWC_OTG
+/* DLG start */
+#if 1//defined(CONFIG_MFD_MAX8986)  // sehyoung.
 	pmu_usb_driver_initialized();
+#endif /* CONFIG_MFD_MAX8986 */
+/* DLG end */
 #endif	
 }
 
@@ -411,7 +430,10 @@ void dwc_otg_cil_SetPreConfigCurrent(void)
 	if(bc11_charger_type!=PMU_MUIC_CHGTYP_DEDICATED_CHGR &&bc11_charger_type!=PMU_MUIC_CHGTYP_DOWNSTREAM_PORT )
 	pmu_set_charging_current(MAX8986_CHARGING_CURR_90MA);
 #else
+#ifndef CONFIG_MFD_D2041
+// DLG TODO charger work
 	pmu_set_usb_enum_current(true);
+#endif /* CONFIG_MFD_D2041 */
 #endif
 }
 
@@ -423,7 +445,10 @@ void dwc_otg_cil_SetPreConfigCurrent(void)
 static void change_preenum_charging_current(struct work_struct * work)
 {
 	pr_info("change_preenum_charging_current\n");
+#ifndef CONFIG_MFD_D2041
+// DLG TODO - charger work
 	pmu_usb_enum_started();
+#endif
 	dwc_otg_cil_SetPreConfigCurrent();
 }
 
@@ -450,7 +475,11 @@ int dwc_otg_cil_GetPostConfigCurrentIn2maUnit(void)
 {
 	int maxCurrent = 0;
 	pr_info("dwc_otg_cil_GetPostConfigCurrentIn2maUnit\n");
+/* DLG start */
+#if defined(CONFIG_MFD_MAX8986)
 	maxCurrent = pmu_get_usb_enum_current();
+#endif /* CONFIG_MFD_MAX8986 */
+/* DLG end */
 	pr_info("maxCurrent = %d ma\n", maxCurrent);
 	return (maxCurrent >> 1); //divide by 2
 }

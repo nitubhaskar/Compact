@@ -1,10 +1,10 @@
-Compact Kernel Version : 1.2.4
-For Samsung GT-S5512 : Galaxy Y PRO DUOS
+Compact Kernel Version: Test
+For Samsung GT-S5302 : Galaxy POCKET DUOS
 
 Introduction:
 ~~~~~~~~~~~~~
 
-This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for 5512 phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
+This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for 5302 phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
 
 
 Folders Description:
@@ -14,11 +14,11 @@ You can get the cross compiler(Toolchain) used to build this kernel from here. V
 "ncurses-5.9" under "Usefull_Tools" is required to enable menuconfig option which helps you config kernel with a menu instead of editing manually .config files.. even though everyone says menuconfig is better, i prefer to edit .config file directly using text editor.
 You can also get ncurses from its official page from here. link--> http://ftp.gnu.org/pub/gnu/ncurses/
 
-"" is the folder which has files required to compile the kernel or name itself is self explanatory i guess.
+"Compact-Kernel" is the folder which has files required to compile the kernel or name itself is self explanatory i guess.
 
 "mkbootimg_src" under "Usefull_Tools" contains all the necessary files to compress kernel(zImage) and ramdisk(ramdisk.gz). remember you need to put these 2 files of yours under this folder.
 
-"Samsung-Stock" is having all the files i have modified in source folder. There is a Readme file inside that folder which explains things more.
+"Original" is having all the files of stock kernel.
 
 "README.md" is the file which has the contents you are reading!
 
@@ -46,7 +46,7 @@ Now your system environment is setup and ready to build the kernel.. Follow the 
 
 1. "make clean" --> its better to do this. so that you will have a fresh files to build kernel and no old files compiled before will be used.
 
-2. "make bcm21553_luisa_ds_defconfig" --> this sets everything to default settings as provided by samsung source.
+2. "make bcm21553_cori_ds_defconfig" --> this sets everything to default settings as provided by samsung source.
 
 3. "make" --> this is used to compile the kernel. this does the compilation in only single process.
 alternate command to speed up the compilation process do "make -j(x)"

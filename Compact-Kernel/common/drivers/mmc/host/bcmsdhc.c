@@ -1,4 +1,4 @@
-/*******************************************************************************
+﻿/*******************************************************************************
 * Copyright 2010 Broadcom Corporation.  All rights reserved.
 *
 * 	@file	drivers/mmc/host/bcmsdhc.c
@@ -32,8 +32,6 @@
 #include <linux/pm_qos_params.h>
 #include <linux/regulator/consumer.h>
 
-#include <linux/mfd/max8986/max8986.h>
-
 #ifndef CONFIG_ARCH_BCM215XX
 #include <mach/reg_sdio.h>
 #else
@@ -41,11 +39,17 @@
 #endif
 
 #include "bcmsdhc.h"
+#include "bcmsdhc_raw.h"
 
 #define DRIVER_NAME "bcm_sdhc"
 
 #define DBG(f, x...) \
 	pr_debug(DRIVER_NAME " [%s()]: " f, __func__, ## x)
+
+extern struct mmc_host *kpanic_core_mmc_host;
+extern struct mmc_host *kpanic_core_sd_host;
+extern int context;
+
 static void bcmsdhc_prepare_data(struct bcmsdhc_host *, struct mmc_data *);
 static void bcmsdhc_finish_data(struct bcmsdhc_host *);
 
@@ -59,49 +63,16 @@ extern int bcm_gpio_set_db_val(unsigned int gpio, unsigned int db_val);
 
 void bcmsdhc_sdio_host_force_scan(struct platform_device *pdev, bool on);
 
+static void bcmsdhc_finish(struct bcmsdhc_host *host);
+static int panic_bcmsdhc_poll_irq(struct bcmsdhc_host *host, struct mmc_command *cmd);
+static int panic_bcmsdhc_transfer_data(struct bcmsdhc_host *host, struct mmc_command *cmd);
+
 int sdhc_update_qos_req(struct bcmsdhc_host *host, s32 value);
 int sdio_add_qos_req(struct bcmsdhc_host *host);
 int sdio_remove_qos_req(struct bcmsdhc_host *host);
 
 
 bool sd_inserted = 0;
-
-struct regulator_dev {
-	struct regulator_desc *desc;
-	int use_count;
-	int open_count;
-	int exclusive;
-
-	/* lists we belong to */
-	struct list_head list; /* list of all regulators */
-	struct list_head slist; /* list of supplied regulators */
-
-	/* lists we own */
-	struct list_head consumer_list; /* consumers we supply */
-	struct list_head supply_list; /* regulators we supply */
-
-	struct blocking_notifier_head notifier;
-	struct mutex mutex; /* consumer lock */
-	struct module *owner;
-	struct device dev;
-	struct regulation_constraints *constraints;
-	struct regulator_dev *supply;	/* for tree */
-
-	void *reg_data;		/* regulator_dev data */
-};
-
-struct regulator {
-	struct device *dev;
-	struct list_head list;
-	int uA_load;
-	int min_uV;
-	int max_uV;
-	char *supply_name;
-	struct device_attribute dev_attr;
-	struct regulator_dev *rdev;
-};
-
-
 /* *************************************************************************************************** */
 /* Function Name: bcmsdhc_dumpregs */
 /* Description: This function is for logging register of SDHC */
@@ -109,49 +80,49 @@ struct regulator {
 
 static void bcmsdhc_dumpregs(struct bcmsdhc_host *host)
 {
-	pr_debug(DRIVER_NAME ": ============== REGISTER DUMP ==============\n");
+	pr_info(DRIVER_NAME ": ============== REGISTER DUMP ==============\n");
 
-	pr_debug(DRIVER_NAME ": Sys addr: 0x%08x | Version:  0x%08x\n",
+	pr_info(DRIVER_NAME ": Sys addr: 0x%08x | Version:  0x%08x\n",
 		 readl(host->ioaddr + SDHC_SYSTEMADDRESS_LO),
 		 readw(host->ioaddr + SDHC_HOST_CONTROLLER_VER));
-	pr_debug(DRIVER_NAME ": Blk size: 0x%08x | Blk cnt:  0x%08x\n",
+	pr_info(DRIVER_NAME ": Blk size: 0x%08x | Blk cnt:  0x%08x\n",
 		 readw(host->ioaddr + SDHC_BLOCKSIZE),
 		 readw(host->ioaddr + SDHC_BLOCKCOUNT));
-	pr_debug(DRIVER_NAME ": Argument: 0x%08x | Trn mode: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Argument: 0x%08x | Trn mode: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_ARGUMENT_0),
 		 readw(host->ioaddr + SDHC_TRANSFERMODE));
-	pr_debug(DRIVER_NAME ": Present:  0x%08x | Host ctl: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Present:  0x%08x | Host ctl: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_PRESENT_STATE),
 		 readb(host->ioaddr + SDHC_HOST_CONTROL));
-	pr_debug(DRIVER_NAME ": Power:    0x%08x | Blk gap:  0x%08x\n",
+	pr_info(DRIVER_NAME ": Power:    0x%08x | Blk gap:  0x%08x\n",
 		 readb(host->ioaddr + SDHC_POWER_CONTROL),
 		 readb(host->ioaddr + SDHC_BLOCK_GAP_CONTROL));
-	pr_debug(DRIVER_NAME ": Wake-up:  0x%08x | Clock:    0x%08x\n",
+	pr_info(DRIVER_NAME ": Wake-up:  0x%08x | Clock:    0x%08x\n",
 		 readb(host->ioaddr + SDHC_WAKEUP_CONTROL),
 		 readw(host->ioaddr + SDHC_CLOCK_CONTROL));
-	pr_debug(DRIVER_NAME ": Timeout:  0x%08x | Int stat: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Timeout:  0x%08x | Int stat: 0x%08x\n",
 		 readb(host->ioaddr + SDHC_TIMEOUT_CONTROL),
 		 readl(host->ioaddr + SDHC_NORMAL_INT_STATUS));
-	pr_debug(DRIVER_NAME ": Int enab: 0x%08x | Sig enab: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Int enab: 0x%08x | Sig enab: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_NORMAL_INT_STATUS_ENABLE),
 		 readl(host->ioaddr + SDHC_NORMAL_INT_SIGNAL_ENABLE));
-	pr_debug(DRIVER_NAME ": AC12 err: 0x%08x | Slot int: 0x%08x\n",
+	pr_info(DRIVER_NAME ": AC12 err: 0x%08x | Slot int: 0x%08x\n",
 		 readw(host->ioaddr + SDHC_AUTOCMD12_ERROR_STATUS),
 		 readw(host->ioaddr + SDHC_SLOT_INT_STATUS));
-	pr_debug(DRIVER_NAME ": Caps:     0x%08x | Max curr: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Caps:     0x%08x | Max curr: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_CAPABILITIES),
 		 readl(host->ioaddr + SDHC_MAX_CURRENT_CAPABILITIES));
 
 #if (defined(CONFIG_ARCH_BCM282X) || defined(CONFIG_ARCH_BCM116X) || defined(CONFIG_ARCH_BCM215XX))
-	pr_debug(DRIVER_NAME ": COM:     0x%08x | resp0: 0x%08x\n",
+	pr_info(DRIVER_NAME ": COM:     0x%08x | resp0: 0x%08x\n",
 		 readw(host->ioaddr + SDHC_COMMAND),
 		 readl(host->ioaddr + SDHC_R0));
 #endif
-	pr_debug(DRIVER_NAME ": ADMA Err: 0x%08x | ADMA Ptr: 0x%08x\n",
+	pr_info(DRIVER_NAME ": ADMA Err: 0x%08x | ADMA Ptr: 0x%08x\n",
 	       readl(host->ioaddr + SDHC_ADMA_ERR_STAT),
 	       readl(host->ioaddr + SDHC_ADMA_ADDRESS));
 
-	pr_debug(DRIVER_NAME ": ===========================================\n");
+	pr_info(DRIVER_NAME ": ===========================================\n");
 }
 
 /* *************************************************************************************************** */
@@ -172,8 +143,8 @@ static void bcmsdhc_reset(struct bcmsdhc_host *host, u8 mask)
 	if (mask & SOFT_RESET_ALL)
 		host->clock = 0;
 
-	/* Wait max 100 ms */
-	timeout = 100;
+	/* Wait max 110 ms */
+	timeout = 110;
 
 	/* hw clears the bit when it's done */
 	while (readb(host->ioaddr + SDHC_SOFT_RESET) & mask) {
@@ -193,7 +164,7 @@ static void bcmsdhc_reset(struct bcmsdhc_host *host, u8 mask)
 /* Description: initiate the bcm sd host. */
 /* *************************************************************************************************** */
 
-static void bcmsdhc_init(struct bcmsdhc_host *host, u32 mask)
+void bcmsdhc_init(struct bcmsdhc_host *host, u32 mask)
 {
 	u32 intmask;
 
@@ -421,7 +392,77 @@ static void bcmsdhc_transfer_pio(struct bcmsdhc_host *host)
 		}
 	}
 
-	DBG("PIO transfer complete.\n");
+	pr_err("PIO transfer complete\n");
+}
+
+static void wait_for_int_without_timeout(struct bcmsdhc_host *host,
+		unsigned int mask)
+{
+	while (!(readw(host->ioaddr + SDHC_NORMAL_INT_STATUS) & mask))
+		udelay(10);
+}
+
+static int wait_for_int_with_timeout(struct bcmsdhc_host *host,
+		unsigned int mask, unsigned long timeout)
+{
+	if (!timeout)
+		timeout = MMC_DEFAULT_DELAY_COUNT;
+
+	while (!(readw(host->ioaddr + SDHC_NORMAL_INT_STATUS) & mask)) {
+		if (timeout == 0) {
+			pr_err("sdhc[%d]: Interrupt Timeout. mask: %08x,Int: 0x%08x\n",
+				host->sdhc_slot, mask,
+				readw(host->ioaddr + SDHC_NORMAL_INT_STATUS));
+			bcmsdhc_dumpregs(host);
+			return -1;
+		}
+		timeout--;
+		mdelay(1);
+	}
+	return 0;
+}
+
+static void panic_bcmsdhc_poll_transfer_pio(struct bcmsdhc_host *host)
+{
+	u32 ps_mask;
+	u32 int_mask;
+
+	BUG_ON(!host->data);
+
+	if (host->blocks == 0) {
+		return;
+	}
+
+	if (host->data->flags & MMC_DATA_READ) {
+		ps_mask = STATE_BUF_READ_ENABLE;
+		int_mask = NORMAL_INT_STATUS_BUF_READ_RDY;
+	} else {
+		ps_mask = STATE_BUF_WRITE_ENABLE;
+		int_mask = NORMAL_INT_STATUS_BUF_WRITE_RDY;
+	}
+
+	do {
+		/* Check for the BUF_WRITE_ENABLE/BUF_READ_ENABLE bit,
+		 * if not present, then wait for BUF_WRITE_RDY/BUF_READ_RDY 
+		 * interrupt, clear it and then check for the
+		 * BUF_WRITE_ENABLE/BUF_READ_ENABLE.
+		 */
+		if (!(readw(host->ioaddr + SDHC_PRESENT_STATE) & ps_mask))
+		{
+			wait_for_int_without_timeout(host, int_mask);
+			writew(int_mask, host->ioaddr + SDHC_NORMAL_INT_STATUS);
+
+			while (!(readw(host->ioaddr + SDHC_PRESENT_STATE) & ps_mask));
+		}
+
+		if (host->data->flags & MMC_DATA_READ) {
+			bcmsdhc_read_block_pio(host);
+		} else {
+			bcmsdhc_write_block_pio(host);
+		}
+	} while(--host->blocks);
+
+	pr_err("Panic polling PIO transfer complete\n");
 }
 
 /* *************************************************************************************************** */
@@ -820,7 +861,8 @@ static void bcmsdhc_prepare_data(struct bcmsdhc_host *host,
 
 	if (!(host->flags & SDHCI_REQ_USE_DMA)) {
 		sg_miter_start(&host->sg_miter, data->sg, data->sg_len,
-			       SG_MITER_ATOMIC);
+						SG_MITER_ATOMIC | ((data->flags & MMC_DATA_READ) ?
+						SG_MITER_FROM_SG : SG_MITER_TO_SG));
 		host->blocks = data->blocks;
 	}
 
@@ -843,7 +885,11 @@ static bool bcmsdhc_set_transfer_mode(struct bcmsdhc_host *host,
 
 	if (cmd->data == NULL) {
 		cmd->error = -EINVAL;
+		if (context == IN_PANIC)
+			bcmsdhc_finish(host);
+		else
 		tasklet_schedule(&host->finish_tasklet);
+
 		return false;
 	}
 	WARN_ON(!host->data);
@@ -873,10 +919,13 @@ static bool bcmsdhc_set_transfer_mode(struct bcmsdhc_host *host,
 	while (readl(host->ioaddr + SDHC_PRESENT_STATE) & mask) {
 		if (timeout == 0) {
 			pr_err
-			    ("%s: Controller never released inhibit bit(s).\n",
+				("%s: Controller never released data inhibit bit(s).\n",
 			     mmc_hostname(host->mmc));
 /*                      bcmsdhc_dumpregs(host); */
 			cmd->error = -EIO;
+			if (context == IN_PANIC)
+				bcmsdhc_finish(host);
+			else
 			tasklet_schedule(&host->finish_tasklet);
 			return false;
 		}
@@ -946,6 +995,9 @@ static void bcmsdhc_finish_data(struct bcmsdhc_host *host)
 
 		bcmsdhc_send_command(host, data->stop);
 	} else {
+		if (context == IN_PANIC)
+			bcmsdhc_finish(host);
+		else
 		tasklet_schedule(&host->finish_tasklet);
 	}
 }
@@ -958,6 +1010,7 @@ static void bcmsdhc_finish_data(struct bcmsdhc_host *host)
 static void bcmsdhc_send_command(struct bcmsdhc_host *host,
 				 struct mmc_command *cmd)
 {
+	int ret = 0;
 	unsigned long timeout;
 	u16 int_status_en = 0, reg_command = 0;
 
@@ -1004,6 +1057,9 @@ static void bcmsdhc_send_command(struct bcmsdhc_host *host,
 	default:
 		pr_emerg("mmc: unhandled response type %02x\n",
 			 mmc_resp_type(cmd));
+		if (context == IN_PANIC)
+			bcmsdhc_finish(host);
+		else
 		tasklet_schedule(&host->finish_tasklet);
 		goto EXIT;
 	}
@@ -1011,10 +1067,13 @@ static void bcmsdhc_send_command(struct bcmsdhc_host *host,
 	while (readl(host->ioaddr + SDHC_PRESENT_STATE) & STATE_CMD_INHIBIT) {
 		if (timeout == 0) {
 			pr_err
-			    ("%s: Controller never released inhibit bit(s).\n",
+			    ("%s: Controller never released command inhibit bit(s).\n",
 			     mmc_hostname(host->mmc));
 /*                      bcmsdhc_dumpregs(host); */
 			cmd->error = -EIO;
+			if (context == IN_PANIC)
+				bcmsdhc_finish(host);
+			else
 			tasklet_schedule(&host->finish_tasklet);
 			goto EXIT;
 		}
@@ -1022,6 +1081,11 @@ static void bcmsdhc_send_command(struct bcmsdhc_host *host,
 		mdelay(1);
 	}
 
+	/*
+	 * Start timer only in NON-panic path. In Panic path
+	 * we'll poll with timeout anyways.
+	 */
+	if (context != IN_PANIC)
 	mod_timer(&host->timer, jiffies + 10 * HZ);
 
 	int_status_en = readw(host->ioaddr + SDHC_NORMAL_INT_STATUS_ENABLE);
@@ -1069,6 +1133,22 @@ static void bcmsdhc_send_command(struct bcmsdhc_host *host,
 	/* All register initialization must already be complete by this point. */
 	writew(reg_command, host->ioaddr + SDHC_COMMAND);
 
+	/* If in panic, poll for SDHC interrupts */
+	if (context == IN_PANIC) {
+		/* Poll for SDHC interrupts */
+		ret = panic_bcmsdhc_poll_irq(host, cmd);
+		if(ret) {
+			pr_err("sdhc[%d]: panic_bcmsdhc_poll_irq returned error: %d\n",
+					host->sdhc_slot, ret);
+		}
+
+		ret = panic_bcmsdhc_transfer_data(host, cmd);
+		if(ret) {
+			pr_err("sdhc[%d]: panic_bcmsdhc_transfer_data returned error: %d\n",
+					host->sdhc_slot, ret);
+		}
+	}
+
 	return;
 EXIT:
 	return;
@@ -1106,6 +1186,9 @@ static void bcmsdhc_finish_command(struct bcmsdhc_host *host)
 	host->cmd->error = 0;
 
 	if (!host->cmd->data) {
+		if (context == IN_PANIC)
+			bcmsdhc_finish(host);
+		else
 		tasklet_schedule(&host->finish_tasklet);
 	}
 	host->cmd = NULL;
@@ -1144,6 +1227,15 @@ static void bcmsdhc_set_clock(struct bcmsdhc_host *host, unsigned int clock)
 out:
 	host->clock = clock;
 
+	/***
+		Send stable clock after the changing of clock.
+	***/
+	if( host->clock != 0 )
+	{
+		bcmsdhc_clock_on( host );
+		mdelay( 10 );
+		bcmsdhc_clock_off( host );
+	}
 }
 
 /* *************************************************************************************************** */
@@ -1234,7 +1326,7 @@ out:
 /* Description: MMC callback */
 /* *************************************************************************************************** */
 
-static void bcmsdhc_request(struct mmc_host *mmc, struct mmc_request *mrq)
+void bcmsdhc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 {
 	struct bcmsdhc_host *host;
 	unsigned long flags;
@@ -1253,16 +1345,18 @@ static void bcmsdhc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	clk_enable(host->bus_clk);
 	sdhc_update_qos_req(host, 0);
 
-//#ifdef CONFIG_HAS_WAKELOCK
+#ifdef CONFIG_HAS_WAKELOCK
+	if (context != IN_PANIC) {
 	/* Check for the CMD type (expect response or not) */
-//	if (mmc_resp_type(mrq->cmd) == MMC_RSP_NONE) {
+	if (mmc_resp_type(mrq->cmd) == MMC_RSP_NONE) {
 		/* Not valid to use wake_lock_timeout when CMD with no response expected */
-//		wake_lock(&host->sdhc_wakelock);
-//	} else {
+		wake_lock(&host->sdhc_wakelock);
+	} else {
 		/*Wakelock for the bcm_sdhc should be active for the longer period when CMD expects response from the card */
-//		wake_lock_timeout(&host->sdhc_wakelock, msecs_to_jiffies(500));
-//	}
-//#endif
+		wake_lock_timeout(&host->sdhc_wakelock, msecs_to_jiffies(500));
+	}
+	}
+#endif
 
 #if defined(CONFIG_ARCH_BCM116X)  || defined(CONFIG_ARCH_BCM215XX)
 	/* For SD card power saving */
@@ -1278,18 +1372,23 @@ static void bcmsdhc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	/* bcmsdhc_dumpregs(host); */
 	if (host->card_present == false) {
 		host->mrq->cmd->error = -ENOMEDIUM;
+		if (context == IN_PANIC)
+			bcmsdhc_finish(host);
+		else
 		tasklet_schedule(&host->finish_tasklet);
 	} else {
 		bcmsdhc_send_command(host, mrq->cmd);
 	}
 	/* Unlock the wakelock immediately after sending the command with no response
 	   On PM suspend case, deselcting card CMD will be send with no response */
-//#ifdef CONFIG_HAS_WAKELOCK
-//	if (mmc_resp_type(mrq->cmd) == MMC_RSP_NONE) {
+#ifdef CONFIG_HAS_WAKELOCK
+	if (context != IN_PANIC) {
+	if (mmc_resp_type(mrq->cmd) == MMC_RSP_NONE) {
 		/* unlock after CMD transaction */
-//		wake_unlock(&host->sdhc_wakelock);
-//	}
-//#endif
+		wake_unlock(&host->sdhc_wakelock);
+	}
+	}
+#endif
 	mmiowb();
 	spin_unlock_irqrestore(&host->lock, flags);
 }
@@ -1299,7 +1398,7 @@ static void bcmsdhc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 /* Description:MMC callback */
 /* *************************************************************************************************** */
 
-static void bcmsdhc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+void bcmsdhc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 {
 	struct bcmsdhc_host *host;
 	unsigned long flags;
@@ -1317,16 +1416,30 @@ static void bcmsdhc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 #ifdef CONFIG_REGULATOR
 		if(host->vcc) {
 			/* Disable regulator here */
-			printk(KERN_INFO "SDHC:Slot[%d]=> regulator_disable\n", host->sdhc_slot);
-			/* regulator_disable(host->vcc); */
+			DBG(KERN_INFO "SDHC:Slot[%d]=> regulator_disable\n", host->sdhc_slot);
+			regulator_disable(host->vcc);
+			//pull-down all io pad of SD
+			if(host->bcm_plat->flags&SDHC_DEVTYPE_SD){
+				printk("%s-SDHC[%d] is disabled by calling syscfg_interface()-->CMD/DATA Line is pull-down\n",__func__,host->sdhc_slot);
+				host->bcm_plat->syscfg_interface(SYSCFG_SDHC1 +host->sdhc_slot - 1,
+					       SYSCFG_DISABLE);
+				mdelay(1);	// POR condition (maintain at least 1ms after under the 0.5V)
+			}
 		}
 #endif
 		break;
 	case MMC_POWER_UP:
 #ifdef CONFIG_REGULATOR
 		if (host->vcc) {
-			printk(KERN_INFO "SDHC:Slot[%d]=> regulator_enable\n", host->sdhc_slot);
+			DBG(KERN_INFO "SDHC:Slot[%d]=> regulator_enable\n", host->sdhc_slot);
 			result = regulator_enable(host->vcc);
+			//pull-up all io pad of SD
+			if(host->bcm_plat->flags&SDHC_DEVTYPE_SD){
+				mdelay(1);
+				printk("%s-SDHC[%d] is enabled by calling syscfg_interface()-->CMD/DATA Line is pull-up\n",__func__,host->sdhc_slot);
+				host->bcm_plat->syscfg_interface(SYSCFG_SDHC1 +host->sdhc_slot - 1,
+												   SYSCFG_ENABLE);
+			}
 		}
 #endif
 		break;
@@ -1345,22 +1458,36 @@ static void bcmsdhc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 		bcmsdhc_init(host, SOFT_RESET_ALL);
 	}
 
-	bcmsdhc_set_clock(host, ios->clock);
 
 	if (ios->power_mode == MMC_POWER_OFF) {
 		bcmsdhc_set_power(host, -1);
 	} else {
 		bcmsdhc_set_power(host, ios->vdd);
 	}
-	ctrl = readb(host->ioaddr + SDHC_HOST_CONTROL);
 
-	if (ios->bus_width == MMC_BUS_WIDTH_4) {
-		ctrl |= HOSTCTL_DAT_4BIT_WIDTH;
-		host->bus_4bit_mode = true;
-	} else {
+
+	bcmsdhc_set_clock(host, ios->clock);
+
+
+	ctrl = readb(host->ioaddr + SDHC_HOST_CONTROL);
+	if (ios->bus_width == MMC_BUS_WIDTH_8) {
+		ctrl |= HOSTCTL_DAT_8BIT_WIDTH;
 		ctrl &= ~HOSTCTL_DAT_4BIT_WIDTH;
+		host->bus_8bit_mode = true;
 		host->bus_4bit_mode = false;
 	}
+	else if (ios->bus_width == MMC_BUS_WIDTH_4) {
+		ctrl &= ~HOSTCTL_DAT_8BIT_WIDTH;
+		ctrl |= HOSTCTL_DAT_4BIT_WIDTH;
+		host->bus_8bit_mode = false;
+		host->bus_4bit_mode = true;
+	} else {
+		ctrl &= ~HOSTCTL_DAT_8BIT_WIDTH;
+		ctrl &= ~HOSTCTL_DAT_4BIT_WIDTH;
+		host->bus_8bit_mode = false;
+		host->bus_4bit_mode = false;
+	}
+
 	if ((ios->timing == MMC_TIMING_SD_HS)
 	    || (ios->timing == MMC_TIMING_MMC_HS)) {
 		ctrl |= HOSTCTL_HIGH_SPEED;
@@ -1381,7 +1508,7 @@ static void bcmsdhc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 /* Description: MMC callback */
 /* *************************************************************************************************** */
 
-static int bcmsdhc_get_ro(struct mmc_host *mmc)
+int bcmsdhc_get_ro(struct mmc_host *mmc)
 {
 	struct bcmsdhc_host *host;
 	unsigned long flags;
@@ -1481,6 +1608,9 @@ static const struct mmc_host_ops bcmsdhc_ops = {
 	.get_ro = bcmsdhc_get_ro,
 	.get_cd = bcmsdhc_get_cd,
 	.enable_sdio_irq = bcmsdhc_enable_sdio_irq,
+	.panic_probe = raw_mmc_panic_probe,
+	.panic_write = raw_mmc_panic_write,
+	.panic_erase = raw_mmc_panic_erase,
 };
 
 //sysfs - for sd h/w detect
@@ -1503,7 +1633,6 @@ static void bcmsdhc_tasklet_card(unsigned long param)
 	struct bcmsdhc_host *host;
 	unsigned long flags;
 	int state;
-	int result = 0;
 
 	host = (struct bcmsdhc_host *)param;
 	state = gpio_get_value(host->irq_cd);
@@ -1529,29 +1658,6 @@ static void bcmsdhc_tasklet_card(unsigned long param)
 	sd_inserted = host->card_present;
 
 	spin_unlock_irqrestore(&host->lock, flags);
-
-	// When the card is rejrcted, the sd power should turn on!
-	// struct regulator *regulator_get(struct device *dev, const char *id)
-	if(!host->card_present)
-	{
-		if(!strcmp(mmc_hostname(host->mmc), "mmc1"))
-		{
-			if(host->vcc)
-			{
-			/* 	-------------------------------------------------------------------------------------------- */
-			/*	printk(KERN_INFO "%s's vreg: Name %s / Use Count %d / Open Count %d\n", mmc_hostname(host->mmc), 
-						host->vcc->supply_name, host->vcc->rdev->use_count, host->vcc->rdev->open_count); */
-			/*	-------------------------------------------------------------------------------------------- */
-				result = regulator_enable(host->vcc);
-				printk(KERN_INFO "%s's vreg[Turn On]: Name %s / Use Count %d / Open Count %d / Result %d\n", mmc_hostname(host->mmc),
-							host->vcc->supply_name, host->vcc->rdev->use_count, host->vcc->rdev->open_count, result);
-
-			if(host->vcc->rdev->use_count > 65535) 
-				host->vcc->rdev->use_count = 0;
-			}
-		}
-	}
-
 	mmc_detect_change(host->mmc, msecs_to_jiffies(500));
 }
 
@@ -1575,7 +1681,7 @@ static void bcmsdhc_tasklet_finish(unsigned long param)
 
 	mrq = host->mrq;
 
-	if ((host->enable_sdio_interrupt && host->bus_4bit_mode) == false) {
+	if ((host->enable_sdio_interrupt && (host->bus_4bit_mode || host->bus_8bit_mode)) == false) {
 		bcmsdhc_clock_off(host);
 	}
 	/* else need to leave clock on in order to receive interrupts in 4 bit mode */
@@ -1610,12 +1716,83 @@ static void bcmsdhc_tasklet_finish(unsigned long param)
 #endif
 
 	mmiowb();
+
+#ifdef CONFIG_HAS_WAKELOCK
+	if (mmc_resp_type(mrq->cmd) != MMC_RSP_NONE) {
+		wake_unlock(&host->sdhc_wakelock);
+	}
+#endif
+
 	spin_unlock_irqrestore(&host->lock, flags);
 
 	mmc_request_done(host->mmc, mrq);
 	clk_disable(host->bus_clk);
 	sdhc_update_qos_req(host, PM_QOS_DEFAULT_VALUE);
 }
+
+/*
+ * bcmsdhc_finish: Function to signal command finish. Called from Panic path.
+ *				   Analogous to the above bcmsdhc_tasklet_finish function.
+ */
+static void bcmsdhc_finish(struct bcmsdhc_host *host)
+{
+	unsigned long flags;
+	struct mmc_request *mrq;
+	u8 set_voltage;
+
+	spin_lock_irqsave(&host->lock, flags);
+
+	mrq = host->mrq;
+
+	if ((host->enable_sdio_interrupt && (host->bus_4bit_mode || host->bus_8bit_mode)) == false) {
+		bcmsdhc_clock_off(host);
+	}
+	/* else need to leave clock on in order to receive interrupts in 4 bit mode */
+
+	/* bcmsdhc_clock_off(host); */
+
+	writew(0, host->ioaddr + SDHC_NORMAL_INT_STATUS_ENABLE);
+
+	set_voltage = readb(host->ioaddr + SDHC_POWER_CONTROL);
+	set_voltage &= ~SDBUS_POWER_ON;
+	writeb(set_voltage, host->ioaddr + SDHC_POWER_CONTROL);
+
+	/* BUG: Comment pulling down the dat/clk lines on finish */
+/*	if (host->bcm_plat->syscfg_interface(SYSCFG_SDHC1 +
+		host->sdhc_slot - 1, SYSCFG_DISABLE))
+		return; */
+
+	if (mrq->cmd->error ||
+		(mrq->data && (mrq->data->error ||
+			   (mrq->data->stop && mrq->data->stop->error)))) {
+		/* The controller needs a reset upon error conditions */
+		bcmsdhc_reset(host, SOFT_RESET_CMD);
+		bcmsdhc_reset(host, SOFT_RESET_DAT);
+	}
+
+	host->mrq = NULL;
+	host->cmd = NULL;
+	host->data = NULL;
+
+#ifndef CONFIG_LEDS_CLASS
+	bcmsdhc_deactivate_led(host);
+#endif
+
+	mmiowb();
+
+#ifdef CONFIG_HAS_WAKELOCK
+	if (mmc_resp_type(mrq->cmd) != MMC_RSP_NONE) {
+		wake_unlock(&host->sdhc_wakelock);
+	}
+#endif
+
+	spin_unlock_irqrestore(&host->lock, flags);
+
+	raw_mmc_request_done(host->mmc, mrq);
+	clk_disable(host->bus_clk);
+	sdhc_update_qos_req(host, PM_QOS_DEFAULT_VALUE);
+}
+
 
 /* *************************************************************************************************** */
 /* Function Name: bcmsdhc_timeout_timer */
@@ -1637,6 +1814,13 @@ static void bcmsdhc_timeout_timer(unsigned long data)
 		 * the entry E5_2820A2 of BCM2820_A2_Errata_v1.1_CUSTOMER.doc
 		 */
 		if (host->cmd == NULL) {
+			if( host->mrq->cmd ) {
+				struct mmc_command*	cmd	= host->mrq->cmd;
+
+				pr_err
+				    ("%s: opcode==0x%x, arg==0x%x, resp=={0x%x, 0x%x, 0x%x, 0x%x}, flags==0x%x, retries==%d, error==%d\n",
+				     mmc_hostname(host->mmc), cmd->opcode, cmd->arg, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3], cmd->flags, cmd->retries, cmd->error);
+			}
 			pr_err
 			    ("%s: Timeout waiting for transfer complete interrupt.\n",
 			     mmc_hostname(host->mmc));
@@ -1652,7 +1836,12 @@ static void bcmsdhc_timeout_timer(unsigned long data)
 							       flags);
 					return;
 				} else {
-					pr_info
+					struct mmc_command*	cmd	= host->cmd;
+
+					pr_err
+					    ("%s: opcode==0x%x, arg==0x%x, resp=={0x%x, 0x%x, 0x%x, 0x%x}, flags==0x%x, retries==%d, error==%d\n",
+					     mmc_hostname(host->mmc), cmd->opcode, cmd->arg, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3], cmd->flags, cmd->retries, cmd->error);
+					pr_err
 					    ("%s: Timeout waiting for command complete interrupt after 5 retries.\n",
 					     mmc_hostname(host->mmc));
 				}
@@ -1829,6 +2018,9 @@ static void bcmsdhc_handle_errors(struct bcmsdhc_host *host)
 			bcmsdhc_finish_data(host);
 		} else {
 			/* complete the request */
+			if (context == IN_PANIC)
+				bcmsdhc_finish(host);
+			else
 			tasklet_schedule(&host->finish_tasklet);
 		}
 	}
@@ -2050,6 +2242,82 @@ out:
 	return result;
 }
 
+/* *************************************************************************/
+/* Function Name: panic_bcmsdhc_poll_irq */
+/* Description: Polling mode function for SD host interrupt */
+/* *************************************************************************/
+static int panic_bcmsdhc_poll_irq(struct bcmsdhc_host *host, struct mmc_command *cmd)
+{
+	int ret;
+	u16 wIntStatus = 0;
+	unsigned long timeout;
+
+	/* Poll for CMD_COMPLETE or ERROR_INT for max of 1s */
+	ret = wait_for_int_with_timeout(host,
+			(NORMAL_INT_STATUS_CMD_COMPLETE | NORMAL_INT_STATUS_ERROR_INT),
+			MMC_1SEC_DELAY_COUNT);
+	if (ret)
+		return -1;
+
+	wIntStatus = readw(host->ioaddr + SDHC_NORMAL_INT_STATUS);
+	DBG(KERN_INFO
+		"Slot[%d]=>NORMAL_INT_STATUS=%x; ERROR_INT_STATUS=%x\n",
+		host->sdhc_slot, (unsigned)wIntStatus,
+		readw(host->ioaddr + SDHC_ERROR_INT_STATUS));
+
+	/* Handle errors if any */
+	if (wIntStatus & NORMAL_INT_STATUS_ERROR_INT) {
+		bcmsdhc_handle_errors(host);
+		return -1;
+	}
+
+	if (wIntStatus & NORMAL_INT_STATUS_CMD_COMPLETE) {
+		writew(NORMAL_INT_STATUS_CMD_COMPLETE,
+			   host->ioaddr + SDHC_NORMAL_INT_STATUS);
+
+		bcmsdhc_finish_command(host);
+	}
+
+	return 0;
+}
+
+static int panic_bcmsdhc_transfer_data(struct bcmsdhc_host *host,
+		struct mmc_command *cmd)
+{
+	int ret;
+	u16 wIntStatus = 0;
+	unsigned int mask;
+
+	/* If NOT data transfer return from here */
+	if (!cmd->data)
+		return 0;
+
+	/* Start polling PIO transfer */
+	panic_bcmsdhc_poll_transfer_pio(host);
+
+	/* Wait for transfer complete event */
+	ret = wait_for_int_with_timeout(host,
+				NORMAL_INT_STATUS_TRX_COMPLETE, MMC_1SEC_DELAY_COUNT);
+	if (ret)
+		return -1;
+
+	wIntStatus = readw(host->ioaddr + SDHC_NORMAL_INT_STATUS);
+	/* Check for errors if any */
+	if (wIntStatus & NORMAL_INT_STATUS_ERROR_INT) {
+		bcmsdhc_handle_errors(host);
+		return -1;
+	}
+
+	/* Clear all the interrupt bits if any*/
+	writel(wIntStatus, host->ioaddr + SDHC_NORMAL_INT_STATUS);
+
+	bcmsdhc_finish_data(host);
+
+	pr_err("panic_bcmsdhc_transfer_data SUCCESS!\n");
+
+	return 0;
+}
+
 /* *************************************************************************************************** */
 /* Function Name: bcmsdhc_probe */
 /* Description: probe SD host */
@@ -2236,7 +2504,11 @@ static int __init bcmsdhc_probe(struct platform_device *pdev)
 	mmc->ops = &bcmsdhc_ops;
 	mmc->f_min = host->max_clk / 256;
 	mmc->f_max = host->max_clk;
-	mmc->caps = MMC_CAP_4_BIT_DATA | MMC_CAP_SDIO_IRQ;
+	if(bcm_plat->flags&SDHC_DEVTYPE_EMMC)
+		mmc->caps = MMC_CAP_8_BIT_DATA | MMC_CAP_SDIO_IRQ;
+	else
+		mmc->caps = MMC_CAP_4_BIT_DATA | MMC_CAP_SDIO_IRQ;
+
 	if (host->bcm_plat->flags & SDHC_MANUAL_SUSPEND_RESUME)
 		mmc->bus_resume_flags = MMC_BUSRESUME_MANUAL_RESUME |
 				MMC_BUSRESUME_NEEDS_RESUME;
@@ -2381,10 +2653,10 @@ static int __init bcmsdhc_probe(struct platform_device *pdev)
 	sd_inserted = host->card_present;
 	
 	bcmsdhc_init(host, SOFT_RESET_ALL);
-//#ifdef CONFIG_HAS_WAKELOCK
-//	wake_lock_init(&host->sdhc_wakelock, WAKE_LOCK_SUSPEND,
-//		       dev_name(&pdev->dev));
-//#endif
+#ifdef CONFIG_HAS_WAKELOCK
+	wake_lock_init(&host->sdhc_wakelock, WAKE_LOCK_SUSPEND,
+		       dev_name(&pdev->dev));
+#endif
 
 #ifdef CONFIG_MMC_DEBUG
 /*      bcmsdhc_dumpregs(host); */
@@ -2402,6 +2674,14 @@ static int __init bcmsdhc_probe(struct platform_device *pdev)
 #endif
 
 	mmiowb();
+
+	/* Store mmc_host structure pointer for Apanic driver */
+	if (host->bcm_plat->flags & SDHC_DEVTYPE_EMMC) {
+		kpanic_core_mmc_host = mmc;
+	}
+	else if (host->bcm_plat->flags & SDHC_DEVTYPE_SD) {
+		kpanic_core_sd_host = mmc;
+	}
 
 	mmc_add_host(mmc);
 	pr_info("SDHCI controller on DASH\n");
@@ -2461,9 +2741,9 @@ static int bcmsdhc_remove(struct platform_device *pdev)
 	led_classdev_unregister(&host->led);
 #endif
 
-//#ifdef CONFIG_HAS_WAKELOCK
-//	wake_lock_destroy(&host->sdhc_wakelock);
-//#endif
+#ifdef CONFIG_HAS_WAKELOCK
+	wake_lock_destroy(&host->sdhc_wakelock);
+#endif
 
 	sdio_remove_qos_req(host);
 
@@ -2528,11 +2808,14 @@ static int bcmsdhc_suspend(struct platform_device *pdev, pm_message_t mesg)
 	if (host) {
 		if (host->mmc->card && host->mmc->card->type != MMC_TYPE_SDIO) {
 			ret = mmc_suspend_host(host->mmc);
+			mdelay(50);	// S/W delay to wait till voltage gose down under the 0.5V.
 		}
+		if(!(host->bcm_plat->flags&SDHC_DEVTYPE_SD)){
 		if (host->bcm_plat->syscfg_interface(SYSCFG_SDHC1 +
 						     host->sdhc_slot - 1,
 						     SYSCFG_DISABLE))
 			return -EINVAL;
+		}
 
 		free_irq(host->irq, host);
 	}
@@ -2554,10 +2837,12 @@ static int bcmsdhc_resume(struct platform_device *pdev)
 		if (ret)
 			return ret;
 
+		if(!(host->bcm_plat->flags&SDHC_DEVTYPE_SD)){
 		if (host->bcm_plat->syscfg_interface(SYSCFG_SDHC1 +
 						     host->sdhc_slot - 1,
 						     SYSCFG_ENABLE))
 			return -EINVAL;
+		}
 
 		if((host->mmc->card &&
 			host->mmc->card->type != MMC_TYPE_SDIO)) {

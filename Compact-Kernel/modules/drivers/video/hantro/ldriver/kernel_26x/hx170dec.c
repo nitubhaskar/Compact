@@ -504,8 +504,9 @@ static int hx170dec_release(struct inode *inode, struct file *filp)
 #else
 	clk_disable(hx_codec_island_clk);
 #endif
-	sema_init(&hx170dec_data.dec_resv_sem, 1);
-	sema_init(&hx170dec_data.pp_resv_sem, 1);
+    // patch for CSP#499977 
+	//sema_init(&hx170dec_data.dec_resv_sem, 1);
+	//sema_init(&hx170dec_data.pp_resv_sem, 1);
 #ifdef USE_SIGNAL
 	/* remove this filp from the asynchronusly notified filp's */
 	hx170dec_fasync(-1, filp, 0);

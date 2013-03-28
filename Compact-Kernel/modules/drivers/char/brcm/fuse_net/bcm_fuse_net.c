@@ -70,9 +70,19 @@ extern unsigned char SYS_GenClientID(void);
 
 struct wake_lock knet_wake_lock;
 
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] wkj change MTU size for SAL
+void KRIL_GetSalesCode_SAL(void);
+static char sales_code[4] = {0,};
+#endif
+
 /**
    Packet Data EndPoint buffer pool info
  */
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] wkj change MTU size for SAL
+#define BCM_NET_MAX_DATA_LEN_SAL   1200
+#endif
 #define BCM_NET_MAX_DATA_LEN       1500 //bytes
 #define BCM_NET_MAX_NUM_PKTS       250 //packets
 
@@ -109,6 +119,44 @@ static uint8_t bcm_fuse_net_find_entry(net_drvr_info_t *ndrvr_info_ptr);
 static void bcm_fuse_net_free_entry(uint8_t pdp_cid);
 
 static int g_bcmnet_wake_time = 6000; //msec
+
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] skh
+//#define SALES_CODE "/system/csc/sales_code.dat"
+#define SALES_CODE  "/proc/LinuStoreIII/efs_info" 
+
+void KRIL_GetSalesCode_SAL(void)
+{
+	mm_segment_t oldfs ;
+	struct file* config_file ;
+	int retval;
+
+	oldfs = get_fs( ) ;
+	set_fs (KERNEL_DS);
+
+      printk("########## KRIL_GetSalesCode_SAL   Start ############\n");
+	config_file = filp_open( "/proc/LinuStoreIII/efs_info" , O_RDONLY, 0 ); 
+
+	if( IS_ERR( config_file ) )
+	{
+		printk("Open sales_code.dat Failed!!! IS_ERR(config_file):%ld\n",IS_ERR(config_file));
+	}
+
+	else
+	{
+		retval= config_file->f_op->read( config_file, sales_code, 
+				sizeof(sales_code), &config_file->f_pos );
+		printk("step 1\n");	
+
+		filp_close( config_file ,NULL );
+	}
+	set_fs( oldfs );
+	sales_code[3] = 0;
+	printk("Open sales_code.dat Sales_code =  %s\n",sales_code);
+	printk("########## End KRIL_GetSalesCode_SAL   ############\n");
+	return;
+}
+#endif
 
 /**
    @fn void bcm_fuse_net_fc_cb(RPC_FlowCtrlEvent_t event, unsigned char8 cid);
@@ -237,6 +285,16 @@ static int bcm_fuse_net_open(struct net_device *dev)
     static int IsFirstCall = 0;
 
     ndrvr_info_ptr.dev_ptr = dev;
+
+//[LTN_SW3_PROTOCOL] sj0212.park 2011.11.09 initial merge from Luisa
+#if defined (CONFIG_LTN_COMMON) //[latin_protocol] wkj change MTU size for SAL
+    if(strlen(sales_code) == 0)
+    {
+    KRIL_GetSalesCode_SAL();
+    }
+    if(strncmp(sales_code,"SAL",3)==0)    
+       ndrvr_info_ptr.dev_ptr->mtu = BCM_NET_MAX_DATA_LEN_SAL;
+#endif
 
     /**
        Register callbacks with the RPC Proxy server

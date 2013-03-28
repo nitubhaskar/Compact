@@ -31,8 +31,8 @@
 #include <linux/switch.h>
 #include <linux/wakelock.h>
 
-#undef USE_SERVICEMODE
-//#define USE_SERVICEMODE
+//#undef USE_SERVICEMODE
+#define USE_SERVICEMODE
 
 #ifdef USE_SERVICEMODE
 #include <asm/uaccess.h>
@@ -47,6 +47,7 @@
 #define HEADSET_DETECT_REF_COUNT  10
 #define GET_IMSI_REF_TIME	(HZ * 8)  /* 8 sec */
 #define WAKE_LOCK_TIME		(HZ * 5)	/* 5 sec */
+#define WAKE_LOCK_TIME_IN_SENDKEY (HZ * 2) /* 2 sec */
 #define TEST_SIM_IMSI	"999999999999999"
 
 #define REG_ANACR12 0x088800B0
@@ -214,12 +215,12 @@ static struct device_attribute hs_Attrs[] = {
         .store = hs_Store,
 	},
        {
-	 .attr = { .name = "threshold", .mode = S_IRUGO | S_IWUGO, .owner = THIS_MODULE },
+	 .attr = { .name = "threshold", .mode = S_IRUGO | S_IWUG, .owner = THIS_MODULE },
         .show = hs_Show,
         .store = hs_Store,
 	},
 	{
-	 .attr = { .name = "teston", .mode = S_IWUGO, .owner = THIS_MODULE },
+	 .attr = { .name = "teston", .mode = S_IWUG, .owner = THIS_MODULE },
         .show = hs_Show,
         .store = hs_Store,
 	}
@@ -415,6 +416,8 @@ irqreturn_t hs_buttonisr(int irq, void *dev_id)
 		}
 	}	
 
+   wake_lock_timeout(&p->det_wake_lock, WAKE_LOCK_TIME_IN_SENDKEY);
+
 	if(p->pluging ==  ENABLE || p->keypressing != NONE)
 	{
 		printk("%s: Headset pluging OR keypressing\n", __func__ );
@@ -459,8 +462,7 @@ static void getIMSI_work_func(struct work_struct *work)
 	second = ((simdata == NULL) || (strncmp(simdata->imsi_string, TEST_SIM_IMSI, IMSI_DIGITS) != 0)) ?  DISABLE : ENABLE;
 
 	FactoryMode = (first == ENABLE || second == ENABLE) ? ENABLE : DISABLE;
-	printk("%s: Factorymode %d\n", __func__, FactoryMode);
-
+	
 	if(FactoryMode == ENABLE)
 	{
 		if(mic.headset_state == HEADSET_4_POLE)
@@ -548,16 +550,6 @@ irqreturn_t hs_isr(int irq, void *dev_id)
 
 	printk("%s: Before state : %d \n", __func__, p->headset_state);
 
-#if 0
-	/* For remove pop-up noise.*/
-	if(p->headset_state && (p->keypressing == NONE || p->keypressing == INIT))
-	{		
-		printk("%s: Remove popup noise\n", __func__);
-		board_sysconfig(SYSCFG_HEADSET, SYSCFG_DISABLE);
-		board_sysconfig(SYSCFG_AUXMIC, SYSCFG_DISABLE);
-	}
-#endif
-	
 	/* debounce headset jack.  don't try to determine the type of
 	 * headset until the detect state is true for a while.
 	 */
@@ -801,6 +793,16 @@ static struct platform_driver headset_driver = {
 		.owner = THIS_MODULE,
 	},
 };
+
+int get_headset_state(void)
+{
+    if (mic.headset_state) 
+        return 1;
+    else
+        return 0;
+}
+
+EXPORT_SYMBOL(get_headset_state);
 
 /*------------------------------------------------------------------------------
 Function name   : BrcmHeadsetModuleInit

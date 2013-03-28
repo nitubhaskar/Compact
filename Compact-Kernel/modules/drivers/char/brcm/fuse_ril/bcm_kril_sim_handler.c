@@ -57,6 +57,10 @@
 
 #define BCM_OEM_HOOK_HEADER_LENGTH 5
 
+#ifdef BCM_RIL_FOR_EAP_SIM  // BCM_EAP_SIM
+#define MAXBUFF  512
+#endif
+
 const UInt16 Sim_Df_Telecom_Path[1] =        {APDUFILEID_MF};
 const UInt16 Sim_Df_Gsm_Path[1] =            {APDUFILEID_MF};
 const UInt16 Sim_Df_ADFusim_Path[1] =        {APDUFILEID_MF};
@@ -92,9 +96,11 @@ extern bool v_SimCheck_MASTER;
 /*-20110822 HKPARK FOR DebugScreen Slave*/
 
 /*+20111110 HKPARK if NO SIM status, send Error Message*/
-extern bool v_NoSimCheck2;
-extern bool v_NoSimCheck1;
+// extern bool v_NoSimCheck2;
+// extern bool v_NoSimCheck1;
 /*-20111110 HKPARK if NO SIM status, send Error Message*/
+
+extern Boolean gFdnSkip[DUAL_SIM_SIZE];
 
 /* ATC Service Class values defined in GSM 07.07 */
 typedef enum
@@ -1084,14 +1090,14 @@ int ParseSimPinResult(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
             case SIM_ABSENT_STATUS:
                 p_sim_status->pin_status = SIM_ABSENT;
 /*+20111110 HKPARK if NO SIM status, send Error Message*/
-                if(pdata->ril_cmd->SimId == 2)
-                {
-                   v_NoSimCheck2 = true;
-                 }
-		  else if(pdata->ril_cmd->SimId == 1)
-		  {
-		    v_NoSimCheck1 =true;
-		  }
+//                if(pdata->ril_cmd->SimId == 2)
+//                {
+//                   v_NoSimCheck2 = true;
+//                 }
+//		  else if(pdata->ril_cmd->SimId == 1)
+//		  {
+//		    v_NoSimCheck1 =true;
+//		  }
 /*-20111110 HKPARK if NO SIM status, send Error Message*/				
                 break;
                 
@@ -1103,14 +1109,14 @@ int ParseSimPinResult(KRIL_CmdList_t *pdata, Kril_CAPI2Info_t *capi2_rsp)
             default:
                 p_sim_status->pin_status = SIM_ERROR;
 /*+20111110 HKPARK if NO SIM status, send Error Message*/
-                if(pdata->ril_cmd->SimId == 2)
-                {
-                   v_NoSimCheck2 = true;
-                 }
-		  else if(pdata->ril_cmd->SimId == 1)
-		  {
-		    v_NoSimCheck1 =true;
-		  }
+//                if(pdata->ril_cmd->SimId == 2)
+//                {
+//                   v_NoSimCheck2 = true;
+//                 }
+//		  else if(pdata->ril_cmd->SimId == 1)
+//		  {
+//		    v_NoSimCheck1 =true;
+//		  }
 /*-20111110 HKPARK if NO SIM status, send Error Message*/						
                 break;
         }
@@ -2556,6 +2562,12 @@ void KRIL_QueryFacilityLockHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                         ssSrvReqPtr->operation = SS_OPERATION_CODE_INTERROGATE;
                         memcpy((void*)ssPwdPtr->currentPwd, (void*)cmd_data->password, SS_PASSWORD_LENGTH);
 
+                        if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                        {
+                            gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                            ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+                        }
+
                         CAPI2_SsApi_SsSrvReq(InitClientInfo(pdata->ril_cmd->SimId), &ssApiSrvReq);
                         KRIL_SetSsSrvReqTID(GetTID()); // MSG_MNSS_CLIENT_SS_SRV_REL is an asynchronous response. TID=0
 
@@ -2863,6 +2875,12 @@ void KRIL_SetFacilityLockHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                             ssSrvReqPtr->operation = SS_OPERATION_CODE_DEACTIVATE;
 
                         memcpy((void*)ssPwdPtr->currentPwd, (void*)cmd_data->password, SS_PASSWORD_LENGTH);
+
+                        if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+                        {
+                            gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+                            ssApiSrvReq.fdnCheck = CONFIG_MODE_SUPPRESS;
+                        }
 
                         KRIL_DEBUG(DBG_INFO, "GetServiceClass(%d): type:%d content:%d\n", cmd_data->service, ssSrvReqPtr->basicSrv.type, ssSrvReqPtr->basicSrv.content);
 
@@ -3492,3 +3510,754 @@ void KRIL_QuerySimPinRemainingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
             break;        
     }
 }
+
+//BCM_EAP_SIM 
+#ifdef BCM_RIL_FOR_EAP_SIM 
+void KRIL_GenericSimAccessHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
+{
+    KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
+    KRIL_DEBUG(DBG_INFO,"pdata->handler_state:0x%lX\n", pdata->handler_state);
+    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
+    {
+        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
+        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+        return;
+    }
+    if (capi2_rsp && capi2_rsp->result != RESULT_OK)
+    {
+        KRIL_DEBUG(DBG_ERROR,"CAPI2 response failed:%d\n", capi2_rsp->result);
+        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+        return;
+    }   
+   
+    switch (pdata->handler_state)
+    {
+        case BCM_SendCAPI2Cmd:
+        {
+            //Bytes 0~3="BRCM";Byte 4:Message ID;Byte 5~6:UInt16 APDU length;Byte 7~ : APDU data
+            UInt8 *cmd_data = (UInt8*)pdata->ril_cmd->data;
+            UInt16 cmd_lenth = (((UInt16)cmd_data[5])|((UInt16)cmd_data[6])<<8);
+            CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),&cmd_data[7], cmd_lenth);
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            break;
+        }
+        case BCM_RESPCAPI2Cmd:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            UInt8 *resp = NULL;
+            UInt32 rsp_len = 0;
+       
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            //APDU data length + 2bytes for APDU response data length info 
+            //+"BRCM"(4 bytes)+ Messgae ID(1 byte)
+            rsp_len = rsp->len + sizeof(UInt16)+ BCM_OEM_HOOK_HEADER_LENGTH;
+
+            if(rsp->resultCode != SIM_GENERIC_APDU_RES_SUCCESS) 
+            {
+                KRIL_DEBUG(DBG_ERROR,"Do Generic Sim Access is not success!! result:%d\n", rsp->resultCode);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+       
+            pdata->bcm_ril_rsp = kmalloc(rsp_len, GFP_KERNEL);
+            if (!pdata->bcm_ril_rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"Allocate bcm_ril_rsp memory failed!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+       
+            pdata->rsp_len = rsp_len;
+            //Bytes 0~3="BRCM";Byte 4:Message ID;Byte 5~6:UInt16 APDU length;Byte 7~ : APDU data
+            resp = (UInt8*)pdata->bcm_ril_rsp;
+            resp[0] = (UInt8)'B';
+            resp[1] = (UInt8)'R';
+            resp[2] = (UInt8)'C';
+            resp[3] = (UInt8)'M';
+            resp[4] = (UInt8)BRIL_HOOK_GENERIC_SIM_ACCESS;
+            resp[5] = (UInt8)(rsp->len & 0x00FF);      //Low Byte
+            resp[6] = (UInt8)((rsp->len & 0xFF00)>>8); //High Byte      
+            memcpy(&resp[7], rsp->data,rsp->len );
+            //RawDataPrintfun(&resp[7], rsp->len, "Sim Access:Rsp ");
+            pdata->handler_state = BCM_FinishCAPI2Cmd;
+            break;
+        }
+            
+        default:
+            KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
+            pdata->handler_state = BCM_ErrorCAPI2Cmd;
+            break;      
+    }
+}
+//EAP-SIM
+void KRIL_GsmSimAuthenticationHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
+{
+    KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
+    KRIL_DEBUG(DBG_INFO,"pdata->handler_state:0x%lX\n", pdata->handler_state);
+
+    KRIL_DEBUG(DBG_ERROR,"pdata->handler_state:0x%lX\n", pdata->handler_state);  	// TY_del	
+
+    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
+    {
+        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
+        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+        return;
+    }
+	
+    if (capi2_rsp && capi2_rsp->result != RESULT_OK)
+    {
+        KRIL_DEBUG(DBG_ERROR,"CAPI2 response failed:%d\n", capi2_rsp->result);
+        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+        return;
+    }	 
+	
+    switch (pdata->handler_state)
+    {
+        case BCM_SendCAPI2Cmd:
+        {    
+            CAPI2_SimApi_GetPinStatus(InitClientInfo(pdata->ril_cmd->SimId));
+            pdata->handler_state = BCM_SIM_SelectMF;
+        }
+        break;
+        case BCM_SIM_SelectMF:
+        {
+            SIM_PIN_Status_t SimStatus;	
+            SIM_PIN_Status_t* rsp = (SIM_PIN_Status_t*)capi2_rsp->dataBuf;
+            SIM_APPL_TYPE_t SimType = SIM_APPL_INVALID;
+
+	    KRIL_DEBUG(DBG_ERROR,"BCM_SIM_SelectMF \n"); 			// TY_del
+
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+
+	    SimStatus = *rsp;
+	    KRIL_DEBUG(DBG_ERROR,"Sim pin state = %d\n",SimStatus); 			// TY_del
+		 
+            if(SimStatus != PIN_READY_STATUS)
+            {
+                KRIL_DEBUG(DBG_INFO,"Sim pin state = %d\n",SimStatus);
+                switch(SimStatus)
+                {
+                    case SIM_ABSENT_STATUS:
+                        pdata->result = BCM_E_SIM_ABSENT;
+                    break;	
+                    default:
+                        pdata->result = BCM_E_GENERIC_FAILURE;
+                    break;	
+                }		      
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            //check sim type is USIM or SIM.
+            SimType = KRIL_GetSimAppType(pdata->ril_cmd->SimId);
+            if(SimType == SIM_APPL_3G)
+            {//For Usim MF select
+                //SELECT MF USIM "00a4000C023f00"
+                UInt8 SELECT_MF_USIM_APDU[]={0x00,0xa4,0x00,0x0C,0x02,0x3f,0x00};
+                CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),SELECT_MF_USIM_APDU,sizeof(SELECT_MF_USIM_APDU));
+            }
+            else if(SimType == SIM_APPL_2G)
+            {//For sim MF select
+                //SELECT SIM Master File "A0A40000023F00"
+                UInt8 SELECT_MF_SIM_APDU[] ={0xa0,0xa4,0x00,0x00,0x02,0x3f,0x00};			
+            CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),SELECT_MF_SIM_APDU,sizeof(SELECT_MF_SIM_APDU));
+            }
+            else
+            {
+                KRIL_DEBUG(DBG_ERROR,"SimType is INVALID!!SimType(%d)\n",SimType);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }            
+            pdata->handler_state = BCM_SIM_SelectDedicatedFile;
+        }
+        break;
+        case BCM_SIM_SelectDedicatedFile:
+        {
+             SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+             SIM_APPL_TYPE_t SimType = SIM_APPL_INVALID;
+
+             if (!rsp)
+             {
+                 KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                 return;
+             }
+             if(rsp->resultCode == SIM_GENERIC_APDU_RES_SUCCESS)
+             {
+                 if (SimIODetermineResponseError(rsp->data[0], rsp->data[1]) == FALSE)
+                 {
+                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                     KRIL_DEBUG(DBG_ERROR,"Select Master File RSP Error!!len=%d,SW1=0x%x SW2=0x%x\n",rsp->len,rsp->data[0],rsp->data[1]);
+                     return;				
+                 }
+             }
+             else
+             {
+                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                 KRIL_DEBUG(DBG_ERROR,"Select Master File Error!!resultCode=%d\n",rsp->resultCode);
+                 return;		
+             }			  
+
+             //check sim type is USIM or SIM.
+             SimType = KRIL_GetSimAppType(pdata->ril_cmd->SimId);
+             if(SimType == SIM_APPL_3G)
+             {//For Usim ADF select
+                 //SELECT DF ADF "00a4000C027FFF"
+                 UInt8 SELECT_DF_ADF_APDU[] ={0x00,0xa4,0x00,0x0C,0x02,0x7F,0xFF};
+                 CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),SELECT_DF_ADF_APDU, sizeof(SELECT_DF_ADF_APDU));			 
+             }
+             else if(SimType == SIM_APPL_2G)
+             {//For sim DF_GSM select
+                 //SELECT DF GSM	"A0A40000027F20"
+                 UInt8 SELECT_DF_GSM_APDU[] ={0xa0,0xa4,0x00,0x00,0x02,0x7f,0x20};		 
+             CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),SELECT_DF_GSM_APDU, sizeof(SELECT_DF_GSM_APDU));
+             }
+             else
+             {
+                 KRIL_DEBUG(DBG_ERROR,"SimType is INVALID!!!!SimType(%d)\n",SimType);
+                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                 return;
+             }             
+             pdata->handler_state = BCM_SIM_DoGSMAuthentication;
+        }
+        break;
+        case BCM_SIM_DoGSMAuthentication:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            //cmd_data Bytes 0~3="BRCM";Byte 4:Message type;Byte 5:Rand length;Byte 6~ : Rand data
+            UInt8 *cmd_data = (UInt8*)pdata->ril_cmd->data;
+            SIM_APPL_TYPE_t SimType = SIM_APPL_INVALID;
+            UInt8 Rand_lenth = cmd_data[5];
+            UInt8  APDU[MAXBUFF] = {0};
+            UInt16 APDUlen = 0;
+            UInt8 Headerlen = 0;  
+
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            if(rsp->resultCode == SIM_GENERIC_APDU_RES_SUCCESS)
+            {
+                if (SimIODetermineResponseError(rsp->data[0], rsp->data[1]) == FALSE)
+                {
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                    KRIL_DEBUG(DBG_ERROR,"Select DF_Gsm RSP Error!!len=%d,SW1=0x%x SW2=0x%x\n",rsp->len,rsp->data[0],rsp->data[1]);
+                    return;				
+                }
+            }
+            else
+            {
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                KRIL_DEBUG(DBG_ERROR,"Select DF Error!!resultCode=%d\n",rsp->resultCode);
+                return;		
+            }						
+            //RawDataPrintfun(cmd_data, pdata->ril_cmd->datalen, "GSM Ath cmd form uril");
+            //check sim type is USIM or SIM.
+            SimType = KRIL_GetSimAppType(pdata->ril_cmd->SimId);
+            if(SimType == SIM_APPL_3G)
+            {
+                //RUN 2G AUTHENTICATE  "008800801110"
+                UInt8 RUN_2G_AUTH_HEADER[] ={0x00,0x88,0x00,0x80,0x11,0x10};	   
+                Headerlen = sizeof(RUN_2G_AUTH_HEADER);
+
+                memcpy(&APDU[0],RUN_2G_AUTH_HEADER,Headerlen);		   
+                //rand data
+                memcpy(&APDU[Headerlen],&cmd_data[6] ,Rand_lenth);
+                //le
+                APDU[Headerlen + Rand_lenth]=0x00;			   
+                //6 Bytes for 008800801110 + 1 byte for le
+                APDUlen = Headerlen + Rand_lenth + 1;
+                if(APDUlen > MAXBUFF)
+                {
+                    KRIL_DEBUG(DBG_ERROR,"The Data buffer length is over Maxbuff! size:%d\n", APDUlen);
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                    return;					
+                }
+            }
+            else if(SimType == SIM_APPL_2G)
+            {			
+                //RUN GSM APDU header "A088000010"
+                UInt8 RUN_GSM_AUTH_HEADER[]={0xA0,0x88,0x00,0x00,0x10}; 
+                Headerlen = sizeof(RUN_GSM_AUTH_HEADER);
+    
+            memcpy(&APDU[0],RUN_GSM_AUTH_HEADER,Headerlen);
+            APDUlen = Rand_lenth + Headerlen;
+            if(APDUlen > MAXBUFF)
+            {
+                KRIL_DEBUG(DBG_ERROR,"The Data buffer length is over Maxbuff! size:%d\n", APDUlen);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            memcpy(&APDU[Headerlen] ,&cmd_data[6],Rand_lenth);
+            }
+            else
+            {
+                KRIL_DEBUG(DBG_ERROR,"SimType is INVALID!!!!SimType(%d)\n",SimType);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }	
+            //RawDataPrintfun(APDU, APDUlen, "GSM Ath CMD to CP");			
+            CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),APDU, APDUlen);
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            break;
+        }
+        case BCM_RESPCAPI2Cmd:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            UInt8 *resp = NULL;
+            UInt32 rsp_len;
+			
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+
+            if(rsp->len==2)
+            {
+                switch (rsp->data[0]) 
+                {
+                    case 0x61:
+                    case 0x9f:
+                    {
+                        UInt8  APDU[MAXBUFF];
+                        UInt16 APDUlen = 0;	 
+                        if (rsp->data[1]==0) 
+                        {
+                            KRIL_DEBUG(DBG_ERROR,"Exception:SW2 is 0 while SW1 is 0x%x!!Warning\n",rsp->data[0]);
+                            break;
+                        }
+                        APDU[0]=0xa0;//CLA
+                        APDU[1]=0xc0;//INS
+                        APDU[2]=0x00;//P1
+                        APDU[3]=0x00;//P2
+
+                        if(KRIL_GetSimAppType(pdata->ril_cmd->SimId) == SIM_APPL_3G)
+                        {
+                            APDU[0] = 0x00; // USIM CLA
+                        }
+				
+                        APDU[4] = rsp->data[1];
+                        APDUlen = 5;
+                        CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),APDU, APDUlen);
+                        pdata->handler_state = BCM_SIM_GetAdditionDataReq;
+					
+                        return;
+                    }
+                    break; 
+                    default:
+                        KRIL_DEBUG(DBG_ERROR,"Exception:SW1 is 0x%x,SW2 is 0x%x !! Warning\n",rsp->data[0],rsp->data[1]);
+                        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                        return;
+                    break;
+                }
+            }
+			        
+            rsp_len = sizeof(SIM_GENERIC_APDU_XFER_RSP_t) + BCM_OEM_HOOK_HEADER_LENGTH;	
+
+            pdata->bcm_ril_rsp = kmalloc(rsp_len, GFP_KERNEL);
+            if (!pdata->bcm_ril_rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"Allocate bcm_ril_rsp memory failed!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+			
+            pdata->rsp_len = rsp_len;
+            //Bytes 0~3="BRCM";Byte4:Message type;Byte5:Result;Byte6:Response length;Byte7~:Rsp data
+            resp = (UInt8*)pdata->bcm_ril_rsp;
+            resp[0] = (UInt8)'B';
+            resp[1] = (UInt8)'R';
+            resp[2] = (UInt8)'C';
+            resp[3] = (UInt8)'M';
+            resp[4] = (UInt8)BRIL_HOOK_EAP_SIM_AUTHENTICATION;
+
+            memcpy(&resp[5], rsp,sizeof(SIM_GENERIC_APDU_XFER_RSP_t));
+
+            //RawDataPrintfun(&resp[5], rsp->len, "GSM CP RSP");
+                
+            pdata->handler_state = BCM_FinishCAPI2Cmd;
+            break;
+		    }
+        case BCM_SIM_GetAdditionDataReq:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            UInt8 *resp = NULL;
+            UInt32 rsp_len;
+
+            //APDU data length + 2bytes for APDU response data length info 
+            //+"BRCM"(4 bytes)+ MessgaeType(1 byte)
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"GetAddition:capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            if(rsp->len == 2)
+            {
+                KRIL_DEBUG(DBG_ERROR,"Exception:Addition SW1 is 0x%x,SW2 is 0x%x !! Warning\n",rsp->data[0],rsp->data[1]);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            rsp_len = sizeof(SIM_GENERIC_APDU_XFER_RSP_t)+ BCM_OEM_HOOK_HEADER_LENGTH; 
+
+            pdata->bcm_ril_rsp = kmalloc(rsp_len, GFP_KERNEL);
+            if (!pdata->bcm_ril_rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"GetAddition:Allocate bcm_ril_rsp memory failed!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+
+            pdata->rsp_len = rsp_len;
+            //Bytes 0~3="BRCM";Byte4:Message type;Byte5:Result;Byte6:Response length;Byte7~:Rsp data
+            resp = (UInt8*)pdata->bcm_ril_rsp;
+            resp[0] = (UInt8)'B';
+            resp[1] = (UInt8)'R';
+            resp[2] = (UInt8)'C';
+            resp[3] = (UInt8)'M';
+            resp[4] = (UInt8)BRIL_HOOK_EAP_SIM_AUTHENTICATION;
+
+            memcpy(&resp[5], rsp, sizeof(SIM_GENERIC_APDU_XFER_RSP_t));
+
+            //RawDataPrintfun(&resp[5], rsp->len, "GSM Addition CP RSP");
+			
+            pdata->handler_state = BCM_FinishCAPI2Cmd;
+            break;
+        }		
+        default:
+            KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
+            pdata->handler_state = BCM_ErrorCAPI2Cmd;
+            break;		  
+    }    
+}
+
+void KRIL_USimAuthenticationHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
+{
+    KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
+    KRIL_DEBUG(DBG_INFO,"pdata->handler_state:0x%lX\n", pdata->handler_state);
+	
+    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
+    {
+        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
+        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+        return;
+    }
+		
+    if (capi2_rsp && capi2_rsp->result != RESULT_OK)
+    {
+        KRIL_DEBUG(DBG_ERROR,"CAPI2 response failed:%d\n", capi2_rsp->result);
+        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+        return;
+    }	 
+	
+    switch (pdata->handler_state)
+    {
+        case BCM_SendCAPI2Cmd:
+        {
+            CAPI2_SimApi_GetPinStatus(InitClientInfo(pdata->ril_cmd->SimId));
+            pdata->handler_state = BCM_SIM_SelectMFUsim;
+        }
+        break;
+        case BCM_SIM_SelectMFUsim:
+        {            
+            SIM_PIN_Status_t SimStatus;	
+            SIM_PIN_Status_t* rsp = (SIM_PIN_Status_t*)capi2_rsp->dataBuf;
+            //SELECT MF USIM "00a4000C023f00"
+            UInt8 SELECT_MF_USIM_APDU[]={0x00,0xa4,0x00,0x0C,0x02,0x3f,0x00};
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            SimStatus = *rsp;
+ 
+            if(SimStatus != PIN_READY_STATUS)
+            {
+                KRIL_DEBUG(DBG_INFO,"USim Pin Status =%d \n",SimStatus);
+                switch(SimStatus)
+                {
+                    case SIM_ABSENT_STATUS:
+                        pdata->result = BCM_E_SIM_ABSENT;
+                    break;	
+                    default:
+                        pdata->result = BCM_E_GENERIC_FAILURE;
+                    break;	
+                }		      
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }		   
+            CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),SELECT_MF_USIM_APDU, sizeof(SELECT_MF_USIM_APDU));
+            pdata->handler_state = BCM_SIM_SelectDedicatedFileOfADF;
+        }
+        break;
+        case BCM_SIM_SelectDedicatedFileOfADF:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            //SELECT DF ADF "00a4000C027FFF"
+            UInt8 SELECT_DF_ADF_APDU[] ={0x00,0xa4,0x00,0x0C,0x02,0x7F,0xFF};
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            if(rsp->resultCode == SIM_GENERIC_APDU_RES_SUCCESS)
+            {
+                if (SimIODetermineResponseError(rsp->data[0], rsp->data[1]) == FALSE)
+                {
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                    KRIL_DEBUG(DBG_ERROR,"Select Usim Master File RSP Error!!len=%d,SW1=0x%x SW2=0x%x\n",rsp->len,rsp->data[0],rsp->data[1]);
+                    return;
+                }
+            }
+            else
+            {
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                KRIL_DEBUG(DBG_ERROR,"Select Usim Master File Error!!resultCode=%d\n",rsp->resultCode);
+                return;
+            }			
+
+             CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),SELECT_DF_ADF_APDU,sizeof(SELECT_DF_ADF_APDU));
+             pdata->handler_state = BCM_SIM_DoUSimAuthentication;
+        }
+        break;
+        case BCM_SIM_DoUSimAuthentication:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;					
+            //OEM hook cmd_data Bytes 0~3="BRCM";Byte4:Message type;Byte5:auth_cnt
+            //6:Rand length 7:autn length
+            //8~(8+Rand length-1)                          : Rand data
+            //(8+Rand length)~(8+Rand length+autn_length-1): autn data
+            UInt8  *cmd_data = (UInt8*)pdata->ril_cmd->data;
+            UInt8  auth_cnt    = cmd_data[5];
+            UInt8  Rand_length = cmd_data[6];
+            UInt8  Autn_length = cmd_data[7];
+            UInt8  APDU[MAXBUFF] = {0};
+            UInt16 APDUlen = 0;
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            if(rsp->resultCode == SIM_GENERIC_APDU_RES_SUCCESS)
+            {   //Success :SW1=0x90 SW2=0x00  
+                if (SimIODetermineResponseError(rsp->data[0], rsp->data[1]) == FALSE)
+                {
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                    KRIL_DEBUG(DBG_ERROR,"Select DF ADF RSP Error!!len=%d,SW1=0x%x SW2=0x%x\n",rsp->len,rsp->data[0],rsp->data[1]);
+                    return;
+                }
+            }
+            else
+            {
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                KRIL_DEBUG(DBG_ERROR,"Select DF ADF Error!!resultCode=%d\n",rsp->resultCode);
+                return;
+            }		 
+            //RawDataPrintfun(cmd_data, pdata->ril_cmd->datalen, "Usim Ath cmd form Uril");			
+            if(auth_cnt == 0)
+            {
+                //RUN 2G AUTHENTICATE  "008800801110"
+                UInt8 RUN_2G_AUTH_HEADER[] ={0x00,0x88,0x00,0x80,0x11,0x10};	   
+                UInt8 Headerlen = sizeof(RUN_2G_AUTH_HEADER);
+
+                memcpy(&APDU[0],RUN_2G_AUTH_HEADER,Headerlen);		   
+                //rand data
+                memcpy(&APDU[Headerlen],&cmd_data[8] ,Rand_length);
+                //le
+                APDU[Headerlen + Rand_length]=0x00;			   
+                //6 Bytes for 008800801110 + 1 byte for le
+                APDUlen = Headerlen + Rand_length + 1;
+            }
+            else if((Rand_length > 0) && (Autn_length > 0))
+            {
+                UInt8 total_len = Rand_length + Autn_length + 2; // 1 byte for rand len + 1 byte for autn len
+                //RUN USIM AUTHENTICATE "00880081"	
+                UInt8 RUN_AUTH_HEADER[]	 ={0x00,0x88,0x00,0x81};							 
+                UInt8 Headerlen=sizeof(RUN_AUTH_HEADER);
+                memcpy(&APDU[0],RUN_AUTH_HEADER,Headerlen);
+                //Lc  
+                APDU[Headerlen] = total_len;
+                //rand length
+                APDU[Headerlen+1] = Rand_length;
+                //Rand data 
+                memcpy(&APDU[Headerlen+2],&cmd_data[8],Rand_length);
+                //auth length
+                APDU[Headerlen+2+Rand_length] = Autn_length;
+                //Auth data
+                memcpy(&APDU[Headerlen+2 + Rand_length + 1],&cmd_data[8 + Rand_length],Autn_length);
+                //Le
+                APDU[Headerlen+2+Rand_length+1+Autn_length] = 0x00;
+                //4 bytes for 00880081 + 1 byte for total len + 1 byte rand len + 1 byte auth len +1 byte for le                           
+                APDUlen = Headerlen + 1 + 1 + Rand_length + 1 + Autn_length + 1;
+            }
+            else
+            {
+                KRIL_DEBUG(DBG_ERROR,"command failed:auth_cnt = %d; Rand_length = %d;Autn_length = %d\n"
+                                     ,auth_cnt,Rand_length,Autn_length);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+            //RawDataPrintfun(APDU, APDUlen, "Usim Ath cmd to CP");
+            CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),APDU, APDUlen);
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            break;
+        }
+        case BCM_RESPCAPI2Cmd:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            UInt8 *cmd_data = (UInt8*)pdata->ril_cmd->data;
+            UInt8 *resp = NULL;
+            UInt32 rsp_len  = 0; 
+            UInt8  auth_cnt = cmd_data[5];
+
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+
+            if(rsp->len==2)
+            {
+                switch (rsp->data[0]) 
+                {
+                    case 0x61:
+                    case 0x9f:
+                    {
+                        UInt8  APDU[MAXBUFF];
+                        UInt16 APDUlen = 0;	 
+                        if (rsp->data[1]==0) 
+                        {
+                            break;
+                        }
+                        APDU[0]=0xa0;//CLA
+                        APDU[1]=0xc0;//INS
+                        APDU[2]=0x00;//P1
+                        APDU[3]=0x00;//P2
+
+                        if(KRIL_GetSimAppType(pdata->ril_cmd->SimId) == SIM_APPL_3G)
+                        {
+                            APDU[0] = 0x00; // USIM CLA
+                        }
+				
+                        APDU[4] = rsp->data[1];
+                        APDUlen = 5;					
+                        CAPI2_SimApi_SendGenericApduCmd(InitClientInfo(pdata->ril_cmd->SimId),APDU, APDUlen);
+                        pdata->handler_state = BCM_SIM_GetAdditionDataReq;					
+                        return;
+                    }
+                    default:
+                        KRIL_DEBUG(DBG_ERROR,"Exception:SW1 is 0x%x,SW2 is 0x%x !! Warning\n",rsp->data[0],rsp->data[1]);
+                        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                        return;
+                    break;					
+                }
+            }
+			        
+            if(((auth_cnt == 0) && (rsp->len == 16)) || (auth_cnt != 0))
+            {			
+                rsp_len = sizeof(SIM_GENERIC_APDU_XFER_RSP_t)+ BCM_OEM_HOOK_HEADER_LENGTH;	
+			
+                pdata->bcm_ril_rsp = kmalloc(rsp_len, GFP_KERNEL);
+                if (!pdata->bcm_ril_rsp)
+                {
+                    KRIL_DEBUG(DBG_ERROR,"Allocate bcm_ril_rsp memory failed!!\n");
+                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                    return;
+                }
+			
+                pdata->rsp_len = rsp_len;
+                //Bytes 0~3="BRCM";Byte4:Message type;Byte5:Resultcode;Byte6:Response data length;Byte7~ : Response data
+                resp = (UInt8*)pdata->bcm_ril_rsp;
+                resp[0] = (UInt8)'B';
+                resp[1] = (UInt8)'R';
+                resp[2] = (UInt8)'C';
+                resp[3] = (UInt8)'M';
+                resp[4] = (UInt8)BRIL_HOOK_EAP_AKA_AUTHENTICATION;
+                memcpy(&resp[5], rsp, sizeof(SIM_GENERIC_APDU_XFER_RSP_t));
+                //RawDataPrintfun(&resp[5], rsp->len, "USIM CP RSP");
+                pdata->handler_state = BCM_FinishCAPI2Cmd;
+            }
+            else
+            {
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                KRIL_DEBUG(DBG_ERROR,"Response data Error!! auth_cnt = %d,Rsp length=%d\n",auth_cnt,rsp->len);
+            }
+	    break;
+        }
+        case BCM_SIM_GetAdditionDataReq:
+        {
+            SIM_GENERIC_APDU_XFER_RSP_t *rsp = (SIM_GENERIC_APDU_XFER_RSP_t*)capi2_rsp->dataBuf;
+            UInt8 *cmd_data = (UInt8*)pdata->ril_cmd->data;
+            UInt8 *resp = NULL;
+            //APDU data length + 2bytes for APDU response data length info 
+            //+"BRCM"(4 bytes)+ MessgaeType(1 byte)
+            UInt32 rsp_len  = 0; 
+            UInt8  auth_cnt = cmd_data[5];
+
+            if (!rsp)
+            {
+                KRIL_DEBUG(DBG_ERROR,"GetAddition:capi2_rsp->dataBuf is NULL, Error!!\n");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }
+
+            if(rsp->len == 2)
+            {
+                KRIL_DEBUG(DBG_ERROR,"Exception:Addition SW1 is 0x%x,SW2 is 0x%x !! Warning\n",rsp->data[0],rsp->data[1]);
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                return;
+            }			
+            if(((auth_cnt == 0) && (rsp->len == 16)) || (auth_cnt != 0))
+            {			
+                rsp_len = sizeof(SIM_GENERIC_APDU_XFER_RSP_t)+ BCM_OEM_HOOK_HEADER_LENGTH;	
+                pdata->bcm_ril_rsp = kmalloc(rsp_len, GFP_KERNEL);
+                if (!pdata->bcm_ril_rsp)
+                {
+                   KRIL_DEBUG(DBG_ERROR,"GetAddition:Allocate bcm_ril_rsp memory failed!!\n");
+                   pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                   return;
+                }
+					
+                pdata->rsp_len = rsp_len;
+                //Bytes 0~3="BRCM";Byte4:Message type;Byte5:Resultcode;Byte6:Response data length;Byte7~ : Response data
+                resp = (UInt8*)pdata->bcm_ril_rsp;
+                resp[0] = (UInt8)'B';
+                resp[1] = (UInt8)'R';
+                resp[2] = (UInt8)'C';
+                resp[3] = (UInt8)'M';
+                resp[4] = (UInt8)BRIL_HOOK_EAP_AKA_AUTHENTICATION;
+                memcpy(&resp[5], rsp, sizeof(SIM_GENERIC_APDU_XFER_RSP_t));				
+                //RawDataPrintfun(&resp[5], rsp->len, "USIM Addition CP RSP");			
+                pdata->handler_state = BCM_FinishCAPI2Cmd;
+            }
+            else
+            {
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                KRIL_DEBUG(DBG_ERROR,"GetAddition:Response data Error!! auth_cnt = %d,Rsp length=%d\n",auth_cnt,rsp->len);
+            }
+            break;
+        }    
+        default:
+            KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
+            pdata->handler_state = BCM_ErrorCAPI2Cmd;
+            break;		  
+    }
+}
+#endif

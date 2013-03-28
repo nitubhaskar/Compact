@@ -156,7 +156,8 @@ void AUDDRV_Enable_Output (
 				AUDDRV_SPKR_Enum_t      mixer_speaker_selection,
 				Boolean                 enable_speaker,
 				AUDIO_SAMPLING_RATE_t   sample_rate,
-				AUDIO_CHANNEL_NUM_t     input_to_mixer
+				AUDIO_CHANNEL_NUM_t     input_to_mixer,
+				void *                 callback
 				);
 
 // Disable audio output path. 

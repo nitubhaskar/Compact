@@ -93,8 +93,8 @@
 #include "../../displays/lcd_ili9341_boe.h"
 #elif defined(CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
 #include "../../displays/lcd_s6d05a1x31_cooperve.h"
-#elif defined(CONFIG_BCM_LCD_ILI9481)
-#include "../../displays/lcd_ILI9481.h"
+#elif defined(CONFIG_BCM_LCD_ILI9486_BOE)
+#include "../../displays/lcd_ili9486_boe_amaging.h"
 #else
 #include "../../displays/lcd_ili9341_boe_rev05.h"
 #endif

@@ -13,6 +13,9 @@ obj-$(CONFIG_BOARD_COOPERVE) += board-cooperve.o
 obj-$(CONFIG_BOARD_LUISA_DS) += board-luisa_ds.o
 obj-$(CONFIG_BOARD_TORINO) += board-torino.o
 obj-$(CONFIG_BOARD_TORINOK) += board-torinoK.o
+obj-$(CONFIG_BOARD_AMAZING) += board-amazing.o
+obj-$(CONFIG_BOARD_AMAZING_SS) += board-amazing_ss.o
+obj-$(CONFIG_BOARD_CORI_DS) += board-cori_ds.o
 
 obj-$(CONFIG_BCM215XX_PM)      += bcm215xx_sleep.o bcm215xx_pm.o
 obj-$(CONFIG_OSDAL_SUPPORT) += osdal_21553_clock.o

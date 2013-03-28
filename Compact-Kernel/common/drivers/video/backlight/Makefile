@@ -37,6 +37,7 @@ obj-$(CONFIG_BACKLIGHT_ADX)    += adx_bl.o
 obj-$(CONFIG_BACKLIGHT_ADP5520)	+= adp5520_bl.o
 obj-$(CONFIG_BACKLIGHT_CAT3648)	+= cat3648_bl.o
 obj-$(CONFIG_BACKLIGHT_CAT4253)	+= cat4253_bl.o
+obj-$(CONFIG_BACKLIGHT_KTD253B)	+= ktd253b_bl.o
 obj-$(CONFIG_BACKLIGHT_LCDFB) += lcdfb_backlight.o
 obj-$(CONFIG_BACKLIGHT_ADP8860)	+= adp8860_bl.o
 obj-$(CONFIG_BACKLIGHT_88PM860X) += 88pm860x_bl.o

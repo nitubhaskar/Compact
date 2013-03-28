@@ -124,7 +124,7 @@ Int32 KRIL_GetRsp(struct file *filp, UInt32 cmd, UInt32 arg)
 
     if (false == list_empty(&(gKrilResultQueue.list))) //not empty
     {
-        KRIL_DEBUG(DBG_INFO, "rsp continue read list:%p, next:%p\n", &(gKrilResultQueue.list), gKrilResultQueue.list.next);
+        KRIL_DEBUG(DBG_TRACE, "rsp continue read list:%p, next:%p\n", &(gKrilResultQueue.list), gKrilResultQueue.list.next);
         rv = RESULT_NOT_EMPTY;
     }
     mutex_unlock(&priv->recv_mutex);
@@ -188,7 +188,7 @@ Int32 KRIL_SendCmd(UInt32 cmd, UInt32 arg)
             return 0;
         }
 
-        KRIL_DEBUG(DBG_INFO, "client:%d RIL_Token:%p CmdID:%ld datalen:%d\n", kril_cmd->ril_cmd->client, kril_cmd->ril_cmd->t, kril_cmd->ril_cmd->CmdID, kril_cmd->ril_cmd->datalen);
+        KRIL_DEBUG(DBG_TRACE, "client:%d RIL_Token:%p CmdID:%ld datalen:%d\n", kril_cmd->ril_cmd->client, kril_cmd->ril_cmd->t, kril_cmd->ril_cmd->CmdID, kril_cmd->ril_cmd->datalen);
 
         if (0 != kril_cmd->ril_cmd->datalen)
         {
@@ -210,7 +210,7 @@ Int32 KRIL_SendCmd(UInt32 cmd, UInt32 arg)
                 }
                 else
                 {
-                    KRIL_DEBUG(DBG_INFO, "tdata memory allocate success tdata:%p\n", kril_cmd->ril_cmd->data);
+                    KRIL_DEBUG(DBG_TRACE, "tdata memory allocate success tdata:%p\n", kril_cmd->ril_cmd->data);
                     kril_cmd->ril_cmd->data = tdata;
                 }
             }
@@ -225,7 +225,7 @@ Int32 KRIL_SendCmd(UInt32 cmd, UInt32 arg)
         list_add_tail(&kril_cmd->list, &gKrilCmdQueue.list); 
         mutex_unlock(&gKrilCmdQueue.mutex);
         queue_work(gKrilCmdQueue.cmd_wq, &gKrilCmdQueue.commandq);
-        KRIL_DEBUG(DBG_INFO, "head cmd:%ld list:%p next:%p prev:%p\n", kril_cmd->cmd, &kril_cmd->list, kril_cmd->list.next, kril_cmd->list.prev);
+        KRIL_DEBUG(DBG_TRACE, "head cmd:%ld list:%p next:%p prev:%p\n", kril_cmd->cmd, &kril_cmd->list, kril_cmd->list.next, kril_cmd->list.prev);
     }
     return 0;
 }

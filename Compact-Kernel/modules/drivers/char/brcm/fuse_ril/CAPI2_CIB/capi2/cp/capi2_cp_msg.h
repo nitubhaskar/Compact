@@ -21,21 +21,7 @@ the GPL, without Broadcom's express prior written consent.
 #ifndef CAPI2_CP_MSG_H
 #define CAPI2_CP_MSG_H
 
-
-//typedef char* char_ptr_t;
-//bool_t xdr_char_ptr_t(XDR *xdrs, char** ptr);
-
-XDR_STRUCT_DECLARE(sockaddr)
-XDR_STRUCT_DECLARE(SockOptVal_t)
-XDR_STRUCT_DECLARE(SocketSignalInd_t)
-XDR_STRUCT_DECLARE(SocketSendReq_t)
-XDR_STRUCT_DECLARE(SocketRecvReq_t)
-XDR_STRUCT_DECLARE(SocketRecvRsp_t)
 XDR_STRUCT_DECLARE(RTCTime_t)
-
- 
-/// ip_addr is an unsigned long
-#define xdr_ip_addr	xdr_u_long
 
 #define xdr_unsigned xdr_u_int
 

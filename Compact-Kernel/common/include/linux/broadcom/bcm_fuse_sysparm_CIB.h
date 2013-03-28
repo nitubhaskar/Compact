@@ -241,14 +241,17 @@ typedef	struct
 } Smart_Compressor_t;
 #endif
 
-typedef struct
-{
+typedef struct {
 	UInt8 audio_parm_magic[AUDIO_MAGIC_SIZE];
 	//UInt16 audio_channel;
-	UInt16 speaker_pga;  //level, index
-	Int16  ext_speaker_pga;
-	Int16  ext_speaker_preamp_pga;
-	UInt16 mic_pga;      //level, index
+	UInt16 speaker_pga;	/* level, index */
+	Int16 ext_speaker_pga;	/* dB */
+	Int16 ext_speaker_preamp_pga;	/* dB */
+	UInt16 ext_speaker_param1;  //customer pmu param1
+	UInt16 ext_speaker_param2;  //customer pmu param2
+	UInt16 ext_speaker_param3;  //customer pmu param3
+	UInt16 ext_speaker_param4;  //customer pmu param4	
+	UInt16 mic_pga;		/* level, index */
 	UInt16 max_mic_gain;
 	//UInt32 audvoc_anacr0;
 

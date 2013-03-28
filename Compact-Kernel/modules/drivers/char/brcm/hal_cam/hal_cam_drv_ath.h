@@ -44,6 +44,13 @@ the GPL, without Broadcom's express prior written consent.
 #define MAX_I2C_DATA_COUNT	1500
 
 //#define LITTLE_ENDIAN_SWITCH
+// [[ mhoon.chae@LTN_MM support anti-banding
+#if defined(CONFIG_LTN_COMMON)
+typedef enum {
+    CAM_ANTIBANDING_50HZ = 50,
+    CAM_ANTIBANDING_60HZ = 60
+} cam_antibanding_setting;
+#endif //ltn_cam : support anti-banding hmin84.park 2011.12.08
 
 #define HALCAM_LOG_ERR 0x01
 #define HALCAM_LOG_DBG 0x02
@@ -192,8 +199,17 @@ typedef enum
     PAUSE,
     I2C_CNTRL,
     SENSOR_FUNC,
-    I2C_CNTRL2
+    I2C_CNTRL2,
+    REGULATOR_CNTRL //CYK_TEST
 }CamSensorCntrlSel_t;
+
+/** Camera Power Regulrator Interface Control Select */
+typedef enum 
+{
+    PORT_A,
+    PORT_I,
+    PORT_C,
+}CamRagulratorCntrlSel_t;
 
 /** Camera Sensor Interface Control Commands */
 typedef enum 
@@ -202,7 +218,9 @@ typedef enum
     GPIO_SetHigh,
     GPIO_SetLow,
     CLK_TurnOn,
-    CLK_TurnOff
+    CLK_TurnOff,
+    REGUL_TurnOn,
+    REGUL_TurnOff
 }CamSensorCntrlCmd_t;
 
 /// Sensor GPIO/Clock Interface Control 
@@ -210,6 +228,7 @@ typedef struct {
     CamSensorCntrlSel_t   cntrl_sel;                ///< Interface control select:  GPIO, Clock                       
     UInt32                value;                    ///< GPIO #, Pause time       
     CamSensorCntrlCmd_t   cmd;                      ///< Interface control command            
+    CamRagulratorCntrlSel_t port_id;                ///< Ragulrator Port ID>
 } CamSensorIntfCntrl_st_t;              
 
 /**  Camera Sync Interface  
@@ -1174,6 +1193,7 @@ struct sens_methods {
     void (*DRV_StoreBaseAddress)(void *virt_ptr);
     HAL_CAM_Result_en_t (*DRV_TurnOnAF)(CamSensorSelect_t sensor);
     HAL_CAM_Result_en_t (*DRV_TurnOffAF)(CamSensorSelect_t sensor);
+    HAL_CAM_Result_en_t (*DRV_CancelAF)(CamSensorSelect_t sensor);
     HAL_CAM_Result_en_t (*DRV_SetSensorParams)( CAM_Parm_t parm,CamSensorSelect_t sensor);//BYKIM_UNIFY
 	HAL_CAM_Result_en_t (*DRV_GetSensorValuesForEXIF)( CAM_Sensor_Values_For_Exif_t *exif_parm,CamSensorSelect_t sensor);//BYKIM_UNIFY
 	HAL_CAM_Result_en_t (*DRV_GetESDValue)( bool *esd_value,CamSensorSelect_t sensor); //BYKIM_ESD

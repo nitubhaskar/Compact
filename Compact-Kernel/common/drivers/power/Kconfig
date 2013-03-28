@@ -154,6 +154,12 @@ config BQ27425_FUEL
         help
           Say Y to enable support for TI bq27425 fuel guage
 
+config LINEAR_POWER
+        tristate "Linear Charger Power"
+        help
+          Say Y to enable support for Linear power supply
+          driver
+
 config BATTERY_Z2
 	tristate "Z2 battery driver"
 	depends on I2C && MACH_ZIPIT2

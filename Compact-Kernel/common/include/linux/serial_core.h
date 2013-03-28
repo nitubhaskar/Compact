@@ -454,13 +454,6 @@ uart_handle_sysrq_char(struct uart_port *port, unsigned int ch)
 #ifdef SUPPORT_SYSRQ
 	if (port->sysrq) {
 		if (ch && time_before(jiffies, port->sysrq)) {
-
-			pr_info("SYSRQ: Triggered from serial port\n");
-			if (port->cons) {
-			    pr_info("Console name %s %s %lx %x\n", 
-			    port->cons->name, port->dev->init_name, 
-			    port->iobase, port->membase);
-			}			
 			handle_sysrq(ch, port->state->port.tty);
 			port->sysrq = 0;
 			return 1;

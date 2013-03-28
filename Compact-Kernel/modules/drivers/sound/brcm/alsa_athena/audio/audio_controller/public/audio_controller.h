@@ -113,6 +113,18 @@ typedef enum {
 void AUDCTRL_Init (void);
 
 /**
+*  @brief  This function save the configuration variables to be
+*          used by powerOnExternalAmp
+*
+*  @param  speaker	    (in)  speaker selection 
+*  @param  usage_flag	(in)  external speaker usage
+*
+*  @return none
+*
+****************************************************************************/
+void configOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag );
+
+/**
 *  @brief  This function controls the power on/off of external
 *          amplifier
 *
@@ -124,7 +136,6 @@ void AUDCTRL_Init (void);
 *
 ****************************************************************************/
 void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag, Boolean use );
-
 
 /**
 *  @brief  This function controls the gain setting of external
@@ -147,6 +158,18 @@ void setExternalAmpGain(Int16 gain);
 ****************************************************************************/
 
 void setExternalPreAmpGain(Int16 gain);
+
+/**
+*  @brief  This function controls the  setting of external PMU
+*          
+*
+*  @param  param_id	        (in)  parameter id
+*  @param  param_value	    (in)  parameter value
+*  @return none
+*
+****************************************************************************/
+
+void setExternalParameter(Int16 param_id,Int16 param_value);
 
 /**
 *  @brief  Enable telephony audio path in HW and DSP

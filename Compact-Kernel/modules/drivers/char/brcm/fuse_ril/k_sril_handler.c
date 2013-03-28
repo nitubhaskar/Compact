@@ -64,6 +64,8 @@ typedef enum
 	CHVSTATUS_CHV_MEMORY_PROBLEM = SI_CHV_MEMORY_PROBLEM	///< Memory problem status word returned by SIM 
 } KrilCHVStatus_t;
 
+extern Boolean gFdnSkip[DUAL_SIM_SIZE];
+
 extern UInt16 KRIL_USSDSeptet2Octet(
 		UInt8 *p_src,
 		UInt8 *p_dest,
@@ -255,8 +257,7 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
 	   			KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
                 return;
             }
-            CAPI2_SmsApi_StopReceivingCellBroadcastReq(InitClientInfo(pdata->ril_cmd->SimId));
-            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            pdata->handler_state = BCM_FinishCAPI2Cmd;
             break;
         }
 
@@ -652,24 +653,29 @@ void KRIL_SRIL_SendEncodeUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     ussdSrvReq->stkCheck = CONFIG_MODE_INVOKE; // Refer to CP: SsApi_UssdSrvReq(.) of ss_api.c and ATCmd_CUSD_Handler(.) of at_ss.c
                     ussdSrvReq->operation = SS_OPERATION_CODE_PROCESS_UNSTRUCTURED_SS_REQ;
 
-					if(Util_GetCharacterSet(tdata->dcs) == CHARACTER_SET_GSM_7_BIT_DEFAULT){
-						ussdSrvReq->ussdInfo.length = KRIL_USSDSeptet2Octet(tdata->USSDString,ussdSrvReq->ussdInfo.data,tdata->StringSize);
-						ussdSrvReq->ussdInfo.dcs = tdata->dcs;// 0xF;
-						num_of_Octets = ussdSrvReq->ussdInfo.length;
-						for(p_temp = ussdSrvReq->ussdInfo.data; num_of_Octets > 0; num_of_Octets--, p_temp++ )
-						{
-							if( *p_temp == 0x00 ) // #define	DEF_GSM_AT_SIGN			0x00		///< Used to mark '@' sign for Default GSM	
-							{
-								*p_temp = 0x80; //#define	CODE_PAGE_MTI_AT_SIGN	0x80		///< Used to mark '@' sign for CodePageMTI
-							}
-						}
-
-					}else{
-						ussdSrvReq->ussdInfo.dcs = tdata->dcs;   
-						ussdSrvReq->ussdInfo.length = tdata->StringSize;
-                    	memcpy( ussdSrvReq->ussdInfo.data,tdata->USSDString, tdata->StringSize);
-
+			if(Util_GetCharacterSet(tdata->dcs) == CHARACTER_SET_GSM_7_BIT_DEFAULT){
+				ussdSrvReq->ussdInfo.length = KRIL_USSDSeptet2Octet(tdata->USSDString,ussdSrvReq->ussdInfo.data,tdata->StringSize);
+				ussdSrvReq->ussdInfo.dcs = tdata->dcs;// 0xF;
+				num_of_Octets = ussdSrvReq->ussdInfo.length;
+				for(p_temp = ussdSrvReq->ussdInfo.data; num_of_Octets > 0; num_of_Octets--, p_temp++ )
+				{
+					if( *p_temp == 0x00 ) // #define	DEF_GSM_AT_SIGN			0x00		///< Used to mark '@' sign for Default GSM	
+					{
+						*p_temp = 0x80; //#define	CODE_PAGE_MTI_AT_SIGN	0x80		///< Used to mark '@' sign for CodePageMTI
 					}
+				}
+
+			}else{
+				ussdSrvReq->ussdInfo.dcs = tdata->dcs;   
+				ussdSrvReq->ussdInfo.length = tdata->StringSize;
+				memcpy( ussdSrvReq->ussdInfo.data,tdata->USSDString, tdata->StringSize);
+			}
+					
+			if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
+			{
+				gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
+				ussdSrvReq->fdnCheck = CONFIG_MODE_SUPPRESS;
+			}
 	
                     CAPI2_SsApi_UssdSrvReq(&clientInfo, ussdSrvReq);
                     gDialogID = clientInfo.dialogId;
@@ -940,7 +946,7 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    KRIL_DEBUG(DBG_ERROR,"pdata->handler_state:0x%lX\n", pdata->handler_state);
+    KRIL_DEBUG(DBG_TRACE,"pdata->handler_state:0x%lX\n", pdata->handler_state);
 
     if (capi2_rsp && capi2_rsp->result != RESULT_OK)
     {
@@ -964,6 +970,9 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		pdata->rsp_len = sizeof(KrilPhonebookGetEntry_t );
 		end_index = start_index;
             PBK_Id_t pbk_id = fileid_to_pbk_id(cmd_data->fileid);
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_id : %d!!\n", pbk_id);
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:start_index : %d!!\n", start_index);
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:end_index : %d!!\n", end_index);
 
             if (pbk_id == 0)
             {
@@ -1001,7 +1010,7 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		USIM_PBK_EXT_DATA_t	*pbk_etc_rec = (USIM_PBK_EXT_DATA_t *)&rsp->usim_adn_ext;
 		int temp_length = 0;
 
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:BCM_RESPCAPI2Cmd!!\n");
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:BCM_RESPCAPI2Cmd!!\n");
             if (MSG_PBK_ENTRY_DATA_RSP != capi2_rsp->msgType)	//HJKIM_ADN
             {
                 KRIL_DEBUG(DBG_ERROR,"RIL_REQUEST_GET_PHONEBOOK_ENTRY: Receive error MsgType:0x%x...!\n", capi2_rsp->msgType);
@@ -1020,13 +1029,16 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
             
 
 
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->rsp_len : %d\n", pdata->rsp_len);
+
+
             {
                 PBK_ENTRY_DATA_RESULT_t data_result = (PBK_ENTRY_DATA_RESULT_t)rsp->data_result;
 
             ril_rsp = (KrilPhonebookGetEntry_t  *)pdata->bcm_ril_rsp;
 
 
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: data_result : %d\n", (int) data_result);
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: data_result : %d\n", (int) data_result);
 
 
                 switch(data_result)
@@ -1034,6 +1046,10 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			case PBK_ENTRY_VALID_NOT_LAST:
 				ril_rsp->index = pbk_rec->location;
 				ril_rsp->next_index = rsp->next_valid_index;    // assuming continuous
+				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: PBK_ENTRY_VALID_NOT_LAST\n");
+
+				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pbk_rec->location : %d\n", pbk_rec->location);
+				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->next_index  : %d\n", ril_rsp->next_index );
 
                     break;
                     
@@ -1090,6 +1106,10 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
                 ril_rsp->length_name = (int)alpha_data->alpha_size + 1;
 
 
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->alpha_data : %s\n", alpha_data->alpha);
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: strlen(alpha_data->alpha) : %d\n", strlen(alpha_data->alpha));
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: alpha_data->alpha_coding: %d\n", alpha_data->alpha_coding);
+
                 switch(alpha_data->alpha_coding)
                 {
 			case ALPHA_CODING_UCS2_80:
@@ -1138,6 +1158,8 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 			break;
                 }
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->dataTypeAlphas[0]: %d\n",  ril_rsp->name_datatpye);
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->alphaTags[0] : %s\n", ril_rsp->name);
 
             }
 //Phone Number            
@@ -1145,6 +1167,9 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			int num_len = strlen(pbk_rec->number);
 			ril_rsp->length_number = num_len;
 
+			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: number: %s\n", (char *)pbk_rec->number);
+			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  num_len: %d\n",  num_len);
+			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->lengthNumbers[0]: %d\n",  ril_rsp->length_number);
 
 			memset( ril_rsp->number, 0, sizeof(num_len) + 1);
 
@@ -1156,9 +1181,10 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			}
 
 			memcpy(ril_rsp->number, (char *)pbk_rec->number, num_len);
+			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->numbers[0]: %s\n", ril_rsp->number);
 
 			}
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_etc_rec->num_of_email: %d\n", pbk_etc_rec->num_of_email);
+			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_etc_rec->num_of_email: %d\n", pbk_etc_rec->num_of_email);
 
 //Email
 	if((pbk_etc_rec->num_of_email >= 1 ) && (pbk_etc_rec->email[0].alpha_size > 0) &&( rsp->pbk_id ==PB_3G_GLOBAL))
@@ -1185,6 +1211,10 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		}
 		else
 			memset(ril_rsp->email, 0, sizeof(email_data->alpha) + 2);
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: email_valid : %s\n", email_valid);
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->email_data : %s\n", email_data->alpha);
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->lengthAlphas[2]: %d\n",  ril_rsp->length_email);
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: email_data->alpha_size: %d\n",  email_data->alpha_size);
 
 		if( email_valid )
 		{
@@ -1248,11 +1278,13 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 
             }
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->dataTypeAlphas[2]: %d\n",  ril_rsp->email_datatpye);
+		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->alphaTags[2] : %s\n", ril_rsp->email);
 		
         }
             pdata->handler_state = BCM_FinishCAPI2Cmd;
 
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->handler_state : %d\n", pdata->handler_state);
+                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->handler_state : %d\n", pdata->handler_state);
 
         break;
         }
@@ -1285,6 +1317,7 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
             KrilPhonebookAccess_t *cmd_data_fdn = (KrilPhonebookAccess_t *)pdata->ril_cmd->data;
 		if((cmd_data_fdn->fileid == 0x6F3B)&&(cmd_data_fdn->pin2  != NULL))
 		{
+		        KRIL_DEBUG(DBG_ERROR,"HJKIM > CAPI2 KRIL_SRIL_AccessPhoneBookEnteryHandler pincheck:%s\n", cmd_data_fdn->pin2 );
 
 	            	CAPI2_SimApi_SendVerifyChvReq(InitClientInfo(pdata->ril_cmd->SimId), CHV2, cmd_data_fdn->pin2);
 	            	pdata->handler_state = BCM_SRIL_CHECK_PIN2_FDN;
@@ -1318,6 +1351,8 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
             UInt8 num_length = cmd_data->numberLength;
 
             USIM_PBK_EXT_DATA_t *usim_adn_ext_data = NULL;    // FixMe
+                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: alphaTag %s \n",  cmd_data->alphaTag);
+                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: number %s \n", cmd_data->number);
 
 
             PBK_Id_t pbk_id = fileid_to_pbk_id(cmd_data->fileid);
@@ -1330,6 +1365,10 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 			return;
 		}
 
+		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: alphaTagDCS %d \n", cmd_data->alphaTagDCS);
+		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: emailTagDCS %d \n", cmd_data->emailTagDCS);
+		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: [EF_type] pbk_id %d \n", pbk_id);
+		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: command %d \n", cmd_data->command);
 
 
             switch(cmd_data->command)
@@ -1342,6 +1381,7 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 
 		if(cmd_data->emailLength > 0)
 		{
+			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: Email saving with DCS : %d \n", emailalpha_coding);
 			usim_adn_ext_data = kmalloc(sizeof(USIM_PBK_EXT_DATA_t),GFP_KERNEL);
 			memset(usim_adn_ext_data , 0x00 , sizeof(USIM_PBK_EXT_DATA_t));
 			usim_adn_ext_data->num_of_email=1;
@@ -1726,6 +1766,7 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			rsp_config_info = (USIM_PBK_CONFIG_LIST_t *)(&(rsp->config_info));
 			ril_rsp = (RIL_Usim_PB_Capa *)pdata->bcm_ril_rsp;
 			pbk_config = &rsp_config_info->configInfo[0][0];
+                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_USIM_PB_CAPA: MAX_DATA_LEN %d \n", MAX_DATA_LEN);
 
 
 		if(rsp_result->usim_adn_info_exist)
@@ -1963,6 +2004,14 @@ void KRIL_SRIL_LockInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			switch(chv_status)
 			{
 				case CHVSTATUS_CHV_NOT_NEEDED:
+//[SIDI_SYSTEM_PIN] r.zaiden_O0100056649_PIN Attempts Fix June.11.2012
+#if defined (CONFIG_LTN_COMMON)
+					// prepare resp data
+					rdata->lock_status = KRIL_PIN_NOT_NEED;
+					rdata->remaining_attempt = 3;
+					KRIL_DEBUG(DBG_ERROR, "Lock info - 0: lock type=%d,lock status=%d \n", rdata->lock_type, rdata->lock_status);
+					break;
+#endif
 				case CHVSTATUS_CHV_VERIFIED:
 					// prepare resp data
 					rdata->lock_status = KRIL_PIN_NOT_NEED;
@@ -2012,7 +2061,12 @@ void KRIL_SRIL_LockInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             }
 			if(rdata->lock_type == KRIL_LOCK_PIN1)
 			{
+//[SIDI_SYSTEM_PIN] r.zaiden_O0100056649_PIN Attempts Fix June.11.2012
+#if defined (CONFIG_LTN_COMMON)
+				if((rdata->lock_status == KRIL_PIN) || (rdata->lock_status == KRIL_PIN_NOT_NEED))
+#else
 				if(rdata->lock_status == KRIL_PIN)
+#endif
 				{
 					rdata->remaining_attempt = rsp->pin1_attempt_left;
             		KRIL_DEBUG(DBG_ERROR, "Lock info - 5: lock type=%d,lock status=%d, attempt=%d \n", rdata->lock_type, rdata->lock_status, rdata->remaining_attempt);
@@ -2140,42 +2194,6 @@ void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSr
 	    KRIL_DEBUG(DBG_ERROR, "Master SIM ID:%d\n", pdata->ril_cmd->SimId);
 //	    CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, BAND_NULL);
  /*+20110904 HKP BAND SELECTION FOR DS*/
-            UInt8 cid; 
-            cid = FindPdpCid(SIM_DUAL_FIRST);
-            if (cid != 0 && cid > BCM_NET_MAX_DUN_PDP_CNTXS && cid <= BCM_NET_MAX_PDP_CNTXS) // GPRS cid is 8-10
-            {
-              CAPI2_PchExApi_SendPDPDeactivateReq(InitClientInfo(SIM_DUAL_FIRST), cid);
-              pdata->handler_state = BCM_PDP_SendPDPDeactivateReq;
-              return;
-             }
-          
-         if((RATSelect_t) tdata->curr_rat == GSM_ONLY)
-	  {
-	     CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, (BandSelect_t) tdata->new_band);
-	  }
-	  else
-	  {
-	    CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, BAND_NULL);
-	  }     
-	  pdata->handler_state = BCM_RESPCAPI2Cmd;
-        }
-	break;
-	
-       case BCM_PDP_SendPDPDeactivateReq:
-        {
-            PDP_SendPDPDeactivateReq_Rsp_t *rsp = (PDP_SendPDPDeactivateReq_Rsp_t *)capi2_rsp->dataBuf;
-            
-            if (rsp->response == PCH_REQ_ACCEPTED)
-            {
-                UInt8 cid;
-                ReleasePdpContext(SIM_DUAL_FIRST, FindPdpCid(SIM_DUAL_FIRST));
-                cid = FindPdpCid(SIM_DUAL_FIRST);
-                if (cid != 0 && cid > BCM_NET_MAX_DUN_PDP_CNTXS && cid <= BCM_NET_MAX_PDP_CNTXS) // GPRS cid is 8-10
-                {
-                   CAPI2_PchExApi_SendPDPDeactivateReq(InitClientInfo(SIM_DUAL_FIRST), cid);
-                   pdata->handler_state = BCM_PDP_SendPDPDeactivateReq;
-                    return;
-                 }
               		
 	  if((RATSelect_t) tdata->curr_rat == GSM_ONLY)
 	  {
@@ -2186,12 +2204,6 @@ void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSr
 	    CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, BAND_NULL);
 	  }
         	 pdata->handler_state = BCM_RESPCAPI2Cmd;
-			  
-            }
-            else // PDP deactive again if return fail
-            {
-                CAPI2_PchExApi_SendPDPDeactivateReq(InitClientInfo(SIM_DUAL_FIRST), FindPdpCid(SIM_DUAL_FIRST));
-            }
         }
         break;
 

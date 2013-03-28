@@ -141,9 +141,7 @@
 #include "capi2_msnu.h"
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
-#include "capi2_ss_msg.h"
-#include "capi2_cp_socket.h"
-#include "capi2_cp_msg.h"
+#include "capi2_ss_msg.h"#include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
 #include "capi2_phonectrl_api.h"
@@ -3794,6 +3792,12 @@ void GenGetPayloadInfo(void* dataBuf, MsgType_t msgType, void** ppBuf, UInt32* l
 	case MSG_GPRS_DEACTIVATE_IND:
 	{
 		CAPI2_GPRS_DEACTIVATE_IND_Rsp_t* pVal = (CAPI2_GPRS_DEACTIVATE_IND_Rsp_t*)dataBuf;
+		*ppBuf = (void*)(pVal->val);
+		break;
+	}
+	case MSG_PBK_READY_IND:
+	{
+		CAPI2_PbkReadyInd_Rsp_t* pVal = (CAPI2_PbkReadyInd_Rsp_t*)dataBuf;
 		*ppBuf = (void*)(pVal->val);
 		break;
 	}

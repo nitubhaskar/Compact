@@ -249,7 +249,7 @@ typedef struct
 } TelephoneNumber_t;
 
 
-#define MAX_BCD_NUMBER_SIZE				20						///< Max BCD Number Size
+#define MAX_BCD_NUMBER_SIZE				40						///< Max BCD Number Size
 #define MAX_PHONE_NUMBER_SIZE			MAX_BCD_NUMBER_SIZE * 2	///< Max Phone Number Size
 #define MAX_PHONE_SUBADDRESS_SIZE		21						///< Max Phone Subaddress Size
 

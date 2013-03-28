@@ -88,7 +88,6 @@
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
-#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -10481,6 +10480,18 @@ bool_t xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t(void* xdrs, CAPI2_GPRS_DEACTIVATE_IND
 
 	if(
 		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( GPRSDeactInd_t ), xdr_GPRSDeactInd_t) &&
+	1)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+bool_t xdr_CAPI2_PbkReadyInd_Rsp_t(void* xdrs, CAPI2_PbkReadyInd_Rsp_t *rsp)
+{
+	XDR_LOG(xdrs,"CAPI2_PbkReadyInd_Rsp_t")
+
+	if(
+		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( PBK_ENTRY_DATA_RSP_t ), xdr_PBK_ENTRY_DATA_RSP_t) &&
 	1)
 		return TRUE;
 	else

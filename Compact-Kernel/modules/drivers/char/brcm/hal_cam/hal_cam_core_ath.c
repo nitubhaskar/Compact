@@ -92,7 +92,7 @@
 #define CAM_NUM_VFVIDEO 4
 #define XFR_SIZE_MAX (4095*4)
 #define XFR_SIZE (4095)
-#define MAX_QUEUE_SIZE 4
+#define MAX_QUEUE_SIZE 6
 #define MAX_QUEUE_SIZE_MASK MAX_QUEUE_SIZE
 #define SWAP(val)   cpu_to_le32(val)
 #define SKIP_STILL_FRAMES 3
@@ -106,8 +106,6 @@
 
 #ifdef CONFIG_BCM_CAM_S5K4ECGX   // for only CooperVE
 /*s5k4ecgx*/  
-#define s5k4ecgx_Core_GPIO 35
-
 extern int bcm_gpio_pull_up(unsigned int gpio, bool up);
 extern int bcm_gpio_pull_up_down_enable(unsigned int gpio, bool enable);
 /*s5k4ecgx*/
@@ -268,9 +266,9 @@ static int gNumOfStillPingPongBuf = STILL_PING_PANG;
 
 struct stCamacqSensorManager_t* GetCamacqSensorManager()
 {
-    HalcamTraceErr( "GetCamacqSensorManager : Enter");
-    HalcamTraceErr( "    cam_g = %x", cam_g);
-    HalcamTraceErr( "    cam_g->pstSensorManager = %x", cam_g->pstSensorManager);
+    //HalcamTraceDbg( "GetCamacqSensorManager : Enter");
+    //HalcamTraceDbg( "    cam_g = %x", cam_g);
+    //HalcamTraceDbg( "    cam_g->pstSensorManager = %x", cam_g->pstSensorManager);
     return cam_g->pstSensorManager;
 }
 
@@ -313,7 +311,7 @@ static void taskcallback(UInt32 intr_status, UInt32 rx_status, UInt32 image_addr
 	fe = intr_status & CSL_CAM_INT_FRAME_END;
 	t = ktime_get();
 	if((intr_status & CSL_CAM_INT_FRAME_START) && (c->mode == CAM_STREAM)) {
-		writel(0x0300200f, io_p2v(BCM21553_MLARB_BASE + 0x100)); 
+		writel(0x0100200f, io_p2v(BCM21553_MLARB_BASE + 0x100)); 
 		writel(0x44444 , io_p2v(BCM21553_MLARB_BASE + 0x108)); 
 		udelay(5);
 	}
@@ -438,6 +436,8 @@ static int mem_mem_dma(dma_addr_t dst_addr, dma_addr_t src_addr, int dma_tx_size
 	OSDAL_Dma_Buffer_List dmaBuffListMem;
 	OSDAL_Dma_Data dmaDataMem;
 	struct camera_sensor_t *c = &cam_g->sens[cam_g->curr];
+
+
 
 	if((dst_addr == (dma_addr_t)NULL) || (src_addr == (dma_addr_t)NULL))
 		{
@@ -596,6 +596,43 @@ static long cam_ioctl(struct file *file, unsigned int cmd,
                if(interruptible_sleep_on_timeout(&gVideoReadyQ, msecs_to_jiffies(1500))==0)
                {
                    HalcamTraceDbg("Video frame timeout, err!");
+				   {	// Sreedhar's patch for debugging the timeout error in getting frame
+						U32 r;
+
+						HalcamTraceErr(" still =%d \n , buffer =%x",c->still_ready,capture_buffer_global);   
+
+						r= readl(io_p2v(0x08440c00));
+						HalcamTraceErr("CAM_CPIS = %ld  ",r);
+
+						r = readl(io_p2v(0x08440c04));
+						HalcamTraceErr("CAM_CPIR = %ld  ",r);
+
+						r = readl(io_p2v(0x08440c08));
+						HalcamTraceErr("CAM_CPIF = %ld  ",r);
+
+						r = readl(io_p2v(0x08440c0c));
+						HalcamTraceErr("CAM_CPIW = %ld  ",r);
+
+						r = readl(io_p2v(0x08440c10));
+						HalcamTraceErr("CAM_CPIW VC= %ld  ",r);
+
+						r = readl(io_p2v(0x08440c14));
+						HalcamTraceErr("CAM_CPIW VS= %ld  ",r);
+
+						r = readl(io_p2v(0x08440c18));
+						HalcamTraceErr("CAM_CPIW HC= %ld  ",r);
+
+						r = readl(io_p2v(0x08440c1c));
+						HalcamTraceErr("CAM_CPIW HS= %ld  ",r);
+
+						r = readl(io_p2v(0x08440c20));
+						HalcamTraceErr("CAM_CPIW M= %ld  ",r);
+
+						r = readl(io_p2v(0x08440c24));
+						HalcamTraceErr("CAM_CPIPIB= %ld  ",r);
+
+                  	//	panic("Forced assertion");
+ 				   }
                    return -2;
                }
             }
@@ -652,8 +689,7 @@ static long cam_ioctl(struct file *file, unsigned int cmd,
 		}
 	case CAM_IOCTL_ENABLE_AUTOFOCUS:
 		{
-			if (cam_g->sens[sensor].sens_m->
-			    DRV_TurnOnAF(sensor) != HAL_CAM_SUCCESS) {
+			if (cam_g->sens[sensor].sens_m->DRV_TurnOnAF(sensor) != HAL_CAM_SUCCESS) {
 				rc = -EFAULT;
 				HalcamTraceErr("CAM_IOCTL_ENABLE_AUTOFOCUS: CAMDRV_TurnOnAF(): ERROR: ");
 			}
@@ -661,13 +697,22 @@ static long cam_ioctl(struct file *file, unsigned int cmd,
 		}
 	case CAM_IOCTL_DISABLE_AUTOFOCUS:
 		{
-			if (cam_g->sens[sensor].sens_m->
-			    DRV_TurnOffAF(sensor) != HAL_CAM_SUCCESS) {
+			if (cam_g->sens[sensor].sens_m->DRV_TurnOffAF(sensor) != HAL_CAM_SUCCESS) {
 				rc = -EFAULT;
 				HalcamTraceErr("CAM_IOCTL_DISABLE_AUTOFOCUS: CAMDRV_TurnOffAF(): ERROR: ");
 			}
 			break;
 		}
+			
+    case CAM_IOCTL_CANCEL_AUTOFOCUS:
+		if (cam_g->sens[sensor].sens_m->DRV_CancelAF(sensor) != HAL_CAM_SUCCESS) {
+				rc = -EFAULT;
+				printk(KERN_INFO"CAM_IOCTL_CANCEL_AUTOFOCUS: CAM_IOCTL_CANCEL_AUTOFOCUS(): ERROR: \r\n");
+			}
+          else
+            printk(KERN_INFO"CAM_IOCTL_CANCEL_AUTOFOCUS: SUCCESS \r\n");
+		
+		break;
 			
 	case CAM_IOCTL_GET_STILL_YCbCr:
 		{
@@ -676,23 +721,42 @@ static long cam_ioctl(struct file *file, unsigned int cmd,
 			short *fbuf;
 			HalcamTraceDbg("CAM_IOCTL_GET_STILL_YCbCr called");
 			if (0 != (copy_from_user(&frame, (void *)arg, sizeof(CAM_Frame1_t)))) {
+                HalcamTraceErr("error::0 != (copy_from_user(&frame, (void *)arg, sizeof(CAM_Frame1_t))):: return -EINVAL");
 				return -EINVAL;
 			}
 
 			if (process_frame(sensor,NULL,NULL) != 1)
 			{
+	          HalcamTraceErr("error::process_frame(sensor,NULL,NULL) != 1::  rc = -EFAULT");
                 rc = -EFAULT;
 			}
 			length = (cam_g->sens[sensor].sCaptureRawSize + 1) >> 1;
 			frame.len = length;
 			frame.buffer = capture_buffer_global;
-			HalcamTraceDbg("frame.buffer = 0x%x ",frame.buffer);
-			//HalcamTraceDbg("\n Copying to user %d bytes from 0x%x",frame.len,(u32)cam_g->cam_buf_main.virt);
+			HalcamTraceErr("frame.buffer = 0x%x ",frame.buffer);
+			//HalcamTraceErr("\n Copying to user %d bytes from 0x%x",frame.len,(u32)cam_g->cam_buf_main.virt);
 			if (copy_to_user((CAM_Frame1_t *) arg, &frame, sizeof(frame)) != 0)
+    {         
+                HalcamTraceErr("error::copy_to_user((CAM_Frame1_t *) arg, &frame, sizeof(frame)) != 0::  rc = -EFAULT");
 				return -EFAULT;
+             }
 			break;
 		}
 
+#if 1   // Albert_Chung 12-01-2011 : Test for CSP_478144
+	case CAM_IOCTL_GET_STILL_YCbCr_BufferVA:
+		{
+            unsigned char *capBufVA;
+
+			capBufVA = (unsigned char *)__va(capture_buffer_global);
+
+            printk("[Albert] __va(capture_buffer_global) = 0x%x \n",__va(capture_buffer_global));
+            printk("[Albert] capBufVA = 0x%x \n",capBufVA);
+			if (copy_to_user((void *)arg, capBufVA, sizeof(int)) != 0)
+				return -EFAULT;
+			break;
+		}
+#endif
 
 	case CAM_IOCTL_GET_DEFAULT_SETTING:
 		{	
@@ -843,12 +907,19 @@ static int process_frame(CamSensorSelect_t sensor, unsigned char* jpegBuf, unsig
 		    c->sCaptureJpegSize  = jpeglength;
 
 //temp_denis       
-#elif defined(CONFIG_BCM_CAM_S5K4ECGX) 
+#elif defined(CONFIG_BCM_CAM_S5K4ECGX) ||defined(CONFIG_BCM_CAM_S5K5CCGX)
 #if 0       // Albert 2011-07-06 : To check JPEG capture
                 c->sCaptureJpegSize = 2064*2304;
 				HalcamTraceDbg("haipeng capture_buffer_global = 0x%x",capture_buffer_global);
 				memcpy(jpegBuf,__va(capture_buffer_global),c->sCaptureJpegSize);
 #else
+			extern int CAMDRV_DecodeInterleaveData(unsigned char *pInterleaveData, 	// (IN) Pointer of Interleave Data
+						 int interleaveDataSize, 			// (IN) Data Size of Interleave Data
+						 int yuvWidth, 						// (IN) Width of YUV Thumbnail
+						 int yuvHeight, 					// (IN) Height of YUV Thumbnail
+						 unsigned char *pJpegData,			// (OUT) Pointer of Buffer for Receiving JPEG Data 
+						 int *pJpegSize,  					// (OUT) Pointer of JPEG Data Size
+						 unsigned char *pYuvData);			// (OUT) Pointer of Buffer for Receiving YUV Data 
 
             status= CAMDRV_DecodeInterleaveData(__va(capture_buffer_global),/*cam_g->cam_buf.virt, */  // (IN) Pointer of Interleave Data
                         4755456,            // (IN) Data Size of Interleave Data     //2064*2304
@@ -858,7 +929,7 @@ static int process_frame(CamSensorSelect_t sensor, unsigned char* jpegBuf, unsig
                          &jpeglength,                   // (OUT) Pointer of JPEG Data Size
                         thumBuf);       // (OUT) Pointer of Buffer for Receiving YUV Data 
 
-                       if((status==FALSE)||(jpeglength>=3000000)||(jpeglength == NULL))
+                       if((status==FALSE)||(jpeglength>=4000000)||(jpeglength == NULL))
                         {
                 			HalcamTraceErr("ERROR status =%d, jpeglength= %d ",status,jpeglength);
 							ret = -1;
@@ -880,6 +951,43 @@ static int process_frame(CamSensorSelect_t sensor, unsigned char* jpegBuf, unsig
 		else
 		{
 			HalcamTraceErr("still capture timeout");
+			{	// Sreedhar's patch for debugging the timeout error in getting frame
+				U32 r;
+
+				HalcamTraceErr(" still =%d \n , buffer =%x",c->still_ready,capture_buffer_global);   
+				r= readl(io_p2v(0x08440c00));
+				HalcamTraceErr("CAM_CPIS = %ld",r);
+
+				r = readl(io_p2v(0x08440c04));
+				HalcamTraceErr("CAM_CPIR = %ld  ",r);
+
+				r = readl(io_p2v(0x08440c08));
+				HalcamTraceErr("CAM_CPIF = %ld  ",r);
+
+				r = readl(io_p2v(0x08440c0c));
+				HalcamTraceErr("CAM_CPIW = %ld  ",r);
+
+				r = readl(io_p2v(0x08440c10));
+				HalcamTraceErr("CAM_CPIW VC= %ld  ",r);
+
+				r = readl(io_p2v(0x08440c14));
+				HalcamTraceErr("CAM_CPIW VS= %ld  ",r);
+
+				r = readl(io_p2v(0x08440c18));
+				HalcamTraceErr("CAM_CPIW HC= %ld  ",r);
+
+				r = readl(io_p2v(0x08440c1c));
+				HalcamTraceErr("CAM_CPIW HS= %ld  ",r);
+
+				r = readl(io_p2v(0x08440c20));
+				HalcamTraceErr("CAM_CPIW M= %ld  ",r);
+
+				r = readl(io_p2v(0x08440c24));
+				HalcamTraceErr("CAM_CPIPIB= %ld  ",r);
+
+                //panic("Forced assertion");
+			}
+
 			ret = -2;
 			break;
 		}
@@ -1093,12 +1201,31 @@ static int cam_i2c_command(struct i2c_client *device, unsigned int cmd,
 	return 0;
 }
 
+static void msleep_SS(UInt32 msec) //CYK_TEST
+{ 
+	long start = 0;
+	long end = 0;
+
+	do_gettimeofday( &g_stDbgTimeval);
+
+	start = g_stDbgTimeval.tv_usec;
+	end = g_stDbgTimeval.tv_usec;
+	
+	while( (end - start) < msec*1000)
+	{
+		do_gettimeofday( &g_stDbgTimeval);
+		end = g_stDbgTimeval.tv_usec;
+	};
+}
+
 struct i2c_device_id cam_i2c_id_table[] = {
 	{"cami2c", 0},
 	{}
 };
 
 MODULE_DEVICE_TABLE(i2c, cam_i2c_id_table);
+
+
 
 static HAL_CAM_Result_en_t cam_sensor_cntrl_seq(CamSensorIntfCntrl_st_t *seq,
 						UInt32 length)
@@ -1182,11 +1309,93 @@ static HAL_CAM_Result_en_t cam_sensor_cntrl_seq(CamSensorIntfCntrl_st_t *seq,
 
 		case PAUSE:
 			if (seq[i].value != 0) {
+#if 1 //CYK_TEST
+				//HalcamTraceErr("[CYK] +++ TEST PAUSE - %d ms", (int)seq[i].value);
+				msleep_SS(seq[i].value);
+				//HalcamTraceErr("[CYK] --- TEST PAUSE - %d ms", (int)seq[i].value);
+
+#else
 				HalcamTraceDbg("PAUSE - %d ms", (int)seq[i].value);
 				msleep(seq[i].value);
+#endif
 			}
 			break;
+#if 0			
+     	case REGULATOR_CNTRL:
+			switch(seq[i].port_id)
+			{
+			
+			case PORT_A :
+				if(seq[i].value > 0)
+				{
+					cam_g->cam_regulator_a = regulator_get(NULL, "cam_vdda");
+					if (!cam_g->cam_regulator_a || IS_ERR(cam_g->cam_regulator_a)) {
+						printk(KERN_ERR "[cam_vdda]No Regulator_A available\n");
+						result = HAL_CAM_ERROR_ACTION_NOT_SUPPORTED;
+						}
+						
+					regulator_set_voltage(cam_g->cam_regulator_a,seq[i].value,seq[i].value);
+					if (cam_g->cam_regulator_a)
+						result += regulator_enable(cam_g->cam_regulator_a);
+				}
+				else
+				{
+					if (cam_g->cam_regulator_a)
+						regulator_disable(cam_g->cam_regulator_a);
+					//To_do : need adding return value
+				}
+				break;
+				
+			case PORT_I :
+				
+				if(seq[i].value > 0)
+				{
+					cam_g->cam_regulator_i = regulator_get(NULL, "cam_vddi");
+					if (!cam_g->cam_regulator_i || IS_ERR(cam_g->cam_regulator_i)) {
+						printk(KERN_ERR "[cam_vddi]No Regulator_I available\n");
+						result = HAL_CAM_ERROR_ACTION_NOT_SUPPORTED;
+						}
 
+					regulator_set_voltage(cam_g->cam_regulator_i,seq[i].value,seq[i].value);
+					if (cam_g->cam_regulator_i)
+						result += regulator_enable(cam_g->cam_regulator_i);
+				}
+				else
+				{
+					if (cam_g->cam_regulator_i)
+						regulator_disable(cam_g->cam_regulator_i);
+					//To_do : need adding return value
+				}
+				break;
+
+			case PORT_C :
+				if(seq[i].value > 0)
+				{
+					cam_g->cam_regulator_c = regulator_get(NULL, "cam_vddc");
+					if (!cam_g->cam_regulator_c|| IS_ERR(cam_g->cam_regulator_c)) {
+						printk(KERN_ERR "[cam_vddc]No Regulator_C available\n");
+						result = HAL_CAM_ERROR_ACTION_NOT_SUPPORTED;
+						}
+
+					regulator_set_voltage(cam_g->cam_regulator_c,seq[i].value,seq[i].value);
+						if (cam_g->cam_regulator_c)
+							result += regulator_enable(cam_g->cam_regulator_c);
+				}
+				else
+				{
+					if (cam_g->cam_regulator_c)
+						regulator_disable(cam_g->cam_regulator_c);
+					//To_do : need adding return value
+				}
+				break;
+
+		default:
+				printk(KERN_INFO"Default MCLK CTRL NO CLOCK\n");
+
+			}
+
+			break;
+#endif
 		default:
 			HalcamTraceErr("CNTRL - Not Supported");
 			result = HAL_CAM_ERROR_ACTION_NOT_SUPPORTED;
@@ -1217,6 +1426,7 @@ static HAL_CAM_Result_en_t cam_sensor_intf_seqsel(CamSensorSelect_t nSensor,
 		HalcamTraceDbg("%s(): No Sequence", __FUNCTION__);
 	}
 	return result;
+	
 }
 
 static int cam_power_up(CamSensorSelect_t sensor)
@@ -1224,91 +1434,7 @@ static int cam_power_up(CamSensorSelect_t sensor)
 	int rc = -1;
 	struct camera_sensor_t *c; 
 	HalcamTraceDbg("%s called ",__FUNCTION__);
-//->swsw
 
-#if 1//swsw_dual
-
-#if 1
-gpio_direction_output(23, 0); //CAM_IO_EN
-gpio_direction_output(52, 0); //CAM_D_EN
-gpio_direction_output(53, 0); //VGA_STBY
-gpio_direction_output(55, 0); //3M_STBY
-gpio_direction_output(63, 0); //RESET
-#endif
-
-#if 0
-//for luisa
-	regulator_set_voltage(cam_g->cam_regulator_c,1200000,1200000);	
-	if (cam_g->cam_regulator_c)
-		rc = regulator_enable(cam_g->cam_regulator_c);
-    gpio_direction_output(23, 1); 
-    //gpio_status_temp = gpio_get_value(23);
-    //HalcamTraceDbg("TEST_TEST !!! gpio23=%d",gpio_status_temp);
-
-	regulator_set_voltage(cam_g->cam_regulator_a,2800000,2800000);
-	if (cam_g->cam_regulator_a)
-		rc = regulator_enable(cam_g->cam_regulator_a);
-#endif	
-
-
-    #if 0
-    
-
-  //<-swsw  
-#ifdef CONFIG_BCM_CAM_SR200PC10
-	regulator_set_voltage(cam_g->cam_regulator_i,1800000,1800000);	
-	if (cam_g->cam_regulator_i)
-		rc = regulator_enable(cam_g->cam_regulator_i);
-	regulator_set_voltage(cam_g->cam_regulator_a,2800000,2800000);	
-	if (cam_g->cam_regulator_a)
-		rc = regulator_enable(cam_g->cam_regulator_a);
-	regulator_set_voltage(cam_g->cam_regulator_c,1800000,1800000);	
-	if (cam_g->cam_regulator_c)
-		rc = regulator_enable(cam_g->cam_regulator_c);	
-#elif defined (CONFIG_BCM_CAM_S5K5CCGX)
-	regulator_set_voltage(cam_g->cam_regulator_c,1200000,1200000);
-	if (cam_g->cam_regulator_c)
-		rc = regulator_enable(cam_g->cam_regulator_c);
-	regulator_set_voltage(cam_g->cam_regulator_a,2800000,2800000);
-	if (cam_g->cam_regulator_a)
-		rc = regulator_enable(cam_g->cam_regulator_a);
-	regulator_set_voltage(cam_g->cam_regulator_i,1800000,1800000);
-	if (cam_g->cam_regulator_i)
-		rc = regulator_enable(cam_g->cam_regulator_i);
-#elif defined (CONFIG_BCM_CAM_S5K4ECGX)
-	regulator_set_voltage(cam_g->cam_regulator_a,2800000,2800000);
-	if (cam_g->cam_regulator_a)
-		rc = regulator_enable(cam_g->cam_regulator_a);
-
-	//mdelay(1);
-
-	regulator_set_voltage(cam_g->cam_regulator_i,1800000,1800000);
-	if (cam_g->cam_regulator_i)
-		rc = regulator_enable(cam_g->cam_regulator_i);
-
-    //mdelay(1);
-
-	regulator_set_voltage(cam_g->cam_regulator_c,2800000,2800000);
-	if (cam_g->cam_regulator_c)
-		rc = regulator_enable(cam_g->cam_regulator_c);
-
-	gpio_direction_output(s5k4ecgx_Core_GPIO, 1);
-#else
-	regulator_set_voltage(cam_g->cam_regulator_c,1200000,1200000);	
-	if (cam_g->cam_regulator_c)
-		rc = regulator_enable(cam_g->cam_regulator_c);
-
-	regulator_set_voltage(cam_g->cam_regulator_i,1800000,1800000);	
-	if (cam_g->cam_regulator_i)
-		rc = regulator_enable(cam_g->cam_regulator_i);
-
-	regulator_set_voltage(cam_g->cam_regulator_a,2800000,2800000);	
-	if (cam_g->cam_regulator_a)
-		rc = regulator_enable(cam_g->cam_regulator_a);
-#endif
-	
-#endif
-#endif//swsw_dual	
 	c = &cam_g->sens[sensor];
 
 HalcamTraceDbg("before DRV_GetIntfConfig, sensor = %d ", sensor);
@@ -1318,12 +1444,12 @@ HalcamTraceDbg("before DRV_GetIntfConfig, sensor = %d ", sensor);
 		HalcamTraceErr("Unable to get sensor interface config ");
 		rc = -EFAULT;
 	}
-
+#if 1 //CYK_TEST
 HalcamTraceDbg("before DRV_TurnOnRegulator");
     
 //swsw_dual
 	c->sens_m->DRV_TurnOnRegulator();
-	
+#endif	
 	/* Config CMI controller over here */
 	if (cam_sensor_intf_seqsel(sensor, SensorPwrUp) != 0) {
 		HalcamTraceErr("Unable to Set power seq at Open");
@@ -1350,23 +1476,10 @@ static int cam_power_down(CamSensorSelect_t sensor)
 		HalcamTraceErr( "Unable to Set power seq at power down");
 		rc = -EFAULT;
 	}
+#if 1 //CYK_TEST
 //swsw_dual
 	c->sens_m->DRV_TurnOffRegulator();
-
-#if 0//swsw_dual
-//for luisa main
-       gpio_direction_output(23, 0); 
-		
-        if (cam_g->cam_regulator_a)
-        	regulator_disable(cam_g->cam_regulator_a);
-
-        if (cam_g->cam_regulator_c)
-        regulator_disable(cam_g->cam_regulator_c);
-        
-#ifdef CONFIG_BCM_CAM_S5K4ECGX  // for only CooperVE
-		gpio_direction_output(s5k4ecgx_Core_GPIO, 0);
 #endif
-#endif//swsw_dual	
 	return 0;
 
 }
@@ -1455,7 +1568,7 @@ int camera_enable(CamSensorSelect_t sensor)
 		}
 		if(c->main.format == CamDataFmtJPEG)
 		{
-			cslCamBuffer1.start_addr = cam_g->cam_buf.phy+SZ_12M-(sensor_size.resX*sensor_size.resY*gNumOfStillPingPongBuf)-(0x400*2);		
+			cslCamBuffer1.start_addr = cam_g->cam_buf.phy+SZ_12M-(sensor_size.resX*sensor_size.resY*gNumOfStillPingPongBuf)-(0x400*6);		
 			cslCamBuffer1.start_addr &= ~0x3FF;
 			cslCamBuffer1.line_stride = sensor_size.resX;
 			cslCamBuffer1.size = sensor_size.resX*sensor_size.resY;
@@ -1535,7 +1648,7 @@ int camera_enable(CamSensorSelect_t sensor)
 
 		c->sens_m->DRV_CfgStillnThumbCapture(c->main.size_window.size,
                             c->main.format, c->th.size_window.size, c->th.format, sensor);
-		writel(0x0300200f, io_p2v(BCM21553_MLARB_BASE + 0x100)); //BMARBL_MACONF0
+		writel(0x0100200f, io_p2v(BCM21553_MLARB_BASE + 0x100)); //BMARBL_MACONF0
         writel(0x44444 , io_p2v(BCM21553_MLARB_BASE + 0x108)); //BMARBL_MACONF2	
 		udelay(5);	
 		
@@ -2010,7 +2123,50 @@ struct i2c_driver i2c_driver_cam = {
 	.command = cam_i2c_command,
 };
 #endif
-#if 1 //CYK_TEST
+#if 1 //Dual_Cam
+
+// [[ mhoon.chae@LTN_MM support anti-banding
+#if defined(CONFIG_LTN_COMMON)
+cam_antibanding_setting camera_antibanding = CAM_ANTIBANDING_60HZ; //default
+
+int camera_antibanding_get (void)
+{
+	printk(KERN_ERR"[LTN] camera_antibanding_get %d\n", camera_antibanding);
+	return camera_antibanding;
+}
+ssize_t camera_antibanding_show (struct device *dev, struct device_attribute *attr, char *buf)
+{
+	int count;
+
+	count = sprintf(buf, "%d", camera_antibanding);
+	printk(KERN_ERR"[LTN] The value of antibanding is %d\n", camera_antibanding);
+
+	return count;
+}
+
+ssize_t camera_antibanding_store (struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	int tmp = 0;
+
+	sscanf(buf, "%d", &tmp);
+	if ((CAM_ANTIBANDING_50HZ == (cam_antibanding_setting) tmp)
+			|| (CAM_ANTIBANDING_60HZ == (cam_antibanding_setting) tmp)) {
+		camera_antibanding = (cam_antibanding_setting) tmp;
+		printk(KERN_ERR"[LTN] The antibanding is set to %d\n", camera_antibanding);
+	}
+
+	return count;
+}
+
+struct device *cam_dev = NULL;
+static struct device_attribute camera_antibanding_attr = {
+	.attr = {
+		.name = "anti-banding",
+		.mode = (S_IRUSR|S_IRGRP | S_IWUSR|S_IWGRP)}, // Juliano.b <-- Removing OTHERS from write access2011.06.01 cause : anti-banding file open fail
+	.show = camera_antibanding_show,
+	.store = camera_antibanding_store
+};
+#endif //ltn_cam : Support anti-banding hmin84.park 2011.12.08
 
 static int __init cam_init(void)
 {
@@ -2036,12 +2192,17 @@ static int __init cam_init(void)
 		rc = PTR_ERR(cam_g->cam_class);
 		goto err;
 	}
+// [[ mhoon.chae@LTN_MM support anti-banding
+#if defined(CONFIG_LTN_COMMON)
+	cam_dev = device_create(cam_g->cam_class, NULL, MKDEV(BCM_CAM_MAJOR, 0), NULL, "camera");
+#else
 	device_create(cam_g->cam_class, NULL, MKDEV(BCM_CAM_MAJOR, 0), NULL,
 		      "camera");
+#endif
 	
 	
 //swsw_dual
-#if 1 //CYK
+#if 0 //CYK
 	rc = register_chrdev(BCM_CAM2_MAJOR, "camera2", &cam_fops);
 	if (rc < 0) {
 		HalcamTraceErr( "Camera: register_chrdev failed for major %d",
@@ -2059,8 +2220,7 @@ static int __init cam_init(void)
 
 #endif
 
-	device_create(cam_g->cam_class, NULL, MKDEV(BCM_CAM2_MAJOR, 0), NULL,
-			  "camera2");
+	//device_create(cam_g->cam_class, NULL, MKDEV(BCM_CAM2_MAJOR, 0), NULL, "camera2");
 
 board_sysconfig(SYSCFG_CAMERA,SYSCFG_INIT);
 
@@ -2125,6 +2285,14 @@ cam_g->sens[CamSensorSecondary].devbusy =0;
 		HalcamTraceErr( "Unable to Set power seq at Open");
 		rc = -EFAULT;
 	}*/
+// [[ mhoon.chae@LTN_MM support anti-banding
+#if defined(CONFIG_LTN_COMMON)
+	printk(KERN_ERR"[LTN] create anti-banding device file!\n");
+	if (device_create_file(cam_dev, &camera_antibanding_attr) < 0) {
+		printk(KERN_ERR"[LTN] Failed to create anti-banding device file!\n");
+		return -1;
+	}
+#endif //ltn_cam : support anti-banding hmin84.park 2011.12.08
 
 	//cam_power_down(cam_g->curr);
 	in = ktime_get();
@@ -2137,7 +2305,7 @@ err3:	wake_lock_destroy(&cam_g->camera_wake_lock);
 #endif	
 err:	
 unregister_chrdev(BCM_CAM_MAJOR, "camera");
-unregister_chrdev(BCM_CAM2_MAJOR, "camera2");
+//unregister_chrdev(BCM_CAM2_MAJOR, "camera2");
 
 	return rc;
 }
@@ -2292,7 +2460,7 @@ static void __exit cam_exit(void)
 
 	class_destroy(cam_g->cam_class);
 	unregister_chrdev(BCM_CAM_MAJOR, "camera");
-	unregister_chrdev(BCM_CAM2_MAJOR, "camera2");
+	//unregister_chrdev(BCM_CAM2_MAJOR, "camera2");
 #if defined (CONFIG_CPU_FREQ_GOV_BCM21553)
 	cpufreq_bcm_client_put(cam_g->cam_dvfs);
 #endif

@@ -11,7 +11,6 @@ DHDCFLAGS += -DDHD_SDALIGN=64 -DMAX_HDR_READ=64 -DDHD_FIRSTREAD=64 \
   	-DMMC_SDIO_ABORT -DCUSTOMER_HW -DCUSTOM_OOB_GPIO_NUM=18 -DXTAL_PU_TIME_MOD \
   	-DCUSTOMER_HW_BCM2155X
 
-DHDCFLAGS += -DCUSTOMER_HW_BCM2155X
 # Samsung platform specific
 DHDCFLAGS += -DBCMWLAN_SAMSUNG
 ifeq ($(CONFIG_BROADCOM_WIFI_RESERVED_MEM),y)
@@ -75,6 +74,9 @@ DHDCFLAGS += -DDTIM_CNT1
 
 #MobileAP fw_reload
 DHDCFLAGS += -DMOBILEAP_RELOAD
+
+# For Soft Roaming ENABLE 
+DHDCFLAGS += -DROAM_ENABLE
 
 ###############################################################################################
 

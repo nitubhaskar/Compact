@@ -2472,10 +2472,31 @@ int board_sysconfig(uint32_t module, uint32_t op)
 
 		} else if (op == SYSCFG_DISABLE) {
 			/* Offset for IOCR2 = 0x0c */
+#if 0		//set no-pull
 			writel(readl(ADDR_SYSCFG_IOCR2) &
 				~(SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN) |
 			         SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
 			       ADDR_SYSCFG_IOCR2);
+#else		// set pull-down
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   & ~(SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
+				   ADDR_SYSCFG_IOCR2);
+			
+			/* Offset for IOCR2 = 0x0c */
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   | SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_DOWN),
+				   ADDR_SYSCFG_IOCR2);
+			
+			/* Offset for IOCR2 = 0x0c */
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   & ~(SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
+				   ADDR_SYSCFG_IOCR2);
+			
+			/* Offset for IOCR2 = 0x0c */
+			writel(readl(ADDR_SYSCFG_IOCR2)
+				   | SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_DOWN),
+				   ADDR_SYSCFG_IOCR2);
+#endif
 		}
 		break;
 #ifdef CONFIG_USB_DWC_OTG
@@ -2915,7 +2936,7 @@ static void tassve_init_gpio(void)
 #define ADDR_GPIO_GPIPUD0 (HW_GPIO_BASE + 0x028) //0x088CE028 GPIO 0 - 31
 #define ADDR_GPIO_GPIPUD1 (HW_GPIO_BASE + 0x02c) //0x088CE02C GPIO 32 - 63
 
-#define IOTR_GPIO(GPIO) (~(3<<((GPIO%16)<<1)))
+#define IOTR_GPIO(GPIO) ((GPIO%16)<<1)
 #define GPIPEN_PULL_EN(GPIO) (1<<(GPIO%32))
 #define GPIPUD_PULL_DOWN(GPIO) (~(1<<(GPIO%32)))
 

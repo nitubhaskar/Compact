@@ -86,7 +86,6 @@ the GPL, without Broadcom's express prior written consent.
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
-#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -854,7 +853,6 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE,_T("MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP,_T("MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED,_T("MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
-		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR,_T("MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 
@@ -1025,6 +1023,8 @@ bool_t xdr_CAPI2_MS_Element_t(XDR* xdrs, CAPI2_MS_Element_t *rsp)
 			//If you see this assert then add the element in data_u of CAPI2_MS_Element_t.
 			xassert( (sizeof(entry->unsize) <= sizeof(rsp->data_u) ), dscm);
 			
+			// Defense for Logging Checker
+			/*
 			_DBG_(CAPI2_TRACE("[CAPI2] MS_Element_t[%d] %s : value={%x %x %x %x %x %x %x %x}\r\n",rsp->inElemType, 
 																	(entry->debugStr)?entry->debugStr:"<>", 
 																	rsp->data_u.u10Bytes[0],  
@@ -1035,6 +1035,7 @@ bool_t xdr_CAPI2_MS_Element_t(XDR* xdrs, CAPI2_MS_Element_t *rsp)
 																	rsp->data_u.u10Bytes[5],  
 																	rsp->data_u.u10Bytes[6],  
 																	rsp->data_u.u10Bytes[7]));
+			*/
 		}
 		return(TRUE);
 	}

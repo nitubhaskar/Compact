@@ -2937,11 +2937,11 @@ dhd_net_attach(dhd_pub_t *dhdp, int ifidx)
 		DHD_ERROR(("couldn't register the net device, err %d\n", err));
 		goto fail;
 	}
-
+#ifdef BRCM_SECURITY_LOG
 	printf("%s: Broadcom Dongle Host Driver MAC=%.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n", net->name,
 	       dhd->pub.mac.octet[0], dhd->pub.mac.octet[1], dhd->pub.mac.octet[2],
 	       dhd->pub.mac.octet[3], dhd->pub.mac.octet[4], dhd->pub.mac.octet[5]);
-
+#endif
 #if defined(CONFIG_WIRELESS_EXT)
 #ifdef SOFTAP
 	if (ifidx == 0) {

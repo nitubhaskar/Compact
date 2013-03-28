@@ -40,7 +40,19 @@ config BCM_LCD_ILI9341_BOE_REV05
         tristate "LCD Panel- S6D04H0A01 controller"
         default Y
         help
-	  QVGA LCD panel (BOE controller)
+	  QVGA LCD panel (ILI9341 controller)
+
+config BCM_LCD_ILI9341_ZANIN
+        tristate "LCD Panel- ILI9341 controller"
+        default Y
+        help
+	  QVGA LCD panel (ILI9341 controller)
+
+config BCM_LCD_ILI9486_BOE
+        tristate "LCD Panel- ILI9486 controller"
+        default Y
+        help
+	  HVGA LCD panel (ILI9486 controller)
 
 config BCM_LCD_S6D04K1
         tristate "LCD Panel- S6D04K1 controller"

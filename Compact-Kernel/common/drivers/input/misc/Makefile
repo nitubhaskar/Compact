@@ -42,5 +42,6 @@ obj-$(CONFIG_INPUT_YEALINK)		+= yealink.o
 obj-$(CONFIG_INPUT_BCM59035_PONKEY)     += ponkey-bcm59035.o
 obj-$(CONFIG_PONKEY_DRV_BCM59038)       += ponkey-bcm59038.o
 obj-$(CONFIG_PONKEY_DRV_MAX8986)        += ponkey-max8986.o
+obj-$(CONFIG_INPUT_ONKEY_D2041) 	+= d2041_onkey.o
 obj-$(CONFIG_INPUT_BMA150_SMB380)	+= bma150.o smb380.o smb380calib.o
 obj-$(CONFIG_SENSORS_AK8973)		+= akm8973.o

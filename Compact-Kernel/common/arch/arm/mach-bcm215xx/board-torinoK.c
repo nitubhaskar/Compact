@@ -3319,7 +3319,7 @@ static void torinoK_init_gpio(void)
 #define ADDR_GPIO_GPIPUD0 (HW_GPIO_BASE + 0x028) //0x088CE028 GPIO 0 - 31
 #define ADDR_GPIO_GPIPUD1 (HW_GPIO_BASE + 0x02c) //0x088CE02C GPIO 32 - 63
 
-#define IOTR_GPIO(GPIO) (~(3<<((GPIO%16)<<1)))
+#define IOTR_GPIO(GPIO) ((GPIO%16)<<1)
 #define GPIPEN_PULL_EN(GPIO) (1<<(GPIO%32))
 #define GPIPUD_PULL_DOWN(GPIO) (~(1<<(GPIO%32)))
 

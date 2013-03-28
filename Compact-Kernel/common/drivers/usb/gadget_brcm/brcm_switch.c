@@ -29,7 +29,10 @@ enum {
 	RNDIS_ETHER_USB_CONF,
 	RESTORE_ADB_MODE,
 	CHECK_USB_MODE,
+	ADB_RNDIS_MOD_OFF,
 	ACM_ONLY_MODE,
+	ADB_ENABLE_MODE,
+	ADB_DISABLE_MODE,
 	ACM_OBEX_MODE,
 	LOOPBACK_TEST_MODE	/* looback test = 8 */	
 };
@@ -53,56 +56,87 @@ static int my_atoi(const char *name)
 }
 
 //Test the APIs
-static void brcm_switch_msc_only(void* data)
+static int brcm_switch_msc_only(void* data)
 {
 #ifdef CONFIG_USB_ANDROID
 	Android_switch_usb_conf(MSC_ONLY_USB_CONF - 1);
 #endif
+	return 0;
 }
 
-static void brcm_switch_adb_msc(void* data)
+static int brcm_switch_adb_msc(void* data)
 {		
 #ifdef CONFIG_USB_ANDROID
 	Android_switch_usb_conf(ADB_MSC_USB_CONF - 1);				
 #endif
+	return 0;
 }
 
-static void brcm_switch_eth(void* data)
+static int brcm_switch_eth(void* data)
 {
 #ifdef CONFIG_USB_ANDROID
 	Android_switch_usb_conf(RNDIS_ETHER_USB_CONF - 1);
 #endif
+	return 0;
 }
 
-static void brcm_switch_restore_adb(void* data)
+static int brcm_switch_restore_adb(void* data)
 {
 #ifdef CONFIG_USB_ANDROID
 	Android_switch_usb_conf(RESTORE_ADB_MODE - 1);
 #endif
+	return 0;
 }
 
-static void brcm_switch_acm_only(void* data)
+static int brcm_switch_adb_rndis_off(void* data)
+{
+#ifdef CONFIG_USB_ANDROID
+	Android_switch_usb_conf(ADB_RNDIS_MOD_OFF - 1);
+#endif
+	return 0;
+}
+
+static int brcm_switch_acm_only(void* data)
 {
 #ifdef CONFIG_USB_ANDROID
 	Android_switch_usb_conf(ACM_ONLY_MODE);
 #endif
+	return 0;
 }
 
-static void brcm_switch_acm_obex(void* data)
+static int brcm_switch_enable_adb(void* data)
+{		
+#ifdef CONFIG_USB_ANDROID
+	Android_switch_usb_conf(ADB_ENABLE_MODE);				
+#endif
+	return 0;
+}
+
+static int brcm_switch_disable_adb(void* data)
+{		
+#ifdef CONFIG_USB_ANDROID
+	Android_switch_usb_conf(ADB_DISABLE_MODE);				
+#endif
+	return 0;
+}
+
+static int brcm_switch_acm_obex(void* data)
 {		
 #ifdef CONFIG_USB_ANDROID
 	Android_switch_usb_conf(ACM_OBEX_MODE);				
 #endif
+	return 0;
 }
 
 extern void usb_loopback_test(u8 loopbk);
-static void brcm_switch_toggle_test(void *data)
+static int brcm_switch_toggle_test(void *data)
 {
 	static unsigned char loopbk_mode = 1;
 #ifdef CONFIG_USB_ANDROID
 	usb_loopback_test(loopbk_mode);		
 	loopbk_mode = !loopbk_mode;
 #endif
+	return 0;
 }
 
 static ssize_t brcm_switch_read(struct file *file, char *buf, int count, loff_t *ppos)
@@ -157,16 +191,28 @@ static ssize_t brcm_switch_write(struct file *file, const char *buffer, unsigned
 			pr_info("\nRESTORE_ADB_MODE\n");
 			brcm_switch_task = kthread_run(brcm_switch_restore_adb, 0, "restore_adb");
 			break;
+		case ADB_RNDIS_MOD_OFF:
+			pr_info("\nADB_RNDIS_MOD_OFF\n");
+			brcm_switch_task = kthread_run(brcm_switch_adb_rndis_off, 0, "adb_rndis_off");
+			break;
 	case ACM_ONLY_MODE:
-			pr_info("\ACM_ONLY_MODE\n");	
+			pr_info("\nACM_ONLY_MODE\n");	
 			brcm_switch_task = kthread_run(brcm_switch_acm_only, 0, "acm_only");			
 			break;
+		case ADB_ENABLE_MODE:
+			pr_info("\nADB_ENABLE_MODE\n");
+			brcm_switch_task = kthread_run(brcm_switch_enable_adb, 0, "enable_adb");
+			break;
+		case ADB_DISABLE_MODE:
+			pr_info("\nADB_DISABLE_MODE\n");
+			brcm_switch_task = kthread_run(brcm_switch_disable_adb, 0, "disable_adb");
+			break;
 	case ACM_OBEX_MODE:
-			pr_info("\ACM_OBEX_MODE\n");		
+			pr_info("\nACM_OBEX_MODE\n");		
 			brcm_switch_task = kthread_run(brcm_switch_acm_obex, 0, "acm_msc");				
 			break;	
 	case LOOPBACK_TEST_MODE:
-			pr_info("LOOPBACK_TEST_MODE\n");
+			pr_info("\nLOOPBACK_TEST_MODE\n");
 			brcm_switch_task = kthread_run(brcm_switch_toggle_test, 0, "toggle_test");
 			break;
         case CHECK_USB_MODE:
