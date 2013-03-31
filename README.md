@@ -67,4 +67,4 @@ d78f52b755b388381d6207c13d8a46ab zImage
 Now you have yourself a boot.img file in the same folder which you can flash through Odin software by making a tar compression of boot.img or make a flashable zip file for cwm.
 
 
-and finally thanks to manoranjan2050, kurotsugi, savie and Maroc-os. All of them have taught me lot of things. i am grateful for them. thanks guys.
+and finally thanks to manoranjan2050, kurotsugi, savie,irfanbagus and Maroc-os. All of them have taught me lot of things. i am grateful for them. thanks guys.
