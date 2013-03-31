@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   hal_pmu.h
@@ -158,12 +159,12 @@ typedef enum
 	EM_PMU_ACTION_SET_WALL_HW_CONTROL_PULSING,		///< Set 59036 in hardware controlled pulsing mode for Wall (default)
 #endif
 #endif
-    EM_PMU_ACTION_SET_USB_RC_PRE_ENUM_CURRENT,  ///< Set USB rapid charging current to be used before enumeration
-    EM_PMU_ACTION_GET_USB_RC_CURRENT_IN_MA,     ///< Get USB rapid charging current in milli Amp
-    EM_PMU_ACTION_SET_USB_RC_ENUM_CURRENT,      ///< Set USB rapid charging current after successful enumeration
-    EM_PMU_ACTION_GET_USB_RC_ENUM_CURRENT,      ///< Get USB rapid charging current in milli Amp to be used after successful enumeration                                         
-    EM_PMU_ACTION_OTG_SW_CTRL,                  ///< Set OTG control to software based
-    EM_PMU_ACTION_OTG_HW_CTRL,                  ///< Set OTG control to hardware based
+       EM_PMU_ACTION_SET_USB_RC_PRE_ENUM_CURRENT,  ///< Set USB rapid charging current to be used before enumeration
+       EM_PMU_ACTION_GET_USB_RC_CURRENT_IN_MA,     ///< Get USB rapid charging current in milli Amp
+       EM_PMU_ACTION_SET_USB_RC_ENUM_CURRENT,      ///< Set USB rapid charging current after successful enumeration
+       EM_PMU_ACTION_GET_USB_RC_ENUM_CURRENT,      ///< Get USB rapid charging current in milli Amp to be used after successful enumeration                                         
+       EM_PMU_ACTION_OTG_SW_CTRL,                  ///< Set OTG control to software based
+       EM_PMU_ACTION_OTG_HW_CTRL,                  ///< Set OTG control to hardware based
 	EM_PMU_ACTION_OTG_ENABLE_VBUS_BOOST,        ///< Enable Vbus boost circuit 
 	EM_PMU_ACTION_OTG_DISABLE_VBUS_BOOST,       ///< Disable Vbus boost circuit 
 	EM_PMU_ACTION_OTG_ENABLE_VBUS_PULSE,        ///< Enable Vbus pulsing
@@ -744,6 +745,9 @@ typedef enum{
 //! Typedef of Data Structure (*data) to be passed as param for EM_PMU_ACTION_CTRL_EOC_CURRENT action
 
 #if !defined(PMU_BCM59055)
+// **FIXME** for some reason, GCC barfs on this when compiling for Android
+// ../modules/drivers/char/brcm/fuse_ril/CAPI2_CIB/sysinterface/hal/pmu/public/hal_pmu.h:679: warning: function declaration isn't a prototype
+//../modules/drivers/char/brcm/fuse_ril/CAPI2_CIB/sysinterface/hal/pmu/public/hal_pmu.h:679: error: field 'get_current' declared as a function
 #ifndef UNDER_LINUX
 typedef struct
 {

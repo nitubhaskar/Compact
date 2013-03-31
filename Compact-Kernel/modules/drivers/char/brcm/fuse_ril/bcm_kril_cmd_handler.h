@@ -36,7 +36,6 @@
 #define BCM_TID_RECV   0x0000
 #define BCM_TID_NOTIFY 0X00
 
-#define DUAL_SIM_SIZE  (SIM_DUAL_SECOND + 1)
 //---------------------------------------------------------
 // RAT Defines
 //---------------------------------------------------------
@@ -113,7 +112,6 @@ typedef struct  // for capi2 info
     UInt32 tid;
     UInt8 clientID;
     MsgType_t msgType;
-    SimNumber_t SimId;
     UInt32 DialogId;
     Result_t result;
     void *dataBuf;
@@ -205,21 +203,17 @@ typedef struct
 } KrilDTMFInfo_t;
 
 /**
-Store the SIM ID and DTMF information
+Store the call retry information
 **/
 typedef struct
 {
-    UInt8 Index;
-    SimNumber_t SimId;
-} KrilSetPreferNWInfo_t;
+    UInt8 total_retry_count;
+    UInt8 current_retry_count;
+    unsigned long retry_duration;
+	VoiceCallParam_t call_param;
+    char address[BCM_MAX_DIGITS+1];
+} KrilCallRetryInfo_t;
 
-/**
-Store the Call Type information
-**/
-typedef struct
-{
-    CCallType_t CallType;
-} KrilAnswerInfo_t;
 
 /**
 Selection path information for a SIM/USIM file
@@ -231,17 +225,6 @@ typedef struct
 } KrilSimDedFilePath_t;
 
 
-/**
-Context data for SMS handler
-**/
-typedef struct
-{
-	UInt8 fdnmode;
-	Boolean isfdnskip;
-	UInt32 handler_state;
-} KrilSMSInfo_t;
-
-
 void KRIL_InitHandler(void);
 void KRIL_CommandThread(struct work_struct *data);
 void KRIL_ResponseHandler(struct work_struct *data);
@@ -249,125 +232,125 @@ void KRIL_NotifyHandler(struct work_struct *data);
 
 void ProcessNotification(Kril_CAPI2Info_t *entry);
 
-void KRIL_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, SimNumber_t SimId, UInt32 DialogId, Result_t result, void *dataBuf, UInt32 dataLength,ResultDataBufHandle_t dataBufHandle);
+void KRIL_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, UInt32 DialogId, Result_t result, void *dataBuf, UInt32 dataLength,ResultDataBufHandle_t dataBufHandle);
 void KRIL_Capi2HandleAckCbk(UInt32 tid, UInt8 clientid, RPC_ACK_Result_t ackResult, UInt32 ackUsrData);
 void KRIL_Capi2HandleFlowCtrl(RPC_FlowCtrlEvent_t event, UInt8 channel);
 
-ClientInfo_t* InitClientInfo(SimNumber_t SimId);
 void SetClientID(UInt8 ClientID);
 UInt32 GetClientID(void);
 UInt32 GetNewTID(void);
 UInt32 GetTID(void);
 
-Boolean IsNeedToWait(SimNumber_t SimId, unsigned long CmdID);
+Boolean IsNeedToWait(unsigned long CmdID);
+void SetBasicLoggingEnable(Boolean Enable);
 Boolean IsBasicCapi2LoggingEnable(void);
 
-// for PDP
-UInt8 ReleasePdpContext(SimNumber_t SimId, UInt8 cid);
-UInt8 FindPdpCid(SimNumber_t SimId);
-
 // for call
-void KRIL_SetIncomingCallIndex(SimNumber_t SimId, UInt8 IncomingCallIndex);
-UInt8 KRIL_GetIncomingCallIndex(SimNumber_t SimId);
-void KRIL_SetWaitingCallIndex(SimNumber_t SimId, UInt8 IncomingCallIndex);
-UInt8 KRIL_GetWaitingCallIndex(SimNumber_t SimId);
-void KRIL_SetCallType(SimNumber_t SimId, int index, CCallType_t theCallType);
-CCallType_t KRIL_GetCallType(SimNumber_t SimId, int index);
-void KRIL_SetCallState(SimNumber_t SimId, int index, BRIL_CallState theCallState);
-BRIL_CallState KRIL_GetCallState(SimNumber_t SimId, int index);
-void KRIL_ClearCallNumPresent(SimNumber_t SimId);
-void KRIL_SetCallNumPresent(SimNumber_t SimId, int index, PresentationInd_t present);
-PresentationInd_t KRIL_GetCallNumPresent(SimNumber_t SimId, int index);
-void KRIL_SetInHoldCallHandler(SimNumber_t SimId, Boolean CallHandler);
-Boolean KRIL_GetInHoldCallHandler(SimNumber_t SimId);
-void KRIL_SetIsNeedMakeCall(SimNumber_t SimId, Boolean MakeCall);
-Boolean KRIL_GetIsNeedMakeCall(SimNumber_t SimId);
+void KRIL_SetIncomingCallIndex(UInt8 IncomingCallIndex);
+UInt8 KRIL_GetIncomingCallIndex(void);
+void KRIL_SetWaitingCallIndex(UInt8 IncomingCallIndex);
+UInt8 KRIL_GetWaitingCallIndex(void);
+void KRIL_SetCallType(int index, CCallType_t theCallType);
+CCallType_t KRIL_GetCallType(int index);
+void KRIL_SetCallState(int index, BRIL_CallState theCallState);
+BRIL_CallState KRIL_GetCallState(int index);
+void KRIL_ClearCallNumPresent(void);
+void KRIL_SetCallNumPresent(int index, PresentationInd_t present, UInt8 c_num);
+PresentationInd_t KRIL_GetCallNumPresent(int index);
+void KRIL_SetInHoldCallHandler(Boolean CallHandler);
+Boolean KRIL_GetInHoldCallHandler(void);
+void KRIL_SetIsNeedMakeCall(Boolean MakeCall);
+Boolean KRIL_GetIsNeedMakeCall(void);
 void KRIL_SetHungupForegroundResumeBackgroundEndMPTY(UInt32 tid);
 UInt32 KRIL_GetHungupForegroundResumeBackgroundEndMPTY(void);
-void KRIL_SetLastCallFailCause(SimNumber_t SimId, BRIL_LastCallFailCause inCause);
-BRIL_LastCallFailCause KRIL_GetLastCallFailCause(SimNumber_t SimId);
+void KRIL_SetLastCallFailCause(BRIL_LastCallFailCause inCause);
+BRIL_LastCallFailCause KRIL_GetLastCallFailCause(void);
 BRIL_LastCallFailCause KRIL_MNCauseToRilError(Cause_t inMNCause);
-void KRIL_BroadcastCallStatus(SimNumber_t SimId, MsgType_t msgType, void* data);
 
 // for Network
-void KRIL_SetInSetPrferredDataConnectionHandler(Boolean state);
-void KRIL_SetInSetPrferredNetworkTypeHandler(Boolean state);
-Boolean KRIL_GetInSetPrferredNetworkTypeHandler(void);
-Boolean KRIL_SetPreferredNetworkType(SimNumber_t SimId, int PreferredNetworkType);
-void KRIL_SetIsNeedSetPreferNetwrokType(Boolean state);
-Boolean KRIL_GetIsNeedSetPreferNetwrokType(void);
-int KRIL_GetPreferredNetworkType(SimNumber_t SimId);
-void KRIL_SetLocationUpdateStatus(SimNumber_t SimId, int LocationUpdateStatus);
-int KRIL_GetLocationUpdateStatus(SimNumber_t SimId);
-void KRIL_SetRestrictedState(SimNumber_t SimId, int RestrictedState);
-int KRIL_GetRestrictedState(SimNumber_t SimId);
+void KRIL_SetInSetPrefNetworkTypeHandler( Boolean inHandler );
+Boolean KRIL_GetInSetPrefNetworkTypeHandler( );
+void KRIL_SetIsNeedSetPreferNetworkType(Boolean state);
+Boolean KRIL_GetIsNeedSetPreferNetworkType();
+
+Boolean KRIL_SetPreferredNetworkType(int PreferredNetworkType);
+int KRIL_GetPreferredNetworkType(void);
+Boolean KRIL_SetBandMode(int BandMode);
+int KRIL_GetBandMode(void);
+void KRIL_SetLocationUpdateStatus(int LocationUpdateStatus);
+int KRIL_GetLocationUpdateStatus(void);
+void KRIL_SetRestrictedState(int RestrictedState);
+int KRIL_GetRestrictedState(void);
 
 // for SS
+void KRIL_SetCLIPValue(int LastCLIP);
+int KRIL_GetCLIPValue(void);
+void KRIL_SetInSsQueryHandler(Boolean inHandler);
+Boolean KRIL_GetInSsQueryHandler(void);
 void KRIL_SetServiceClassValue(int ss_class);
 int KRIL_GetServiceClassValue(void);
 
 // for SIM
-void KRIL_SetSimAppType(SimNumber_t SimId, SIM_APPL_TYPE_t simAppType);
-SIM_APPL_TYPE_t KRIL_GetSimAppType(SimNumber_t SimId);
+void KRIL_SetSimAppType(SIM_APPL_TYPE_t simAppType);
+SIM_APPL_TYPE_t KRIL_GetSimAppType(void);
 
 // for SMS
 Boolean QuerySMSinSIMHandle(KRIL_CmdList_t *listentry, Kril_CAPI2Info_t *entry);
-void KRIL_SetSmsMti(SimNumber_t SimId, SmsMti_t SmsMti);
-SmsMti_t KRIL_GetSmsMti(SimNumber_t SimId);
-void SetIsRevClass2SMS(SimNumber_t SimId, Boolean value);
-Boolean GetIsRevClass2SMS(SimNumber_t SimId);
-Boolean KRIL_IsMoreSendSMSCmd(SimNumber_t SimId);
+void KRIL_SetSmsMti(SmsMti_t SmsMti);
+SmsMti_t KRIL_GetSmsMti(void);
+void SetIsRevClass2SMS(Boolean value);
+Boolean GetIsRevClass2SMS(void);
+void KRIL_SetInSendSMSHandler(Boolean SMSHandler);
+Boolean KRIL_GetInSendSMSHandler(void);
 void KRIL_SetMESMSAvailable(Boolean IsSMSMEAvailable);
 Boolean KRIL_GetMESMSAvailable(void);
-void KRIL_SetTotalSMSInSIM(SimNumber_t SimId, UInt8 TotalSMSInSIM);
-UInt8 KRIL_GetTotalSMSInSIM(SimNumber_t SimId);
-UInt8 CheckFreeSMSIndex(SimNumber_t SimId);
-void SetSMSMesgStatus(SimNumber_t SimId, UInt8 Index, SIMSMSMesgStatus_t status);
-SIMSMSMesgStatus_t GetSMSMesgStatus(SimNumber_t SimId, UInt8 Index);
-void KRIL_SetInUpdateSMSInSIMHandler(SimNumber_t SimId, Boolean SMSHandler);
-Boolean KRIL_GetInUpdateSMSInSIMHandler(SimNumber_t SimId);
-void KRIL_IncrementUpdateSMSNumber(SimNumber_t SimId);
-void KRIL_DecrementUpdateSMSNumber(SimNumber_t SimId);
-Int8 KRIL_GetUpdateSMSNumber(SimNumber_t SimId);
+void KRIL_SetTotalSMSInSIM(UInt8 TotalSMSInSIM);
+UInt8 KRIL_GetTotalSMSInSIM(void);
+UInt8 CheckFreeSMSIndex(void);
+void SetSMSMesgStatus(UInt8 Index, SIMSMSMesgStatus_t status);
+SIMSMSMesgStatus_t GetSMSMesgStatus(UInt8 Index);
+void KRIL_IncrementSendSMSNumber(void);
+void KRIL_DecrementSendSMSNumber(void);
+Int8 KRIL_GetSendSMSNumber(void);
+void KRIL_SetInUpdateSMSInSIMHandler(Boolean SMSHandler);
+Boolean KRIL_GetInUpdateSMSInSIMHandler(void);
+void KRIL_IncrementUpdateSMSNumber(void);
+void KRIL_DecrementUpdateSMSNumber(void);
+Int8 KRIL_GetUpdateSMSNumber(void);
 
 void KRIL_SetSMSToSIMTID(UInt32 Tid);
 UInt32 KRIL_GetSMSToSIMTID(void);
 void KRIL_SetServingCellTID(UInt32 tid);
 UInt32 KRIL_GetServingCellTID(void);
 void KRIL_SetInNeighborCellHandler( Boolean inHandler );
-Boolean KRIL_GetInNeighborCellHandler(void);
+Boolean KRIL_GetInNeighborCellHandler();
 
 void KRIL_SetInSetupPDPHandler( Boolean inHandler );
-Boolean KRIL_GetInSetupPDPHandler(void);
+Boolean KRIL_GetInSetupPDPHandler();
 
 void KRIL_SetNetworkSelectTID(UInt32 tid);
 UInt32 KRIL_GetNetworkSelectTID(void);
 void KRIL_SetInNetworkSelectHandler( Boolean inHandler );
-Boolean KRIL_GetInNetworkSelectHandler(void);
-UInt16 KRIL_USSDSeptet2Octet(UInt8 *p_src, UInt8 *p_dest, UInt16 num_of_Septets);
+Boolean KRIL_GetInNetworkSelectHandler();
+void KRIL_SetInSetupPDPHandler( Boolean inHandler );
+Boolean KRIL_GetInSetupPDPHandler();
 
 /*+20110418 BCOM PATCH FOR DebugScreen*/
 void KRIL_SetMeasureReportTID(UInt32 tid);
 UInt32 KRIL_GetMeasureReportTID(void);
 void KRIL_SetInMeasureReportHandler( Boolean inHandler );
-Boolean KRIL_GetInMeasureReportHandler(void);
+Boolean KRIL_GetInMeasureReportHandler();
 /*-20110418 BCOM PATCH FOR DebugScreen*/
 
-void KRIL_SetHandling2GOnlyRequest( SimNumber_t SimId, Boolean inHandler );
-Boolean KRIL_GetHandling2GOnlyRequest(SimNumber_t SimId);
-
-void KRIL_SetSsSrvReqTID(UInt32 tid);
-UInt32 KRIL_GetSsSrvReqTID(void);
-
-void KRIL_SetASSERTFlag(int flag);
-int KRIL_GetASSERTFlag(void);
+void KRIL_SetHandling2GOnlyRequest( Boolean inHandler );
+Boolean KRIL_GetHandling2GOnlyRequest( );
 
 void HexDataToHexStr(char *HexString, const UInt8 *HexData, UInt16 length);
 void RawDataPrintfun(UInt8* rawdata, UInt16 datalen, char* showstr);
 
 void KRIL_CmdQueueWork(void);
 
-void KRIL_SendNotify(SimNumber_t SimId, int CmdID, void *rsp_data, UInt32 rsp_len);
+void KRIL_SendNotify(int CmdID, void *rsp_data, UInt32 rsp_len);
 
 // for error cause transform
 BRIL_Errno RILErrorResult(Result_t err);

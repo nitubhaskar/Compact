@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   msconsts.h
@@ -111,8 +112,8 @@ the GPL, without Broadcom's express prior written consent.
 #define TASKPRI_AUDDRV_VPURENDER		(TPriority_t)(NORMAL-4)
 #define TASKPRI_AUDDRV_ARM2SPRENDER		(TPriority_t)(NORMAL-4)
 #define TASKPRI_AUDDRV_AMRWBRENDER		(TPriority_t)(NORMAL-4)
-#define TASKPRI_VT						(TPriority_t)(NORMAL+4)
-#define TASKPRI_VOICEIF					(TPriority_t)(NORMAL-4)
+#define TASKPRI_VT						(TPriority_t)(NORMAL-4)
+#define TASKPRI_VOICEIF					(TPriority_t)(ABOVE_NORMAL)
 #define TASKPRI_AUDDRV_VOCODER			(TPriority_t)(NORMAL-4)
 #define TASKPRI_AUDDRV_USB				(TPriority_t)(NORMAL-4)
 #define TASKPRI_AUDDRV_AUDLOG			(TPriority_t)(ABOVE_NORMAL)
@@ -175,7 +176,6 @@ the GPL, without Broadcom's express prior written consent.
 #define TASKPRI_MEASMGR				NORMAL
 #define TASKPRI_STKAPP                  NORMAL
 #define TASKPRI_VCC						NORMAL
-#define TASKPRI_SECMODEM                NORMAL
 
 
 //*************
@@ -302,7 +302,6 @@ the GPL, without Broadcom's express prior written consent.
 #define HISRNAME_WLANSPIGPIO			(IName_t)"WLANSPIGPIO"
 #define TASKNAME_STKAPP		(TName_t)"STKAPP"
 #define TASKNAME_VCC					(TName_t)"VCC"
-#define TASKNAME_SECMODEM               (TName_t)"SECMODEM"
 
 
 
@@ -450,7 +449,6 @@ the GPL, without Broadcom's express prior written consent.
 #define STACKSIZE_MEASMGR				5120
 
 #define STACKSIZE_STKAPP                (STACKSIZE_BASIC + 2048)
-#define STACKSIZE_SECMODEM              (STACKSIZE_BASIC + 1024)
 
 //*************************
 // Number of Queue Entries
@@ -466,7 +464,7 @@ the GPL, without Broadcom's express prior written consent.
 #define QUEUESIZE_SIMPROC               40
 #define QUEUESIZE_SIMAPDU               5
 #define QUEUESIZE_CAPISYS               20
-#define QUEUESIZE_SMS                   35
+#define QUEUESIZE_SMS                   10
 #define QUEUESIZE_MPX                   350
 #define QUEUESIZE_PCHEXTX				350
 #define QUEUESIZE_ATC_MPX               250
@@ -477,11 +475,7 @@ the GPL, without Broadcom's express prior written consent.
 #define QUEUESIZE_SDLTRACE              50
 #define QUEUESIZE_LOG                   200
 #define QUEUESIZE_PROFILE               10
-#if defined(FLASH_TYPE_NAND) && !defined(FLASH_SUBTYPE_ONENAND)
-#define QUEUESIZE_RFCALL1               200
-#else
 #define QUEUESIZE_RFCALL1               20
-#endif
 #define QUEUESIZE_RFCAL                 20
 #define QUEUESIZE_RFCALOUT              20
 #if defined(_ATHENA_) && defined (FDTCAL)
@@ -497,7 +491,7 @@ the GPL, without Broadcom's express prior written consent.
 #define QUEUESIZE_IMAGE					16
 #define QUEUESIZE_AUDIO					16
 #define QUEUESIZE_CP_ISRMSG				128
-#define QUEUESIZE_AUDMAN				48
+#define QUEUESIZE_AUDMAN				144
 #define QUEUESIZE_AUDMIX				128
 #define QUEUESIZE_AUDDRV				16
 #define QUEUESIZE_ARDEV_BTS				16
@@ -543,7 +537,6 @@ the GPL, without Broadcom's express prior written consent.
 
 #define		QUEUESIZE_DSPCORE	        64
 #define QUEUESIZE_STKAPP                20
-#define QUEUESIZE_SECMODEM              20
 
 //*************************
 // Interrupt HISR related Constants

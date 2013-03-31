@@ -113,7 +113,7 @@ struct gs_port {
 	struct list_head	read_pool;
 	struct list_head	read_queue;
 	unsigned		n_read;
-	struct work_struct      push;
+	struct tasklet_struct	push;
 	struct tasklet_struct	pull;
 
 	struct list_head	write_pool;
@@ -426,7 +426,7 @@ __acquires(&port->port_lock)
 	unsigned		started = 0;
 
 	pr_info_userial("gs_start_rx\n");
-	
+
 	while (!list_empty(pool)) {
 		struct usb_request	*req;
 		int			status;
@@ -476,9 +476,9 @@ __acquires(&port->port_lock)
  * So QUEUE_SIZE packets plus however many the FIFO holds (usually two)
  * can be buffered before the TTY layer's buffers (currently 64 KB).
  */
-static void gs_rx_push(struct work_struct *work)
+static void gs_rx_push(unsigned long _port)
 {
-	struct gs_port          *port = container_of(work, struct gs_port, push);
+	struct gs_port		*port = (void *)_port;
 	struct tty_struct	*tty;
 	struct list_head	*queue = &port->read_queue;
 	bool			disconnect = false;
@@ -533,11 +533,10 @@ static void gs_rx_push(struct work_struct *work)
 			count = tty_insert_flip_string(tty, packet, size);
 			if (count)
 				do_push = true;
-						
 			if (count != size) {
 				/* stop pushing; TTY layer can't handle more */
 				port->n_read += count;
-				 pr_vdebug(PREFIX "%d: rx block %d/%d\n",
+				pr_vdebug(PREFIX "%d: rx block %d/%d\n",
 						port->port_num,
 						count, req->actual);
 				break;
@@ -559,8 +558,9 @@ recycle:
 
 		/* tty may have been closed */
 		tty = port->port_tty;
-	} 
-	
+	}
+
+
 	/* We want our data queue to become empty ASAP, keeping data
 	 * in the tty and ldisc (not here).  If we couldn't push any
 	 * this time around, there may be trouble unless there's an
@@ -572,7 +572,7 @@ recycle:
 	if (!list_empty(queue) && tty) {
 		if (!test_bit(TTY_THROTTLED, &tty->flags)) {
 			if (do_push)
-				schedule_work(&port->push);
+				tasklet_schedule(&port->push);
 			else
 				pr_warning(PREFIX "%d: RX not scheduled?\n",
 					port->port_num);
@@ -623,9 +623,9 @@ static int gs_write_loopbk(struct tty_struct *tty, const unsigned char *buf, int
  * So QUEUE_SIZE packets plus however many the FIFO holds (usually two)
  * can be buffered before the TTY layer's buffers (currently 64 KB).
  */
-static void gs_rx_push_loopbk(struct work_struct *work)
+static void gs_rx_push_loopbk(unsigned long _port)
 {
-	struct gs_port       *port = container_of(work, struct gs_port, push);
+	struct gs_port		*port = (void *)_port;
 	struct tty_struct	*tty;
 	struct list_head	*queue = &port->read_queue;
 	bool			disconnect = false;
@@ -721,7 +721,7 @@ recycle:
 	if (!list_empty(queue) && tty) {
 		if (!test_bit(TTY_THROTTLED, &tty->flags)) {
 			if (do_push)
-				schedule_work(&port->push);
+				tasklet_schedule(&port->push);
 			else
 				pr_info_userial(PREFIX "%d: RX not scheduled?\n",
 					port->port_num);
@@ -739,12 +739,12 @@ recycle:
 static void gs_read_complete(struct usb_ep *ep, struct usb_request *req)
 {
 	struct gs_port	*port = ep->driver_data;
- 
+
 	pr_info_userial("gs_read_complete\n");
 	/* Queue all received data until the tty layer is ready for it. */
 	spin_lock(&port->port_lock);
 	list_add_tail(&req->list, &port->read_queue);
-	schedule_work(&port->push);
+	tasklet_schedule(&port->push);
 	spin_unlock(&port->port_lock);
 }
 
@@ -1163,7 +1163,7 @@ static void gs_unthrottle(struct tty_struct *tty)
 		 * rts/cts, or other handshaking with the host, but if the
 		 * read queue backs up enough we'll be NAKing OUT packets.
 		 */
-		schedule_work(&port->push);
+		tasklet_schedule(&port->push);
 		pr_vdebug(PREFIX "%d: unthrottle\n", port->port_num);
 	}
 	spin_unlock_irqrestore(&port->port_lock, flags);
@@ -1216,7 +1216,7 @@ gs_port_alloc(unsigned port_num, struct usb_cdc_line_coding *coding)
 	init_waitqueue_head(&port->close_wait);
 	init_waitqueue_head(&port->drain_wait);
 
-	INIT_WORK(&port->push, gs_rx_push);
+	tasklet_init(&port->push, gs_rx_push, (unsigned long) port);
 	tasklet_init(&port->pull, gs_tx_pull_loopbk, (unsigned long) port);
 
 	INIT_LIST_HEAD(&port->read_pool);
@@ -1268,10 +1268,10 @@ void usb_loopback_test(u8 loopbk)
 		port = ports[i].port;	
 		
 		spin_lock_irqsave(&port->port_lock, flags);
-		if (loopbk)			
-			INIT_WORK(&port->push, gs_rx_push_loopbk);
-		else			
-			INIT_WORK(&port->push, gs_rx_push);
+		if (loopbk) 
+			tasklet_init(&port->push, gs_rx_push_loopbk, (unsigned long) port);
+		else
+			tasklet_init(&port->push, gs_rx_push, (unsigned long) port);
 		
 		spin_unlock_irqrestore(&port->port_lock, flags);
 	}
@@ -1421,8 +1421,8 @@ void gserial_cleanup(void)
 		port = ports[i].port;
 		ports[i].port = NULL;
 		mutex_unlock(&ports[i].lock);
-		
-		flush_scheduled_work();
+
+		tasklet_kill(&port->push);
 
 		/* wait for old opens to finish */
 		wait_event(port->close_wait, gs_closed(port));

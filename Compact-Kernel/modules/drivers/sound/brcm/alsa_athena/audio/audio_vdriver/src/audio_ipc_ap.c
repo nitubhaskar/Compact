@@ -17,7 +17,7 @@ the GPL, without Broadcom's express prior written consent.
 #include "shared.h"
 #include "audio_consts.h"
 #include "ostask.h"
-//#include "osheap.h"
+#include "osheap.h"
 //#include "osinterrupt.h"
 //#include "msconsts.h"
 #include "log.h"

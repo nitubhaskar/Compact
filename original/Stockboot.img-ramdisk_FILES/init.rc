@@ -143,37 +143,30 @@ loglevel 3
     write /dev/cpuctl/bg_non_interactive/cpu.shares 52
 
 #FSR module
-#    insmod fsr.ko
-#    insmod fsr_stl.ko
+    insmod fsr.ko
+    insmod fsr_stl.ko
 #RFS module
-#    insmod rfs_glue.ko
-#    insmod rfs_fat.ko
+    insmod rfs_glue.ko
+    insmod rfs_fat.ko
 
-#    chmod 0770 /dev/stl9
-#    chmod 0770 /dev/stl10
-#    chmod 0770 /dev/stl11
-#    chmod 0770 /dev/stl12
-#    chmod 0770 /dev/stl13
-#    chmod 0770 /dev/stl14
-#    chmod 0770 /dev/stl15
+    chmod 0770 /dev/stl9
+    chmod 0770 /dev/stl10
+    chmod 0770 /dev/stl11
+    chmod 0770 /dev/stl12
+    chmod 0770 /dev/stl13
+    chmod 0770 /dev/stl14
+    chmod 0770 /dev/stl15
 
-#    chmod 0770 /dev/bml9
-#    chmod 0770 /dev/bml10
-#    chmod 0770 /dev/bml11
-#    chmod 0770 /dev/bml12
-#    chmod 0770 /dev/bml13
-#    chmod 0770 /dev/bml14
-#    chmod 0770 /dev/bml15
-
+    chmod 0770 /dev/bml9
+    chmod 0770 /dev/bml10
+    chmod 0770 /dev/bml11
+    chmod 0770 /dev/bml12
+    chmod 0770 /dev/bml13
+    chmod 0770 /dev/bml14
+    chmod 0770 /dev/bml15
     
 #    bml15 nv partition
-#   chown radio system /dev/bml15
-
-#   mmcblk0p15 nv partition
-#   Notice : permission of mmcblk0p15 nv partition should be added on "ueventd.rc" file too.
-    chown radio system /dev/block/mmcblk0p15
-    chmod 0770 /dev/block/mmcblk0p15   
-
+    chown radio system /dev/bml15
 
 
 on fs
@@ -185,30 +178,30 @@ on fs
 #    mount yaffs2 mtd@persist /persist nosuid nodev
     #mount yaffs2 mtd@cache /cache nosuid nodev
 
-    mount ext4 /dev/block/mmcblk0p7 /system
-    mount ext4 /dev/block/mmcblk0p7 /system ro remount
-   	exec check_filesystem /dev/block/mmcblk0p8 ext4
-    mount ext4 /dev/block/mmcblk0p8 /cache nosuid nodev
+    mount rfs /dev/stl9 /system check=no
 
+## for LogMeIn (for customer VOP)
+    chown root root /system/bin/RescueStarter
+    chmod 0755 /system/bin/RescueStarter
+    chown root root /system/bin/RescueServer
+    chmod 0755 /system/bin/RescueServer
+        
+#   mount rfs /dev/stl11 /data nosuid nodev check=no
+    mount rfs /dev/stl10 /cache nosuid nodev
+    mount rfs /dev/stl9 /system ro remount
+    
 #J4FS module
     insmod j4fs.ko
 
-    mount j4fs /dev/block/mmcblk0p4 /mnt/.lfs 
-
+    mount j4fs /dev/stl6 /mnt/.lfs 
 #/*ASW3 YONG_ODE_START*/
 
-# SEC_SECURITYLAB_LATONA_DEVICE_ENCRYPTION: efs permission, enable smc crypto driver and make secure storage
 # We chown/chmod /efs again so because mount is run as root + defaults
-	mount ext4 /dev/block/mmcblk0p10 /efs nosuid nodev
+mount rfs /dev/stl12 /efs nosuid nodev check=no    
 
 # SEC_DMCRYPT for MC_CRYPT_ROOT before apply_disk_policy or apply_sec_devenc_init
-    chown radio system /efs
-
-    chmod 0771 /efs
-    
-    mkdir /efs/smc-storage 0771 system system
-    chmod 0666 /dev/smodule
-# SEC_SECURITYLAB_LATONA_DEVICE_ENCRYPTION: end
+chown radio system /efs
+chmod 0771 /efs
 
     # SEC_DMCRYPT efs or cache or lfs partition required
     exec apply_sec_devenc_init
@@ -221,8 +214,8 @@ on fs
 
 # SEC_SECURITYLAB_LATONA_DEVICE_ENCRYPTION: add crypt option
 # We chown/chmod /data again so because mount is run as root + defaults
-	exec check_filesystem /dev/block/mmcblk0p9 ext4
-    mount ext4 /dev/block/mmcblk0p9 /data nosuid nodev
+
+    mount rfs /dev/stl11 /data nosuid nodev crypt check=no
     chown system system /data
     chmod 0771 /data    
 
@@ -252,9 +245,6 @@ on fs
 #    mount ext4 /dev/block/mmcblk0p15 /cache nosuid nodev barrier=1
 
 on post-fs
-    # verfiy filesystem (UMS)
-	exec apply_system_policy /dev/block/mmcblk0p11 vfat
-	
     # once everything is setup, no need to modify /
     mount rootfs rootfs / ro remount
 
@@ -327,8 +317,8 @@ on post-fs
     mkdir /data/misc/vpn/profiles 0770 system system
     # give system access to wpa_supplicant.conf for backup and restore
     mkdir /data/misc/wifi 0770 wifi wifi
-#    mkdir /data/misc/radionv 0770 radio system
-#    chmod 0770 /data/misc/radionv
+    mkdir /data/misc/radionv 0770 radio system
+    chmod 0770 /data/misc/radionv
 #    mkdir /data/misc/wifi/sockets 0770 wifi wifi
 #    mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
     chmod 0770 /data/misc/wifi
@@ -350,7 +340,7 @@ on post-fs
     mkdir /data/app 0771 system system
     mkdir /data/property 0700 root root
 #    mkdir /data/radio 0770 radio radio
-     mkdir /data/misc/radio 0774 radio radio
+     mkdir /data/misc/radio 0775 radio system
      chmod 0775 /data/misc/radio
 #    mkdir /data/misc/sensors 0777 system misc
 
@@ -359,6 +349,11 @@ on post-fs
     chown system log /data/log
 
     chmod 0775 /data/log
+
+    # Create directory for FOTA 
+    mkdir /data/fota 0775 radio radio
+    chown radio radio /data/fota
+    chmod 0775 /data/fota
 
     # anr mode chage
     mkdir /data/anr 0775 system system 
@@ -539,9 +534,6 @@ on boot
 #    # for fsbuild_check
     chown radio radio /proc/LinuStoreIII/fsbuild_check 
     chmod 0664 /proc/LinuStoreIII/fsbuild_check
-#    # for recovery_opts
-    chown radio radio /proc/LinuStoreIII/recovery_opts 
-    chmod 0664 /proc/LinuStoreIII/recovery_opts
 
 
 # sound text data file
@@ -553,12 +545,9 @@ on boot
     chmod 0777 /data/stream_headset.txt
     chmod 0777 /data/stream_speaker.txt
     chmod 0777 /data/srstunning.txt    
-    chmod 0777 /data/samsungrec.txt    
 
 #snamy.jeong@samsung.com_110502 loopback test mode.
     chmod 0666 /dev/bcm_alsa_pcg
-    chmod 0666 /dev/bcm_log
-    chmod 0666 /dev/bcm_audio_log        
 
 # for Dump On/Off
 	chmod 0777 /data/dump_enable
@@ -572,6 +561,32 @@ on boot
 # CPU Governor
 	chmod 0660 /sys/class/sec/cpu/cpu_gov
 	chown root system /sys/class/sec/cpu/cpu_gov
+	
+## for YAMAHA geomagnetic sensor
+#accelerometer
+	chown system input /sys/class/input/input3/enable
+	chown system input /sys/class/input/input3/delay
+	chown system input /sys/class/input/input3/wake
+#geomagnetic
+	chown system input /sys/class/input/input1/enable
+	chown system input /sys/class/input/input1/delay
+	chown system input /sys/class/input/input1/wake
+#geomagnetic_raw
+	chown compass input /sys/class/input/input2/offsets
+#orientation
+	chown system input /sys/class/input/input4/enable
+	chown system input /sys/class/input/input4/delay
+	chown system input /sys/class/input/input4/wake
+#gyro
+#	chown system input /sys/class/input/input6/enable
+#	chown system input /sys/class/input/input6/delay
+#	chown system input /sys/class/input/input6/wake
+
+## sensor mounting direction
+#accelerometer
+	write /sys/class/input/input3/position 3
+#geomagnetic
+	write /sys/class/input/input1/position 0
 
 # waketime CSP461560
     chown radio system /sys/module/bcm_fuse_net/parameters/pdp_waketime
@@ -583,6 +598,17 @@ on boot
     setprop net.tcp.buffersize.umts    4094,87380,196608,4096,16384,110208
     setprop net.tcp.buffersize.edge    4093,26280,35040,4096,16384,35040
     setprop net.tcp.buffersize.gprs    4092,8760,11680,4096,8760,11680
+
+# Define broadcom bluetooth properties
+    setprop service.brcm.bt.activation 0
+    setprop service.brcm.bt.btld 0
+    setprop service.brcm.bt.btld_pid 0
+    setprop service.brcm.bt.hcid_active 0
+    setprop service.brcm.bt.is_sta 0
+    setprop service.brcm.bt.srv_active 0 
+
+# Define broadcom gps properties 
+    setprop gps.fd.block "false"
 
 ## for datarouter
 #    chown system system /dev/ttygs0
@@ -628,17 +654,6 @@ on property:persist.service.adb.enable=1
 on property:persist.service.adb.enable=0
     stop adbd
 
-#/*ASW3 YONG_ODE_START*/
-on property:encryption.smcdriver=active
-    start smc
-
-service smc /system/bin/sh /system/xbin/start_smc.sh
-    user root
-    group root
-    disabled
-    oneshot
-#/*ASW3 YONG_ODE_END*/
-
 service servicemanager /system/bin/servicemanager
     user system
     critical
@@ -661,10 +676,8 @@ service netd /system/bin/netd
 
 service debuggerd /system/bin/debuggerd
 
-# SEC_DSDS
 service ril-daemon /system/bin/rild
     socket rild stream 660 root radio
-    socket rild1 stream 660 root radio
     socket rild-debug stream 660 radio system
     user root
     group radio cache inet misc audio sdcard_rw diag log
@@ -751,15 +764,16 @@ on property:dev.bootcomplete=1
         stop dhcp-service
         start dhcp-service
 
+service iprenew_eth0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
 #service logcat /system/bin/logcat -v time -b radio -f /dev/null
 #    oneshot
 
 #/*ASW3 YONG_ODE_START*/
 ###### Device Encryption - init_wtl_data.rc
 on property:encryption.bootmode=remount
-#    exec check_encrypted_filesystem /data ext4
-    stop ril-daemon
-    stop gpsd
     stop mobex-daemon
     # stop DR-deamon     
     # stop tvout
@@ -774,8 +788,7 @@ on property:encryption.bootmode=remount
     # do not add here, "on property" tag area
     # mount rfs /dev/block/mmcblk0p3 /data nosuid nodev usedm check=no,iocharset=utf8
     # mount yaffs2 mtd@userdata /data nosuid nodev
-    #mount rfs /dev/stl11 /data nosuid nodev usedm check=no
-    mount ext4 /dev/block/mmcblk0p9 /data nosuid nodev usedm
+    mount rfs /dev/stl11 /data nosuid nodev usedm check=no
     chown system system /data
     chmod 0771 /data
 
@@ -850,8 +863,8 @@ on property:encryption.bootmode=remount
     mkdir /data/misc/vpn/profiles 0770 system system
     # give system access to wpa_supplicant.conf for backup and restore
     mkdir /data/misc/wifi 0770 wifi wifi
-#    mkdir /data/misc/radionv 0770 radio radio
-#    chmod 0770 /data/misc/radionv
+    mkdir /data/misc/radionv 0770 radio system
+    chmod 0770 /data/misc/radionv
 #    mkdir /data/misc/wifi/sockets 0770 wifi wifi
 #    mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
     chmod 0770 /data/misc/wifi
@@ -873,7 +886,7 @@ on property:encryption.bootmode=remount
     mkdir /data/app 0771 system system
     mkdir /data/property 0700 root root
 #    mkdir /data/radio 0770 radio radio
-     mkdir /data/misc/radio 0774 radio radio
+#    mkdir /data/misc/radio 0770 radio radio
 #    mkdir /data/misc/sensors 0777 system misc
 
     # create log system 
@@ -881,6 +894,10 @@ on property:encryption.bootmode=remount
     chown system log /data/log
 
     chmod 0775 /data/log
+
+    # Create directory for FOTA 
+    mkdir /data/fota 0777 system system
+    chmod 0777 /data/fota
 
     # anr mode chage
     mkdir /data/anr 0775 system system 
@@ -908,6 +925,9 @@ on property:encryption.bootmode=remount
 
     mkdir /data/data/.drm/ 0755
 
+    # For MMI Checker
+    mkdir /data/dfta 0777 system system
+
 # k.moon.kim_2011.7.10 'reload properties for ODE 
     exec reload_data_partition_properties
 
@@ -924,9 +944,7 @@ on property:encryption.bootmode=remount
 
     # start tvout 
  #   start DR-deamon
-    start ril-daemon
     start mobex-daemon 
-    start gpsd
     
 ## for LogMeIn (for customer VOP)
 #   chown root root /system/bin/RescueStarter
@@ -935,9 +953,19 @@ on property:encryption.bootmode=remount
 #   chmod 0755 /system/bin/RescueServer
 
 service RescueStarter /system/bin/RescueStarter
-    user root
-    group root
+    user nobody
+    group input graphics
     oneshot
+    
+## for YAMAHA geomagnetic sensor
+service orientationd /system/bin/orientationd
+	user compass
+	group input
+
+service geomagneticd /system/bin/geomagneticd
+	user compass
+	group system input
+    
 ######### End of LogMeIn #########
 
 #/*ASW3 YONG_ODE_END*/

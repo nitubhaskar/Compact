@@ -347,7 +347,7 @@ static long hx170dec_ioctl(struct file *filp,
 				sem = &hx170dec_data.dec_irq_sem;
 			else
 				sem = &hx170dec_data.pp_irq_sem;
-			return down_timeout(sem, msecs_to_jiffies(200)); //BYKIM_CSP467824
+			return down_timeout(sem, msecs_to_jiffies(100));
 		}
 #endif
 	case HX170DEC_DEC_CLK_ENABLE:
@@ -504,9 +504,7 @@ static int hx170dec_release(struct inode *inode, struct file *filp)
 #else
 	clk_disable(hx_codec_island_clk);
 #endif
-    // patch for CSP#499977 
-	//sema_init(&hx170dec_data.dec_resv_sem, 1);
-	//sema_init(&hx170dec_data.pp_resv_sem, 1);
+
 #ifdef USE_SIGNAL
 	/* remove this filp from the asynchronusly notified filp's */
 	hx170dec_fasync(-1, filp, 0);

@@ -149,14 +149,12 @@ static atomic_t adb_enable_excl;
 static struct android_dev *_android_dev;
 static unsigned char cur_adb_mode = 0;
 
-#define MAX_STR_LEN		32
 /* string IDs are assigned dynamically */
 
 #define STRING_MANUFACTURER_IDX		0
 #define STRING_PRODUCT_IDX		1
 #define STRING_SERIAL_IDX		2
 
-char serial_number[MAX_STR_LEN];
 /* String Table */
 static struct usb_string strings_dev[] = {
 	/* These dummy values should be overridden by platform data */
@@ -209,15 +207,13 @@ extern void usb_composite_stop(struct usb_gadget *gadget);
 /*-------------------------------------------------------------------------*/
 static void android_reenum_thread(void *data);
 static void android_init_usb_thread (void *data);
+int Android_switch_usb_conf(unsigned char);
 
-int Android_switch_usb_conf (unsigned char);
 #ifdef SS_MODE
 /*
 - return value "1" = Obex enable;
 - return value "0" = Obex disable;
 */
-extern int Obex_Status_Option (void);
-
 #endif
 
 /* Global variables */
@@ -266,9 +262,12 @@ static void android_start_usb (void)
 {
 	struct android_dev *dev = _android_dev;
 
-#if !defined(CONFIG_BOARD_THUNDERBIRD_EDN31) && !defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) && !defined(CONFIG_BOARD_TOTORO) && !defined(CONFIG_BOARD_LUISA) && !defined(CONFIG_BOARD_LUISA_DS) && !defined(CONFIG_BOARD_TASSVE) && !defined(CONFIG_BOARD_COOPERVE) && !defined(CONFIG_BOARD_TORINO) && !defined(CONFIG_BOARD_AMAZING) &&!defined(CONFIG_BOARD_AMAZING_SS) && !defined(CONFIG_BOARD_CORI_DS)
-	if (dev->cdev && dev->cdev->gadget)
-		usb_gadget_connect(dev->cdev->gadget);
+
+#if !defined(CONFIG_BOARD_THUNDERBIRD_EDN31) && !defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) && !defined(CONFIG_BOARD_TOTORO) && !defined(CONFIG_BOARD_LUISA) && !defined(CONFIG_BOARD_TASSVE) && !defined(CONFIG_BOARD_COOPERVE)
+	if (dev->cdev) { 
+		if (dev->cdev->gadget)
+			usb_gadget_connect(dev->cdev->gadget);
+	}
 	android_kernel_thread(INIT_USB);
 #else
 	dwc_otg_cil_USBInitialized();
@@ -302,7 +301,7 @@ static void android_force_reenum(void)
 	     So the USB gadget speed is UNKNOWN....*/
 	if (dev->cdev && dev->cdev->gadget &&
 		dev->cdev->gadget->speed == USB_SPEED_UNKNOWN) {		
-#if !defined(CONFIG_BOARD_THUNDERBIRD_EDN31) && !defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) && !defined(CONFIG_BOARD_TOTORO) && !defined(CONFIG_BOARD_LUISA)  && !defined(CONFIG_BOARD_LUISA_DS) && !defined(CONFIG_BOARD_TASSVE) && !defined(CONFIG_BOARD_COOPERVE) && !defined(CONFIG_BOARD_TORINO) && !defined(CONFIG_BOARD_AMAZING)&&!defined(CONFIG_BOARD_AMAZING_SS) && !defined(CONFIG_BOARD_CORI_DS)
+#if !defined(CONFIG_BOARD_THUNDERBIRD_EDN31) && !defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) && !defined(CONFIG_BOARD_TOTORO) && !defined(CONFIG_BOARD_LUISA) && !defined(CONFIG_BOARD_TASSVE) && !defined(CONFIG_BOARD_COOPERVE)
 		if ( dwc_otg_cil_Usb_Charger_Detection_BC10() == DEDICATED_CHARGER) {
 			dwc_otg_pcd_stop_usb();
 			dwc_otg_cil_USBInitialized();
@@ -312,7 +311,7 @@ static void android_force_reenum(void)
 #endif		
 	}
 	
-#if defined(CONFIG_BOARD_THUNDERBIRD_EDN31) || defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_TOTORO) || defined(CONFIG_BOARD_LUISA) || defined(CONFIG_BOARD_LUISA_DS) || defined(CONFIG_BOARD_TASSVE) || defined(CONFIG_BOARD_COOPERVE) || defined(CONFIG_BOARD_TORINO) || defined(CONFIG_BOARD_AMAZING) || defined(CONFIG_BOARD_AMAZING_SS) ||  defined(CONFIG_BOARD_CORI_DS)
+#if defined(CONFIG_BOARD_THUNDERBIRD_EDN31) || defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_TOTORO) || defined(CONFIG_BOARD_LUISA) || defined(CONFIG_BOARD_TASSVE) || defined(CONFIG_BOARD_COOPERVE)
 	if (dev->cdev && dev->cdev->gadget) {
 		g_need_reenum = TRUE;
 		msleep(DISCONNECT_TIME_FOR_PC); 
@@ -413,7 +412,7 @@ static void android_reenum_thread(void *data)
 	if (g_need_reenum) {		
 		g_retry++;
 		pr_info("g_retry = %d\n", g_retry);		
-#if defined(CONFIG_BOARD_THUNDERBIRD_EDN31) || defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_TOTORO) || defined(CONFIG_BOARD_LUISA)  || defined(CONFIG_BOARD_LUISA_DS) || defined(CONFIG_BOARD_TASSVE) || defined(CONFIG_BOARD_COOPERVE) || defined(CONFIG_BOARD_TORINO) || defined(CONFIG_BOARD_AMAZING) || defined(CONFIG_BOARD_AMAZING_SS) ||  defined(CONFIG_BOARD_CORI_DS)
+#if defined(CONFIG_BOARD_THUNDERBIRD_EDN31) || defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_TOTORO) || defined(CONFIG_BOARD_LUISA) || defined(CONFIG_BOARD_TASSVE) || defined(CONFIG_BOARD_COOPERVE)
 		usb_gadget_disconnect(dev->cdev->gadget);
 #endif
 		android_force_reenum();
@@ -425,8 +424,6 @@ void Android_usb_cable_connection(bool is_connected)
 {
 	pr_info("Android_USB_Cable_Connection = %d\n", is_connected);
 	g_usb_cable_connected = is_connected;
-	if (set_ether_addr(hostaddr)) 
-	rndis_set_ether_addr(hostaddr);
 }
 
 /**
@@ -453,15 +450,8 @@ void Android_PMU_USB_Start(void)
 	if ( dwc_otg_cil_Usb_Charger_Detection_BC10() == DEDICATED_CHARGER)	
 		return;	
 #endif	
-
 #ifdef BC11_SUPPORT
-
-#ifdef CONFIG_TSU8111_MUIC
-	dwc_otg_cil_get_BC11_Charger_Type(fsa880_muic_get_charger_type());
-#else
-	dwc_otg_cil_get_BC11_Charger_Type(max8986_muic_get_charger_type());
-#endif
-
+	dwc_otg_cil_get_BC11_Charger_Type(max8986_muic_get_charger_type());	
 #endif
 	g_retry = 0;
 	android_force_reenum();		
@@ -544,13 +534,13 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 	}
 
 	g_retry = 0;		
-#if defined(CONFIG_BOARD_THUNDERBIRD_EDN31) || defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_TOTORO) || defined(CONFIG_BOARD_LUISA) || defined(CONFIG_BOARD_LUISA_DS) || defined(CONFIG_BOARD_TASSVE) || defined(CONFIG_BOARD_COOPERVE) || defined(CONFIG_BOARD_TORINO) || defined(CONFIG_BOARD_AMAZING) || defined(CONFIG_BOARD_AMAZING_SS) ||  defined(CONFIG_BOARD_CORI_DS)
-    if (!dev->cdev)  /*Coverity check*/
+#if defined(CONFIG_BOARD_THUNDERBIRD_EDN31) || defined(CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_TOTORO) || defined(CONFIG_BOARD_LUISA) || defined(CONFIG_BOARD_TASSVE) || defined(CONFIG_BOARD_COOPERVE)
+	if (!dev->cdev)  /*Coverity check*/
 		return cur_usb_conf;
 	if (dev->cdev->gadget) { /*Coverity check*/
-		usb_gadget_disconnect(dev->cdev->gadget);	
-		msleep(DISCONNECT_TIME_FOR_PC); 
-     }
+			usb_gadget_disconnect(dev->cdev->gadget);	
+			msleep(DISCONNECT_TIME_FOR_PC); 
+	}
 #endif
 
 	switch (new_usb_conf) {
@@ -598,14 +588,8 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 		adb_function_enable(ENABLE);
 		acm_interface_enable(ENABLE);
 		acm_function_enable(ENABLE);
-		if(Obex_Status_Option()){
-			obex_interface_enable(ENABLE);	
-			obex_function_enable(ENABLE);			
-		}
-		else{
-			obex_interface_enable(DISABLE);	
-			obex_function_enable(DISABLE);			
-		}
+		obex_interface_enable(DISABLE);	
+		obex_function_enable(DISABLE);				
 #else
 		device_desc.idVendor = __constant_cpu_to_le16(VENDOR_ID);
 		device_desc.idProduct = __constant_cpu_to_le16(ADB_PRODUCT_ID);
@@ -642,14 +626,8 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 		set_current_usb_config(SET_ACM_USB_CONF);
 		acm_interface_enable(ENABLE);
 		acm_function_enable(ENABLE);
-		if(Obex_Status_Option()){
-			obex_interface_enable(ENABLE);	
-			obex_function_enable(ENABLE);			
-		}
-		else{
-			obex_interface_enable(DISABLE);	
-			obex_function_enable(DISABLE);			
-		}
+		obex_interface_enable(DISABLE);	
+		obex_function_enable(DISABLE);		
 		dev->adb_enabled = DISABLE;		
 		dev->cdev->desc.bDeviceClass         = USB_CLASS_COMM;
 		cur_adb_mode = 0;
@@ -667,14 +645,8 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 		adb_function_enable(DISABLE);
 		acm_interface_enable(ENABLE);
 		acm_function_enable(ENABLE);
-		if(Obex_Status_Option()){
-			obex_interface_enable(ENABLE);	
-			obex_function_enable(ENABLE);			
-		}
-		else{
-			obex_interface_enable(DISABLE);	
-			obex_function_enable(DISABLE);			
-		}
+		obex_interface_enable(DISABLE);	
+		obex_function_enable(DISABLE);
 		dev->cdev->desc.bDeviceClass         = USB_CLASS_PER_INTERFACE;
 		cur_adb_mode = 0;			
 #else
@@ -685,8 +657,8 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 		set_current_usb_config(SET_ACM_USB_CONF);		
 		acm_interface_enable(ENABLE);		
 		acm_function_enable(ENABLE);		
-		obex_interface_enable(ENABLE);	
-		obex_function_enable(ENABLE);
+		obex_interface_enable(DISABLE);	
+		obex_function_enable(DISABLE);
 		dev->adb_enabled = DISABLE;
 		dev->cdev->desc.bDeviceClass         = USB_CLASS_PER_INTERFACE;
 		cur_adb_mode = 0;		
@@ -699,10 +671,9 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 		adb_interface_enable(DISABLE);
 		dev->adb_enabled = DISABLE;
 		adb_function_enable(DISABLE);
-		if(!Obex_Status_Option()){
-			obex_interface_enable(DISABLE);	
-			obex_function_enable(DISABLE);			
-		}
+		obex_interface_enable(DISABLE);	
+		obex_function_enable(DISABLE);			
+		
 		break;
 
 	case ADB_ENABLE_MODE:
@@ -711,10 +682,9 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 		adb_interface_enable(ENABLE);
 		dev->adb_enabled = ENABLE;
 		adb_function_enable(ENABLE);
-		if(!Obex_Status_Option()){
-			obex_interface_enable(DISABLE);	
-			obex_function_enable(DISABLE);			
-		}
+		obex_interface_enable(DISABLE);	
+		obex_function_enable(DISABLE);			
+		
 		break;
 #endif 
 	default:
@@ -725,7 +695,7 @@ int Android_switch_usb_conf (unsigned char new_usb_conf)
 	dev->cdev->desc.idProduct = device_desc.idProduct;
 	dev->cdev->desc.idVendor = device_desc.idVendor;
 	cur_usb_conf = new_usb_conf;
-
+	
 	if (g_usb_cable_connected == 0) {
 		pr_info("USB cable is disconnected.....\n");
 		return new_usb_conf;
@@ -1060,31 +1030,6 @@ static struct miscdevice adb_enable_device = {
 	.fops = &adb_enable_fops,
 };
 
-/* used to update SERIAL_ID*/
-void get_usb_serial(char *usb_serial_number)
-{
-	char temp_serial_number[MAX_STR_LEN] = "1234567890ABCDEF";
-
-	unsigned int unique_serial_number=0;
-
-	unique_serial_number = (system_serial_high << 16) + (system_serial_low >> 16);
-#if defined(CONFIG_BOARD_TORINO)
-	sprintf(temp_serial_number,"S6102%08x",unique_serial_number);
-#elif defined(CONFIG_BOARD_TORINOK)
-	sprintf(temp_serial_number,"S6102K%08x",unique_serial_number);
-#elif defined(CONFIG_BOARD_LUISA_DS)
-	sprintf(temp_serial_number,"B5512%08x",unique_serial_number);
-#elif defined(CONFIG_BOARD_AMAZING)
-	sprintf(temp_serial_number,"S6802%08x",unique_serial_number);
-#elif defined(CONFIG_BOARD_AMAZING_SS)
-	sprintf(temp_serial_number,"S6800%08x",unique_serial_number);	
-#elif defined(CONFIG_BOARD_CORI_DS)
-	sprintf(temp_serial_number,"S5302%08x",unique_serial_number);	
-#endif
-	strncpy(usb_serial_number,temp_serial_number,
-			(strlen(temp_serial_number)>31?31:strlen(temp_serial_number)));
-}
-
 static int __init android_probe(struct platform_device *pdev)
 {
 	struct android_usb_platform_data *pdata = pdev->dev.platform_data;
@@ -1114,33 +1059,11 @@ static int __init android_probe(struct platform_device *pdev)
 		if (pdata->serial_number)
 			strings_dev[STRING_SERIAL_IDX].s = pdata->serial_number;
 		dev->nluns = pdata->nluns;
-	} else
-		return -EINVAL;
-
-	/* used to update SERIAL_ID*/
-	strings_dev[STRING_PRODUCT_IDX].s = pdata->product_name;
-	strings_dev[STRING_MANUFACTURER_IDX].s = pdata->manufacturer_name;
-	
-	if(system_serial_high != 0 || system_serial_low !=0)
-	{
-		get_usb_serial(serial_number);
-		strings_dev[STRING_SERIAL_IDX].s = serial_number;
 	}
-	else
-	{
-		if (pdata->serial_number)
-		{
-			strings_dev[STRING_SERIAL_IDX].s = pdata->serial_number;
-		}
-		else
-		{
-			strings_dev[STRING_SERIAL_IDX].s = serial_number;
-		}
-	}
-	strcpy(serial_number, strings_dev[STRING_SERIAL_IDX].s);
 
 	return 0;
 }
+
 
 static struct platform_driver android_platform_driver = {
 	.driver = { .name = "android_usb", },
@@ -1185,6 +1108,7 @@ static int __init android_init(void)
 		misc_deregister(&adb_enable_device);
 		platform_driver_unregister(&android_platform_driver);
 	}
+
 	return ret;
 }
 

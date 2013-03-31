@@ -34,20 +34,6 @@
 #define  BCM_EAP_URIL_CLIENT 9
 #endif
 
-
-#ifndef _TASKMSGS_H_
-/**
-Structure : Sim Identifier Type
-**/
-typedef enum
-{
-    SIM_SINGLE,      ///< single SIM case
-    SIM_DUAL_FIRST,  ///< the first SIM
-    SIM_DUAL_SECOND, ///< the second SIM
-    SIM_ALL = 0xFF   ///< for all the SIMs
-} SimNumber_t;
-#endif
-
 /* ----------------------------------------------------------------------------- */
 /* @doc EXTERNAL */
 /* @constants Notification Class | Notification classes */
@@ -249,11 +235,11 @@ typedef enum
 
 #define RIL_CLIENTID_INDEX(CLIENT_ID) (CLIENT_ID - 1)
 
-typedef void (RILResponseCallbackFunc) (SimNumber_t SimId, UInt32 CmdID,
+typedef void (RILResponseCallbackFunc) (UInt32 CmdID,
 					int result,
 					void *dataBuf, UInt32 dataLength);
 
-typedef void (RILNotifyCallbackFunc) (SimNumber_t SimId, UInt32 msgType,
+typedef void (RILNotifyCallbackFunc) (UInt32 msgType,
 				      int result,
 				      void *dataBuf, UInt32 dataLength);
 
@@ -293,7 +279,7 @@ int KRIL_Register(UInt32 clientID,
 /* RETURN       : 1 register successfully ; 0 register failed */
 /* Notes: */
 /* ****************************************************************************** */
-int KRIL_DevSpecific_Cmd(unsigned short client, SimNumber_t SimId, UInt32 CmdID, void *data,
+int KRIL_DevSpecific_Cmd(unsigned short client, UInt32 CmdID, void *data,
 			 size_t datalen);
 
 #endif /* _BCM_KRIL_INTERFACE_H */

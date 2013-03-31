@@ -41,10 +41,6 @@
 #include <linux/i2c.h>
 #include <linux/i2c-id.h>
 #include <linux/leds.h>
-#ifdef CONFIG_BROADCOM_WIFI_RESERVED_MEM
-#include <linux/wlan_plat.h>
-#include <linux/skbuff.h>
-#endif
 
 #if defined (CONFIG_ANDROID_PMEM)
 #include <linux/android_pmem.h>
@@ -171,7 +167,7 @@ static struct bcmsdhc_platform_data bcm21553_sdhc_data1 = {
 
 static struct bcmsdhc_platform_data bcm21553_sdhc_data2 = {
 	.base_clk = FREQ_MHZ(50),
-	.flags = SDHC_DEVTYPE_EMMC | SDHC_CARD_ALWAYS_PRESENT,
+	.flags = SDHC_DEVTYPE_EMMC | SDIO_CARD_ALWAYS_PRESENT,
 	.cd_pullup_cfg = SDCD_PULLUP | SDCD_UPDOWN_ENABLE,
 	.irq_cd = -1,
 	.syscfg_interface = board_sysconfig,
@@ -381,110 +377,7 @@ void bcm_wlan_power_off(int val)
 EXPORT_SYMBOL(bcm_wlan_power_on);
 EXPORT_SYMBOL(bcm_wlan_power_off);
 
-#ifdef CONFIG_BROADCOM_WIFI_RESERVED_MEM
-
-#define PREALLOC_WLAN_SEC_NUM		4
-#define PREALLOC_WLAN_BUF_NUM		160
-#define PREALLOC_WLAN_SECTION_HEADER	24
-
-#define WLAN_SKB_BUF_NUM	17
-
-#define WLAN_SECTION_SIZE_0	(PREALLOC_WLAN_BUF_NUM * 128)
-#define WLAN_SECTION_SIZE_1	(PREALLOC_WLAN_BUF_NUM * 128)
-#define WLAN_SECTION_SIZE_2	(PREALLOC_WLAN_BUF_NUM * 512)
-#define WLAN_SECTION_SIZE_3	(PREALLOC_WLAN_BUF_NUM * 1024)
-
-static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
-
-struct wifi_mem_prealloc {
-	void *mem_ptr;
-	unsigned long size;
-};
-
-static struct wifi_mem_prealloc wifi_mem_array[PREALLOC_WLAN_SEC_NUM] = {
-	{NULL, (WLAN_SECTION_SIZE_0 + PREALLOC_WLAN_SECTION_HEADER)},
-	{NULL, (WLAN_SECTION_SIZE_1 + PREALLOC_WLAN_SECTION_HEADER)},
-	{NULL, (WLAN_SECTION_SIZE_2 + PREALLOC_WLAN_SECTION_HEADER)},
-	{NULL, (WLAN_SECTION_SIZE_3 + PREALLOC_WLAN_SECTION_HEADER)}
-};
-
-void *wlan_mem_prealloc(int section, unsigned long size)
-{
-	if (section == PREALLOC_WLAN_SEC_NUM)
-		return wlan_static_skb;
-
-	if ((section < 0) || (section > PREALLOC_WLAN_SEC_NUM))
-		return NULL;
-
-	if (wifi_mem_array[section].size < size)
-		return NULL;
-
-	return wifi_mem_array[section].mem_ptr;
-}
-EXPORT_SYMBOL (wlan_mem_prealloc);
-#define DHD_SKB_HDRSIZE 		336
-#define DHD_SKB_1PAGE_BUFSIZE	((PAGE_SIZE*1)-DHD_SKB_HDRSIZE)
-#define DHD_SKB_2PAGE_BUFSIZE	((PAGE_SIZE*2)-DHD_SKB_HDRSIZE)
-#define DHD_SKB_4PAGE_BUFSIZE	((PAGE_SIZE*4)-DHD_SKB_HDRSIZE)
-
-int __init brcm_init_wifi_mem(void)
-{
-	int i;
-	int j;
-
-	printk("brcm_init_wifi_mem...\n");
-
-	for (i = 0; i < 8; i++) {
-		wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_1PAGE_BUFSIZE);
-		if (!wlan_static_skb[i])
-			goto err_skb_alloc;
-	}
-
-	for (; i < 16; i++) {
-		wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_2PAGE_BUFSIZE);
-		if (!wlan_static_skb[i])
-			goto err_skb_alloc;
-	}
-
-	wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_4PAGE_BUFSIZE);
-	if (!wlan_static_skb[i])
-		goto err_skb_alloc;
-
-	for (i = 0 ; i < PREALLOC_WLAN_SEC_NUM ; i++) {
-		wifi_mem_array[i].mem_ptr =
-				kmalloc(wifi_mem_array[i].size, GFP_KERNEL);
-
-		if (!wifi_mem_array[i].mem_ptr)
-			goto err_mem_alloc;
-	}
-	return 0;
-
- err_mem_alloc:
-	pr_err("Failed to mem_alloc for WLAN\n");
-	for (j = 0 ; j < i ; j++)
-		kfree(wifi_mem_array[j].mem_ptr);
-
-	i = WLAN_SKB_BUF_NUM;
-
- err_skb_alloc:
-	pr_err("Failed to skb_alloc for WLAN\n");
-	for (j = 0 ; j < i ; j++)
-		dev_kfree_skb(wlan_static_skb[j]);
-
-	return -ENOMEM;
-}
-
-static struct wifi_platform_data wifi_pdata = {
-	.set_power		= NULL,
-	.set_reset		= NULL,
-	.set_carddetect		= NULL,
-	.mem_prealloc		= wlan_mem_prealloc,
-};
-
-#endif /*CONFIG_BROADCOM_WIFI_RESERVED_MEM*/
-
-
-//#endif /* 4330 */
+//#endif /* 4319 */
 #ifdef CONFIG_KEYBOARD_BCM
 static void bcm_keypad_config_iocr(int row, int col)
 {
@@ -818,25 +711,6 @@ static struct regulator_init_data sim_init_data = {
 	.consumer_supplies = sim_consumers,
 };
 
-static struct regulator_consumer_supply sim1_consumers[] = {
-	{
-		.dev	= NULL,
-		.supply	= "sim1_vcc",
-	},
-};
-
-static struct regulator_init_data sim1_init_data = {
-	.constraints = {
-		.min_uV = 1200000,
-		.max_uV = 3400000,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE|REGULATOR_CHANGE_STATUS,
-		.always_on = 0,
-		.boot_on = 0,
-	},
-	.num_consumer_supplies = ARRAY_SIZE(sim1_consumers),
-	.consumer_supplies = sim1_consumers,
-};
-
 static struct regulator_consumer_supply csr_nm1_consumers[] = {
 	{
 		.dev	= NULL,
@@ -880,11 +754,6 @@ static struct max8986_regl_init_data bcm21553_regulators[] = {
 		.regl_id = MAX8986_REGL_SIMLDO,
 		.dsm_opmode = MAX8986_REGL_LPM_IN_DSM,
 		.init_data = &sim_init_data,
-	},
-	{
-		.regl_id = MAX8986_REGL_DLDO4,
-		.dsm_opmode = MAX8986_REGL_LPM_IN_DSM,
-		.init_data = &sim1_init_data,
 	},
 	{
 		.regl_id = MAX8986_REGL_CSR_NM1,
@@ -1937,23 +1806,8 @@ int board_sysconfig(uint32_t module, uint32_t op)
 				SYSCFG_IOCR0_GPIO55_GPEN10_MUX(0x3) |
 				SYSCFG_IOCR0_PCM_SPI2_GPIO4043_MUX(0x02) |
 				SYSCFG_IOCR0_DIGMIC_GPIO6362_MUX |
-				SYSCFG_IOCR0_GPEN9_SPI_GPIO54_H_MUX | 
-				SYSCFG_IOCR0_I2S_MUX(0x3)
+				SYSCFG_IOCR0_GPEN9_SPI_GPIO54_H_MUX
 				, ADDR_SYSCFG_IOCR0);
-#define GPIO_I2S_MUX_1 (57)
-#define GPIO_I2S_MUX_2 (60)
-
-                               gpio_request(GPIO_I2S_MUX_1, "GPIO_I2S_MUX_1");
-                               gpio_request(GPIO_I2S_MUX_2, "GPIO_I2S_MUX_2");
-                               gpio_direction_input(GPIO_I2S_MUX_1);
-                               gpio_direction_input(GPIO_I2S_MUX_2);
-                               bcm_gpio_pull_up(GPIO_I2S_MUX_1, true);
-                               bcm_gpio_pull_up_down_enable(GPIO_I2S_MUX_1, true);
-                               bcm_gpio_pull_up(GPIO_I2S_MUX_2, true);
-                               bcm_gpio_pull_up_down_enable(GPIO_I2S_MUX_2, true);
-                               gpio_free(GPIO_I2S_MUX_1);
-                               gpio_free(GPIO_I2S_MUX_2);
-
 			/* SD1/SD2/SD3 DAT[0:3]/CMD lines pulled down
 			 * UARTA enable internal pullup */
 			/* BIT10 | BIT12 | BIT20 | BIT23 | BIT25 | BIT27 | BIT29 | BIT31 */
@@ -1970,8 +1824,7 @@ int board_sysconfig(uint32_t module, uint32_t op)
 			/* BIT21 | BIT27 | BIT31 */
 			writel(readl(ADDR_SYSCFG_IOCR3) |
 				SYSCFG_IOCR3_TWIF_ENB |
-				SYSCFG_IOCR3_SIMDAT_PU | SYSCFG_IOCR3_I2C3_EN |
-				SYSCFG_IOCR3_PCMDI_PD
+				SYSCFG_IOCR3_SIMDAT_PU | SYSCFG_IOCR3_I2C3_EN
 				, ADDR_SYSCFG_IOCR3);
 			/* UARTB enable internal pullup */
 			/* BIT9 | BIT11 | BIT14 */
@@ -2104,11 +1957,7 @@ static int __init arch_late_init(void)
 		printk("******* %s:Fail to alloc memory ****** \n", __func__);
 	}
 #endif
-#ifdef CONFIG_BROADCOM_WIFI_RESERVED_MEM
-	brcm_init_wifi_mem();
-#endif
 	return 0;
-
 }
 late_initcall(arch_late_init);
 

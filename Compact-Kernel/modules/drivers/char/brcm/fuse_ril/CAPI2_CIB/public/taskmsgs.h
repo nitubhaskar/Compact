@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   taskmsgs.h
@@ -55,7 +56,7 @@ the GPL, without Broadcom's express prior written consent.
 /**
 	Maximum number of filtered event masks for each client
  **/
-#define  MAX_FILTERED_EVENT_MASK_NUM		10
+#define  MAX_FILTERED_EVENT_MASK_NUM		20
 
 typedef enum
 {
@@ -88,7 +89,6 @@ typedef enum
 	MSG_GRP_LCS 				= 0x0D00,
 	MSG_GRP_TLS 				= 0x0E00,
 	MSG_GRP_FTP 				= 0x0F00,
-	MSG_GRP_SECMODEM            = 0x1000,
 
 	MSG_GRP_INT_UTIL			= 0x2000,
 	MSG_GRP_INT_ATC 			= 0x2100,
@@ -98,7 +98,6 @@ typedef enum
 	MSG_GRP_INT_SIM				= 0x2500,
 	MSG_GRP_INT_STK				= 0x2600,
 	MSG_GRP_INT_VCC				= 0x2700,
-	MSG_GRP_INT_SECMODEM        = 0x2800,
 
 	MSG_GRP_CAPI2_LCS			= 0x3200,
 	MSG_GRP_CAPI2_SMS			= 0x3300,
@@ -303,19 +302,6 @@ typedef enum
 	**/
 	MSG_NW_MEAS_RESULT_IND		= MSG_GRP_NET+0x15, ///<Payload type {::PHONECTRL_NMR_t}
 
-	/** 
-	This reports suspended/resumed status of a SIM. This message is sent only for dual-sim build. 
-	For the payload contents see ::SIM_INSTANCE_STATUS_t. 
-	**/ 
-	MSG_SIM_INSTANCE_STATUS_IND	= MSG_GRP_NET+0x16, 
-
-	/** 
-	This reports whether the power-saving feature has been invoked on a VM for dual-sim build. 
-	This message is not sent in non-dual-sim build. The payload is a Boolean value. If the value
-	is TRUE it indicates the VM has been powered down for power saving purpose and FALSE otherwise 
-	**/ 
-	MSG_VCC_VM_PWR_SAVING_IND       = MSG_GRP_NET+0x17, 
-
 	// End of MSG_GRP_NET (0x0200)
 
 	//---------------------------------------------------------------
@@ -409,9 +395,9 @@ typedef enum
 	MSG_DATACALL_ECDC_IND		= MSG_GRP_CC+0x23,	///<Payload type {::DataECDCLinkMsg_t}
 
 	/**
-	This is the event confirming that a data call has been released. See ::Cause_t for list of release causes
-	**/
-	MSG_DATACALL_RELEASE_CNF	= MSG_GRP_CC+0x24,	///<Payload type {::DataCallReleaseMsg_t}
+        This is the event confirming that a data call has been released. See ::Cause_t for list of release causes
+        **/
+        MSG_DATACALL_RELEASE_CNF        = MSG_GRP_CC+0x24,      ///<Payload type {::DataCallReleaseMsg_t}
 
 	/**
 	This is the event indicating to all of the clients for an API call from one of the
@@ -1570,15 +1556,6 @@ typedef enum
     
 	// End of MSG_GRP_SIM (0x0C00)
 
-	//---------------------------------------------------------------
-	// MSG_GRP_SECMODEM, MESSAGE GROUP FOR SECURE MODEM (0x1000)
-	//---------------------------------------------------------------
-	MSG_SECMODEM_SIMLOCK_STATUS_IND     = MSG_GRP_SECMODEM+0x00, ///<Payload type {::UInt8}
-	MSG_SECMODEM_XSIM_STATUS_IND        = MSG_GRP_SECMODEM+0x01, ///<Payload type {::UInt8}
-	MSG_SECMODEM_CONFIG_MODEM_RSP       = MSG_GRP_SECMODEM+0x02, ///<Payload type {::UInt8}
-
-
-	// End of MSG_GRP_SECMODEM (0x1000)
 
 	//===============================================================
 	//===============================================================
@@ -1639,9 +1616,6 @@ typedef enum
 
 	MSG_AT_LINE_STATE_IND		= MSG_GRP_INT_ATC+0x36,	///<Payload type {::Boolean}
 
-#ifdef CNEON_COMMON
-	MSG_AT_GLUE_INT_CH_CMD		= MSG_GRP_INT_ATC+0x37,
-#endif
 	MSG_MS_READY_IND			= MSG_GRP_INT_ATC+0x50,	///<Payload type {::MODULE_READY_STATUS_t}
 	MSG_CALL_MONITOR_STATUS		= MSG_GRP_INT_ATC+0x51,	///<Payload type {::UInt8}
 
@@ -2108,33 +2082,12 @@ typedef enum
 	MSG_LCS_RRC_STOP_MEASUREMENT_IND					 	= MSG_GRP_LCS+0x87, ///<Payload type {::ClientInfo_t}
 	/// From platform to LCS task. RRC reset position stored information
 	MSG_LCS_RRC_RESET_POS_STORED_INFO_IND				 	= MSG_GRP_LCS+0x88, ///<Payload type {::ClientInfo_t}
-
-	//----------------------------------------------------------------------
-	// MSG_GRP_INT_SECMODEM, MESSAGE GROUP FOR SECURE MODEM (0x2800)
-	//----------------------------------------------------------------------
-	MSG_SECMODEM_PROC_CONFIG_MODEM_REQ  = MSG_GRP_INT_SECMODEM + 0x00, ///<Payload type {::SecModemConfigModemReq_t}
-	MSG_SECMODEM_PROC_HOST_TO_MODEM_REQ = MSG_GRP_INT_SECMODEM + 0x01, ///<Payload type {::SecModemHostToModemReq_t}
-	MSG_SECMODEM_PROC_MODEM_TO_HOST_RSP = MSG_GRP_INT_SECMODEM + 0x02, ///<Payload type {::SecModemModemToHostRsp_t}
-
-	// End of MSG_GRP_INT_SECMODEM, (0x2800)
 //TASKMSGS_INCLUDE taskmsgs_atc.i
 
 	MSG_AT_CMD_STR				= MSG_GRP_INT_ATC+0x35,	///<Payload type {::}
 	MSG_AT_COMMAND_REQ			= MSG_GRP_INT_ATC+0x52,	///<Payload type {::AtCmdInfo_t}
 	MSG_AT_COMMAND_IND			= MSG_GRP_INT_ATC+0x53,	///<Payload type {::AtCmdInfo_t}
-	MSG_AT_REGISTER_REQ			= MSG_GRP_INT_ATC+0x54, 	///<Payload type {::AtRegisterInfo_t}
-	MSG_AT_TONE_REQ				= MSG_GRP_INT_ATC+0x55, 	///<Payload type {::AtToneInfo_t}
-	MSG_AT_AUDIO_REQ			= MSG_GRP_INT_ATC+0x56,		///<payload type {::Boolean}
-	MSG_AT_MICMUTE_REQ			= MSG_GRP_INT_ATC+0x57,		///<payload type {::Boolean}
-	MSG_AT_SPEAKERMUTE_REQ			= MSG_GRP_INT_ATC+0x58,		///<payload type {::Boolean}
-	MSG_AT_SETSPEAKER_REQ			= MSG_GRP_INT_ATC+0x59, 	///<payload type {::UInt32}
-	MSG_AT_GETSPEAKER_REQ			= MSG_GRP_INT_ATC+0x5a, 	///<payload type {::void}
-	MSG_AT_GETSPEAKER_RSP		= MSG_GRP_INT_ATC+0x5b, 	///<payload type {::UInt32}
-	MSG_AT_SETMIC_REQ			= MSG_GRP_INT_ATC+0x5c, 	///<payload type {::UInt32}
-	MSG_AT_GETMIC_REQ			= MSG_GRP_INT_ATC+0x5d, 	///<payload type {::void}
-	MSG_AT_GETMIC_RSP		= MSG_GRP_INT_ATC+0x5e, 	///<payload type {::UInt32}
-	
-//TASKMSGS_INCLUDE taskmsgs_usb.i
+	MSG_AT_REGISTER_REQ			= MSG_GRP_INT_ATC+0x54, 	///<Payload type {::AtRegisterInfo_t}//TASKMSGS_INCLUDE taskmsgs_usb.i
 	//---------------------------------------------------------------
 	// MSG_GRP_DEV, MESSAGE GROUP FOR DEVICES (0x0700)
 	//---------------------------------------------------------------
@@ -2928,7 +2881,6 @@ typedef enum
 
 /** @endcond */
 //TASKMSGS_INCLUDE taskmsgs_capi2.i
-/// @cond CAPI2
 	//---------------------------------------------------
 	//	CAPI2 message id's
 	// (Reserved 0x3XXX for CAPI2 messages)
@@ -3088,7 +3040,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_UpdateSMSCapExceededFlag 
 	**/
-	MSG_SIM_UPDATE_SMSCAPEXC_FLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E,	///<Payload type {CAPI2_SimApi_UpdateSMSCapExceededFlag_Req_t}
+	MSG_SIM_UPDATE_SMSCAPEXC_FLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E,	///<Payload type {::CAPI2_SimApi_UpdateSMSCapExceededFlag_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3096,7 +3048,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SelectBand 
 	**/
-	MSG_MS_SELECT_BAND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x20,	///<Payload type {CAPI2_NetRegApi_SelectBand_Req_t}
+	MSG_MS_SELECT_BAND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x20,	///<Payload type {::CAPI2_NetRegApi_SelectBand_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3104,7 +3056,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SetSupportedRATandBand 
 	**/
-	MSG_MS_SET_RAT_BAND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x22,	///<Payload type {CAPI2_NetRegApi_SetSupportedRATandBand_Req_t}
+	MSG_MS_SET_RAT_BAND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x22,	///<Payload type {::CAPI2_NetRegApi_SetSupportedRATandBand_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3112,7 +3064,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_CellLock 
 	**/
-	MSG_MS_CELL_LOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x24,	///<Payload type {CAPI2_NetRegApi_CellLock_Req_t}
+	MSG_MS_CELL_LOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x24,	///<Payload type {::CAPI2_NetRegApi_CellLock_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3120,7 +3072,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PLMN_GetCountryByMcc 
 	**/
-	MSG_MS_GET_MCC_COUNTRY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26,	///<Payload type {CAPI2_PLMN_GetCountryByMcc_Req_t}
+	MSG_MS_GET_MCC_COUNTRY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26,	///<Payload type {::CAPI2_PLMN_GetCountryByMcc_Req_t}
 	 /** 
 	payload is ::char 
 	**/
@@ -3128,7 +3080,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_GetPLMNEntryByIndex 
 	**/
-	MSG_MS_PLMN_INFO_BY_CODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28,	///<Payload type {CAPI2_MS_GetPLMNEntryByIndex_Req_t}
+	MSG_MS_PLMN_INFO_BY_CODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28,	///<Payload type {::CAPI2_MS_GetPLMNEntryByIndex_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3144,7 +3096,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_GetPLMNByCode 
 	**/
-	MSG_MS_PLMN_INFO_BY_INDEX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2C,	///<Payload type {CAPI2_MS_GetPLMNByCode_Req_t}
+	MSG_MS_PLMN_INFO_BY_INDEX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2C,	///<Payload type {::CAPI2_MS_GetPLMNByCode_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3152,7 +3104,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_PlmnSelect 
 	**/
-	MSG_PLMN_SELECT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E,	///<Payload type {CAPI2_NetRegApi_PlmnSelect_Req_t}
+	MSG_PLMN_SELECT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E,	///<Payload type {::CAPI2_NetRegApi_PlmnSelect_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3176,7 +3128,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SetPlmnMode 
 	**/
-	MSG_MS_SET_PLMN_MODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x34,	///<Payload type {CAPI2_NetRegApi_SetPlmnMode_Req_t}
+	MSG_MS_SET_PLMN_MODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x34,	///<Payload type {::CAPI2_NetRegApi_SetPlmnMode_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3192,7 +3144,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_SetPlmnFormat 
 	**/
-	MSG_MS_SET_PLMN_FORMAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x38,	///<Payload type {CAPI2_MS_SetPlmnFormat_Req_t}
+	MSG_MS_SET_PLMN_FORMAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x38,	///<Payload type {::CAPI2_MS_SetPlmnFormat_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3200,7 +3152,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_IsMatchedPLMN 
 	**/
-	MSG_MS_MATCH_PLMN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A,	///<Payload type {CAPI2_MS_IsMatchedPLMN_Req_t}
+	MSG_MS_MATCH_PLMN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A,	///<Payload type {::CAPI2_MS_IsMatchedPLMN_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3228,7 +3180,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_GetPLMNNameByCode 
 	**/
-	MSG_MS_PLMN_NAME_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x42,	///<Payload type {CAPI2_NetRegApi_GetPLMNNameByCode_Req_t}
+	MSG_MS_PLMN_NAME_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x42,	///<Payload type {::CAPI2_NetRegApi_GetPLMNNameByCode_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3244,7 +3196,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PhoneCtrlApi_SetSystemState 
 	**/
-	MSG_SYS_SET_SYSTEM_STATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x46,	///<Payload type {CAPI2_PhoneCtrlApi_SetSystemState_Req_t}
+	MSG_SYS_SET_SYSTEM_STATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x46,	///<Payload type {::CAPI2_PhoneCtrlApi_SetSystemState_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3292,7 +3244,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PhoneCtrlApi_SetPowerDownTimer 
 	**/
-	MSG_SET_POWER_DOWN_TIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x52,	///<Payload type {CAPI2_PhoneCtrlApi_SetPowerDownTimer_Req_t}
+	MSG_SET_POWER_DOWN_TIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x52,	///<Payload type {::CAPI2_PhoneCtrlApi_SetPowerDownTimer_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3364,7 +3316,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_IsPINBlocked 
 	**/
-	MSG_SIM_PIN_BLOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x64,	///<Payload type {CAPI2_SimApi_IsPINBlocked_Req_t}
+	MSG_SIM_PIN_BLOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x64,	///<Payload type {::CAPI2_SimApi_IsPINBlocked_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3372,7 +3324,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_IsPUKBlocked 
 	**/
-	MSG_SIM_PUK_BLOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x66,	///<Payload type {CAPI2_SimApi_IsPUKBlocked_Req_t}
+	MSG_SIM_PUK_BLOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x66,	///<Payload type {::CAPI2_SimApi_IsPUKBlocked_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3404,27 +3356,27 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendVerifyChvReq 
 	**/
-	MSG_SIM_VERIFY_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6E,	///<Payload type {CAPI2_SimApi_SendVerifyChvReq_Req_t}
+	MSG_SIM_VERIFY_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6E,	///<Payload type {::CAPI2_SimApi_SendVerifyChvReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendChangeChvReq 
 	**/
-	MSG_SIM_CHANGE_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x70,	///<Payload type {CAPI2_SimApi_SendChangeChvReq_Req_t}
+	MSG_SIM_CHANGE_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x70,	///<Payload type {::CAPI2_SimApi_SendChangeChvReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendSetChv1OnOffReq 
 	**/
-	MSG_SIM_ENABLE_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x72,	///<Payload type {CAPI2_SimApi_SendSetChv1OnOffReq_Req_t}
+	MSG_SIM_ENABLE_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x72,	///<Payload type {::CAPI2_SimApi_SendSetChv1OnOffReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendUnblockChvReq 
 	**/
-	MSG_SIM_UNBLOCK_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x74,	///<Payload type {CAPI2_SimApi_SendUnblockChvReq_Req_t}
+	MSG_SIM_UNBLOCK_CHV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x74,	///<Payload type {::CAPI2_SimApi_SendUnblockChvReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendSetOperStateReq 
 	**/
-	MSG_SIM_SET_FDN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x76,	///<Payload type {CAPI2_SimApi_SendSetOperStateReq_Req_t}
+	MSG_SIM_SET_FDN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x76,	///<Payload type {::CAPI2_SimApi_SendSetOperStateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_IsPbkAccessAllowed 
 	**/
-	MSG_SIM_IS_PBK_ALLOWED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x78,	///<Payload type {CAPI2_SimApi_IsPbkAccessAllowed_Req_t}
+	MSG_SIM_IS_PBK_ALLOWED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x78,	///<Payload type {::CAPI2_SimApi_IsPbkAccessAllowed_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3432,7 +3384,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendPbkInfoReq 
 	**/
-	MSG_SIM_PBK_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x7A,	///<Payload type {CAPI2_SimApi_SendPbkInfoReq_Req_t}
+	MSG_SIM_PBK_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x7A,	///<Payload type {::CAPI2_SimApi_SendPbkInfoReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendReadAcmMaxReq 
 	**/
@@ -3440,7 +3392,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendWriteAcmMaxReq 
 	**/
-	MSG_SIM_ACM_MAX_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x7E,	///<Payload type {CAPI2_SimApi_SendWriteAcmMaxReq_Req_t}
+	MSG_SIM_ACM_MAX_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x7E,	///<Payload type {::CAPI2_SimApi_SendWriteAcmMaxReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendReadAcmReq 
 	**/
@@ -3448,11 +3400,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendWriteAcmReq 
 	**/
-	MSG_SIM_ACM_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x82,	///<Payload type {CAPI2_SimApi_SendWriteAcmReq_Req_t}
+	MSG_SIM_ACM_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x82,	///<Payload type {::CAPI2_SimApi_SendWriteAcmReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendIncreaseAcmReq 
 	**/
-	MSG_SIM_ACM_INCREASE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x84,	///<Payload type {CAPI2_SimApi_SendIncreaseAcmReq_Req_t}
+	MSG_SIM_ACM_INCREASE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x84,	///<Payload type {::CAPI2_SimApi_SendIncreaseAcmReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendReadSvcProvNameReq 
 	**/
@@ -3464,7 +3416,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_GetServiceStatus 
 	**/
-	MSG_SIM_SERVICE_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x8A,	///<Payload type {CAPI2_SimApi_GetServiceStatus_Req_t}
+	MSG_SIM_SERVICE_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x8A,	///<Payload type {::CAPI2_SimApi_GetServiceStatus_Req_t}
 	 /** 
 	payload is ::SIMServiceStatus_t 
 	**/
@@ -3520,7 +3472,7 @@ typedef enum
 	 /** 
 	api is CAPI2_simmiApi_GetMasterFileId 
 	**/
-	MSG_SIM_APDU_FILEID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x98,	///<Payload type {CAPI2_simmiApi_GetMasterFileId_Req_t}
+	MSG_SIM_APDU_FILEID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x98,	///<Payload type {::CAPI2_simmiApi_GetMasterFileId_Req_t}
 	 /** 
 	payload is ::APDUFileID_t 
 	**/
@@ -3532,15 +3484,15 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendSelectAppiReq 
 	**/
-	MSG_SIM_SELECT_APPLI_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x9C,	///<Payload type {CAPI2_SimApi_SendSelectAppiReq_Req_t}
+	MSG_SIM_SELECT_APPLI_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x9C,	///<Payload type {::CAPI2_SimApi_SendSelectAppiReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendDeactivateAppiReq 
 	**/
-	MSG_SIM_DEACTIVATE_APPLI_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x9E,	///<Payload type {CAPI2_SimApi_SendDeactivateAppiReq_Req_t}
+	MSG_SIM_DEACTIVATE_APPLI_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x9E,	///<Payload type {::CAPI2_SimApi_SendDeactivateAppiReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendCloseSocketReq 
 	**/
-	MSG_SIM_CLOSE_SOCKET_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA0,	///<Payload type {CAPI2_SimApi_SendCloseSocketReq_Req_t}
+	MSG_SIM_CLOSE_SOCKET_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA0,	///<Payload type {::CAPI2_SimApi_SendCloseSocketReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_GetAtrData 
 	**/
@@ -3552,75 +3504,75 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SubmitDFileInfoReq 
 	**/
-	MSG_SIM_DFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA4,	///<Payload type {CAPI2_SimApi_SubmitDFileInfoReq_Req_t}
+	MSG_SIM_DFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA4,	///<Payload type {::CAPI2_SimApi_SubmitDFileInfoReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitEFileInfoReq 
 	**/
-	MSG_SIM_EFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA6,	///<Payload type {CAPI2_SimApi_SubmitEFileInfoReq_Req_t}
+	MSG_SIM_EFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA6,	///<Payload type {::CAPI2_SimApi_SubmitEFileInfoReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendEFileInfoReq 
 	**/
-	MSG_SIM_SEND_EFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA8,	///<Payload type {CAPI2_SimApi_SendEFileInfoReq_Req_t}
+	MSG_SIM_SEND_EFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xA8,	///<Payload type {::CAPI2_SimApi_SendEFileInfoReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendDFileInfoReq 
 	**/
-	MSG_SIM_SEND_DFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xAA,	///<Payload type {CAPI2_SimApi_SendDFileInfoReq_Req_t}
+	MSG_SIM_SEND_DFILE_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xAA,	///<Payload type {::CAPI2_SimApi_SendDFileInfoReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitWholeBinaryEFileReadReq 
 	**/
-	MSG_SIM_WHOLE_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xAC,	///<Payload type {CAPI2_SimApi_SubmitWholeBinaryEFileReadReq_Req_t}
+	MSG_SIM_WHOLE_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xAC,	///<Payload type {::CAPI2_SimApi_SubmitWholeBinaryEFileReadReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendWholeBinaryEFileReadReq 
 	**/
-	MSG_SIM_SEND_WHOLE_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xAE,	///<Payload type {CAPI2_SimApi_SendWholeBinaryEFileReadReq_Req_t}
+	MSG_SIM_SEND_WHOLE_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xAE,	///<Payload type {::CAPI2_SimApi_SendWholeBinaryEFileReadReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitBinaryEFileReadReq 
 	**/
-	MSG_SIM_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB0,	///<Payload type {CAPI2_SimApi_SubmitBinaryEFileReadReq_Req_t}
+	MSG_SIM_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB0,	///<Payload type {::CAPI2_SimApi_SubmitBinaryEFileReadReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendBinaryEFileReadReq 
 	**/
-	MSG_SIM_SEND_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB2,	///<Payload type {CAPI2_SimApi_SendBinaryEFileReadReq_Req_t}
+	MSG_SIM_SEND_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB2,	///<Payload type {::CAPI2_SimApi_SendBinaryEFileReadReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitRecordEFileReadReq 
 	**/
-	MSG_SIM_RECORD_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB4,	///<Payload type {CAPI2_SimApi_SubmitRecordEFileReadReq_Req_t}
+	MSG_SIM_RECORD_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB4,	///<Payload type {::CAPI2_SimApi_SubmitRecordEFileReadReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendRecordEFileReadReq 
 	**/
-	MSG_SIM_SEND_RECORD_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB6,	///<Payload type {CAPI2_SimApi_SendRecordEFileReadReq_Req_t}
+	MSG_SIM_SEND_RECORD_EFILE_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB6,	///<Payload type {::CAPI2_SimApi_SendRecordEFileReadReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitBinaryEFileUpdateReq 
 	**/
-	MSG_SIM_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB8,	///<Payload type {CAPI2_SimApi_SubmitBinaryEFileUpdateReq_Req_t}
+	MSG_SIM_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xB8,	///<Payload type {::CAPI2_SimApi_SubmitBinaryEFileUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendBinaryEFileUpdateReq 
 	**/
-	MSG_SIM_SEND_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xBA,	///<Payload type {CAPI2_SimApi_SendBinaryEFileUpdateReq_Req_t}
+	MSG_SIM_SEND_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xBA,	///<Payload type {::CAPI2_SimApi_SendBinaryEFileUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitLinearEFileUpdateReq 
 	**/
-	MSG_SIM_LINEAR_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xBC,	///<Payload type {CAPI2_SimApi_SubmitLinearEFileUpdateReq_Req_t}
+	MSG_SIM_LINEAR_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xBC,	///<Payload type {::CAPI2_SimApi_SubmitLinearEFileUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendLinearEFileUpdateReq 
 	**/
-	MSG_SIM_SEND_LINEAR_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xBE,	///<Payload type {CAPI2_SimApi_SendLinearEFileUpdateReq_Req_t}
+	MSG_SIM_SEND_LINEAR_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xBE,	///<Payload type {::CAPI2_SimApi_SendLinearEFileUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitSeekRecordReq 
 	**/
-	MSG_SIM_SEEK_RECORD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC0,	///<Payload type {CAPI2_SimApi_SubmitSeekRecordReq_Req_t}
+	MSG_SIM_SEEK_RECORD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC0,	///<Payload type {::CAPI2_SimApi_SubmitSeekRecordReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendSeekRecordReq 
 	**/
-	MSG_SIM_SEND_SEEK_RECORD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC2,	///<Payload type {CAPI2_SimApi_SendSeekRecordReq_Req_t}
+	MSG_SIM_SEND_SEEK_RECORD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC2,	///<Payload type {::CAPI2_SimApi_SendSeekRecordReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitCyclicEFileUpdateReq 
 	**/
-	MSG_SIM_CYCLIC_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC4,	///<Payload type {CAPI2_SimApi_SubmitCyclicEFileUpdateReq_Req_t}
+	MSG_SIM_CYCLIC_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC4,	///<Payload type {::CAPI2_SimApi_SubmitCyclicEFileUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendCyclicEFileUpdateReq 
 	**/
-	MSG_SIM_SEND_CYCLIC_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC6,	///<Payload type {CAPI2_SimApi_SendCyclicEFileUpdateReq_Req_t}
+	MSG_SIM_SEND_CYCLIC_EFILE_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xC6,	///<Payload type {::CAPI2_SimApi_SendCyclicEFileUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendRemainingPinAttemptReq 
 	**/
@@ -3636,7 +3588,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_GetServiceCodeStatus 
 	**/
-	MSG_SIM_SERVICE_CODE_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xCC,	///<Payload type {CAPI2_SimApi_GetServiceCodeStatus_Req_t}
+	MSG_SIM_SERVICE_CODE_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xCC,	///<Payload type {::CAPI2_SimApi_GetServiceCodeStatus_Req_t}
 	 /** 
 	payload is ::SERVICE_FLAG_STATUS_t 
 	**/
@@ -3644,7 +3596,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_CheckCphsService 
 	**/
-	MSG_SIM_CHECK_CPHS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xCE,	///<Payload type {CAPI2_SimApi_CheckCphsService_Req_t}
+	MSG_SIM_CHECK_CPHS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xCE,	///<Payload type {::CAPI2_SimApi_CheckCphsService_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3660,7 +3612,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_GetSmsSca 
 	**/
-	MSG_SIM_SMS_SCA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xD2,	///<Payload type {CAPI2_SimApi_GetSmsSca_Req_t}
+	MSG_SIM_SMS_SCA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xD2,	///<Payload type {::CAPI2_SimApi_GetSmsSca_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3692,7 +3644,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SetAlsDefaultLine 
 	**/
-	MSG_SIM_SET_ALS_DEFAULT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xDA,	///<Payload type {CAPI2_SimApi_SetAlsDefaultLine_Req_t}
+	MSG_SIM_SET_ALS_DEFAULT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xDA,	///<Payload type {::CAPI2_SimApi_SetAlsDefaultLine_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3716,11 +3668,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendWritePuctReq 
 	**/
-	MSG_SIM_PUCT_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xE0,	///<Payload type {CAPI2_SimApi_SendWritePuctReq_Req_t}
+	MSG_SIM_PUCT_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xE0,	///<Payload type {::CAPI2_SimApi_SendWritePuctReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitRestrictedAccessReq 
 	**/
-	MSG_SIM_RESTRICTED_ACCESS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xE2,	///<Payload type {CAPI2_SimApi_SubmitRestrictedAccessReq_Req_t}
+	MSG_SIM_RESTRICTED_ACCESS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0xE2,	///<Payload type {::CAPI2_SimApi_SubmitRestrictedAccessReq_Req_t}
 	 /** 
 	api is CAPI2_MS_GetSystemRAT 
 	**/
@@ -3796,19 +3748,19 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendNumOfPLMNEntryReq 
 	**/
-	MSG_SIM_PLMN_NUM_OF_ENTRY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x10C,	///<Payload type {CAPI2_SimApi_SendNumOfPLMNEntryReq_Req_t}
+	MSG_SIM_PLMN_NUM_OF_ENTRY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x10C,	///<Payload type {::CAPI2_SimApi_SendNumOfPLMNEntryReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendReadPLMNEntryReq 
 	**/
-	MSG_SIM_PLMN_ENTRY_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x10E,	///<Payload type {CAPI2_SimApi_SendReadPLMNEntryReq_Req_t}
+	MSG_SIM_PLMN_ENTRY_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x10E,	///<Payload type {::CAPI2_SimApi_SendReadPLMNEntryReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendWriteMulPLMNEntryReq 
 	**/
-	MSG_SIM_MUL_PLMN_ENTRY_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x110,	///<Payload type {CAPI2_SimApi_SendWriteMulPLMNEntryReq_Req_t}
+	MSG_SIM_MUL_PLMN_ENTRY_UPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x110,	///<Payload type {::CAPI2_SimApi_SendWriteMulPLMNEntryReq_Req_t}
 	 /** 
 	api is CAPI2_SYS_SetRegisteredEventMask 
 	**/
-	MSG_SYS_SET_REG_EVENT_MASK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x112,	///<Payload type {CAPI2_SYS_SetRegisteredEventMask_Req_t}
+	MSG_SYS_SET_REG_EVENT_MASK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x112,	///<Payload type {::CAPI2_SYS_SetRegisteredEventMask_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3816,7 +3768,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYS_SetFilteredEventMask 
 	**/
-	MSG_SYS_SET_REG_FILTER_MASK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x114,	///<Payload type {CAPI2_SYS_SetFilteredEventMask_Req_t}
+	MSG_SYS_SET_REG_FILTER_MASK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x114,	///<Payload type {::CAPI2_SYS_SetFilteredEventMask_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3824,7 +3776,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PhoneCtrlApi_SetRssiThreshold 
 	**/
-	MSG_SYS_SET_RSSI_THRESHOLD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x116,	///<Payload type {CAPI2_PhoneCtrlApi_SetRssiThreshold_Req_t}
+	MSG_SYS_SET_RSSI_THRESHOLD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x116,	///<Payload type {::CAPI2_PhoneCtrlApi_SetRssiThreshold_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3856,7 +3808,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYSPARM_SetDARPCfg 
 	**/
-	MSG_SYS_SET_DARP_CFG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x11E,	///<Payload type {CAPI2_SYSPARM_SetDARPCfg_Req_t}
+	MSG_SYS_SET_DARP_CFG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x11E,	///<Payload type {::CAPI2_SYSPARM_SetDARPCfg_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3864,7 +3816,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYSPARM_SetEGPRSMSClass 
 	**/
-	MSG_SYSPARAM_SET_EGPRS_MSCLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x120,	///<Payload type {CAPI2_SYSPARM_SetEGPRSMSClass_Req_t}
+	MSG_SYSPARAM_SET_EGPRS_MSCLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x120,	///<Payload type {::CAPI2_SYSPARM_SetEGPRSMSClass_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3872,7 +3824,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYSPARM_SetGPRSMSClass 
 	**/
-	MSG_SYSPARAM_SET_GPRS_MSCLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x122,	///<Payload type {CAPI2_SYSPARM_SetGPRSMSClass_Req_t}
+	MSG_SYSPARAM_SET_GPRS_MSCLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x122,	///<Payload type {::CAPI2_SYSPARM_SetGPRSMSClass_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3888,7 +3840,7 @@ typedef enum
 	 /** 
 	api is CAPI2_TestCmds 
 	**/
-	MSG_CAPI2_TEST_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x126,	///<Payload type {CAPI2_TestCmds_Req_t}
+	MSG_CAPI2_TEST_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x126,	///<Payload type {::CAPI2_TestCmds_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3896,7 +3848,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendPlayToneRes 
 	**/
-	MSG_STK_SEND_PLAYTONE_RES_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x128,	///<Payload type {CAPI2_SatkApi_SendPlayToneRes_Req_t}
+	MSG_STK_SEND_PLAYTONE_RES_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x128,	///<Payload type {::CAPI2_SatkApi_SendPlayToneRes_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3904,7 +3856,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SATK_SendSetupCallRes 
 	**/
-	MSG_STK_SETUP_CALL_RES_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x12A,	///<Payload type {CAPI2_SATK_SendSetupCallRes_Req_t}
+	MSG_STK_SETUP_CALL_RES_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x12A,	///<Payload type {::CAPI2_SATK_SendSetupCallRes_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3912,7 +3864,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_SetFdnCheck 
 	**/
-	MSG_PBK_SET_FDN_CHECK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x12C,	///<Payload type {CAPI2_PbkApi_SetFdnCheck_Req_t}
+	MSG_PBK_SET_FDN_CHECK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x12C,	///<Payload type {::CAPI2_PbkApi_SetFdnCheck_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3936,7 +3888,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SMS_ConfigureMEStorage 
 	**/
-	MSG_SMS_CONFIGUREMESTORAGE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x136,	///<Payload type {CAPI2_SMS_ConfigureMEStorage_Req_t}
+	MSG_SMS_CONFIGUREMESTORAGE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x136,	///<Payload type {::CAPI2_SMS_ConfigureMEStorage_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3944,7 +3896,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MsDbApi_SetElement 
 	**/
-	MSG_MS_SET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x138,	///<Payload type {CAPI2_MsDbApi_SetElement_Req_t}
+	MSG_MS_SET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x138,	///<Payload type {::CAPI2_MsDbApi_SetElement_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -3952,7 +3904,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MsDbApi_GetElement 
 	**/
-	MSG_MS_GET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x13A,	///<Payload type {CAPI2_MsDbApi_GetElement_Req_t}
+	MSG_MS_GET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x13A,	///<Payload type {::CAPI2_MsDbApi_GetElement_Req_t}
 	 /** 
 	payload is ::CAPI2_MS_Element_t 
 	**/
@@ -3960,7 +3912,7 @@ typedef enum
 	 /** 
 	api is CAPI2_USimApi_IsApplicationSupported 
 	**/
-	MSG_USIM_IS_APP_SUPPORTED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x13C,	///<Payload type {CAPI2_USimApi_IsApplicationSupported_Req_t}
+	MSG_USIM_IS_APP_SUPPORTED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x13C,	///<Payload type {::CAPI2_USimApi_IsApplicationSupported_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3968,7 +3920,7 @@ typedef enum
 	 /** 
 	api is CAPI2_USimApi_IsAllowedAPN 
 	**/
-	MSG_USIM_IS_APN_ALLOWED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x13E,	///<Payload type {CAPI2_USimApi_IsAllowedAPN_Req_t}
+	MSG_USIM_IS_APN_ALLOWED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x13E,	///<Payload type {::CAPI2_USimApi_IsAllowedAPN_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -3984,7 +3936,7 @@ typedef enum
 	 /** 
 	api is CAPI2_USimApi_GetAPNEntry 
 	**/
-	MSG_USIM_GET_APN_ENTRY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x142,	///<Payload type {CAPI2_USimApi_GetAPNEntry_Req_t}
+	MSG_USIM_GET_APN_ENTRY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x142,	///<Payload type {::CAPI2_USimApi_GetAPNEntry_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -3992,7 +3944,7 @@ typedef enum
 	 /** 
 	api is CAPI2_USimApi_IsEstServActivated 
 	**/
-	MSG_USIM_IS_EST_SERV_ACTIVATED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x144,	///<Payload type {CAPI2_USimApi_IsEstServActivated_Req_t}
+	MSG_USIM_IS_EST_SERV_ACTIVATED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x144,	///<Payload type {::CAPI2_USimApi_IsEstServActivated_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4000,11 +3952,11 @@ typedef enum
 	 /** 
 	api is CAPI2_USimApi_SendSetEstServReq 
 	**/
-	MSG_SIM_SET_EST_SERV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x146,	///<Payload type {CAPI2_USimApi_SendSetEstServReq_Req_t}
+	MSG_SIM_SET_EST_SERV_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x146,	///<Payload type {::CAPI2_USimApi_SendSetEstServReq_Req_t}
 	 /** 
 	api is CAPI2_USimApi_SendWriteAPNReq 
 	**/
-	MSG_SIM_UPDATE_ONE_APN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x148,	///<Payload type {CAPI2_USimApi_SendWriteAPNReq_Req_t}
+	MSG_SIM_UPDATE_ONE_APN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x148,	///<Payload type {::CAPI2_USimApi_SendWriteAPNReq_Req_t}
 	 /** 
 	api is CAPI2_USimApi_SendDeleteAllAPNReq 
 	**/
@@ -4044,7 +3996,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_SetMEPowerClass 
 	**/
-	MSG_MS_SETMEPOWER_CLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x154,	///<Payload type {CAPI2_MS_SetMEPowerClass_Req_t}
+	MSG_MS_SETMEPOWER_CLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x154,	///<Payload type {::CAPI2_MS_SetMEPowerClass_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4052,7 +4004,7 @@ typedef enum
 	 /** 
 	api is CAPI2_USimApi_GetServiceStatus 
 	**/
-	MSG_USIM_GET_SERVICE_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x156,	///<Payload type {CAPI2_USimApi_GetServiceStatus_Req_t}
+	MSG_USIM_GET_SERVICE_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x156,	///<Payload type {::CAPI2_USimApi_GetServiceStatus_Req_t}
 	 /** 
 	payload is ::SIMServiceStatus_t 
 	**/
@@ -4060,7 +4012,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_IsAllowedAPN 
 	**/
-	MSG_SIM_IS_ALLOWED_APN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x158,	///<Payload type {CAPI2_SimApi_IsAllowedAPN_Req_t}
+	MSG_SIM_IS_ALLOWED_APN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x158,	///<Payload type {::CAPI2_SimApi_IsAllowedAPN_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4068,7 +4020,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_GetSmsMaxCapacity 
 	**/
-	MSG_SMS_GETSMSMAXCAPACITY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x15A,	///<Payload type {CAPI2_SmsApi_GetSmsMaxCapacity_Req_t}
+	MSG_SMS_GETSMSMAXCAPACITY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x15A,	///<Payload type {::CAPI2_SmsApi_GetSmsMaxCapacity_Req_t}
 	 /** 
 	payload is ::UInt16 
 	**/
@@ -4092,7 +4044,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendPreferredPlmnUpdateInd 
 	**/
-	MSG_SIM_SEND_PLMN_UPDATE_IND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x160,	///<Payload type {CAPI2_SimApi_SendPreferredPlmnUpdateInd_Req_t}
+	MSG_SIM_SEND_PLMN_UPDATE_IND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x160,	///<Payload type {::CAPI2_SimApi_SendPreferredPlmnUpdateInd_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4108,11 +4060,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendSetBdnReq 
 	**/
-	MSG_SIM_SET_BDN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x164,	///<Payload type {CAPI2_SimApi_SendSetBdnReq_Req_t}
+	MSG_SIM_SET_BDN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x164,	///<Payload type {::CAPI2_SimApi_SendSetBdnReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_PowerOnOffCard 
 	**/
-	MSG_SIM_POWER_ON_OFF_CARD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x166,	///<Payload type {CAPI2_SimApi_PowerOnOffCard_Req_t}
+	MSG_SIM_POWER_ON_OFF_CARD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x166,	///<Payload type {::CAPI2_SimApi_PowerOnOffCard_Req_t}
 	 /** 
 	api is CAPI2_SimApi_GetRawAtr 
 	**/
@@ -4120,7 +4072,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_Set_Protocol 
 	**/
-	MSG_SIM_SET_PROTOCOL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x16A,	///<Payload type {CAPI2_SimApi_Set_Protocol_Req_t}
+	MSG_SIM_SET_PROTOCOL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x16A,	///<Payload type {::CAPI2_SimApi_Set_Protocol_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4136,7 +4088,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SendGenericApduCmd 
 	**/
-	MSG_SIM_SEND_GENERIC_APDU_CMD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x16E,	///<Payload type {CAPI2_SimApi_SendGenericApduCmd_Req_t}
+	MSG_SIM_SEND_GENERIC_APDU_CMD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x16E,	///<Payload type {::CAPI2_SimApi_SendGenericApduCmd_Req_t}
 	 /** 
 	api is CAPI2_SimApi_TerminateXferApdu 
 	**/
@@ -4156,7 +4108,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SetPlmnSelectRat 
 	**/
-	MSG_SET_PLMN_SELECT_RAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x174,	///<Payload type {CAPI2_NetRegApi_SetPlmnSelectRat_Req_t}
+	MSG_SET_PLMN_SELECT_RAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x174,	///<Payload type {::CAPI2_NetRegApi_SetPlmnSelectRat_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4184,35 +4136,35 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_SendUsimHdkUpdateReq 
 	**/
-	MSG_WRITE_USIM_PBK_HDK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x17C,	///<Payload type {CAPI2_PbkApi_SendUsimHdkUpdateReq_Req_t}
+	MSG_WRITE_USIM_PBK_HDK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x17C,	///<Payload type {::CAPI2_PbkApi_SendUsimHdkUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUsimAasReadReq 
 	**/
-	MSG_READ_USIM_PBK_ALPHA_AAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x17E,	///<Payload type {CAPI2_PbkApi_SendUsimAasReadReq_Req_t}
+	MSG_READ_USIM_PBK_ALPHA_AAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x17E,	///<Payload type {::CAPI2_PbkApi_SendUsimAasReadReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUsimAasUpdateReq 
 	**/
-	MSG_WRITE_USIM_PBK_ALPHA_AAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x180,	///<Payload type {CAPI2_PbkApi_SendUsimAasUpdateReq_Req_t}
+	MSG_WRITE_USIM_PBK_ALPHA_AAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x180,	///<Payload type {::CAPI2_PbkApi_SendUsimAasUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUsimGasReadReq 
 	**/
-	MSG_READ_USIM_PBK_ALPHA_GAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x182,	///<Payload type {CAPI2_PbkApi_SendUsimGasReadReq_Req_t}
+	MSG_READ_USIM_PBK_ALPHA_GAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x182,	///<Payload type {::CAPI2_PbkApi_SendUsimGasReadReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUsimGasUpdateReq 
 	**/
-	MSG_WRITE_USIM_PBK_ALPHA_GAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x184,	///<Payload type {CAPI2_PbkApi_SendUsimGasUpdateReq_Req_t}
+	MSG_WRITE_USIM_PBK_ALPHA_GAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x184,	///<Payload type {::CAPI2_PbkApi_SendUsimGasUpdateReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUsimAasInfoReq 
 	**/
-	MSG_GET_USIM_PBK_ALPHA_INFO_AAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x186,	///<Payload type {CAPI2_PbkApi_SendUsimAasInfoReq_Req_t}
+	MSG_GET_USIM_PBK_ALPHA_INFO_AAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x186,	///<Payload type {::CAPI2_PbkApi_SendUsimAasInfoReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUsimGasInfoReq 
 	**/
-	MSG_GET_USIM_PBK_ALPHA_INFO_GAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x188,	///<Payload type {CAPI2_PbkApi_SendUsimGasInfoReq_Req_t}
+	MSG_GET_USIM_PBK_ALPHA_INFO_GAS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x188,	///<Payload type {::CAPI2_PbkApi_SendUsimGasInfoReq_Req_t}
 	 /** 
 	api is CAPI2_DiagApi_MeasurmentReportReq 
 	**/
-	MSG_DIAG_MEASURE_REPORT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x18C,	///<Payload type {CAPI2_DiagApi_MeasurmentReportReq_Req_t}
+	MSG_DIAG_MEASURE_REPORT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x18C,	///<Payload type {::CAPI2_DiagApi_MeasurmentReportReq_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4268,7 +4220,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendSMSCommandTxtReq 
 	**/
-	MSG_SMS_SEND_COMMAND_TXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A0,	///<Payload type {CAPI2_SmsApi_SendSMSCommandTxtReq_Req_t}
+	MSG_SMS_SEND_COMMAND_TXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A0,	///<Payload type {::CAPI2_SmsApi_SendSMSCommandTxtReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4276,7 +4228,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendSMSCommandPduReq 
 	**/
-	MSG_SMS_SEND_COMMAND_PDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A2,	///<Payload type {CAPI2_SmsApi_SendSMSCommandPduReq_Req_t}
+	MSG_SMS_SEND_COMMAND_PDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A2,	///<Payload type {::CAPI2_SmsApi_SendSMSCommandPduReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4284,7 +4236,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendPDUAckToNetwork 
 	**/
-	MSG_SMS_SEND_ACKTONETWORK_PDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A4,	///<Payload type {CAPI2_SmsApi_SendPDUAckToNetwork_Req_t}
+	MSG_SMS_SEND_ACKTONETWORK_PDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A4,	///<Payload type {::CAPI2_SmsApi_SendPDUAckToNetwork_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4292,7 +4244,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_StartCellBroadcastWithChnlReq 
 	**/
-	MSG_SMS_START_CB_WITHCHNL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A6,	///<Payload type {CAPI2_SmsApi_StartCellBroadcastWithChnlReq_Req_t}
+	MSG_SMS_START_CB_WITHCHNL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A6,	///<Payload type {::CAPI2_SmsApi_StartCellBroadcastWithChnlReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4300,7 +4252,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetMoSmsTpMr 
 	**/
-	MSG_SMS_SET_TPMR_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A8,	///<Payload type {CAPI2_SmsApi_SetMoSmsTpMr_Req_t}
+	MSG_SMS_SET_TPMR_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1A8,	///<Payload type {::CAPI2_SmsApi_SetMoSmsTpMr_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4308,7 +4260,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SIMLOCKApi_SetStatus 
 	**/
-	MSG_SIMLOCK_SET_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1AA,	///<Payload type {CAPI2_SIMLOCKApi_SetStatus_Req_t}
+	MSG_SIMLOCK_SET_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1AA,	///<Payload type {::CAPI2_SIMLOCKApi_SetStatus_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4316,7 +4268,7 @@ typedef enum
 	 /** 
 	api is CAPI2_DIAG_ApiCellLockReq 
 	**/
-	MSG_DIAG_CELLLOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1AE,	///<Payload type {CAPI2_DIAG_ApiCellLockReq_Req_t}
+	MSG_DIAG_CELLLOCK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1AE,	///<Payload type {::CAPI2_DIAG_ApiCellLockReq_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4332,7 +4284,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_SetRuaReadyTimer 
 	**/
-	MSG_MS_SET_RUA_READY_TIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1B2,	///<Payload type {CAPI2_MS_SetRuaReadyTimer_Req_t}
+	MSG_MS_SET_RUA_READY_TIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1B2,	///<Payload type {::CAPI2_MS_SetRuaReadyTimer_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4348,7 +4300,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MsDbApi_SYS_EnableCellInfoMsg 
 	**/
-	MSG_SYS_ENABLE_CELL_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1CC,	///<Payload type {CAPI2_MsDbApi_SYS_EnableCellInfoMsg_Req_t}
+	MSG_SYS_ENABLE_CELL_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1CC,	///<Payload type {::CAPI2_MsDbApi_SYS_EnableCellInfoMsg_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4356,7 +4308,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_L1_bb_isLocked 
 	**/
-	MSG_L1_BB_ISLOCKED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1CE,	///<Payload type {CAPI2_LCS_L1_bb_isLocked_Req_t}
+	MSG_L1_BB_ISLOCKED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1CE,	///<Payload type {::CAPI2_LCS_L1_bb_isLocked_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4364,7 +4316,7 @@ typedef enum
 	 /** 
 	api is CAPI2_DIALSTR_ParseGetCallType 
 	**/
-	MSG_UTIL_DIAL_STR_PARSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1D2,	///<Payload type {CAPI2_DIALSTR_ParseGetCallType_Req_t}
+	MSG_UTIL_DIAL_STR_PARSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1D2,	///<Payload type {::CAPI2_DIALSTR_ParseGetCallType_Req_t}
 	 /** 
 	payload is ::CallType_t 
 	**/
@@ -4372,7 +4324,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_FttCalcDeltaTime 
 	**/
-	MSG_LCS_FTT_DELTA_TIME_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1D4,	///<Payload type {CAPI2_LCS_FttCalcDeltaTime_Req_t}
+	MSG_LCS_FTT_DELTA_TIME_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1D4,	///<Payload type {::CAPI2_LCS_FttCalcDeltaTime_Req_t}
 	 /** 
 	payload is ::UInt32 
 	**/
@@ -4380,7 +4332,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_ForcedReadyStateReq 
 	**/
-	MSG_MS_FORCEDREADYSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1D8,	///<Payload type {CAPI2_NetRegApi_ForcedReadyStateReq_Req_t}
+	MSG_MS_FORCEDREADYSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1D8,	///<Payload type {::CAPI2_NetRegApi_ForcedReadyStateReq_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4394,9 +4346,9 @@ typedef enum
 	**/
 	MSG_SS_RESETSSALSFLAG_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x1DB,
 	 /** 
-	api is CAPI2_SimLockApi_GetStatus 
+	api is CAPI2_SIMLOCK_GetStatus 
 	**/
-	MSG_SIMLOCK_GET_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1DC,	///<Payload type {CAPI2_SimLockApi_GetStatus_Req_t}
+	MSG_SIMLOCK_GET_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1DC,	///<Payload type {::CAPI2_SIMLOCK_GetStatus_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4404,7 +4356,7 @@ typedef enum
 	 /** 
 	api is CAPI2_DIALSTR_IsValidString 
 	**/
-	MSG_DIALSTR_IS_VALID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E0,	///<Payload type {CAPI2_DIALSTR_IsValidString_Req_t}
+	MSG_DIALSTR_IS_VALID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E0,	///<Payload type {::CAPI2_DIALSTR_IsValidString_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4412,7 +4364,7 @@ typedef enum
 	 /** 
 	api is CAPI2_UTIL_Cause2NetworkCause 
 	**/
-	MSG_UTIL_CONVERT_NTWK_CAUSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E2,	///<Payload type {CAPI2_UTIL_Cause2NetworkCause_Req_t}
+	MSG_UTIL_CONVERT_NTWK_CAUSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E2,	///<Payload type {::CAPI2_UTIL_Cause2NetworkCause_Req_t}
 	 /** 
 	payload is ::NetworkCause_t 
 	**/
@@ -4420,7 +4372,7 @@ typedef enum
 	 /** 
 	api is CAPI2_UTIL_ErrCodeToNetCause 
 	**/
-	MSG_UTIL_CONVERT_ERRCODE_NTWK_CAUSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E4,	///<Payload type {CAPI2_UTIL_ErrCodeToNetCause_Req_t}
+	MSG_UTIL_CONVERT_ERRCODE_NTWK_CAUSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E4,	///<Payload type {::CAPI2_UTIL_ErrCodeToNetCause_Req_t}
 	 /** 
 	payload is ::NetworkCause_t 
 	**/
@@ -4428,7 +4380,7 @@ typedef enum
 	 /** 
 	api is CAPI2_IsGprsDialStr 
 	**/
-	MSG_ISGPRS_DIAL_STR_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E6,	///<Payload type {CAPI2_IsGprsDialStr_Req_t}
+	MSG_ISGPRS_DIAL_STR_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E6,	///<Payload type {::CAPI2_IsGprsDialStr_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4436,7 +4388,7 @@ typedef enum
 	 /** 
 	api is CAPI2_UTIL_GetNumOffsetInSsStr 
 	**/
-	MSG_GET_NUM_SS_STR_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E8,	///<Payload type {CAPI2_UTIL_GetNumOffsetInSsStr_Req_t}
+	MSG_GET_NUM_SS_STR_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1E8,	///<Payload type {::CAPI2_UTIL_GetNumOffsetInSsStr_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -4444,7 +4396,7 @@ typedef enum
 	 /** 
 	api is CAPI2_IsPppLoopbackDialStr 
 	**/
-	MSG_DIALSTR_IS_PPPLOOPBACK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1EE,	///<Payload type {CAPI2_IsPppLoopbackDialStr_Req_t}
+	MSG_DIALSTR_IS_PPPLOOPBACK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1EE,	///<Payload type {::CAPI2_IsPppLoopbackDialStr_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4460,7 +4412,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYSPARM_SetHSDPAPHYCategory 
 	**/
-	MSG_SYSPARM_SET_HSDPA_PHY_CAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1F2,	///<Payload type {CAPI2_SYSPARM_SetHSDPAPHYCategory_Req_t}
+	MSG_SYSPARM_SET_HSDPA_PHY_CAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1F2,	///<Payload type {::CAPI2_SYSPARM_SetHSDPAPHYCategory_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4476,7 +4428,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_ConvertSmsMSMsgType 
 	**/
-	MSG_SMS_CONVERT_MSGTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1F6,	///<Payload type {CAPI2_SmsApi_ConvertSmsMSMsgType_Req_t}
+	MSG_SMS_CONVERT_MSGTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x1F6,	///<Payload type {::CAPI2_SmsApi_ConvertSmsMSMsgType_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -4516,7 +4468,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYSPARM_SetHSUPAPHYCategory 
 	**/
-	MSG_SYSPARM_SET_HSUPA_PHY_CAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x208,	///<Payload type {CAPI2_SYSPARM_SetHSUPAPHYCategory_Req_t}
+	MSG_SYSPARM_SET_HSUPA_PHY_CAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x208,	///<Payload type {::CAPI2_SYSPARM_SetHSUPAPHYCategory_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4532,7 +4484,7 @@ typedef enum
 	 /** 
 	api is CAPI2_InterTaskMsgToCP 
 	**/
-	MSG_INTERTASK_MSG_TO_CP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x20C,	///<Payload type {CAPI2_InterTaskMsgToCP_Req_t}
+	MSG_INTERTASK_MSG_TO_CP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x20C,	///<Payload type {::CAPI2_InterTaskMsgToCP_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4540,7 +4492,7 @@ typedef enum
 	 /** 
 	api is CAPI2_InterTaskMsgToAP 
 	**/
-	MSG_INTERTASK_MSG_TO_AP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x20E,	///<Payload type {CAPI2_InterTaskMsgToAP_Req_t}
+	MSG_INTERTASK_MSG_TO_AP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x20E,	///<Payload type {::CAPI2_InterTaskMsgToAP_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4588,7 +4540,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallState 
 	**/
-	MSG_CC_GETCALLSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x21C,	///<Payload type {CAPI2_CcApi_GetCallState_Req_t}
+	MSG_CC_GETCALLSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x21C,	///<Payload type {::CAPI2_CcApi_GetCallState_Req_t}
 	 /** 
 	payload is ::CCallState_t 
 	**/
@@ -4596,7 +4548,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallType 
 	**/
-	MSG_CC_GETCALLTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x21E,	///<Payload type {CAPI2_CcApi_GetCallType_Req_t}
+	MSG_CC_GETCALLTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x21E,	///<Payload type {::CAPI2_CcApi_GetCallType_Req_t}
 	 /** 
 	payload is ::CCallType_t 
 	**/
@@ -4612,7 +4564,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallNumber 
 	**/
-	MSG_CC_GETCALLNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x222,	///<Payload type {CAPI2_CcApi_GetCallNumber_Req_t}
+	MSG_CC_GETCALLNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x222,	///<Payload type {::CAPI2_CcApi_GetCallNumber_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4620,7 +4572,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallingInfo 
 	**/
-	MSG_CC_GETCALLINGINFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x224,	///<Payload type {CAPI2_CcApi_GetCallingInfo_Req_t}
+	MSG_CC_GETCALLINGINFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x224,	///<Payload type {::CAPI2_CcApi_GetCallingInfo_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4708,7 +4660,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetConnectedLineID 
 	**/
-	MSG_CC_GETCONNECTEDLINEID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x23A,	///<Payload type {CAPI2_CcApi_GetConnectedLineID_Req_t}
+	MSG_CC_GETCONNECTEDLINEID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x23A,	///<Payload type {::CAPI2_CcApi_GetConnectedLineID_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -4716,7 +4668,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallPresent 
 	**/
-	MSG_CC_GET_CALL_PRESENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x23C,	///<Payload type {CAPI2_CcApi_GetCallPresent_Req_t}
+	MSG_CC_GET_CALL_PRESENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x23C,	///<Payload type {::CAPI2_CcApi_GetCallPresent_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4724,7 +4676,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallIndexInThisState 
 	**/
-	MSG_CC_GET_INDEX_STATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x23E,	///<Payload type {CAPI2_CcApi_GetCallIndexInThisState_Req_t}
+	MSG_CC_GET_INDEX_STATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x23E,	///<Payload type {::CAPI2_CcApi_GetCallIndexInThisState_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4732,7 +4684,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_IsMultiPartyCall 
 	**/
-	MSG_CC_ISMULTIPARTYCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x240,	///<Payload type {CAPI2_CcApi_IsMultiPartyCall_Req_t}
+	MSG_CC_ISMULTIPARTYCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x240,	///<Payload type {::CAPI2_CcApi_IsMultiPartyCall_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4748,7 +4700,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_IsConnectedLineIDPresentAllowed 
 	**/
-	MSG_CC_ISCONNECTEDLINEIDPRESENTALLOWED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x244,	///<Payload type {CAPI2_CcApi_IsConnectedLineIDPresentAllowed_Req_t}
+	MSG_CC_ISCONNECTEDLINEIDPRESENTALLOWED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x244,	///<Payload type {::CAPI2_CcApi_IsConnectedLineIDPresentAllowed_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4756,7 +4708,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCurrentCallDurationInMilliSeconds 
 	**/
-	MSG_CC_GETCURRENTCALLDURATIONINMILLISECONDS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x246,	///<Payload type {CAPI2_CcApi_GetCurrentCallDurationInMilliSeconds_Req_t}
+	MSG_CC_GETCURRENTCALLDURATIONINMILLISECONDS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x246,	///<Payload type {::CAPI2_CcApi_GetCurrentCallDurationInMilliSeconds_Req_t}
 	 /** 
 	payload is ::UInt32 
 	**/
@@ -4804,7 +4756,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallClientInfo 
 	**/
-	MSG_CC_GETCALLCLIENT_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x252,	///<Payload type {CAPI2_CcApi_GetCallClientInfo_Req_t}
+	MSG_CC_GETCALLCLIENT_INFO_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x252,	///<Payload type {::CAPI2_CcApi_GetCallClientInfo_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4812,7 +4764,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCallClientID 
 	**/
-	MSG_CC_GETCALLCLIENTID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x254,	///<Payload type {CAPI2_CcApi_GetCallClientID_Req_t}
+	MSG_CC_GETCALLCLIENTID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x254,	///<Payload type {::CAPI2_CcApi_GetCallClientID_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -4820,7 +4772,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetTypeAdd 
 	**/
-	MSG_CC_GETTYPEADD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x256,	///<Payload type {CAPI2_CcApi_GetTypeAdd_Req_t}
+	MSG_CC_GETTYPEADD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x256,	///<Payload type {::CAPI2_CcApi_GetTypeAdd_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -4828,7 +4780,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_SetVoiceCallAutoReject 
 	**/
-	MSG_CC_SETVOICECALLAUTOREJECT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x258,	///<Payload type {CAPI2_CcApi_SetVoiceCallAutoReject_Req_t}
+	MSG_CC_SETVOICECALLAUTOREJECT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x258,	///<Payload type {::CAPI2_CcApi_SetVoiceCallAutoReject_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4844,7 +4796,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_SetTTYCall 
 	**/
-	MSG_CC_SETTTYCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x25C,	///<Payload type {CAPI2_CcApi_SetTTYCall_Req_t}
+	MSG_CC_SETTTYCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x25C,	///<Payload type {::CAPI2_CcApi_SetTTYCall_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4860,7 +4812,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_IsSimOriginedCall 
 	**/
-	MSG_CC_ISSIMORIGINEDCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x260,	///<Payload type {CAPI2_CcApi_IsSimOriginedCall_Req_t}
+	MSG_CC_ISSIMORIGINEDCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x260,	///<Payload type {::CAPI2_CcApi_IsSimOriginedCall_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4868,7 +4820,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_SetVideoCallParam 
 	**/
-	MSG_CC_SETVIDEOCALLPARAM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x262,	///<Payload type {CAPI2_CcApi_SetVideoCallParam_Req_t}
+	MSG_CC_SETVIDEOCALLPARAM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x262,	///<Payload type {::CAPI2_CcApi_SetVideoCallParam_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4884,7 +4836,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetCCM 
 	**/
-	MSG_CC_GETCCM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x266,	///<Payload type {CAPI2_CcApi_GetCCM_Req_t}
+	MSG_CC_GETCCM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x266,	///<Payload type {::CAPI2_CcApi_GetCCM_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4892,7 +4844,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_SendDtmfTone 
 	**/
-	MSG_CCAPI_SENDDTMF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x268,	///<Payload type {CAPI2_CcApi_SendDtmfTone_Req_t}
+	MSG_CCAPI_SENDDTMF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x268,	///<Payload type {::CAPI2_CcApi_SendDtmfTone_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4900,7 +4852,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_StopDtmfTone 
 	**/
-	MSG_CCAPI_STOPDTMF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26A,	///<Payload type {CAPI2_CcApi_StopDtmfTone_Req_t}
+	MSG_CCAPI_STOPDTMF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26A,	///<Payload type {::CAPI2_CcApi_StopDtmfTone_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4908,7 +4860,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_AbortDtmf 
 	**/
-	MSG_CCAPI_ABORTDTMF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26C,	///<Payload type {CAPI2_CcApi_AbortDtmf_Req_t}
+	MSG_CCAPI_ABORTDTMF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26C,	///<Payload type {::CAPI2_CcApi_AbortDtmf_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4916,7 +4868,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_SetDtmfToneTimer 
 	**/
-	MSG_CCAPI_SETDTMFTIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26E,	///<Payload type {CAPI2_CcApi_SetDtmfToneTimer_Req_t}
+	MSG_CCAPI_SETDTMFTIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x26E,	///<Payload type {::CAPI2_CcApi_SetDtmfToneTimer_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4924,7 +4876,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_ResetDtmfToneTimer 
 	**/
-	MSG_CCAPI_RESETDTMFTIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x270,	///<Payload type {CAPI2_CcApi_ResetDtmfToneTimer_Req_t}
+	MSG_CCAPI_RESETDTMFTIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x270,	///<Payload type {::CAPI2_CcApi_ResetDtmfToneTimer_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -4932,7 +4884,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetDtmfToneTimer 
 	**/
-	MSG_CCAPI_GETDTMFTIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x272,	///<Payload type {CAPI2_CcApi_GetDtmfToneTimer_Req_t}
+	MSG_CCAPI_GETDTMFTIMER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x272,	///<Payload type {::CAPI2_CcApi_GetDtmfToneTimer_Req_t}
 	 /** 
 	payload is ::Ticks_t 
 	**/
@@ -4940,7 +4892,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetTiFromCallIndex 
 	**/
-	MSG_CCAPI_GETTIFROMCALLINDEX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x274,	///<Payload type {CAPI2_CcApi_GetTiFromCallIndex_Req_t}
+	MSG_CCAPI_GETTIFROMCALLINDEX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x274,	///<Payload type {::CAPI2_CcApi_GetTiFromCallIndex_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4948,7 +4900,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_IsSupportedBC 
 	**/
-	MSG_CCAPI_IS_SUPPORTEDBC_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x276,	///<Payload type {CAPI2_CcApi_IsSupportedBC_Req_t}
+	MSG_CCAPI_IS_SUPPORTEDBC_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x276,	///<Payload type {::CAPI2_CcApi_IsSupportedBC_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -4956,7 +4908,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetBearerCapability 
 	**/
-	MSG_CCAPI_IS_BEARER_CAPABILITY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x278,	///<Payload type {CAPI2_CcApi_GetBearerCapability_Req_t}
+	MSG_CCAPI_IS_BEARER_CAPABILITY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x278,	///<Payload type {::CAPI2_CcApi_GetBearerCapability_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4964,7 +4916,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendSMSSrvCenterNumberUpdateReq 
 	**/
-	MSG_SMS_SENDSMSSRVCENTERNUMBERUPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x27A,	///<Payload type {CAPI2_SmsApi_SendSMSSrvCenterNumberUpdateReq_Req_t}
+	MSG_SMS_SENDSMSSRVCENTERNUMBERUPDATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x27A,	///<Payload type {::CAPI2_SmsApi_SendSMSSrvCenterNumberUpdateReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4972,7 +4924,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_GetSMSrvCenterNumber 
 	**/
-	MSG_SMS_GETSMSSRVCENTERNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x27C,	///<Payload type {CAPI2_SmsApi_GetSMSrvCenterNumber_Req_t}
+	MSG_SMS_GETSMSSRVCENTERNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x27C,	///<Payload type {::CAPI2_SmsApi_GetSMSrvCenterNumber_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -4996,7 +4948,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_GetSmsStoredState 
 	**/
-	MSG_SMS_GETSMSSTOREDSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x282,	///<Payload type {CAPI2_SmsApi_GetSmsStoredState_Req_t}
+	MSG_SMS_GETSMSSTOREDSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x282,	///<Payload type {::CAPI2_SmsApi_GetSmsStoredState_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5004,27 +4956,27 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_WriteSMSPduReq 
 	**/
-	MSG_SMS_WRITESMSPDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x284,	///<Payload type {CAPI2_SmsApi_WriteSMSPduReq_Req_t}
+	MSG_SMS_WRITESMSPDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x284,	///<Payload type {::CAPI2_SmsApi_WriteSMSPduReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_WriteSMSReq 
 	**/
-	MSG_SMS_WRITESMSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x286,	///<Payload type {CAPI2_SmsApi_WriteSMSReq_Req_t}
+	MSG_SMS_WRITESMSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x286,	///<Payload type {::CAPI2_SmsApi_WriteSMSReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_SendSMSReq 
 	**/
-	MSG_SMS_SENDSMSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x288,	///<Payload type {CAPI2_SmsApi_SendSMSReq_Req_t}
+	MSG_SMS_SENDSMSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x288,	///<Payload type {::CAPI2_SmsApi_SendSMSReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_SendSMSPduReq 
 	**/
-	MSG_SMS_SENDSMSPDUREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28A,	///<Payload type {CAPI2_SmsApi_SendSMSPduReq_Req_t}
+	MSG_SMS_SENDSMSPDUREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28A,	///<Payload type {::CAPI2_SmsApi_SendSMSPduReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_SendStoredSmsReq 
 	**/
-	MSG_SMS_SENDSTOREDSMSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28C,	///<Payload type {CAPI2_SmsApi_SendStoredSmsReq_Req_t}
+	MSG_SMS_SENDSTOREDSMSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28C,	///<Payload type {::CAPI2_SmsApi_SendStoredSmsReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_WriteSMSPduToSIMReq 
 	**/
-	MSG_SMS_WRITESMSPDUTOSIM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28E,	///<Payload type {CAPI2_SmsApi_WriteSMSPduToSIMReq_Req_t}
+	MSG_SMS_WRITESMSPDUTOSIM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x28E,	///<Payload type {::CAPI2_SmsApi_WriteSMSPduToSIMReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_GetLastTpMr 
 	**/
@@ -5052,7 +5004,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamProcId 
 	**/
-	MSG_SMS_SETSMSTXPARAMPROCID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x296,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamProcId_Req_t}
+	MSG_SMS_SETSMSTXPARAMPROCID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x296,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamProcId_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5060,7 +5012,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamCodingType 
 	**/
-	MSG_SMS_SETSMSTXPARAMCODINGTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x298,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamCodingType_Req_t}
+	MSG_SMS_SETSMSTXPARAMCODINGTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x298,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamCodingType_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5068,7 +5020,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamValidPeriod 
 	**/
-	MSG_SMS_SETSMSTXPARAMVALIDPERIOD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x29A,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamValidPeriod_Req_t}
+	MSG_SMS_SETSMSTXPARAMVALIDPERIOD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x29A,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamValidPeriod_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5076,7 +5028,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamCompression 
 	**/
-	MSG_SMS_SETSMSTXPARAMCOMPRESSION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x29C,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamCompression_Req_t}
+	MSG_SMS_SETSMSTXPARAMCOMPRESSION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x29C,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamCompression_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5084,7 +5036,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamReplyPath 
 	**/
-	MSG_SMS_SETSMSTXPARAMREPLYPATH_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x29E,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamReplyPath_Req_t}
+	MSG_SMS_SETSMSTXPARAMREPLYPATH_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x29E,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamReplyPath_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5092,7 +5044,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamUserDataHdrInd 
 	**/
-	MSG_SMS_SETSMSTXPARAMUSERDATAHDRIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A0,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamUserDataHdrInd_Req_t}
+	MSG_SMS_SETSMSTXPARAMUSERDATAHDRIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A0,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamUserDataHdrInd_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5100,7 +5052,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamStatusRptReqFlag 
 	**/
-	MSG_SMS_SETSMSTXPARAMSTATUSRPTREQFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A2,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamStatusRptReqFlag_Req_t}
+	MSG_SMS_SETSMSTXPARAMSTATUSRPTREQFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A2,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamStatusRptReqFlag_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5108,7 +5060,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsTxParamRejDupl 
 	**/
-	MSG_SMS_SETSMSTXPARAMREJDUPL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A4,	///<Payload type {CAPI2_SmsApi_SetSmsTxParamRejDupl_Req_t}
+	MSG_SMS_SETSMSTXPARAMREJDUPL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A4,	///<Payload type {::CAPI2_SmsApi_SetSmsTxParamRejDupl_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5116,19 +5068,19 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_DeleteSmsMsgByIndexReq 
 	**/
-	MSG_SMS_DELETESMSMSGBYINDEX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A6,	///<Payload type {CAPI2_SmsApi_DeleteSmsMsgByIndexReq_Req_t}
+	MSG_SMS_DELETESMSMSGBYINDEX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A6,	///<Payload type {::CAPI2_SmsApi_DeleteSmsMsgByIndexReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_ReadSmsMsgReq 
 	**/
-	MSG_SMS_READSMSMSG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A8,	///<Payload type {CAPI2_SmsApi_ReadSmsMsgReq_Req_t}
+	MSG_SMS_READSMSMSG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2A8,	///<Payload type {::CAPI2_SmsApi_ReadSmsMsgReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_ListSmsMsgReq 
 	**/
-	MSG_SMS_LISTSMSMSG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2AA,	///<Payload type {CAPI2_SmsApi_ListSmsMsgReq_Req_t}
+	MSG_SMS_LISTSMSMSG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2AA,	///<Payload type {::CAPI2_SmsApi_ListSmsMsgReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_SetNewMsgDisplayPref 
 	**/
-	MSG_SMS_SETNEWMSGDISPLAYPREF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2AC,	///<Payload type {CAPI2_SmsApi_SetNewMsgDisplayPref_Req_t}
+	MSG_SMS_SETNEWMSGDISPLAYPREF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2AC,	///<Payload type {::CAPI2_SmsApi_SetNewMsgDisplayPref_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5136,7 +5088,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_GetNewMsgDisplayPref 
 	**/
-	MSG_SMS_GETNEWMSGDISPLAYPREF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2AE,	///<Payload type {CAPI2_SmsApi_GetNewMsgDisplayPref_Req_t}
+	MSG_SMS_GETNEWMSGDISPLAYPREF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2AE,	///<Payload type {::CAPI2_SmsApi_GetNewMsgDisplayPref_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -5144,7 +5096,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSMSPrefStorage 
 	**/
-	MSG_SMS_SETSMSPREFSTORAGE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B0,	///<Payload type {CAPI2_SmsApi_SetSMSPrefStorage_Req_t}
+	MSG_SMS_SETSMSPREFSTORAGE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B0,	///<Payload type {::CAPI2_SmsApi_SetSMSPrefStorage_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5160,7 +5112,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_GetSMSStorageStatus 
 	**/
-	MSG_SMS_GETSMSSTORAGESTATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B4,	///<Payload type {CAPI2_SmsApi_GetSMSStorageStatus_Req_t}
+	MSG_SMS_GETSMSSTORAGESTATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B4,	///<Payload type {::CAPI2_SmsApi_GetSMSStorageStatus_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5168,7 +5120,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SaveSmsServiceProfile 
 	**/
-	MSG_SMS_SAVESMSSERVICEPROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B6,	///<Payload type {CAPI2_SmsApi_SaveSmsServiceProfile_Req_t}
+	MSG_SMS_SAVESMSSERVICEPROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B6,	///<Payload type {::CAPI2_SmsApi_SaveSmsServiceProfile_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5176,7 +5128,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_RestoreSmsServiceProfile 
 	**/
-	MSG_SMS_RESTORESMSSERVICEPROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B8,	///<Payload type {CAPI2_SmsApi_RestoreSmsServiceProfile_Req_t}
+	MSG_SMS_RESTORESMSSERVICEPROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2B8,	///<Payload type {::CAPI2_SmsApi_RestoreSmsServiceProfile_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5184,11 +5136,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetCellBroadcastMsgTypeReq 
 	**/
-	MSG_SMS_SETCELLBROADCASTMSGTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2BA,	///<Payload type {CAPI2_SmsApi_SetCellBroadcastMsgTypeReq_Req_t}
+	MSG_SMS_SETCELLBROADCASTMSGTYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2BA,	///<Payload type {::CAPI2_SmsApi_SetCellBroadcastMsgTypeReq_Req_t}
 	 /** 
 	api is CAPI2_SmsApi_CBAllowAllChnlReq 
 	**/
-	MSG_SMS_CBALLOWALLCHNLREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2BC,	///<Payload type {CAPI2_SmsApi_CBAllowAllChnlReq_Req_t}
+	MSG_SMS_CBALLOWALLCHNLREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2BC,	///<Payload type {::CAPI2_SmsApi_CBAllowAllChnlReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5196,7 +5148,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_AddCellBroadcastChnlReq 
 	**/
-	MSG_SMS_ADDCELLBROADCASTCHNLREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2BE,	///<Payload type {CAPI2_SmsApi_AddCellBroadcastChnlReq_Req_t}
+	MSG_SMS_ADDCELLBROADCASTCHNLREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2BE,	///<Payload type {::CAPI2_SmsApi_AddCellBroadcastChnlReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5204,7 +5156,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_RemoveCellBroadcastChnlReq 
 	**/
-	MSG_SMS_REMOVECELLBROADCASTCHNLREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2C0,	///<Payload type {CAPI2_SmsApi_RemoveCellBroadcastChnlReq_Req_t}
+	MSG_SMS_REMOVECELLBROADCASTCHNLREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2C0,	///<Payload type {::CAPI2_SmsApi_RemoveCellBroadcastChnlReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5236,7 +5188,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_AddCellBroadcastLangReq 
 	**/
-	MSG_SMS_ADDCELLBROADCASTLANGREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2C8,	///<Payload type {CAPI2_SmsApi_AddCellBroadcastLangReq_Req_t}
+	MSG_SMS_ADDCELLBROADCASTLANGREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2C8,	///<Payload type {::CAPI2_SmsApi_AddCellBroadcastLangReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5244,7 +5196,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_RemoveCellBroadcastLangReq 
 	**/
-	MSG_SMS_REMOVECELLBROADCASTLANGREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2CA,	///<Payload type {CAPI2_SmsApi_RemoveCellBroadcastLangReq_Req_t}
+	MSG_SMS_REMOVECELLBROADCASTLANGREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2CA,	///<Payload type {::CAPI2_SmsApi_RemoveCellBroadcastLangReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5260,7 +5212,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetCBIgnoreDuplFlag 
 	**/
-	MSG_SMS_SETCBIGNOREDUPLFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2D0,	///<Payload type {CAPI2_SmsApi_SetCBIgnoreDuplFlag_Req_t}
+	MSG_SMS_SETCBIGNOREDUPLFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2D0,	///<Payload type {::CAPI2_SmsApi_SetCBIgnoreDuplFlag_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5276,7 +5228,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetVMIndOnOff 
 	**/
-	MSG_SMS_SETVMINDONOFF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2D4,	///<Payload type {CAPI2_SmsApi_SetVMIndOnOff_Req_t}
+	MSG_SMS_SETVMINDONOFF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2D4,	///<Payload type {::CAPI2_SmsApi_SetVMIndOnOff_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5308,7 +5260,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_GetVmscNumber 
 	**/
-	MSG_SMS_GETVMSCNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2DC,	///<Payload type {CAPI2_SmsApi_GetVmscNumber_Req_t}
+	MSG_SMS_GETVMSCNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2DC,	///<Payload type {::CAPI2_SmsApi_GetVmscNumber_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5316,7 +5268,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_UpdateVmscNumberReq 
 	**/
-	MSG_SMS_UPDATEVMSCNUMBERREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2DE,	///<Payload type {CAPI2_SmsApi_UpdateVmscNumberReq_Req_t}
+	MSG_SMS_UPDATEVMSCNUMBERREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2DE,	///<Payload type {::CAPI2_SmsApi_UpdateVmscNumberReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5332,7 +5284,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSMSBearerPreference 
 	**/
-	MSG_SMS_SETSMSBEARERPREFERENCE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E2,	///<Payload type {CAPI2_SmsApi_SetSMSBearerPreference_Req_t}
+	MSG_SMS_SETSMSBEARERPREFERENCE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E2,	///<Payload type {::CAPI2_SmsApi_SetSMSBearerPreference_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5340,7 +5292,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsReadStatusChangeMode 
 	**/
-	MSG_SMS_SETSMSREADSTATUSCHANGEMODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E4,	///<Payload type {CAPI2_SmsApi_SetSmsReadStatusChangeMode_Req_t}
+	MSG_SMS_SETSMSREADSTATUSCHANGEMODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E4,	///<Payload type {::CAPI2_SmsApi_SetSmsReadStatusChangeMode_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5356,7 +5308,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_ChangeSmsStatusReq 
 	**/
-	MSG_SMS_CHANGESTATUSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E8,	///<Payload type {CAPI2_SmsApi_ChangeSmsStatusReq_Req_t}
+	MSG_SMS_CHANGESTATUSREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2E8,	///<Payload type {::CAPI2_SmsApi_ChangeSmsStatusReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5364,7 +5316,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendMEStoredStatusInd 
 	**/
-	MSG_SMS_SENDMESTOREDSTATUSIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2EA,	///<Payload type {CAPI2_SmsApi_SendMEStoredStatusInd_Req_t}
+	MSG_SMS_SENDMESTOREDSTATUSIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2EA,	///<Payload type {::CAPI2_SmsApi_SendMEStoredStatusInd_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5372,7 +5324,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendMERetrieveSmsDataInd 
 	**/
-	MSG_SMS_SENDMERETRIEVESMSDATAIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2EC,	///<Payload type {CAPI2_SmsApi_SendMERetrieveSmsDataInd_Req_t}
+	MSG_SMS_SENDMERETRIEVESMSDATAIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2EC,	///<Payload type {::CAPI2_SmsApi_SendMERetrieveSmsDataInd_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5380,7 +5332,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendMERemovedStatusInd 
 	**/
-	MSG_SMS_SENDMEREMOVEDSTATUSIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2EE,	///<Payload type {CAPI2_SmsApi_SendMERemovedStatusInd_Req_t}
+	MSG_SMS_SENDMEREMOVEDSTATUSIND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2EE,	///<Payload type {::CAPI2_SmsApi_SendMERemovedStatusInd_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5388,7 +5340,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetSmsStoredState 
 	**/
-	MSG_SMS_SETSMSSTOREDSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2F0,	///<Payload type {CAPI2_SmsApi_SetSmsStoredState_Req_t}
+	MSG_SMS_SETSMSSTOREDSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2F0,	///<Payload type {::CAPI2_SmsApi_SetSmsStoredState_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5412,7 +5364,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SetAllNewMsgDisplayPref 
 	**/
-	MSG_SMS_SETALLNEWMSGDISPLAYPREF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2F6,	///<Payload type {CAPI2_SmsApi_SetAllNewMsgDisplayPref_Req_t}
+	MSG_SMS_SETALLNEWMSGDISPLAYPREF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2F6,	///<Payload type {::CAPI2_SmsApi_SetAllNewMsgDisplayPref_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5420,7 +5372,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SmsApi_SendAckToNetwork 
 	**/
-	MSG_SMS_ACKTONETWORK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2F8,	///<Payload type {CAPI2_SmsApi_SendAckToNetwork_Req_t}
+	MSG_SMS_ACKTONETWORK_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x2F8,	///<Payload type {::CAPI2_SmsApi_SendAckToNetwork_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5460,7 +5412,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SMS_SetPDAStorageOverFlowFlag 
 	**/
-	MSG_SMS_PDA_OVERFLOW_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x302,	///<Payload type {CAPI2_SMS_SetPDAStorageOverFlowFlag_Req_t}
+	MSG_SMS_PDA_OVERFLOW_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x302,	///<Payload type {::CAPI2_SMS_SetPDAStorageOverFlowFlag_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5468,7 +5420,7 @@ typedef enum
 	 /** 
 	api is CAPI2_ISimApi_SendAuthenAkaReq 
 	**/
-	MSG_ISIM_SENDAUTHENAKAREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x304,	///<Payload type {CAPI2_ISimApi_SendAuthenAkaReq_Req_t}
+	MSG_ISIM_SENDAUTHENAKAREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x304,	///<Payload type {::CAPI2_ISimApi_SendAuthenAkaReq_Req_t}
 	 /** 
 	api is CAPI2_ISimApi_IsIsimSupported 
 	**/
@@ -5492,19 +5444,19 @@ typedef enum
 	 /** 
 	api is CAPI2_ISimApi_SendAuthenHttpReq 
 	**/
-	MSG_ISIM_SENDAUTHENHTTPREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x30C,	///<Payload type {CAPI2_ISimApi_SendAuthenHttpReq_Req_t}
+	MSG_ISIM_SENDAUTHENHTTPREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x30C,	///<Payload type {::CAPI2_ISimApi_SendAuthenHttpReq_Req_t}
 	 /** 
 	api is CAPI2_ISimApi_SendAuthenGbaNafReq 
 	**/
-	MSG_ISIM_SENDAUTHENGBANAFREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x30E,	///<Payload type {CAPI2_ISimApi_SendAuthenGbaNafReq_Req_t}
+	MSG_ISIM_SENDAUTHENGBANAFREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x30E,	///<Payload type {::CAPI2_ISimApi_SendAuthenGbaNafReq_Req_t}
 	 /** 
 	api is CAPI2_ISimApi_SendAuthenGbaBootReq 
 	**/
-	MSG_ISIM_SENDAUTHENGBABOOTREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x310,	///<Payload type {CAPI2_ISimApi_SendAuthenGbaBootReq_Req_t}
+	MSG_ISIM_SENDAUTHENGBABOOTREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x310,	///<Payload type {::CAPI2_ISimApi_SendAuthenGbaBootReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_GetAlpha 
 	**/
-	MSG_PBK_GETALPHA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x312,	///<Payload type {CAPI2_PbkApi_GetAlpha_Req_t}
+	MSG_PBK_GETALPHA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x312,	///<Payload type {::CAPI2_PbkApi_GetAlpha_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5512,7 +5464,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_IsEmergencyCallNumber 
 	**/
-	MSG_PBK_ISEMERGENCYCALLNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x314,	///<Payload type {CAPI2_PbkApi_IsEmergencyCallNumber_Req_t}
+	MSG_PBK_ISEMERGENCYCALLNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x314,	///<Payload type {::CAPI2_PbkApi_IsEmergencyCallNumber_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5520,7 +5472,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_IsPartialEmergencyCallNumber 
 	**/
-	MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x316,	///<Payload type {CAPI2_PbkApi_IsPartialEmergencyCallNumber_Req_t}
+	MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x316,	///<Payload type {::CAPI2_PbkApi_IsPartialEmergencyCallNumber_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5528,15 +5480,15 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_SendInfoReq 
 	**/
-	MSG_PBK_SENDINFOREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x318,	///<Payload type {CAPI2_PbkApi_SendInfoReq_Req_t}
+	MSG_PBK_SENDINFOREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x318,	///<Payload type {::CAPI2_PbkApi_SendInfoReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendFindAlphaMatchMultipleReq 
 	**/
-	MSG_SENDFINDALPHAMATCHMULTIPLEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x31A,	///<Payload type {CAPI2_PbkApi_SendFindAlphaMatchMultipleReq_Req_t}
+	MSG_SENDFINDALPHAMATCHMULTIPLEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x31A,	///<Payload type {::CAPI2_PbkApi_SendFindAlphaMatchMultipleReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendFindAlphaMatchOneReq 
 	**/
-	MSG_SENDFINDALPHAMATCHONEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x31C,	///<Payload type {CAPI2_PbkApi_SendFindAlphaMatchOneReq_Req_t}
+	MSG_SENDFINDALPHAMATCHONEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x31C,	///<Payload type {::CAPI2_PbkApi_SendFindAlphaMatchOneReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_IsReady 
 	**/
@@ -5548,23 +5500,23 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_SendReadEntryReq 
 	**/
-	MSG_SENDREADENTRYREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x320,	///<Payload type {CAPI2_PbkApi_SendReadEntryReq_Req_t}
+	MSG_SENDREADENTRYREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x320,	///<Payload type {::CAPI2_PbkApi_SendReadEntryReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendWriteEntryReq 
 	**/
-	MSG_PBK_SENDWRITEENTRYREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x322,	///<Payload type {CAPI2_PbkApi_SendWriteEntryReq_Req_t}
+	MSG_PBK_SENDWRITEENTRYREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x322,	///<Payload type {::CAPI2_PbkApi_SendWriteEntryReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendUpdateEntryReq 
 	**/
-	MSG_PBK_SENDUPDATEENTRYREQ  = MSG_GRP_CAPI2_GEN_0 + 0x324,	///<Payload type {CAPI2_PbkApi_SendUpdateEntryReq_Req_t}
+	MSG_PBK_SENDUPDATEENTRYREQ  = MSG_GRP_CAPI2_GEN_0 + 0x324,	///<Payload type {::CAPI2_PbkApi_SendUpdateEntryReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_SendIsNumDiallableReq 
 	**/
-	MSG_PBK_SENDISNUMDIALLABLEREQ  = MSG_GRP_CAPI2_GEN_0 + 0x326,	///<Payload type {CAPI2_PbkApi_SendIsNumDiallableReq_Req_t}
+	MSG_PBK_SENDISNUMDIALLABLEREQ  = MSG_GRP_CAPI2_GEN_0 + 0x326,	///<Payload type {::CAPI2_PbkApi_SendIsNumDiallableReq_Req_t}
 	 /** 
 	api is CAPI2_PbkApi_IsNumDiallable 
 	**/
-	MSG_PBK_ISNUMDIALLABLE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x328,	///<Payload type {CAPI2_PbkApi_IsNumDiallable_Req_t}
+	MSG_PBK_ISNUMDIALLABLE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x328,	///<Payload type {::CAPI2_PbkApi_IsNumDiallable_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5572,7 +5524,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_IsNumBarred 
 	**/
-	MSG_PBK_ISNUMBARRED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x32A,	///<Payload type {CAPI2_PbkApi_IsNumBarred_Req_t}
+	MSG_PBK_ISNUMBARRED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x32A,	///<Payload type {::CAPI2_PbkApi_IsNumBarred_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5580,7 +5532,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PbkApi_IsUssdDiallable 
 	**/
-	MSG_PBK_ISUSSDDIALLABLE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x32C,	///<Payload type {CAPI2_PbkApi_IsUssdDiallable_Req_t}
+	MSG_PBK_ISUSSDDIALLABLE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x32C,	///<Payload type {::CAPI2_PbkApi_IsUssdDiallable_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5588,7 +5540,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetPDPContext 
 	**/
-	MSG_PDP_SETPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x32E,	///<Payload type {CAPI2_PdpApi_SetPDPContext_Req_t}
+	MSG_PDP_SETPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x32E,	///<Payload type {::CAPI2_PdpApi_SetPDPContext_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5596,7 +5548,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetSecPDPContext 
 	**/
-	MSG_PDP_SETSECPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x330,	///<Payload type {CAPI2_PdpApi_SetSecPDPContext_Req_t}
+	MSG_PDP_SETSECPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x330,	///<Payload type {::CAPI2_PdpApi_SetSecPDPContext_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5604,7 +5556,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetGPRSQoS 
 	**/
-	MSG_PDP_GETGPRSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x332,	///<Payload type {CAPI2_PdpApi_GetGPRSQoS_Req_t}
+	MSG_PDP_GETGPRSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x332,	///<Payload type {::CAPI2_PdpApi_GetGPRSQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5612,7 +5564,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetGPRSQoS 
 	**/
-	MSG_PDP_SETGPRSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x334,	///<Payload type {CAPI2_PdpApi_SetGPRSQoS_Req_t}
+	MSG_PDP_SETGPRSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x334,	///<Payload type {::CAPI2_PdpApi_SetGPRSQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5620,7 +5572,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetGPRSMinQoS 
 	**/
-	MSG_PDP_GETGPRSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x336,	///<Payload type {CAPI2_PdpApi_GetGPRSMinQoS_Req_t}
+	MSG_PDP_GETGPRSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x336,	///<Payload type {::CAPI2_PdpApi_GetGPRSMinQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5628,7 +5580,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetGPRSMinQoS 
 	**/
-	MSG_PDP_SETGPRSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x338,	///<Payload type {CAPI2_PdpApi_SetGPRSMinQoS_Req_t}
+	MSG_PDP_SETGPRSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x338,	///<Payload type {::CAPI2_PdpApi_SetGPRSMinQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5636,7 +5588,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SendCombinedAttachReq 
 	**/
-	MSG_MS_SENDCOMBINEDATTACHREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x33A,	///<Payload type {CAPI2_NetRegApi_SendCombinedAttachReq_Req_t}
+	MSG_MS_SENDCOMBINEDATTACHREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x33A,	///<Payload type {::CAPI2_NetRegApi_SendCombinedAttachReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5644,7 +5596,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SendDetachReq 
 	**/
-	MSG_MS_SENDDETACHREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x33C,	///<Payload type {CAPI2_NetRegApi_SendDetachReq_Req_t}
+	MSG_MS_SENDDETACHREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x33C,	///<Payload type {::CAPI2_NetRegApi_SendDetachReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5660,7 +5612,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_IsSecondaryPdpDefined 
 	**/
-	MSG_PDP_ISSECONDARYPDPDEFINED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x340,	///<Payload type {CAPI2_PdpApi_IsSecondaryPdpDefined_Req_t}
+	MSG_PDP_ISSECONDARYPDPDEFINED_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x340,	///<Payload type {::CAPI2_PdpApi_IsSecondaryPdpDefined_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5668,19 +5620,19 @@ typedef enum
 	 /** 
 	api is CAPI2_PchExApi_SendPDPActivateReq 
 	**/
-	MSG_PCHEX_SENDPDPACTIVATEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x342,	///<Payload type {CAPI2_PchExApi_SendPDPActivateReq_Req_t}
+	MSG_PCHEX_SENDPDPACTIVATEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x342,	///<Payload type {::CAPI2_PchExApi_SendPDPActivateReq_Req_t}
 	 /** 
 	api is CAPI2_PchExApi_SendPDPModifyReq 
 	**/
-	MSG_PCHEX_SENDPDPMODIFYREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x344,	///<Payload type {CAPI2_PchExApi_SendPDPModifyReq_Req_t}
+	MSG_PCHEX_SENDPDPMODIFYREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x344,	///<Payload type {::CAPI2_PchExApi_SendPDPModifyReq_Req_t}
 	 /** 
 	api is CAPI2_PchExApi_SendPDPDeactivateReq 
 	**/
-	MSG_PCHEX_SENDPDPDEACTIVATEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x346,	///<Payload type {CAPI2_PchExApi_SendPDPDeactivateReq_Req_t}
+	MSG_PCHEX_SENDPDPDEACTIVATEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x346,	///<Payload type {::CAPI2_PchExApi_SendPDPDeactivateReq_Req_t}
 	 /** 
 	api is CAPI2_PchExApi_SendPDPActivateSecReq 
 	**/
-	MSG_PCHEX_SENDPDPACTIVATESECREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x348,	///<Payload type {CAPI2_PchExApi_SendPDPActivateSecReq_Req_t}
+	MSG_PCHEX_SENDPDPACTIVATESECREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x348,	///<Payload type {::CAPI2_PchExApi_SendPDPActivateSecReq_Req_t}
 	 /** 
 	api is CAPI2_PdpApi_GetGPRSActivateStatus 
 	**/
@@ -5692,7 +5644,7 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SetMSClass 
 	**/
-	MSG_PDP_SETMSCLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x34C,	///<Payload type {CAPI2_NetRegApi_SetMSClass_Req_t}
+	MSG_PDP_SETMSCLASS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x34C,	///<Payload type {::CAPI2_NetRegApi_SetMSClass_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5708,7 +5660,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetUMTSTft 
 	**/
-	MSG_PDP_GETUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x350,	///<Payload type {CAPI2_PdpApi_GetUMTSTft_Req_t}
+	MSG_PDP_GETUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x350,	///<Payload type {::CAPI2_PdpApi_GetUMTSTft_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5716,7 +5668,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetUMTSTft 
 	**/
-	MSG_PDP_SETUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x352,	///<Payload type {CAPI2_PdpApi_SetUMTSTft_Req_t}
+	MSG_PDP_SETUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x352,	///<Payload type {::CAPI2_PdpApi_SetUMTSTft_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5724,7 +5676,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_DeleteUMTSTft 
 	**/
-	MSG_PDP_DELETEUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x354,	///<Payload type {CAPI2_PdpApi_DeleteUMTSTft_Req_t}
+	MSG_PDP_DELETEUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x354,	///<Payload type {::CAPI2_PdpApi_DeleteUMTSTft_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5732,7 +5684,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_DeactivateSNDCPConnection 
 	**/
-	MSG_PDP_DEACTIVATESNDCPCONNECTION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x356,	///<Payload type {CAPI2_PdpApi_DeactivateSNDCPConnection_Req_t}
+	MSG_PDP_DEACTIVATESNDCPCONNECTION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x356,	///<Payload type {::CAPI2_PdpApi_DeactivateSNDCPConnection_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5740,7 +5692,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetR99UMTSMinQoS 
 	**/
-	MSG_PDP_GETR99UMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x358,	///<Payload type {CAPI2_PdpApi_GetR99UMTSMinQoS_Req_t}
+	MSG_PDP_GETR99UMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x358,	///<Payload type {::CAPI2_PdpApi_GetR99UMTSMinQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5748,7 +5700,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetR99UMTSQoS 
 	**/
-	MSG_PDP_GETR99UMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x35A,	///<Payload type {CAPI2_PdpApi_GetR99UMTSQoS_Req_t}
+	MSG_PDP_GETR99UMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x35A,	///<Payload type {::CAPI2_PdpApi_GetR99UMTSQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5756,7 +5708,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetUMTSMinQoS 
 	**/
-	MSG_PDP_GETUMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x35C,	///<Payload type {CAPI2_PdpApi_GetUMTSMinQoS_Req_t}
+	MSG_PDP_GETUMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x35C,	///<Payload type {::CAPI2_PdpApi_GetUMTSMinQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5764,7 +5716,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetUMTSQoS 
 	**/
-	MSG_PDP_GETUMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x35E,	///<Payload type {CAPI2_PdpApi_GetUMTSQoS_Req_t}
+	MSG_PDP_GETUMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x35E,	///<Payload type {::CAPI2_PdpApi_GetUMTSQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5772,7 +5724,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetNegQoS 
 	**/
-	MSG_PDP_GETNEGQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x360,	///<Payload type {CAPI2_PdpApi_GetNegQoS_Req_t}
+	MSG_PDP_GETNEGQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x360,	///<Payload type {::CAPI2_PdpApi_GetNegQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5780,7 +5732,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetR99UMTSMinQoS 
 	**/
-	MSG_PDP_SETR99UMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x362,	///<Payload type {CAPI2_PdpApi_SetR99UMTSMinQoS_Req_t}
+	MSG_PDP_SETR99UMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x362,	///<Payload type {::CAPI2_PdpApi_SetR99UMTSMinQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5788,7 +5740,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetR99UMTSQoS 
 	**/
-	MSG_PDP_SETR99UMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x364,	///<Payload type {CAPI2_PdpApi_SetR99UMTSQoS_Req_t}
+	MSG_PDP_SETR99UMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x364,	///<Payload type {::CAPI2_PdpApi_SetR99UMTSQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5796,7 +5748,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetUMTSMinQoS 
 	**/
-	MSG_PDP_SETUMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x366,	///<Payload type {CAPI2_PdpApi_SetUMTSMinQoS_Req_t}
+	MSG_PDP_SETUMTSMINQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x366,	///<Payload type {::CAPI2_PdpApi_SetUMTSMinQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5804,7 +5756,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetUMTSQoS 
 	**/
-	MSG_PDP_SETUMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x368,	///<Payload type {CAPI2_PdpApi_SetUMTSQoS_Req_t}
+	MSG_PDP_SETUMTSQOS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x368,	///<Payload type {::CAPI2_PdpApi_SetUMTSQoS_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5812,7 +5764,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetNegotiatedParms 
 	**/
-	MSG_PDP_GETNEGOTIATEDPARMS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x36A,	///<Payload type {CAPI2_PdpApi_GetNegotiatedParms_Req_t}
+	MSG_PDP_GETNEGOTIATEDPARMS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x36A,	///<Payload type {::CAPI2_PdpApi_GetNegotiatedParms_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5820,7 +5772,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_IsGprsCallActive 
 	**/
-	MSG_MS_ISGPRSCALLACTIVE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x36C,	///<Payload type {CAPI2_MS_IsGprsCallActive_Req_t}
+	MSG_MS_ISGPRSCALLACTIVE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x36C,	///<Payload type {::CAPI2_MS_IsGprsCallActive_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5828,7 +5780,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_SetChanGprsCallActive 
 	**/
-	MSG_MS_SETCHANGPRSCALLACTIVE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x36E,	///<Payload type {CAPI2_MS_SetChanGprsCallActive_Req_t}
+	MSG_MS_SETCHANGPRSCALLACTIVE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x36E,	///<Payload type {::CAPI2_MS_SetChanGprsCallActive_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5836,7 +5788,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_SetCidForGprsActiveChan 
 	**/
-	MSG_MS_SETCIDFORGPRSACTIVECHAN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x370,	///<Payload type {CAPI2_MS_SetCidForGprsActiveChan_Req_t}
+	MSG_MS_SETCIDFORGPRSACTIVECHAN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x370,	///<Payload type {::CAPI2_MS_SetCidForGprsActiveChan_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5852,7 +5804,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_GetGprsActiveChanFromCid 
 	**/
-	MSG_MS_GETGPRSACTIVECHANFROMCID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x374,	///<Payload type {CAPI2_MS_GetGprsActiveChanFromCid_Req_t}
+	MSG_MS_GETGPRSACTIVECHANFROMCID_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x374,	///<Payload type {::CAPI2_MS_GetGprsActiveChanFromCid_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -5860,7 +5812,7 @@ typedef enum
 	 /** 
 	api is CAPI2_MS_GetCidFromGprsActiveChan 
 	**/
-	MSG_MS_GETCIDFROMGPRSACTIVECHAN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x376,	///<Payload type {CAPI2_MS_GetCidFromGprsActiveChan_Req_t}
+	MSG_MS_GETCIDFROMGPRSACTIVECHAN_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x376,	///<Payload type {::CAPI2_MS_GetCidFromGprsActiveChan_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -5868,7 +5820,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetPDPAddress 
 	**/
-	MSG_PDP_GETPDPADDRESS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x378,	///<Payload type {CAPI2_PdpApi_GetPDPAddress_Req_t}
+	MSG_PDP_GETPDPADDRESS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x378,	///<Payload type {::CAPI2_PdpApi_GetPDPAddress_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5876,7 +5828,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SendTBFData 
 	**/
-	MSG_PDP_SENDTBFDATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x37A,	///<Payload type {CAPI2_PdpApi_SendTBFData_Req_t}
+	MSG_PDP_SENDTBFDATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x37A,	///<Payload type {::CAPI2_PdpApi_SendTBFData_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5884,7 +5836,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_TftAddFilter 
 	**/
-	MSG_PDP_TFTADDFILTER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x37C,	///<Payload type {CAPI2_PdpApi_TftAddFilter_Req_t}
+	MSG_PDP_TFTADDFILTER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x37C,	///<Payload type {::CAPI2_PdpApi_TftAddFilter_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5892,7 +5844,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetPCHContextState 
 	**/
-	MSG_PDP_SETPCHCONTEXTSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x37E,	///<Payload type {CAPI2_PdpApi_SetPCHContextState_Req_t}
+	MSG_PDP_SETPCHCONTEXTSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x37E,	///<Payload type {::CAPI2_PdpApi_SetPCHContextState_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5900,7 +5852,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetDefaultPDPContext 
 	**/
-	MSG_PDP_SETDEFAULTPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x380,	///<Payload type {CAPI2_PdpApi_SetDefaultPDPContext_Req_t}
+	MSG_PDP_SETDEFAULTPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x380,	///<Payload type {::CAPI2_PdpApi_SetDefaultPDPContext_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5908,7 +5860,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PchExApi_GetDecodedProtConfig 
 	**/
-	MSG_PCHEX_READDECODEDPROTCONFIG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x382,	///<Payload type {CAPI2_PchExApi_GetDecodedProtConfig_Req_t}
+	MSG_PCHEX_READDECODEDPROTCONFIG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x382,	///<Payload type {::CAPI2_PchExApi_GetDecodedProtConfig_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -5916,7 +5868,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PchExApi_BuildIpConfigOptions 
 	**/
-	MSG_PCHEX_BUILDPROTCONFIGOPTIONS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x384,	///<Payload type {CAPI2_PchExApi_BuildIpConfigOptions_Req_t}
+	MSG_PCHEX_BUILDPROTCONFIGOPTIONS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x384,	///<Payload type {::CAPI2_PchExApi_BuildIpConfigOptions_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5924,7 +5876,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PchExApi_BuildIpConfigOptions2 
 	**/
-	MSG_PCHEX_BUILDPROTCONFIGOPTIONS2_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x386,	///<Payload type {CAPI2_PchExApi_BuildIpConfigOptions2_Req_t}
+	MSG_PCHEX_BUILDPROTCONFIGOPTIONS2_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x386,	///<Payload type {::CAPI2_PchExApi_BuildIpConfigOptions2_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5932,7 +5884,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PchExApi_BuildIpConfigOptionsWithChapAuthType 
 	**/
-	MSG_PCHEX_BUILDPROTCONFIGOPTION_CHAP_TYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x388,	///<Payload type {CAPI2_PchExApi_BuildIpConfigOptionsWithChapAuthType_Req_t}
+	MSG_PCHEX_BUILDPROTCONFIGOPTION_CHAP_TYPE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x388,	///<Payload type {::CAPI2_PchExApi_BuildIpConfigOptionsWithChapAuthType_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5948,7 +5900,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_IsPDPContextActive 
 	**/
-	MSG_PDP_ISCONTEXT_ACTIVE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x38C,	///<Payload type {CAPI2_PdpApi_IsPDPContextActive_Req_t}
+	MSG_PDP_ISCONTEXT_ACTIVE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x38C,	///<Payload type {::CAPI2_PdpApi_IsPDPContextActive_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -5956,11 +5908,11 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_ActivateSNDCPConnection 
 	**/
-	MSG_PDP_ACTIVATESNDCPCONNECTION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x38E,	///<Payload type {CAPI2_PdpApi_ActivateSNDCPConnection_Req_t}
+	MSG_PDP_ACTIVATESNDCPCONNECTION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x38E,	///<Payload type {::CAPI2_PdpApi_ActivateSNDCPConnection_Req_t}
 	 /** 
 	api is CAPI2_PdpApi_GetPDPContext 
 	**/
-	MSG_PDP_GETPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x390,	///<Payload type {CAPI2_PdpApi_GetPDPContext_Req_t}
+	MSG_PDP_GETPDPCONTEXT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x390,	///<Payload type {::CAPI2_PdpApi_GetPDPContext_Req_t}
 	 /** 
 	payload is ::PDPDefaultContext_t 
 	**/
@@ -5976,7 +5928,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYS_GetBootLoaderVersion 
 	**/
-	MSG_SYSPARAM_BOOTLOADER_VER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x396,	///<Payload type {CAPI2_SYS_GetBootLoaderVersion_Req_t}
+	MSG_SYSPARAM_BOOTLOADER_VER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x396,	///<Payload type {::CAPI2_SYS_GetBootLoaderVersion_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -5984,7 +5936,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SYS_GetDSFVersion 
 	**/
-	MSG_SYSPARAM_DSF_VER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x398,	///<Payload type {CAPI2_SYS_GetDSFVersion_Req_t}
+	MSG_SYSPARAM_DSF_VER_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x398,	///<Payload type {::CAPI2_SYS_GetDSFVersion_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6010,31 +5962,31 @@ typedef enum
 	 /** 
 	api is CAPI2_SS_SendCallForwardReq 
 	**/
-	MSG_SS_SENDCALLFORWARDREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2,	///<Payload type {CAPI2_SS_SendCallForwardReq_Req_t}
+	MSG_SS_SENDCALLFORWARDREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2,	///<Payload type {::CAPI2_SS_SendCallForwardReq_Req_t}
 	 /** 
 	api is CAPI2_SS_QueryCallForwardStatus 
 	**/
-	MSG_SS_QUERYCALLFORWARDSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x4,	///<Payload type {CAPI2_SS_QueryCallForwardStatus_Req_t}
+	MSG_SS_QUERYCALLFORWARDSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x4,	///<Payload type {::CAPI2_SS_QueryCallForwardStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_SendCallBarringReq 
 	**/
-	MSG_SS_SENDCALLBARRINGREQ_REQ  = MSG_GRP_CAPI2_SS + 0x6,	///<Payload type {CAPI2_SS_SendCallBarringReq_Req_t}
+	MSG_SS_SENDCALLBARRINGREQ_REQ  = MSG_GRP_CAPI2_SS + 0x6,	///<Payload type {::CAPI2_SS_SendCallBarringReq_Req_t}
 	 /** 
 	api is CAPI2_SS_QueryCallBarringStatus 
 	**/
-	MSG_SS_QUERYCALLBARRINGSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x8,	///<Payload type {CAPI2_SS_QueryCallBarringStatus_Req_t}
+	MSG_SS_QUERYCALLBARRINGSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x8,	///<Payload type {::CAPI2_SS_QueryCallBarringStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_SendCallBarringPWDChangeReq 
 	**/
-	MSG_SS_SENDCALLBARRINGPWDCHANGEREQ_REQ  = MSG_GRP_CAPI2_SS + 0xA,	///<Payload type {CAPI2_SS_SendCallBarringPWDChangeReq_Req_t}
+	MSG_SS_SENDCALLBARRINGPWDCHANGEREQ_REQ  = MSG_GRP_CAPI2_SS + 0xA,	///<Payload type {::CAPI2_SS_SendCallBarringPWDChangeReq_Req_t}
 	 /** 
 	api is CAPI2_SS_SendCallWaitingReq 
 	**/
-	MSG_SS_SENDCALLWAITINGREQ_REQ  = MSG_GRP_CAPI2_SS + 0xC,	///<Payload type {CAPI2_SS_SendCallWaitingReq_Req_t}
+	MSG_SS_SENDCALLWAITINGREQ_REQ  = MSG_GRP_CAPI2_SS + 0xC,	///<Payload type {::CAPI2_SS_SendCallWaitingReq_Req_t}
 	 /** 
 	api is CAPI2_SS_QueryCallWaitingStatus 
 	**/
-	MSG_SS_QUERYCALLWAITINGSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0xE,	///<Payload type {CAPI2_SS_QueryCallWaitingStatus_Req_t}
+	MSG_SS_QUERYCALLWAITINGSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0xE,	///<Payload type {::CAPI2_SS_QueryCallWaitingStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_QueryCallingLineIDStatus 
 	**/
@@ -6058,31 +6010,31 @@ typedef enum
 	 /** 
 	api is CAPI2_SS_SetCallingLineIDStatus 
 	**/
-	MSG_SS_SETCALLINGLINEIDSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x1A,	///<Payload type {CAPI2_SS_SetCallingLineIDStatus_Req_t}
+	MSG_SS_SETCALLINGLINEIDSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x1A,	///<Payload type {::CAPI2_SS_SetCallingLineIDStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_SetCallingLineRestrictionStatus 
 	**/
-	MSG_SS_SETCALLINGLINERESTRICTIONSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x1C,	///<Payload type {CAPI2_SS_SetCallingLineRestrictionStatus_Req_t}
+	MSG_SS_SETCALLINGLINERESTRICTIONSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x1C,	///<Payload type {::CAPI2_SS_SetCallingLineRestrictionStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_SetConnectedLineIDStatus 
 	**/
-	MSG_SS_SETCONNECTEDLINEIDSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x1E,	///<Payload type {CAPI2_SS_SetConnectedLineIDStatus_Req_t}
+	MSG_SS_SETCONNECTEDLINEIDSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x1E,	///<Payload type {::CAPI2_SS_SetConnectedLineIDStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_SetConnectedLineRestrictionStatus 
 	**/
-	MSG_SS_SETCONNECTEDLINERESTRICTIONSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x20,	///<Payload type {CAPI2_SS_SetConnectedLineRestrictionStatus_Req_t}
+	MSG_SS_SETCONNECTEDLINERESTRICTIONSTATUS_REQ  = MSG_GRP_CAPI2_SS + 0x20,	///<Payload type {::CAPI2_SS_SetConnectedLineRestrictionStatus_Req_t}
 	 /** 
 	api is CAPI2_SS_SendUSSDConnectReq 
 	**/
-	MSG_SS_SENDUSSDCONNECTREQ_REQ  = MSG_GRP_CAPI2_SS + 0x22,	///<Payload type {CAPI2_SS_SendUSSDConnectReq_Req_t}
+	MSG_SS_SENDUSSDCONNECTREQ_REQ  = MSG_GRP_CAPI2_SS + 0x22,	///<Payload type {::CAPI2_SS_SendUSSDConnectReq_Req_t}
 	 /** 
 	api is CAPI2_SS_SendUSSDData 
 	**/
-	MSG_SS_SENDUSSDDATA_REQ  = MSG_GRP_CAPI2_SS + 0x24,	///<Payload type {CAPI2_SS_SendUSSDData_Req_t}
+	MSG_SS_SENDUSSDDATA_REQ  = MSG_GRP_CAPI2_SS + 0x24,	///<Payload type {::CAPI2_SS_SendUSSDData_Req_t}
 	 /** 
 	api is CAPI2_SsApi_DialStrSrvReq 
 	**/
-	MSG_SSAPI_DIALSTRSRVREQ_REQ  = MSG_GRP_CAPI2_SS + 0x26,	///<Payload type {CAPI2_SsApi_DialStrSrvReq_Req_t}
+	MSG_SSAPI_DIALSTRSRVREQ_REQ  = MSG_GRP_CAPI2_SS + 0x26,	///<Payload type {::CAPI2_SsApi_DialStrSrvReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6090,7 +6042,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SS_EndUSSDConnectReq 
 	**/
-	MSG_SS_ENDUSSDCONNECTREQ_REQ  = MSG_GRP_CAPI2_SS + 0x28,	///<Payload type {CAPI2_SS_EndUSSDConnectReq_Req_t}
+	MSG_SS_ENDUSSDCONNECTREQ_REQ  = MSG_GRP_CAPI2_SS + 0x28,	///<Payload type {::CAPI2_SS_EndUSSDConnectReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6098,7 +6050,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SsApi_SsSrvReq 
 	**/
-	MSG_SSAPI_SSSRVREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2A,	///<Payload type {CAPI2_SsApi_SsSrvReq_Req_t}
+	MSG_SSAPI_SSSRVREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2A,	///<Payload type {::CAPI2_SsApi_SsSrvReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6106,7 +6058,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SsApi_UssdSrvReq 
 	**/
-	MSG_SSAPI_USSDSRVREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2C,	///<Payload type {CAPI2_SsApi_UssdSrvReq_Req_t}
+	MSG_SSAPI_USSDSRVREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2C,	///<Payload type {::CAPI2_SsApi_UssdSrvReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6114,7 +6066,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SsApi_UssdDataReq 
 	**/
-	MSG_SSAPI_USSDDATAREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2E,	///<Payload type {CAPI2_SsApi_UssdDataReq_Req_t}
+	MSG_SSAPI_USSDDATAREQ_REQ  = MSG_GRP_CAPI2_SS + 0x2E,	///<Payload type {::CAPI2_SsApi_UssdDataReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6122,7 +6074,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SsApi_SsReleaseReq 
 	**/
-	MSG_SSAPI_SSRELEASEREQ_REQ  = MSG_GRP_CAPI2_SS + 0x30,	///<Payload type {CAPI2_SsApi_SsReleaseReq_Req_t}
+	MSG_SSAPI_SSRELEASEREQ_REQ  = MSG_GRP_CAPI2_SS + 0x30,	///<Payload type {::CAPI2_SsApi_SsReleaseReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6130,7 +6082,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SsApi_DataReq 
 	**/
-	MSG_SSAPI_DATAREQ_REQ  = MSG_GRP_CAPI2_SS + 0x32,	///<Payload type {CAPI2_SsApi_DataReq_Req_t}
+	MSG_SSAPI_DATAREQ_REQ  = MSG_GRP_CAPI2_SS + 0x32,	///<Payload type {::CAPI2_SsApi_DataReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6138,7 +6090,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SS_SsApiReqDispatcher 
 	**/
-	MSG_SSAPI_DISPATCH_REQ  = MSG_GRP_CAPI2_SS + 0x34,	///<Payload type {CAPI2_SS_SsApiReqDispatcher_Req_t}
+	MSG_SSAPI_DISPATCH_REQ  = MSG_GRP_CAPI2_SS + 0x34,	///<Payload type {::CAPI2_SS_SsApiReqDispatcher_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6146,7 +6098,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SS_GetStr 
 	**/
-	MSG_SS_GET_STR_REQ  = MSG_GRP_CAPI2_SS + 0x36,	///<Payload type {CAPI2_SS_GetStr_Req_t}
+	MSG_SS_GET_STR_REQ  = MSG_GRP_CAPI2_SS + 0x36,	///<Payload type {::CAPI2_SS_GetStr_Req_t}
 	 /** 
 	payload is ::UInt8 
 	**/
@@ -6205,7 +6157,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendLangSelectEvent 
 	**/
-	MSG_SATK_SENDLANGSELECTEVENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A4,	///<Payload type {CAPI2_SatkApi_SendLangSelectEvent_Req_t}
+	MSG_SATK_SENDLANGSELECTEVENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A4,	///<Payload type {::CAPI2_SatkApi_SendLangSelectEvent_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6213,7 +6165,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendBrowserTermEvent 
 	**/
-	MSG_SATK_SENDBROWSERTERMEVENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A6,	///<Payload type {CAPI2_SatkApi_SendBrowserTermEvent_Req_t}
+	MSG_SATK_SENDBROWSERTERMEVENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A6,	///<Payload type {::CAPI2_SatkApi_SendBrowserTermEvent_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6221,7 +6173,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_CmdResp 
 	**/
-	MSG_SATK_CMDRESP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A8,	///<Payload type {CAPI2_SatkApi_CmdResp_Req_t}
+	MSG_SATK_CMDRESP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3A8,	///<Payload type {::CAPI2_SatkApi_CmdResp_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -6229,7 +6181,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_DataServCmdResp 
 	**/
-	MSG_SATK_DATASERVCMDRESP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3AA,	///<Payload type {CAPI2_SatkApi_DataServCmdResp_Req_t}
+	MSG_SATK_DATASERVCMDRESP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3AA,	///<Payload type {::CAPI2_SatkApi_DataServCmdResp_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -6237,7 +6189,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendDataServReq 
 	**/
-	MSG_SATK_SENDDATASERVREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3AC,	///<Payload type {CAPI2_SatkApi_SendDataServReq_Req_t}
+	MSG_SATK_SENDDATASERVREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3AC,	///<Payload type {::CAPI2_SatkApi_SendDataServReq_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -6245,7 +6197,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendTerminalRsp 
 	**/
-	MSG_SATK_SENDTERMINALRSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3AE,	///<Payload type {CAPI2_SatkApi_SendTerminalRsp_Req_t}
+	MSG_SATK_SENDTERMINALRSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3AE,	///<Payload type {::CAPI2_SatkApi_SendTerminalRsp_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -6253,7 +6205,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SetTermProfile 
 	**/
-	MSG_SATK_SETTERMPROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B0,	///<Payload type {CAPI2_SatkApi_SetTermProfile_Req_t}
+	MSG_SATK_SETTERMPROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B0,	///<Payload type {::CAPI2_SatkApi_SetTermProfile_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6261,15 +6213,15 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendEnvelopeCmdReq 
 	**/
-	MSG_SATK_SEND_ENVELOPE_CMD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B2,	///<Payload type {CAPI2_SatkApi_SendEnvelopeCmdReq_Req_t}
+	MSG_SATK_SEND_ENVELOPE_CMD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B2,	///<Payload type {::CAPI2_SatkApi_SendEnvelopeCmdReq_Req_t}
 	 /** 
 	api is CAPI2_SatkApi_SendTerminalRspReq 
 	**/
-	MSG_STK_TERMINAL_RESPONSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B4,	///<Payload type {CAPI2_SatkApi_SendTerminalRspReq_Req_t}
+	MSG_STK_TERMINAL_RESPONSE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B4,	///<Payload type {::CAPI2_SatkApi_SendTerminalRspReq_Req_t}
 	 /** 
 	api is CAPI2_StkApi_SendBrowsingStatusEvent 
 	**/
-	MSG_STK_SEND_BROWSING_STATUS_EVT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B6,	///<Payload type {CAPI2_StkApi_SendBrowsingStatusEvent_Req_t}
+	MSG_STK_SEND_BROWSING_STATUS_EVT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B6,	///<Payload type {::CAPI2_StkApi_SendBrowsingStatusEvent_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6277,11 +6229,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendCcSetupReq 
 	**/
-	MSG_SATK_SEND_CC_SETUP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B8,	///<Payload type {CAPI2_SatkApi_SendCcSetupReq_Req_t}
+	MSG_SATK_SEND_CC_SETUP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3B8,	///<Payload type {::CAPI2_SatkApi_SendCcSetupReq_Req_t}
 	 /** 
 	api is CAPI2_SatkApi_SendCcSsReq 
 	**/
-	MSG_SATK_SEND_CC_SS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C0,	///<Payload type {CAPI2_SatkApi_SendCcSsReq_Req_t}
+	MSG_SATK_SEND_CC_SS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C0,	///<Payload type {::CAPI2_SatkApi_SendCcSsReq_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6289,7 +6241,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendCcUssdReq 
 	**/
-	MSG_SATK_SEND_CC_USSD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C2,	///<Payload type {CAPI2_SatkApi_SendCcUssdReq_Req_t}
+	MSG_SATK_SEND_CC_USSD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C2,	///<Payload type {::CAPI2_SatkApi_SendCcUssdReq_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6297,7 +6249,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendCcSmsReq 
 	**/
-	MSG_SATK_SEND_CC_SMS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C4,	///<Payload type {CAPI2_SatkApi_SendCcSmsReq_Req_t}
+	MSG_SATK_SEND_CC_SMS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C4,	///<Payload type {::CAPI2_SatkApi_SendCcSmsReq_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6305,7 +6257,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_CpMoLrReq 
 	**/
-	MSG_LCS_CPMOLRREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C8,	///<Payload type {CAPI2_LCS_CpMoLrReq_Req_t}
+	MSG_LCS_CPMOLRREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3C8,	///<Payload type {::CAPI2_LCS_CpMoLrReq_Req_t}
 	 /** 
 	api is CAPI2_LCS_CpMoLrAbort 
 	**/
@@ -6317,7 +6269,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_CpMtLrVerificationRsp 
 	**/
-	MSG_LCS_CPMTLRVERIFICATIONRSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3CC,	///<Payload type {CAPI2_LCS_CpMtLrVerificationRsp_Req_t}
+	MSG_LCS_CPMTLRVERIFICATIONRSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3CC,	///<Payload type {::CAPI2_LCS_CpMtLrVerificationRsp_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6325,7 +6277,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_CpMtLrRsp 
 	**/
-	MSG_LCS_CPMTLRRSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3CE,	///<Payload type {CAPI2_LCS_CpMtLrRsp_Req_t}
+	MSG_LCS_CPMTLRRSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3CE,	///<Payload type {::CAPI2_LCS_CpMtLrRsp_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6333,7 +6285,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_CpLocUpdateRsp 
 	**/
-	MSG_LCS_CPLOCUPDATERSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3D0,	///<Payload type {CAPI2_LCS_CpLocUpdateRsp_Req_t}
+	MSG_LCS_CPLOCUPDATERSP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3D0,	///<Payload type {::CAPI2_LCS_CpLocUpdateRsp_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6341,7 +6293,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_DecodePosEstimate 
 	**/
-	MSG_LCS_DECODEPOSESTIMATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3D2,	///<Payload type {CAPI2_LCS_DecodePosEstimate_Req_t}
+	MSG_LCS_DECODEPOSESTIMATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3D2,	///<Payload type {::CAPI2_LCS_DecodePosEstimate_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6349,7 +6301,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LCS_EncodeAssistanceReq 
 	**/
-	MSG_LCS_ENCODEASSISTANCEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3D4,	///<Payload type {CAPI2_LCS_EncodeAssistanceReq_Req_t}
+	MSG_LCS_ENCODEASSISTANCEREQ_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3D4,	///<Payload type {::CAPI2_LCS_EncodeAssistanceReq_Req_t}
 	 /** 
 	payload is ::int 
 	**/
@@ -6365,23 +6317,23 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_MakeVoiceCall 
 	**/
-	MSG_CC_MAKEVOICECALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3E4,	///<Payload type {CAPI2_CcApi_MakeVoiceCall_Req_t}
+	MSG_CC_MAKEVOICECALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3E4,	///<Payload type {::CAPI2_CcApi_MakeVoiceCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_MakeDataCall 
 	**/
-	MSG_CC_MAKEDATACALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3E6,	///<Payload type {CAPI2_CcApi_MakeDataCall_Req_t}
+	MSG_CC_MAKEDATACALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3E6,	///<Payload type {::CAPI2_CcApi_MakeDataCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_MakeFaxCall 
 	**/
-	MSG_CC_MAKEFAXCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3E8,	///<Payload type {CAPI2_CcApi_MakeFaxCall_Req_t}
+	MSG_CC_MAKEFAXCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3E8,	///<Payload type {::CAPI2_CcApi_MakeFaxCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_MakeVideoCall 
 	**/
-	MSG_CC_MAKEVIDEOCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3EA,	///<Payload type {CAPI2_CcApi_MakeVideoCall_Req_t}
+	MSG_CC_MAKEVIDEOCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3EA,	///<Payload type {::CAPI2_CcApi_MakeVideoCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_EndCall 
 	**/
-	MSG_CC_ENDCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3EC,	///<Payload type {CAPI2_CcApi_EndCall_Req_t}
+	MSG_CC_ENDCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3EC,	///<Payload type {::CAPI2_CcApi_EndCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_EndAllCalls 
 	**/
@@ -6389,7 +6341,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_EndCallImmediate 
 	**/
-	MSG_CCAPI_ENDCALL_IMMEDIATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3F0,	///<Payload type {CAPI2_CcApi_EndCallImmediate_Req_t}
+	MSG_CCAPI_ENDCALL_IMMEDIATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3F0,	///<Payload type {::CAPI2_CcApi_EndCallImmediate_Req_t}
 	 /** 
 	api is CAPI2_CcApi_EndAllCallsImmediate 
 	**/
@@ -6405,11 +6357,11 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_AcceptVoiceCall 
 	**/
-	MSG_CC_ACCEPTVOICECALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3F8,	///<Payload type {CAPI2_CcApi_AcceptVoiceCall_Req_t}
+	MSG_CC_ACCEPTVOICECALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3F8,	///<Payload type {::CAPI2_CcApi_AcceptVoiceCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_AcceptDataCall 
 	**/
-	MSG_CC_ACCEPTDATACALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3FA,	///<Payload type {CAPI2_CcApi_AcceptDataCall_Req_t}
+	MSG_CC_ACCEPTDATACALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3FA,	///<Payload type {::CAPI2_CcApi_AcceptDataCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_AcceptWaitingCall 
 	**/
@@ -6417,7 +6369,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_AcceptVideoCall 
 	**/
-	MSG_CC_ACCEPTVIDEOCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3FE,	///<Payload type {CAPI2_CcApi_AcceptVideoCall_Req_t}
+	MSG_CC_ACCEPTVIDEOCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x3FE,	///<Payload type {::CAPI2_CcApi_AcceptVideoCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_HoldCurrentCall 
 	**/
@@ -6425,7 +6377,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_HoldCall 
 	**/
-	MSG_CC_HOLDCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x402,	///<Payload type {CAPI2_CcApi_HoldCall_Req_t}
+	MSG_CC_HOLDCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x402,	///<Payload type {::CAPI2_CcApi_HoldCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_RetrieveNextHeldCall 
 	**/
@@ -6433,31 +6385,29 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_RetrieveCall 
 	**/
-	MSG_CC_RETRIEVECALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x406,	///<Payload type {CAPI2_CcApi_RetrieveCall_Req_t}
+	MSG_CC_RETRIEVECALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x406,	///<Payload type {::CAPI2_CcApi_RetrieveCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_SwapCall 
 	**/
-	MSG_CC_SWAPCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x408,	///<Payload type {CAPI2_CcApi_SwapCall_Req_t}
+	MSG_CC_SWAPCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x408,	///<Payload type {::CAPI2_CcApi_SwapCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_SplitCall 
 	**/
-	MSG_CC_SPLITCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x40A,	///<Payload type {CAPI2_CcApi_SplitCall_Req_t}
+	MSG_CC_SPLITCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x40A,	///<Payload type {::CAPI2_CcApi_SplitCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_JoinCall 
 	**/
-	MSG_CC_JOINCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x40C,	///<Payload type {CAPI2_CcApi_JoinCall_Req_t}
+	MSG_CC_JOINCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x40C,	///<Payload type {::CAPI2_CcApi_JoinCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_TransferCall 
 	**/
-	MSG_CC_TRANSFERCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x40E,	///<Payload type {CAPI2_CcApi_TransferCall_Req_t}
+	MSG_CC_TRANSFERCALL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x40E,	///<Payload type {::CAPI2_CcApi_TransferCall_Req_t}
 	 /** 
 	api is CAPI2_CcApi_GetCNAPName 
 	**/
-	MSG_CC_GETCNAPNAME_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4B4,	///<Payload type {CAPI2_CcApi_GetCNAPName_Req_t}
-	 /** 
-	payload is ::CcCnapName_t 
-	**/
-	MSG_CC_GETCNAPNAME_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x4B5,	///<Payload type {::CcCnapName_t}
+	MSG_CC_GETCNAPNAME_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4B4,	///<Payload type {::CAPI2_CcApi_GetCNAPName_Req_t}
+	 /** 	payload is ::CcCnapName_t 
+	**/	MSG_CC_GETCNAPNAME_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x4B5,	///<Payload type {::CcCnapName_t}
 	 /** 
 	api is CAPI2_SYSPARM_GetHSUPASupported 
 	**/
@@ -6485,7 +6435,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_IsCurrentStateMpty 
 	**/
-	MSG_CC_ISCURRENTSTATEMPTY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4BE,	///<Payload type {CAPI2_CcApi_IsCurrentStateMpty_Req_t}
+	MSG_CC_ISCURRENTSTATEMPTY_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4BE,	///<Payload type {::CAPI2_CcApi_IsCurrentStateMpty_Req_t}
 	 /** 
 	payload is ::Boolean 
 	**/
@@ -6493,7 +6443,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetPCHContextState 
 	**/
-	MSG_PDP_GETPCHCONTEXTSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4C0,	///<Payload type {CAPI2_PdpApi_GetPCHContextState_Req_t}
+	MSG_PDP_GETPCHCONTEXTSTATE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4C0,	///<Payload type {::CAPI2_PdpApi_GetPCHContextState_Req_t}
 	 /** 
 	payload is ::PCHContextState_t 
 	**/
@@ -6501,7 +6451,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetPDPContextEx 
 	**/
-	MSG_PDP_GETPCHCONTEXT_EX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4C2,	///<Payload type {CAPI2_PdpApi_GetPDPContextEx_Req_t}
+	MSG_PDP_GETPCHCONTEXT_EX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4C2,	///<Payload type {::CAPI2_PdpApi_GetPDPContextEx_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6517,19 +6467,19 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_SubmitSelectFileSendApduReq 
 	**/
-	MSG_SIM_SEND_APDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4C8,	///<Payload type {CAPI2_SimApi_SubmitSelectFileSendApduReq_Req_t}
+	MSG_SIM_SEND_APDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4C8,	///<Payload type {::CAPI2_SimApi_SubmitSelectFileSendApduReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SubmitMulRecordEFileReq 
 	**/
-	MSG_SIM_MUL_REC_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4CC,	///<Payload type {CAPI2_SimApi_SubmitMulRecordEFileReq_Req_t}
+	MSG_SIM_MUL_REC_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4CC,	///<Payload type {::CAPI2_SimApi_SubmitMulRecordEFileReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_SendSelectApplicationReq 
 	**/
-	MSG_SIM_SELECT_APPLICATION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D0,	///<Payload type {CAPI2_SimApi_SendSelectApplicationReq_Req_t}
+	MSG_SIM_SELECT_APPLICATION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D0,	///<Payload type {::CAPI2_SimApi_SendSelectApplicationReq_Req_t}
 	 /** 
 	api is CAPI2_SimApi_PerformSteeringOfRoaming 
 	**/
-	MSG_SIM_PEROFRM_STEERING_OF_ROAMING_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D2,	///<Payload type {CAPI2_SimApi_PerformSteeringOfRoaming_Req_t}
+	MSG_SIM_PEROFRM_STEERING_OF_ROAMING_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D2,	///<Payload type {::CAPI2_SimApi_PerformSteeringOfRoaming_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6537,11 +6487,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendProactiveCmdFetchingOnOffReq 
 	**/
-	MSG_STK_PROACTIVE_CMD_FETCHING_ON_OFF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D6,	///<Payload type {CAPI2_SatkApi_SendProactiveCmdFetchingOnOffReq_Req_t}
+	MSG_STK_PROACTIVE_CMD_FETCHING_ON_OFF_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D6,	///<Payload type {::CAPI2_SatkApi_SendProactiveCmdFetchingOnOffReq_Req_t}
 	 /** 
 	api is CAPI2_SatkApi_SendExtProactiveCmdReq 
 	**/
-	MSG_SATK_SEND_EXT_PROACTIVE_CMD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D8,	///<Payload type {CAPI2_SatkApi_SendExtProactiveCmdReq_Req_t}
+	MSG_SATK_SEND_EXT_PROACTIVE_CMD_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4D8,	///<Payload type {::CAPI2_SatkApi_SendExtProactiveCmdReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6549,7 +6499,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendTerminalProfileReq 
 	**/
-	MSG_SATK_SEND_TERMINAL_PROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4DA,	///<Payload type {CAPI2_SatkApi_SendTerminalProfileReq_Req_t}
+	MSG_SATK_SEND_TERMINAL_PROFILE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4DA,	///<Payload type {::CAPI2_SatkApi_SendTerminalProfileReq_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6557,11 +6507,11 @@ typedef enum
 	 /** 
 	api is CAPI2_SatkApi_SendPollingIntervalReq 
 	**/
-	MSG_STK_POLLING_INTERVAL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4DC,	///<Payload type {CAPI2_SatkApi_SendPollingIntervalReq_Req_t}
+	MSG_STK_POLLING_INTERVAL_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4DC,	///<Payload type {::CAPI2_SatkApi_SendPollingIntervalReq_Req_t}
 	 /** 
 	api is CAPI2_PdpApi_SetPDPActivationCallControlFlag 
 	**/
-	MSG_PDP_SETPDPACTIVATIONCCFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E0,	///<Payload type {CAPI2_PdpApi_SetPDPActivationCallControlFlag_Req_t}
+	MSG_PDP_SETPDPACTIVATIONCCFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E0,	///<Payload type {::CAPI2_PdpApi_SetPDPActivationCallControlFlag_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6577,11 +6527,11 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SendPDPActivateReq_PDU 
 	**/
-	MSG_PDP_SENDPDPACTIVATIONPDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E4,	///<Payload type {CAPI2_PdpApi_SendPDPActivateReq_PDU_Req_t}
+	MSG_PDP_SENDPDPACTIVATIONPDU_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E4,	///<Payload type {::CAPI2_PdpApi_SendPDPActivateReq_PDU_Req_t}
 	 /** 
 	api is CAPI2_PdpApi_RejectNWIPDPActivation 
 	**/
-	MSG_PDP_REJECTNWIACTIVATION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E6,	///<Payload type {CAPI2_PdpApi_RejectNWIPDPActivation_Req_t}
+	MSG_PDP_REJECTNWIACTIVATION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E6,	///<Payload type {::CAPI2_PdpApi_RejectNWIPDPActivation_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6589,7 +6539,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetPDPBearerCtrlMode 
 	**/
-	MSG_PDP_SETBEARERCTRLMODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E8,	///<Payload type {CAPI2_PdpApi_SetPDPBearerCtrlMode_Req_t}
+	MSG_PDP_SETBEARERCTRLMODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4E8,	///<Payload type {::CAPI2_PdpApi_SetPDPBearerCtrlMode_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6605,7 +6555,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_RejectSecNWIPDPActivation 
 	**/
-	MSG_PDP_REJECTSECNWIACTIVATION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4EC,	///<Payload type {CAPI2_PdpApi_RejectSecNWIPDPActivation_Req_t}
+	MSG_PDP_REJECTSECNWIACTIVATION_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4EC,	///<Payload type {::CAPI2_PdpApi_RejectSecNWIPDPActivation_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6613,7 +6563,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetPDPNWIControlFlag 
 	**/
-	MSG_PDP_SETPDPNWICONTROLFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4EE,	///<Payload type {CAPI2_PdpApi_SetPDPNWIControlFlag_Req_t}
+	MSG_PDP_SETPDPNWICONTROLFLAG_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4EE,	///<Payload type {::CAPI2_PdpApi_SetPDPNWIControlFlag_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6629,7 +6579,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_CheckUMTSTft 
 	**/
-	MSG_PDP_CHECKUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4F4,	///<Payload type {CAPI2_PdpApi_CheckUMTSTft_Req_t}
+	MSG_PDP_CHECKUMTSTFT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x4F4,	///<Payload type {::CAPI2_PdpApi_CheckUMTSTft_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6653,7 +6603,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_SetElement 
 	**/
-	MSG_CCAPI_SET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6A4,	///<Payload type {CAPI2_CcApi_SetElement_Req_t}
+	MSG_CCAPI_SET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6A4,	///<Payload type {::CAPI2_CcApi_SetElement_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6661,7 +6611,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_GetElement 
 	**/
-	MSG_CCAPI_GET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6A6,	///<Payload type {CAPI2_CcApi_GetElement_Req_t}
+	MSG_CCAPI_GET_ELEMENT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6A6,	///<Payload type {::CAPI2_CcApi_GetElement_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6669,7 +6619,7 @@ typedef enum
 	 /** 
 	api is CAPI2_WL_PsSetFilterList 
 	**/
-	MSG_WL_PS_SET_FILTER_LIST_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6A8,	///<Payload type {CAPI2_WL_PsSetFilterList_Req_t}
+	MSG_WL_PS_SET_FILTER_LIST_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6A8,	///<Payload type {::CAPI2_WL_PsSetFilterList_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6677,7 +6627,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_GetProtConfigOptions 
 	**/
-	MSG_PDP_GETPROTCONFIGOPTIONS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6AA,	///<Payload type {CAPI2_PdpApi_GetProtConfigOptions_Req_t}
+	MSG_PDP_GETPROTCONFIGOPTIONS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6AA,	///<Payload type {::CAPI2_PdpApi_GetProtConfigOptions_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6685,7 +6635,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PdpApi_SetProtConfigOptions 
 	**/
-	MSG_PDP_SETPROTCONFIGOPTIONS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6AC,	///<Payload type {CAPI2_PdpApi_SetProtConfigOptions_Req_t}
+	MSG_PDP_SETPROTCONFIGOPTIONS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6AC,	///<Payload type {::CAPI2_PdpApi_SetProtConfigOptions_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6693,7 +6643,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LcsApi_RrlpSendDataToNetwork 
 	**/
-	MSG_LCS_RRLP_SEND_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6AE,	///<Payload type {CAPI2_LcsApi_RrlpSendDataToNetwork_Req_t}
+	MSG_LCS_RRLP_SEND_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6AE,	///<Payload type {::CAPI2_LcsApi_RrlpSendDataToNetwork_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6717,7 +6667,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LcsApi_RrcSendUlDcch 
 	**/
-	MSG_LCS_RRC_SEND_DL_DCCH_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6B4,	///<Payload type {CAPI2_LcsApi_RrcSendUlDcch_Req_t}
+	MSG_LCS_RRC_SEND_DL_DCCH_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6B4,	///<Payload type {::CAPI2_LcsApi_RrcSendUlDcch_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6725,7 +6675,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LcsApi_RrcMeasCtrlFailure 
 	**/
-	MSG_LCS_RRC_MEAS_CTRL_FAILURE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6B6,	///<Payload type {CAPI2_LcsApi_RrcMeasCtrlFailure_Req_t}
+	MSG_LCS_RRC_MEAS_CTRL_FAILURE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6B6,	///<Payload type {::CAPI2_LcsApi_RrcMeasCtrlFailure_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6733,7 +6683,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LcsApi_RrcStatus 
 	**/
-	MSG_LCS_RRC_STAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6B8,	///<Payload type {CAPI2_LcsApi_RrcStatus_Req_t}
+	MSG_LCS_RRC_STAT_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6B8,	///<Payload type {::CAPI2_LcsApi_RrcStatus_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6741,7 +6691,7 @@ typedef enum
 	 /** 
 	api is CAPI2_SimApi_PowerOnOffSim 
 	**/
-	MSG_SIM_POWER_ON_OFF_SIM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6BA,	///<Payload type {CAPI2_SimApi_PowerOnOffSim_Req_t}
+	MSG_SIM_POWER_ON_OFF_SIM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6BA,	///<Payload type {::CAPI2_SimApi_PowerOnOffSim_Req_t}
 	 /** 
 	payload is ::SIMAccess_t 
 	**/
@@ -6749,7 +6699,7 @@ typedef enum
 	 /** 
 	api is CAPI2_PhoneCtrlApi_SetPagingStatus 
 	**/
-	MSG_SYS_SET_PAGING_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6BC,	///<Payload type {CAPI2_PhoneCtrlApi_SetPagingStatus_Req_t}
+	MSG_SYS_SET_PAGING_STATUS_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6BC,	///<Payload type {::CAPI2_PhoneCtrlApi_SetPagingStatus_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6765,7 +6715,7 @@ typedef enum
 	 /** 
 	api is CAPI2_LcsApi_SetGpsCapabilities 
 	**/
-	MSG_LCS_SET_GPS_CAP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C0,	///<Payload type {CAPI2_LcsApi_SetGpsCapabilities_Req_t}
+	MSG_LCS_SET_GPS_CAP_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C0,	///<Payload type {::CAPI2_LcsApi_SetGpsCapabilities_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
@@ -6773,7 +6723,7 @@ typedef enum
 	 /** 
 	api is CAPI2_CcApi_AbortDtmfTone 
 	**/
-	MSG_CCAPI_ABORTDTMF_TONE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C2,	///<Payload type {CAPI2_CcApi_AbortDtmfTone_Req_t}
+	MSG_CCAPI_ABORTDTMF_TONE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C2,	///<Payload type {::CAPI2_CcApi_AbortDtmfTone_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6781,23 +6731,14 @@ typedef enum
 	 /** 
 	api is CAPI2_NetRegApi_SetSupportedRATandBandEx 
 	**/
-	MSG_MS_SET_RAT_BAND_EX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C4,	///<Payload type {CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t}
+	MSG_MS_SET_RAT_BAND_EX_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C4,	///<Payload type {::CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t}
 	 /** 
 	payload is ::Result_t 
 	**/
 	MSG_MS_SET_RAT_BAND_EX_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6C5,
-	 /** 
-	api is CAPI2_SimApi_ResetSIM 
+	 /** 	api is CAPI2_NetRegApi_SetTZUpdateMode 
 	**/
-	MSG_SIM_RESET_SIM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6C8,	///<Payload type {CAPI2_SimApi_ResetSIM_Req_t}
-	 /** 
-	payload is ::Result_t 
-	**/
-	MSG_SIM_RESET_SIM_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6C9,
-	 /** 
-	api is CAPI2_NetRegApi_SetTZUpdateMode 
-	**/
-	MSG_TIMEZONE_SET_UPDATE_MODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6CA,	///<Payload type {CAPI2_NetRegApi_SetTZUpdateMode_Req_t}
+	MSG_TIMEZONE_SET_UPDATE_MODE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6CA,	///<Payload type {::CAPI2_NetRegApi_SetTZUpdateMode_Req_t}
 	 /** 
 	payload is void 
 	**/
@@ -6810,47 +6751,13 @@ typedef enum
 	payload is ::TimeZoneUpdateMode_t 
 	**/
 	MSG_TIMEZONE_GET_UPDATE_MODE_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6CD,	///<Payload type {::TimeZoneUpdateMode_t}
-	 /** 
-	api is CAPI2_SEC_HostToModemInd 
-	**/
-	MSG_SEC_HOST_TO_MODEM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6CE,	///<Payload type {CAPI2_SEC_HostToModemInd_Req_t}
-	 /** 
-	payload is void 
-	**/
-	MSG_SEC_HOST_TO_MODEM_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6CF,
-	 /** 
-	payload is ::UInt8 
-	**/
-	MSG_SEC_MODEM_TO_HOST_IND  = MSG_GRP_CAPI2_GEN_0 + 0x6D1,	///<Payload type {::UInt8}
-	 /** 
-	api is CAPI2_SimApi_GetAdData 
-	**/
-	MSG_SIM_AD_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6D6,
-	 /** 
-	payload is void 
-	**/
-	MSG_SIM_AD_DATA_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6D7,	///<Payload type {void}
-	 /** 
-	api is CAPI2_SimApi_GetCurrentSimVoltage 
+	 /** 	api is CAPI2_SimApi_GetAdData 	**/	MSG_SIM_AD_DATA_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6D6,	 /** 	payload is void 	**/	MSG_SIM_AD_DATA_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6D7,	///<Payload type {void}        /** 	api is CAPI2_SimApi_GetCurrentSimVoltage 
 	**/
 	MSG_SIM_GET_CURRENT_SIM_VOLTAGE_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6D8,
 	 /** 
 	payload is ::SimVoltage_t 
 	**/
-	MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6D9,	///<Payload type {::SimVoltage_t}
-	 /** 
-	api is CAPI2_MS_SetSupportedRATandBand 
-	**/
-	MSG_MS_SET_RAT_AND_BAND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6DA,	///<Payload type {CAPI2_MS_SetSupportedRATandBand_Req_t}
-	 /** 
-	payload is ::Result_t 
-	**/
-	MSG_MS_SET_RAT_AND_BAND_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6DB,
-	 /** 
-	api is CAPI2_SecModemApi_ConfigModemReq 
-	**/
-	MSG_SECMODEM_CONFIG_MODEM_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6DC,
-
+	MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6D9,	///<Payload type {::SimVoltage_t}	/** 	api is CAPI2_MS_SetSupportedRATandBand 	**/	MSG_MS_SET_RAT_AND_BAND_REQ  = MSG_GRP_CAPI2_GEN_0 + 0x6DA,	///<Payload type {::CAPI2_MS_SetSupportedRATandBand_Req_t}	 /** 	payload is ::Result_t 	**/	MSG_MS_SET_RAT_AND_BAND_RSP  = MSG_GRP_CAPI2_GEN_0 + 0x6DB,
 	//MSG_GEN_REQ_END = 0x48FF
 
 /*********  _CAPI2_CODE_GEN_END_  ************/
@@ -6862,8 +6769,6 @@ typedef enum
 	MSG_GEN_REQ_END = 0x48FF,
 
 	MSG_CAPI2_MSGIDS_END = 0x4FFF,
-
-/// @endcond
 //TASKMSGS_INCLUDE taskmsgs_sysrpc.i
 
 	//------------------------------------------------
@@ -7138,7 +7043,6 @@ Boolean SYS_RegisterForRemoteClient(CallbackFunc_t* callback);
 void SYS_DefaultRemoteHandler(InterTaskMsg_t* inMsg);
 
 
-
 #ifdef VMF_INCLUDE
 
 //***************************************************************************************
@@ -7168,9 +7072,6 @@ void VccApi_ResetVmfCtx(ClientInfo_t* inClientInfoPtr, UInt8 origVmId);
 
 #define VccApi_ResetVmf(clientInfoPtr) VccApi_ResetVmfCtx(clientInfoPtr, orig_ctx_id);
 
-void VccApi_ResetDataVmf(ClientInfo_t* pClientInfo);
-
-
 //***************************************************************************************
 /**
     Function to Init SIM-Id in clientInfo based on global vm-id
@@ -7186,8 +7087,6 @@ void VccApi_InitSimId(ClientInfo_t* inClientInfoPtr);
 #define VccApi_ActivateVmf(p)
 #define VccApi_ResetVmf(p)
 #define VccApi_InitSimId(p)
-#define VccApi_ResetDataVmf(p)
-
 
 #endif
 

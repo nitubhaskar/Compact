@@ -254,7 +254,7 @@ void AUDLOG_ProcessLogChannel( StatQ_t * msg)
 				}
 			}
 			else
-			if ((bcmlog_stream_ptr != NULL)&&( sender== 0x101 || sender== 0x201 ))  // Coverity prevent check
+			if (bcmlog_stream_ptr != NULL)
                    	{
 			
                         memcpy(log_cb_info_ks_ptr[n].log_msg,(UInt16 *)ptr, size/2); // copy 81 bytes of data

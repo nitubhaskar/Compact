@@ -37,8 +37,8 @@ extern "C"
  *  ioctl commands
  *
  **/
-#define ATC_KERNEL_SEND_AT_CMD		100					///<	Send AT command to CP. Data type: ATC_KERNEL_ATCmd_t
-#define ATC_KERNEL_Get_AT_RESP		101					///<	Get AT command resp from CP.  Data type: ATC_KERNEL_ATResp_t
+#define ATC_KERNEL_SEND_AT_CMD		100					///<	Send AT command to CP 
+#define ATC_KERNEL_Get_AT_RESP		101					///<	Get AT command resp from CP 
 #define ATC_KERNEL_FORCE_ASSERT_CMD	102					///<	Force an AP assertion (kernel panic)
 #define ATC_KERNEL_REG_AT_TERMINAL  103					///<	Register an AT terminal. Data type: ATC_KERNEL_AtRegisterInfo_t
 #define ATC_KERNEL_Reboot_System	104					/// reboot system
@@ -52,7 +52,6 @@ extern "C"
 typedef struct
 {
 	UInt8 fChan;							///<	at channel
-	UInt8 fSimId;							///<	SIM number
 	char* fATCmdStr;						///<	at command string to be processed
 }	ATC_KERNEL_ATCmd_t ;
 
@@ -63,7 +62,6 @@ typedef struct
  */
 typedef struct
 {
-    UInt8 fChan;                             ///<    at channel
 	char* fATRespStr;						///<	at command response
 }	ATC_KERNEL_ATResp_t ;
 

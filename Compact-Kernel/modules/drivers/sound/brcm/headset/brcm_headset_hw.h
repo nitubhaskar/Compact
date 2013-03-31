@@ -66,13 +66,5 @@ typedef struct
 	UInt8 gid2_len;		///< Number of bytes in "gid2" element, i.e. number of bytes in EF-GID2
 } SIMLOCK_SIM_DATA_t;
 
-typedef enum
-{
-    SIM_SINGLE,      ///< single SIM case
-    SIM_DUAL_FIRST,  ///< the first SIM
-    SIM_DUAL_SECOND, ///< the second SIM
-    SIM_ALL = 0xFF   ///< for all the SIMs
-} SimNumber_t;
-
 #endif //  __BCM_HEADSET_HW__
 

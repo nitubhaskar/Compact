@@ -78,6 +78,7 @@ extern void ProcessCPCrashedDump(struct work_struct *work);
 extern void pm_ipc_power_saving_init(IPC_PlatformSpecificPowerSavingInfo_T* ipc_ps);
 #endif
 
+
 typedef struct
 {
     wait_queue_head_t evt_wait;
@@ -250,31 +251,31 @@ void ipcs_intr_workqueue_process(struct work_struct *work)
     }
 
 
-	if(IpcCPCrashCheck())
-	{
+   if(IpcCPCrashCheck())
+   {
 		cp_crashed  = 1;
 		if( BCMLOG_CPCRASH_MTD == BCMLOG_GetCpCrashDumpDevice() )
 		{
-			/* we kill AP when CP crashes */
+		/* we kill AP when CP crashes */
 			IPC_DEBUG(DBG_INFO, "Crashing AP now...\n\n");
 #if defined(CONFIG_SEC_DEBUG)
     			cp_abort();
 #else
-			abort();  
+    			abort();
 #endif
 		} else 
 		{
-			schedule_work(&g_ipc_info.cp_crash_dump_wq);
-		}
+		schedule_work(&g_ipc_info.cp_crash_dump_wq);
+	}
 
 		IPC_ProcessEvents();
 	}else
 	{
-		IPC_ProcessEvents();  
+       IPC_ProcessEvents();  
 #ifdef CONFIG_HAS_WAKELOCK 
-	       wake_unlock(&ipc_wake_lock);
+       wake_unlock(&ipc_wake_lock);
 #endif // CONFIG_HAS_WAKELOCK
-	}
+   }
 }
 
 
@@ -354,13 +355,13 @@ static int __init ipcs_init(void *smbase, unsigned int size)
     IPC_DEBUG(DBG_ERROR, "ipcs_ccb_init() failed, ret[%d]\n", rc);
       return(rc);
   }
-  
+
   // AP ipc init is done
   g_ipc_info.ap_ipc_init_done = 1;
 
   //Let CP know that we are done registering endpoints
   IPC_Configured();
- 
+
   //Wait for IPC initialized
   IPC_DEBUG(DBG_INFO, "IPC_Configured() invoked\n");
 
@@ -460,27 +461,27 @@ static int __init ipcs_module_init(void)
   }
   else
   {
-      // wait for CP to have IPC setup as well; if we exit module init
-      // before IPC is ready, RPC module will likely crash during its 
-      // own init
-      startTime = current_kernel_time();
-      while ( !g_ipc_info.ipc_state )
-      {
-        IPC_DEBUG(DBG_INFO, "[ipc]: CP IPC not ready, sleeping...\n");
-        msleep(20);
-        readyChkCnt++;
-        if ( readyChkCnt > 100 )
-        {
-            IPC_DEBUG(DBG_ERROR, "[ipc]: IPC init timeout - no response from CP\n");
-            rc = -1;
-            goto out_del;
-        }
-      }
-      endTime = current_kernel_time();
-      IPC_DEBUG(DBG_INFO,"readyChkCnt=%d time=%ldus\n", readyChkCnt,
-            ((endTime.tv_sec - startTime.tv_sec)*1000000L+(endTime.tv_nsec - startTime.tv_nsec)/1000L));
+  // wait for CP to have IPC setup as well; if we exit module init
+  // before IPC is ready, RPC module will likely crash during its 
+  // own init
+  startTime = current_kernel_time();
+  while ( !g_ipc_info.ipc_state )
+  {
+    IPC_DEBUG(DBG_INFO, "[ipc]: CP IPC not ready, sleeping...\n");
+    msleep(20);
+    readyChkCnt++;
+    if ( readyChkCnt > 100 )
+    {
+        IPC_DEBUG(DBG_ERROR, "[ipc]: IPC init timeout - no response from CP\n");
+        rc = -1;
+        goto out_del;
+    }
+  }
+  endTime = current_kernel_time();
+  IPC_DEBUG(DBG_INFO,"readyChkCnt=%d time=%ldus\n", readyChkCnt,
+        ((endTime.tv_sec - startTime.tv_sec)*1000000L+(endTime.tv_nsec - startTime.tv_nsec)/1000L));
 
-      IPC_DEBUG(DBG_INFO,"[ipc]: ipcs_module_init ok\n");
+  IPC_DEBUG(DBG_INFO,"[ipc]: ipcs_module_init ok\n");
   }
     
   return 0;

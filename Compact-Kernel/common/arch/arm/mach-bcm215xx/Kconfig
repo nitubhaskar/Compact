@@ -50,6 +50,31 @@ choice
 		bool "EUR TMO"
 	help
 		Support EUR TMO Board		
+		
+	config TARGET_LOCALE_EUR_VODA
+		bool "EUR VODA"
+	help
+		Support EUR VODA Board				
+	
+	config TARGET_LOCALE_EUR_ORG
+		bool "EUR ORG"
+	help
+		Support EUR ORG Board	
+
+	config TARGET_LOCALE_SEA_THL
+		bool "SEA THL"
+	help
+		Support SEA THL Board			
+
+	config TARGET_LOCALE_MEA_PCL
+		bool "MEA PCL"
+	help
+		Support MEA PCL Board			
+
+	config TARGET_LOCALE_MEA_ISL
+		bool "MEA ISL"
+	help
+		Support MEA ISL Board					
 endchoice
 
 comment "BCM21553 Board Type"
@@ -100,7 +125,7 @@ config BOARD_LUISA
 	help
 	  Configure this option to specify the whether the used
 	  for development is a BCM21553 Luisa board.
-	  
+
 config BOARD_TASSVE
 	bool "Samsung BCM2155x TASSVE board"
 	help
@@ -112,44 +137,7 @@ config BOARD_COOPERVE
 	help
 	  Configure this option to specify the whether the used
 	  for development is a BCM21553 TassVE board.
-
-config BOARD_LUISA_DS
-	bool "Samsung BCM2155x LUISA DS board"
-	help
-	  Configure this option to specify the whether the used
-	  for development is a BCM21553 Luisa DS board.
-
-config BOARD_TORINO
-	bool "Samsung BCM2155x TORINO board"
-	help
-	  Configure this option to specify the whether the used
-	  for development is a BCM21553 Torino board.
-
-config BOARD_TORINOK
-	bool "Samsung BCM2155x TORINOK board"
-	help
-	  Configure this option to specify the whether the used
-	  for development is a BCM21553 TorinoK board.
 	    	    
-config BOARD_AMAZING
-	bool "Samsung BCM2155x AMAZING board"
-	help
-	  Configure this option to specify the whether the used
-	  for development is a BCM21553 Torino board.
-
-config BOARD_AMAZING_SS
-	bool "Samsung BCM2155x AMAZING_SS board"
-	help
-	  Configure this option to specify the whether the used
-	  for development is a BCM21553 amazing_ss board.
-
-config BOARD_CORI_DS
-	bool "Samsung BCM2155x CORI_DS board"
-	help
-	  Configure this option to specify the whether the used
-	  for development is a BCM21553 cori_ds board.
-
-	  	    	    
 endchoice
 
 config SDRAM_BASE_ADDR
@@ -205,8 +193,6 @@ config BCM21553_V3D_SYNC_ENABLE
 config HEADSET_DET_GPIO
 	bool "Samsung BCM2155x LUISA 0_2 board Headset"
 
-config BRCM_HEADSET_GPIO
-	bool "Set GPIO 42"
-	default N
+
 
 endmenu

@@ -191,6 +191,10 @@ CAM_Sensor_Supported_Params_t CamPrimaryDefault_st =
 	"GT-S5360T" //target name
 #elif defined(CONFIG_TARGET_LOCALE_EUR_O2)
 	"GT-S5363" //target name
+#elif defined(CONFIG_TARGET_LOCALE_EUR_VODA) || defined(CONFIG_TARGET_LOCALE_EUR_ORG)
+	"GT-S5369" //target name
+#elif defined(CONFIG_TARGET_LOCALE_SEA_THL)
+	"GT-S5360B" //target name
 #else
 	"GT-S5360" //target name
 #endif
@@ -223,7 +227,7 @@ HAL_CAM_ConfigCaps_st_t CamPrimaryCfgCap_st =
 	#ifdef CAMERA_SENSOR_30FPS_CONFIG
        1                              // UInt32                pre_frame;            //Frames to throw out for ViewFinder/Video capture 
 	#else
-	    2                             // UInt32                pre_frame;            //Frames to throw out for ViewFinder/Video capture 
+        2                             // UInt32                pre_frame;            //Frames to throw out for ViewFinder/Video capture 
 	#endif
     },
 
@@ -973,13 +977,13 @@ static HAL_CAM_Result_en_t Init_totoro_sensor(CamSensorSelect_t sensor)
     
 	printk(KERN_ERR"write src200pc10_init0\n");
 	// CamacqExtWriteI2cLists(sr200pc10_init0,1);   // wingi 
-    iRet =   pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_INIT );
+        iRet =   pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_INIT );
 	if(iRet<0)
 	{
 	    printk(KERN_ERR"write CAMACQ_SENSORDATA_INIT error \n");
   	    return HAL_CAM_ERROR_INTERNAL_ERROR;
 	}
-    iRet =   pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_NONE);
+       iRet =   pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_SCENE_NONE);
 	if(iRet<0)
 	{
 	    printk(KERN_ERR"write CAMACQ_SENSORDATA_SCENE_NONE error \n");
@@ -1089,6 +1093,7 @@ HAL_CAM_Result_en_t CAMDRV_SetVideoCaptureMode(
         )
 
 {
+
     HAL_CAM_Result_en_t result = HAL_CAM_SUCCESS;
     struct stCamacqSensorManager_t* pstSensorManager = NULL;
     struct stCamacqSensor_t* pstSensor = NULL;
@@ -2178,11 +2183,11 @@ HAL_CAM_Result_en_t CAMDRV_GetSensorValuesForEXIF( CAM_Sensor_Values_For_Exif_t 
     }    
     {
         CAMDRV_CheckISO();    
-        sprintf(aString, "%d", gv_isoSpeedRatings); 
+        sprintf(aString, "%d,", gv_isoSpeedRatings); 
         strcpy(exif_parm->isoSpeedRating,aString);
     }
     strcpy(exif_parm->FNumber,(char *)"28/10" );
-    strcpy(exif_parm->maxLensAperture,(char *)"30/10" );
+    strcpy(exif_parm->maxLensAperture,(char *)"28/10" );
     strcpy(exif_parm->lensFocalLength,(char *)"273/100" );
     strcpy(exif_parm->exposureProgram,"3" );
     strcpy(exif_parm->colorSpaceInfo,"1");

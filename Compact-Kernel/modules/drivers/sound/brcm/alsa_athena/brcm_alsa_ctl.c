@@ -59,10 +59,7 @@ static char gpstrCtrlName[BRCM_CTL_TOTAL][40] =
 
        "BTHeadset Volume",
 	"BTHeadset Switch",
-	"PCM Playback Route",
-    "BTHeadset mode Switch",
-    "VTCall mode Switch",
-	"HAC mode Switch",
+	"PCM Playback Route"
 };
  
 BRCM_CTRL_ENU		gCurPath = BRCM_CTL_TOTAL;
@@ -180,31 +177,6 @@ static int GetCtrlInfo(
 			uinfo->value.integer.max = AUDCTRL_SPK_TOTAL_COUNT;	
 			uinfo->value.integer.step = 1;
 		break;
-        case BRCM_CTL_BT_WB_MODE:
-        		DEBUG("\BRCM_CTL_BT_WB_MODE");
-			uinfo->type			     = SNDRV_CTL_ELEM_TYPE_INTEGER;
-			uinfo->count			 = 1;	   // enable/disable
-			uinfo->value.integer.min = 0;
-			uinfo->value.integer.max = 1;	
-			uinfo->value.integer.step = 1;
-		break;
-	
-        case BRCM_CTL_VT_CALL_MODE:
-        		DEBUG("\BRCM_CTL_VT_CALL_MODE");
-			uinfo->type			     = SNDRV_CTL_ELEM_TYPE_INTEGER;
-			uinfo->count			 = 1;	   // enable/disable
-			uinfo->value.integer.min = 0;
-			uinfo->value.integer.max = 1;	
-			uinfo->value.integer.step = 1;
-		break;
-		case BRCM_CTL_HAC_MODE:
-				DEBUG("\BRCM_CTL_HAC_MODE");
-			uinfo->type			     = SNDRV_CTL_ELEM_TYPE_INTEGER;
-			uinfo->count			 = 1;	   // enable/disable
-			uinfo->value.integer.min = 0;
-			uinfo->value.integer.max = 1;	
-			uinfo->value.integer.step = 1;
-		break;
 	
 		default:
 			DEBUG("\n%lx:Unknown GetCtrlInfo ctrl->private_value=%d",jiffies, (int)kcontrol->private_value);
@@ -232,8 +204,8 @@ static int GetControlItem(
 	//DEBUG("\n%lx:GetControlItem",jiffies);
 	DEBUG("\n%lx:GetControlItem ctrl->private_value=%d",jiffies, kcontrol->private_value);
 
-	//Coverity prevent kcontrol->private_value is unsigned type
-	if(kcontrol->private_value < BRCM_CTL_TOTAL)
+
+	if(kcontrol->private_value>=0 && kcontrol->private_value<BRCM_CTL_TOTAL)
 		ucontrol->value.integer.value[0] = sgBrcmCtrlVal[kcontrol->private_value];
 
 	return 0;
@@ -343,8 +315,8 @@ static int SetControlItem(
 
     audio_init();
 	//DEBUG("\n%lx:SetControlItem",jiffies);
-	//Coverity prevent kcontrol->private_value is unsigned long 
-	if(kcontrol->private_value<BRCM_CTL_TOTAL)
+
+	if(kcontrol->private_value>=0 && kcontrol->private_value<BRCM_CTL_TOTAL)
 	{
 		if(!(kcontrol->private_value&1))//volume
 		{
@@ -434,35 +406,8 @@ static int SetControlItem(
                 AUDIO_Ctrl_Trigger(ACTON_ROUTE,&parm_route,NULL,0);
             }
             break;
-        case BRCM_CTL_BT_WB_MODE:
-            {   
-                BRCM_AUDIO_Param_Bt_Wbmode_t parm_mode;
-
-                parm_mode.enable = (int)ucontrol->value.integer.value[0];
-                 // Send the bt wb mode command
-                AUDIO_Ctrl_Trigger(ACTON_BT_WB_MODE,&parm_mode,NULL,1);
-            }
-            break;
-        case BRCM_CTL_VT_CALL_MODE:
-            {   
-                BRCM_AUDIO_Param_Vt_Callmode_t parm_vt_mode;
-
-                parm_vt_mode.enable = (int)ucontrol->value.integer.value[0];
-                printk("BRCM_CTL_VT_CALL_MODE: enable=%d \n", parm_vt_mode.enable);
-				
-                 // Send the vy mode command
-                AUDIO_Ctrl_Trigger(ACTON_VT_CALL_MODE,&parm_vt_mode,NULL,1);
-            }
-            break;
-		case BRCM_CTL_HAC_MODE:
-			{   
-                BRCM_AUDIO_Param_Hac_Mode_t parm_hac_mode;
 	
-                parm_hac_mode.enable = (int)ucontrol->value.integer.value[0];
-                 // Send the hac mode command
-                AUDIO_Ctrl_Trigger(ACTON_HAC_MODE,&parm_hac_mode,NULL,1);
-            }
-            break;
+      			
                 default:
                     break;
             }
@@ -508,11 +453,7 @@ static struct snd_kcontrol_new gpSndCtrls[] __devinitdata =
 	BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_BTHeadset_Volume], 0, BRCM_CTL_BTHeadset_Volume),
 	BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_BTHeadset_Mute], 0, BRCM_CTL_BTHeadset_Mute),
 	
-	BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_ROUTE], 0, BRCM_CTL_ROUTE),
-    BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_BT_WB_MODE], 0, BRCM_CTL_BT_WB_MODE),
-    BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_VT_CALL_MODE], 0, BRCM_CTL_VT_CALL_MODE),
-	BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_HAC_MODE], 0, BRCM_CTL_HAC_MODE)
-
+	BRCM_MIXER_CTRL(gpstrCtrlName[BRCM_CTL_ROUTE], 0, BRCM_CTL_ROUTE)
 };
 
 //*****************************************************************

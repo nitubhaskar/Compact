@@ -1,4 +1,3 @@
-
 /*******************************************************************************************
 Copyright 2009, 2010 Broadcom Corporation.  All rights reserved.
 
@@ -34,8 +33,7 @@ extern "C" {
 typedef enum
 {
 	CHAL_AUDIO_PCMIF_Mode_8KHz,  ///< 0: PCM works in 8K mode. (Bit rate 200K, Data rate 8K)
-	CHAL_AUDIO_PCMIF_Mode_16KHz,  ///< 1: PCM works in 16K mode. (Bit rate 400K, Data rate 16K)
-	CHAL_AUDIO_PCMIF_Mode_User   ///< 2: PCM works in the user defined mode
+	CHAL_AUDIO_PCMIF_Mode_User   ///< 1: PCM works in the user defined mode
 } CHAL_AUDIO_PCMIF_Mode_en;
 
 
@@ -171,4 +169,3 @@ cVoid chal_audiopcmif_ReadFifo(
 #endif
 
 #endif //_CHAL_AUDIOPCMIF_H_
-

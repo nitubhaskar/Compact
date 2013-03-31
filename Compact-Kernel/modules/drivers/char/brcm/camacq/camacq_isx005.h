@@ -32,7 +32,8 @@
 /* Definition */
 #define __ISX005_SONY__         // Option             
 
-#define CAMACQ_MAIN_NAME         "cami2c_main"    //#define CAMACQ_SUB_NAME          "cami2c_sub"//swsw_dual#define CAMACQ_MAIN_I2C_ID       0x1a			  	  // 0x3D
+#define CAMACQ_MAIN_NAME         "cami2c"    
+#define CAMACQ_MAIN_I2C_ID       0x1a			  	  // 0x3D
 #define CAMACQ_MAIN_RES_TYPE   	 CAMACQ_SENSOR_MAIN   // main sensor
 
 #define CAMACQ_MAIN_ISPROBED     0
@@ -64,15 +65,12 @@
 #define CAMACQ_MAIN_PATH_SET_FILE "/sdcard/sensor/main/%s.dat"
 #if (CAMACQ_MAIN_2BYTE_SENSOR)	
 #define CAMACQ_MAIN_BURST_MODE 0
-#define CAMACQ_MAIN_I2C_NUM_OF_BYTE 2//add for burst
 #else
 #define CAMACQ_MAIN_BURST_MODE 0
-#define CAMACQ_MAIN_I2C_NUM_OF_BYTE 4//add for burst
 #endif /* CAMACQ_MAIN2BYTE_SENSOR */
 
 #define CAMACQ_MAIN_BURST_I2C_TRACE 0
 #define CAMACQ_MAIN_BURST_MAX 100
-#define CAMACQ_MAIN_REG_FLAG_BURST 	0x0E//add for burst
 
 #define CAMACQ_MAIN_REG_FLAG_CNTS 	0x0F12
 #define CAMACQ_MAIN_REG_DELAY 		0xFFFF
@@ -95,10 +93,6 @@
 #if CAMACQ_MAIN_2BYTE_SENSOR
 #define CAMACQ_MAIN_EXT_REG_IS_BTM_OF_DATA(A)		(((A[0]==CAMACQ_MAIN_END_MARKER) && (A[1]==CAMACQ_MAIN_END_MARKER))? 1:0)
 #define CAMACQ_MAIN_EXT_REG_IS_DELAY(A)				((A[0]==CAMACQ_MAIN_REG_DELAY)? 1:0)
-#define CAMACQ_MAIN_EXT_REG_IS_BURST(A)				(((A[0]==CAMACQ_MAIN_REG_FLAG_BURST) && (A[1]==0x01))? 1:0)
-#define CAMACQ_MAIN_EXT_REG_IS_BURST_END(A)				(((A[0]==CAMACQ_MAIN_REG_FLAG_BURST) && (A[1]==0x00))? 1:0)
-#define CAMACQ_MAIN_EXT_REG_IS_CNTS(A)				(((A[0]==CAMACQ_MAIN_REG_FLAG_BURST) && (A[1]==0x01))? 1:0)
-//add for burst
 
 #if (CAMACQ_MAIN_FS_MODE==1)
 #define CAMACQ_MAIN_EXT_REG_GET_DATA(dest,srce,idx)\
@@ -115,8 +109,6 @@ memcpy(dest, &(srce[idx*CAMACQ_MAIN_REG_DAT_SZ*CAMACQ_MAIN_REG_SET_SZ]), CAMACQ_
 (A[2]==CAMACQ_MAIN_END_MARKER) && (A[3]==CAMACQ_MAIN_END_MARKER))? 1:0)
 #define CAMACQ_MAIN_EXT_REG_IS_DELAY(A)				(((A[0]==((CAMACQ_MAIN_REG_DELAY>>8) & 0xFF)) && (A[1]==(CAMACQ_MAIN_REG_DELAY & 0xFF)))? 1:0)
 #define CAMACQ_MAIN_EXT_REG_IS_CNTS(A)				(((A[0]==((CAMACQ_MAIN_REG_FLAG_CNTS>>8) & 0xFF)) && (A[1]==(CAMACQ_MAIN_REG_FLAG_CNTS & 0xFF)))? 1:0)
-#define CAMACQ_MAIN_EXT_REG_IS_BURST(A)				(((A[0]==CAMACQ_MAIN_REG_FLAG_BURST) && (A[1]==0x01))? 0:0) /*Always false (If you want to use it,please modify this condition */
-#define CAMACQ_MAIN_EXT_REG_IS_BURST_END(A)				(((A[0]==CAMACQ_MAIN_REG_FLAG_BURST) && (A[1]==0x00))? 0:0) /*Always false (If you want to use it,please modify this condition */
 
 #if (CAMACQ_MAIN_FS_MODE==1)
 #define CAMACQ_MAIN_EXT_REG_GET_DATA(dest,srce,idx)\
@@ -2656,12 +2648,10 @@ CAMACQ_MAIN_BTM_OF_DATA
 //==========================================================
 // CAMERA_FRAMERATE_10FPS
 //==========================================================
-GLOBAL _stSonyData reg_main_fps_fixed_10[]//BYKIM_0923
+GLOBAL _stSonyData reg_main_fps_fixed_10[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x0383,0x04,0x01},	
-{0x02A4,0x0000,0x02},	/*BYKIM_TEMP 10fps*/
-{0x0012,0x01,0x01},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -2673,9 +2663,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL _stSonyData reg_main_fps_fixed_15[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x0383,0x03,0x01},	
-{0x02A4,0x0000,0x02},	/*BYKIM_TEMP 15fps*/
-{0x0012,0x01,0x01},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -10375,7 +10363,7 @@ GLOBAL _stSonyData reg_main_dtp_on[]
 {0x4f25,0x0000,0x02},// MAIN_CONFIG2
 {0x02d7,0x11,0x01},// LM
 {0x2800,0x0001,0x02},   // IR_PG : Colorbar
-{0x2802,0x0402,0x02},   //BYKIM_CHANGE_DTP_DATA
+{0x2802,0x0100,0x02},   //
 {0x3202,0x01,0x01},  	// Partten ON
 CAMACQ_MAIN_BTM_OF_DATA
 }

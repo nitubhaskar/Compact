@@ -34,6 +34,9 @@
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -141,7 +144,9 @@
 #include "capi2_msnu.h"
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
-#include "capi2_ss_msg.h"#include "capi2_cp_msg.h"
+#include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
+#include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
 #include "capi2_phonectrl_api.h"

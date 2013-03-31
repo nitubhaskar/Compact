@@ -421,37 +421,6 @@ extern "C" {
 
 /**
 *
-*  @brief    Lock LCDC Controller For Exclusive Use (all supported modes)
-*
-* 	To be used only while in atomic context
-*
-*  @param	 lcdcH         (in) CSL LCDC handle
-*
-*  @return	 CSL_LCD_RES_T (out)
-*
-*  @note     Common to Z80/M68 & DBI modes
-*
-*****************************************************************************/
-	CSL_LCD_RES_T CSL_LCDC_Lock_NoSem(CSL_LCD_HANDLE lcdcH);
-
-/**
-*
-*  @brief    Unlock LCDC Controller (all supported modes)
-*
-*
-* 	To be used only while in atomic context
-*
-*  @param	 lcdcH         (in) CSL LCDC handle
-*
-*  @return	 CSL_LCD_RES_T (out)
-*
-*  @note     Common to Z80/M68 & DBI modes
-*
-*****************************************************************************/
-	CSL_LCD_RES_T CSL_LCDC_Unlock_NoSem(CSL_LCD_HANDLE lcdcH);
-
-/**
-*
 *  @brief    Inits LCDC Controller (all supported modes)
 *
 *  @param	 ctrlInit      (in) configuration settings

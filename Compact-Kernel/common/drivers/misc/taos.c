@@ -30,7 +30,6 @@
 #define TAOS_DEBUG 0
 
 /*********** for debug **********************************************************/
-#define error(fmt, arg...) printk("--------" fmt "\n", ##arg)
 #if TAOS_DEBUG 
 #define PROXDBG(fmt, args...) printk(fmt, ## args)
 #else
@@ -160,8 +159,10 @@ static ktime_t timeA,timeB;
 static ktime_t timeSub;
 #endif
 
+#if !defined (CONFIG_BOARD_COOPERVE)
 static struct regulator *prox_regulator=NULL;
 static bool prox_power_mode = false;
+#endif
 static short prox_value_cnt = 0;
 
 extern int bcm_gpio_pull_up(unsigned int gpio, bool up);
@@ -170,6 +171,7 @@ extern int set_irq_type(unsigned int irq, unsigned int type);
 
 static void prox_ctrl_regulator(int on_off)
 {
+#if !defined (CONFIG_BOARD_COOPERVE)
 	if(on_off)
 	{
                 if(prox_power_mode) return;
@@ -201,6 +203,7 @@ static void prox_ctrl_regulator(int on_off)
                 prox_power_mode = false;        
         
 	}
+#endif
 }
 
 /*************************************************************************/
@@ -389,11 +392,12 @@ static void taos_work_func_prox(struct work_struct *work)
 
 	}
 
-#if defined(CONFIG_SENSORS_HSCD)
-		input_report_abs(taos_global->input_dev, ABS_DISTANCE,((proximity_value == 1)? 0:1));
+	if(USE_INPUT_DEVICE)
+	{
+		input_report_abs(taos_global->input_dev,ABS_DISTANCE,(int)vout);
 		input_sync(taos_global->input_dev);
 		mdelay(1);
-#endif
+	}
 
 	/* reset Interrupt pin */
 	/* to active Interrupt, TMD2771x Interuupt pin shoud be reset. */
@@ -432,9 +436,9 @@ void taos_chip_init(void)
 {
 	
 	PROXDBG("[TAOS] %s called\n",__func__); 
-
+#if !defined (CONFIG_BOARD_COOPERVE)
 	prox_regulator = regulator_get(NULL,"prox_vcc");
-	
+#endif	
 }
 
 
@@ -627,70 +631,6 @@ static struct miscdevice proximity_device = {
 
 //------------------------------------------------------------------------------------
 
-
-#if defined(CONFIG_SENSORS_HSCD)
-
-static ssize_t proximity_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-
-	return sprintf(buf, "%d\n", proximity_enable);
-}
-
-static ssize_t proximity_enable_store(struct device *dev, struct device_attribute *attr,  const char *buf, size_t size)
-{
-    bool new_value;
-
-    if (sysfs_streq(buf, "1"))
-        new_value = true;
-    else if (sysfs_streq(buf, "0"))
-        new_value = false;
-    else {
-        pr_err("%s: invalid value %d\n", __func__, *buf);
-        return -EINVAL;
-    }
-
-    printk(KERN_INFO "[TAOS] proximity_enable_store : new_value=%d\n", new_value);
-    
-    mutex_lock(&taos_global->power_lock);
-    
-    if (new_value ){  
-        input_report_abs(taos_global->input_dev, ABS_DISTANCE, ((gpio_get_value(GPIO_PROXI_INT) == 0)? 0:1));
-        input_sync(taos_global->input_dev);
-        
-        printk(KERN_INFO "[TAOS] proximity_enable_store : GPIO_PROXI_INT=%d\n", gpio_get_value(GPIO_PROXI_INT));             
-        
-        taos_on(taos_global,PROXIMITY);
-        proximity_enable =1;	
-
-    }
-    else if (!new_value ) 
-    {
-        taos_off(taos_global,PROXIMITY);
-        proximity_enable=0;
-        prox_value_cnt = 0;                
-        proximity_value = 0;         
-    }
-
-    mutex_unlock(&taos_global->power_lock);
-    return size;
-}
-
-static struct device_attribute dev_attr_prox_enable =
-	__ATTR(enable, S_IRUGO | S_IWUSR | S_IWGRP,
-	       proximity_enable_show, proximity_enable_store);
-
-static struct attribute *taos_prox_attributes[] = {
-	&dev_attr_prox_enable.attr,
-	NULL
-};
-
-static struct attribute_group taos_prox_attr_group = {
-	.attrs = taos_prox_attributes,
-};
-
-#endif
-
-
 static int taos_opt_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
 {
@@ -725,8 +665,6 @@ static int taos_opt_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, taos_global);
 	opt_i2c_client = client;
 	printk(KERN_INFO "[TAOS] [%s] slave addr = %x\n", __func__, client->addr);	
-
-	mutex_init(&taos_global->power_lock);
 
 	/* misc device Settings */
 	err = misc_register(&proximity_device);
@@ -796,16 +734,6 @@ static int taos_opt_probe(struct i2c_client *client,
         }
 	printk(KERN_INFO "[TAOS] Input device settings complete");
 
-#if defined(CONFIG_SENSORS_HSCD)
-	/*create sysfs attributes*/
-	err = sysfs_create_group(&taos_global->input_dev->dev.kobj, &taos_prox_attr_group);
-	if (err)
-	{
-		error("Failed to create sysfs attributes");
-		goto MISC_DREG;
-	}
-#endif    
-
 
 #if USE_INTERRUPT
 	/* WORK QUEUE Settings */
@@ -845,12 +773,6 @@ static int taos_opt_probe(struct i2c_client *client,
 	// maintain power-down mode before using sensor
 	taos_off(taos_global, ALL);
 
-#if defined(CONFIG_SENSORS_HSCD)
-	/* set initial proximity value as 1 */
-	input_report_abs(taos_global->input_dev, ABS_DISTANCE, 1);
-	input_sync(taos_global->input_dev);
-#endif
-
 	printk(KERN_INFO "[TAOS] %s end\n",__func__);
 	return 0;
 
@@ -871,10 +793,6 @@ static int taos_opt_remove(struct i2c_client *client)
 {
 	printk(KERN_INFO "%s\n",__func__);
 
-#if defined(CONFIG_SENSORS_HSCD)
-	sysfs_remove_group(&client->dev.kobj, &taos_prox_attr_group);
-#endif
-
 #if USE_INTERRUPT
 	free_irq(gpio_to_irq(GPIO_PROXI_INT), NULL);
 #endif
@@ -882,7 +800,6 @@ static int taos_opt_remove(struct i2c_client *client)
         destroy_workqueue(taos_wq);
         input_unregister_device(taos_global->input_dev);
         misc_deregister(&proximity_device);    
-	mutex_destroy(&taos_global->power_lock);        
         kfree(taos_global);
 
 	return 0;

@@ -11,6 +11,3 @@ config BRCM_V3D
 		  Broadcom V3D Graphics Engine Optimized driver
 	help
 	  Broadcom OpenGL engine support
-config HVGA_BIGRAM
-	bool "Broadcom Memory Option"
-	default Y

@@ -30,7 +30,7 @@
 #include "sim_def.h"
 #include "engmode_api.h"
 
-//#include "i2c_drv.h"
+#include "i2c_drv.h"
 #include "common_ecdc.h"
 #include "uelbs_api.h"
 #include "common_sim.h"

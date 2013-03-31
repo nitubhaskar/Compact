@@ -81,10 +81,8 @@ extern Boolean inVoiceCall;
 //=============================================================================
 
 
-//this is needed because DSPCMD_AUDIO_ENABLE sets/clears AMCR.AUDEN
-extern Boolean vopath_enabled;
-extern Boolean vipath_enabled;
-
+Boolean voicePlayOutpathEnabled = FALSE;  //this is needed because DSPCMD_AUDIO_ENABLE sets/clears AMCR.AUDEN
+extern Boolean voiceInPathEnabled ;  //this is needed because DSPCMD_AUDIO_ENABLE sets/clears AMCR.AUDEN for both voiceIn and voiceOut
 Boolean controlFlagForCustomGain = FALSE;
 
 void VPSHAREDMEM_Init( void );
@@ -93,9 +91,6 @@ static UInt32 voiceCallSampleRate = 8000;  // defalut to 8K Hz
 static Boolean dspECEnable = TRUE;
 static Boolean dspNSEnable = TRUE;
 static Boolean voiceULMute = FALSE;
-static Boolean IsBTM_WB = FALSE;
-
-static Boolean bNeedToFinshTelephonyDeinit = FALSE;
 
 #if defined(FUSE_APPS_PROCESSOR)
 /////////////////////////////////////////////////////////////////////////////
@@ -115,15 +110,6 @@ static SysAudioParm_t* AUDIO_GetParmAccessPtr(void)
 }
 
 #define AUDIOMODE_PARM_ACCESSOR(app,mode)        ((SysAudioParm_t *)((SysAudioParm_t *)AUDIO_GetParmAccessPtr()+app*AUDIO_MODE_NUMBER))[mode]
-
-void auddrv_FinshTelephonyDeinit( void )
-{
-	if( bNeedToFinshTelephonyDeinit == TRUE)
-	{
-		bNeedToFinshTelephonyDeinit = FALSE;
-		AUDDRV_Telephony_Deinit( );
-	}
-}
 #endif
 //=============================================================================
 // Private function prototypes
@@ -220,7 +206,6 @@ void AUDDRV_Telephony_Init ( AUDDRV_MIC_Enum_t  mic, AUDDRV_SPKR_Enum_t speaker 
 {
         Boolean ec_enable_from_sysparm = dspECEnable;
         Boolean ns_enable_from_sysparm = dspNSEnable;
-        AudioApp_t audio_app;
 
 	Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_Telephony_Init");
 
@@ -254,7 +239,6 @@ void AUDDRV_Telephony_Init ( AUDDRV_MIC_Enum_t  mic, AUDDRV_SPKR_Enum_t speaker 
 
 	//at beginning
 	inVoiceCall = TRUE;  //to prevent sending DSP Audio Enable when enable voice path.
-	bNeedToFinshTelephonyDeinit = FALSE;
 
 	audio_control_dsp( DSPCMD_TYPE_MUTE_DSP_UL, 0, 0, 0, 0, 0 );
 	audio_control_dsp( DSPCMD_TYPE_EC_NS_ON, FALSE, FALSE, 0, 0, 0 );
@@ -263,27 +247,21 @@ void AUDDRV_Telephony_Init ( AUDDRV_MIC_Enum_t  mic, AUDDRV_SPKR_Enum_t speaker 
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_CONNECT_UL, FALSE, 0, 0, 0, 0 );
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_CONNECT_DL, FALSE, 0, 0, 0, 0 );
 
-    audio_app = AUDDRV_GetAudioApp();
 	//only check voiceCallSampleRate
     if (voiceCallSampleRate == 16000) 
     {
-        
-        audio_app = GetWbApp(audio_app);
-
-        AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), audio_app );  //WB
+		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), AUDIO_APP_VOICE_CALL_WB );  //WB
 		AUDDRV_Telephony_InitHW ( mic, speaker, AUDIO_SAMPLING_RATE_16000 );
     }
 	else
     {
-        audio_app = GetNbApp(audio_app);
-		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), audio_app );  //NB
+		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), AUDIO_APP_VOICE_CALL );  //NB
 		AUDDRV_Telephony_InitHW ( mic, speaker, AUDIO_SAMPLING_RATE_8000 );
     }
 
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_ENABLE, TRUE, 0, AUDDRV_IsCall16K( AUDDRV_GetAudioMode() ), 0, 0 );
 	//after AUDDRV_Telephony_InitHW to make SRST.
 	AUDDRV_SetVCflag(TRUE);  //let HW control logic know.
-	inVoiceCall = TRUE;  //to prevent sending DSP Audio Enable when enable voice path.
 
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_CONNECT_DL, TRUE, AUDDRV_IsCall16K( AUDDRV_GetAudioMode() ), 0, 0, 0 );
 
@@ -326,7 +304,6 @@ void AUDDRV_Telephony_RateChange( UInt32 rate )
 {
         Boolean ec_enable_from_sysparm = dspECEnable;
         Boolean ns_enable_from_sysparm = dspNSEnable;
-        AudioApp_t audio_app;
 
 	Log_DebugPrintf(LOGID_AUDIO, "AUDDRV_Telephony_RateChange: rate = %d\n\r", rate);
 
@@ -365,19 +342,11 @@ void AUDDRV_Telephony_RateChange( UInt32 rate )
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_CONNECT_UL, FALSE, 0, 0, 0, 0 );
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_CONNECT_DL, FALSE, 0, 0, 0, 0 );
 
-    audio_app = AUDDRV_GetAudioApp();
-
 	//need to know the mode!  need to set HW to 16Khz.
     if (voiceCallSampleRate == 8000)
-    {
-        audio_app = GetNbApp(audio_app);
-		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), audio_app);  //NB
-    }
+		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), AUDIO_APP_VOICE_CALL);  //NB
     else
-    {
-        audio_app = GetWbApp(audio_app);
-		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), audio_app);
-    }
+		AUDDRV_SetAudioMode( (AudioMode_t)(AUDDRV_GetAudioMode()% AUDIO_MODE_NUMBER), AUDIO_APP_VOICE_CALL_WB);
 
 	//AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, speaker, TRUE, AUDIO_SAMPLING_RATE_8000);
 	audio_control_dsp( DSPCMD_TYPE_AUDIO_ENABLE, TRUE, 0, AUDDRV_IsCall16K( AUDDRV_GetAudioMode() ), 0, 0 );
@@ -479,12 +448,12 @@ void AUDDRV_ECreset_NLPoff(Boolean ECenable)
 // This is part of the control sequence for ending telephony audio.
 void AUDDRV_Telephony_Deinit (void )
 {
-	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Telephony_Deinit: vipath_enabled = %d, vopath_enabled = %d*\n\r", vipath_enabled, vopath_enabled);
-
+	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Telephony_Deinit voicePlayOutpathEnabled = %d*\n\r", voicePlayOutpathEnabled);
 #if defined(FUSE_APPS_PROCESSOR)&&!defined(BSP_ONLY_BUILD)	
-	// a quick fix not to disable voice path for speech playback when end the phone call.
-	// a quick fix not to disable voice path for speech recording when end the phone call.
-	if (vipath_enabled==FALSE && vopath_enabled==FALSE)
+	AUDDRV_SetVCflag(FALSE);  //let HW control logic know.
+
+	// a quick fix not to disable voice path for speech playbck or recording when end the phone call.
+	if ((voicePlayOutpathEnabled == FALSE) && (voiceInPathEnabled == FALSE))
 	{
 		  //per call basis: disable the DTX by calling stack api when call disconnected
 		audio_control_generic( AUDDRV_CPCMD_ENABLE_DSP_DTX, FALSE, 0, 0, 0, 0 );
@@ -501,32 +470,15 @@ void AUDDRV_Telephony_Deinit (void )
 		//OSTASK_Sleep( 3 ); //make sure audio is off
 
 		AUDDRV_Telephony_DeinitHW( );
-		AUDDRV_SetVCflag(FALSE);  //let HW control logic know.
-		inVoiceCall = FALSE;
-
 		audio_control_dsp( DSPCMD_TYPE_AUDIO_ENABLE, FALSE, 0, 0, 0, 0 );
-
-		//But on Android, we always get UNMUTE at the beginning of the call.
-		//Actually on Android, I cannot clear it otherwise the UL will be umuted for a short duration.
 	}
-	else
-	{
-		//keep DSP and HW running. will execute AUDDRV_Telephony_Deinit when voice recording is done.
-		bNeedToFinshTelephonyDeinit = TRUE;
 
-		if (vopath_enabled == FALSE)
-		{
-			AUDDRV_DisableHWOutput( AUDDRV_VOICE_OUTPUT, AUDDRV_REASON_HW_CTRL );
-		}
-		else
-		if (vipath_enabled == FALSE)
-		{
-			AUDDRV_DisableHWInput( AUDDRV_VOICE_INPUT, AUDDRV_REASON_HW_CTRL );
-		}
-	}
+	if (AUDIO_CHNL_BLUETOOTH == AUDDRV_GetAudioMode() )
+		VPRIPCMDQ_DigitalSound( FALSE );
 
 	//at last
     voiceCallSampleRate = 8000;  //reset it to 8KHz,
+	inVoiceCall = FALSE;
 #endif
 	return;
 }
@@ -559,37 +511,23 @@ Boolean AUDDRV_IsVoiceCallWB(AudioMode_t audio_mode)
 
 Boolean AUDDRV_IsCall16K(AudioMode_t voiceMode)
 {
-
 	Boolean is_call16k = FALSE;
-    
-    if ( voiceMode >= AUDIO_MODE_NUMBER )
-        voiceMode = (AudioMode_t) (voiceMode - AUDIO_MODE_NUMBER);
-	
-	if( ( AUDDRV_GetAudioApp() == AUDIO_APP_VOICE_CALL_WB ) ||
-        ( AUDDRV_GetAudioApp() == AUDIO_APP_VT_CALL_WB ))
-	{
 	switch(voiceMode)
 		{
-		case	AUDIO_MODE_HANDSET:
-		case	AUDIO_MODE_HEADSET:
-		case	AUDIO_MODE_HANDSFREE:
-		case	AUDIO_MODE_SPEAKERPHONE:
-		case	AUDIO_MODE_TTY:
-		case	AUDIO_MODE_HAC:
-		case	AUDIO_MODE_USB:
-		case	AUDIO_MODE_RESERVE:
+		case	AUDIO_MODE_HANDSET_WB:
+		case	AUDIO_MODE_HEADSET_WB:
+		case	AUDIO_MODE_HANDSFREE_WB:
+		//case	AUDIO_MODE_BLUETOOTH_WB:
+		case	AUDIO_MODE_SPEAKERPHONE_WB:
+		case	AUDIO_MODE_TTY_WB:
+		case	AUDIO_MODE_HAC_WB:
+		case	AUDIO_MODE_USB_WB:
+		case	AUDIO_MODE_RESERVE_WB:
 			is_call16k = TRUE;
 			break;
-
-		case	AUDIO_MODE_BLUETOOTH: //BT headset needs to consider NB or WB too
-			is_call16k = IsBTM_WB; 
-			break;
-
 		default:
 			break;
 		}
-	}
-
 	return is_call16k;
 }
 //=============================================================================
@@ -620,29 +558,3 @@ void AUDDRV_ControlFlagFor_CustomGain( Boolean on_off )
 	controlFlagForCustomGain = on_off;
 }
 
-//*********************************************************************
-/**
-*   Get BTM headset NB or WB info
-
-*	@return		Boolean, TRUE for WB and FALSE for NB (8k) 
-*   @note      
-**********************************************************************/
-Boolean AUDDRV_IsBTMWB( void )
-{
-	return IsBTM_WB;
-}
-
-//*********************************************************************
-/**
-*   Set BTM type 
-
-*	@param		Boolean isWB 
-*	@return		none
-*
-*	@note	isWB=TRUE for BT WB headset; =FALSE for BT NB (8k) headset.
-**********************************************************************/
-void AUDDRV_SetBTMTypeWB( Boolean isWB)
-{
-	IsBTM_WB = isWB;
-	AUDDRV_SetPCMRate(IsBTM_WB); 
-}

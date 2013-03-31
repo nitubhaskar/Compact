@@ -3506,8 +3506,6 @@ GLOBAL const U32 reg_main_init[]
 {0x002A023E},
 {0x0F120001},   //REG_TC_GP_EnablePreview
 {0x0F120001},   //REG_TC_GP_EnablePreviewChanged
-
-CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3560,7 +3558,6 @@ GLOBAL const U32 reg_main_preview[]
 {0x0F120001},
 {0x002A0268},
 {0x0F120001},
-CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3651,6 +3648,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_nightshot[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 0
 {0x00287000},
 {0x002A06B8},
 {0x0F12FFFF},
@@ -3693,7 +3691,7 @@ GLOBAL const u32 reg_main_nightshot[]
 {0x002A023E},
 {0x0F120001},
 {0x0F120001},
-
+    
 {0x002A0A1E},
 {0x0F121580},
 
@@ -3709,8 +3707,7 @@ GLOBAL const u32 reg_main_nightshot[]
 {0x0F120050},
 {0x0F120058},
 {0x0F120060},	
-
-CAMACQ_MAIN_BTM_OF_DATA
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3721,10 +3718,10 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_wb_auto[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 {0xFCFCD000},
 {0x00287000},
-
-CAMACQ_MAIN_BTM_OF_DATA
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3735,22 +3732,11 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_wb_daylight[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 {0xFCFCD000},
 {0x00287000},
-               // 0x002A04E6 S/W Program
-               // 0x0F120777
-{0x002A04BA},
-{0x0F120620},
-
-{0x002A04BE},
-{0x0F1203D0},
-
-{0x002A04C2},
-{0x0F120580},
-
-{0x002A04C6},
-{0x0F120001},
-CAMACQ_MAIN_BTM_OF_DATA
+     #endif          // 0x002A04E6 S/W Program
+               // 0x0F12077F
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3761,6 +3747,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_wb_cloudy[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 {0xFCFCD000},
 {0x00287000},
                // 0x002A04E6 S/W Program
@@ -3776,9 +3763,7 @@ GLOBAL const u32 reg_main_wb_cloudy[]
 
 {0x002A04C6},
 {0x0F120001},
-
-CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3789,9 +3774,24 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_wb_incandescent[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 
-CAMACQ_MAIN_BTM_OF_DATA
+{0xFCFCD000},
+{0x00287000},
+               // 0x002A04E6 S/W Program
+               // 0x0F120777
+{0x002A04BA},
+{0x0F120620},
 
+{0x002A04BE},
+{0x0F1203D0},
+
+{0x002A04C2},
+{0x0F120580},
+
+{0x002A04C6},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3802,6 +3802,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_wb_fluorescent[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 {0xFCFCD000},
 {0x00287000},
                // 0x002A04E6 S/W Program
@@ -3817,9 +3818,7 @@ GLOBAL const u32 reg_main_wb_fluorescent[]
 
 {0x002A04C6},
 {0x0F120001},
-
-CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3842,21 +3841,6 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_wb_tungsten[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-				   // 0x002A04E6 S/W Program
-				   // 0x0F120777
-	{0x002A04BA},
-	{0x0F1203B0},
-	
-	{0x002A04BE},
-	{0x0F1203D0},
-	
-	{0x002A04C2},
-	{0x0F1209F0},
-	
-	{0x002A04C6},
-	{0x0F120001},
 
 CAMACQ_MAIN_BTM_OF_DATA
 }
@@ -3906,12 +3890,12 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_effect_none[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 {0xFCFCD000},
 {0x00287000},
 {0x002A023C},
 {0x0F120000},
-
-CAMACQ_MAIN_BTM_OF_DATA
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3938,11 +3922,12 @@ GLOBAL const u32 reg_main_effect_gray[]
 GLOBAL const u32 reg_main_effect_negative[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A023C},
-	{0x0F120003},
-
+#if 0
+{0xFCFCD000},
+{0x00287000},
+{0x002A023C},
+{0x0F120003},
+#endif
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -3954,11 +3939,13 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_effect_solarize[]
 #if defined(_CAMACQ_API_C_)
 ={/*swsw empty*/
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A023C},
-	{0x0F120002},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 0
+
+{0xFCFCD000},
+{0x00287000},
+{0x002A023C},
+{0x0F120002},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3969,12 +3956,12 @@ GLOBAL const u32 reg_main_effect_solarize[]
 GLOBAL const u32 reg_main_effect_sepia[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A023C},
-	{0x0F120004},
-	CAMACQ_MAIN_BTM_OF_DATA
-
+#if 0
+{0xFCFCD000},
+{0x00287000},
+{0x002A023C},
+{0x0F120004},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -3997,6 +3984,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_effect_whiteboard[]
 #if defined(_CAMACQ_API_C_)
 ={
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -4008,6 +3996,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_effect_blackboard[]
 #if defined(_CAMACQ_API_C_)
 ={
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -4092,46 +4081,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_meter_matrix[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A1492},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	
-	{0x002A0268},	//REG_TC_GP_PrevConfigChanged
-	{0x0F120001},
-
-	CAMACQ_MAIN_BTM_OF_DATA
+		CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4143,6 +4093,7 @@ GLOBAL const u32 reg_main_meter_cw[]
 #if defined(_CAMACQ_API_C_)
 ={
 
+#if 1
 {0xFCFCD000},
 {0x00287000},
 {0x002A1492},
@@ -4181,9 +4132,7 @@ GLOBAL const u32 reg_main_meter_cw[]
 
 {0x002A0268},   //REG_TC_GP_PrevConfigChanged
 {0x0F120001},
-
-CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4194,7 +4143,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_meter_spot[]
 #if defined(_CAMACQ_API_C_)
 ={
-
+#if 1
 {0xFCFCD000},
 {0x00287000},
 {0x002A1492},
@@ -4230,12 +4179,10 @@ GLOBAL const u32 reg_main_meter_spot[]
 {0x0F120000},
 {0x0F120000},
 {0x0F120000},
-
+                 
 {0x002A0268},   //REG_TC_GP_PrevConfigChanged
 {0x0F120001},
-
-CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4246,7 +4193,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_meter_frame[]
 #if defined(_CAMACQ_API_C_)
 ={
-#if 0
+#if 1
 
 {0xFCFCD000},
 {0x00287000},
@@ -4287,9 +4234,7 @@ GLOBAL const u32 reg_main_meter_frame[]
 {0x002A0268},   //REG_TC_GP_PrevConfigChanged
 {0x0F120001},
 #endif
-CAMACQ_MAIN_BTM_OF_DATA
 }
-
 #endif /* _CAMACQ_API_C_ */
 ;
 
@@ -4464,7 +4409,7 @@ GLOBAL const u32 reg_main_camcorder[]
 {0x0F120001},
 {0x002A0268},
 {0x0F120001},
-CAMACQ_MAIN_BTM_OF_DATA
+		CAMACQ_MAIN_BTM_OF_DATA
 		#endif
 }
 #endif /* _CAMACQ_API_C_ */
@@ -4490,26 +4435,6 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_fps_fixed_7[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A02B4},
-	{0x0F120052},
-	{0x002A02BE},
-	{0x0F120000},
-	{0x0F120001},
-	{0x0F120535},
-	{0x0F120535},
-	{0x002A02D0},
-	{0x0F120000},
-	{0x0F120000},
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
 
 
 CAMACQ_MAIN_BTM_OF_DATA
@@ -4535,28 +4460,30 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_fps_fixed_15[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A02B4},
-	{0x0F120052},
-	{0x002A02BE},
-	{0x0F120000},
-	{0x0F120001},
-	{0x0F12029A},
-	{0x0F12029A},
-	{0x002A02D0},
-	{0x0F120000},
-	{0x0F120000},
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
-CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+
+{0xFCFCD000},
+{0x00287000},
+{0x002A02B4},
+{0x0F120042},
+{0x002A02BE},
+{0x0F120000},
+{0x0F120001},
+{0x0F12029A},
+{0x0F12029A},
+{0x002A02D0},
+{0x0F120000},
+{0x0F120000},
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4567,28 +4494,29 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_fps_fixed_20[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A02B4},
-	{0x0F120052},
-	{0x002A02BE},
-	{0x0F120000},
-	{0x0F120001},
-	{0x0F1201F4},
-	{0x0F1201F4},
-	{0x002A02D0},
-	{0x0F120000},
-	{0x0F120000},
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
+#if 1
 
-	CAMACQ_MAIN_BTM_OF_DATA
+{0xFCFCD000},
+{0x00287000},
+{0x002A02B4},
+{0x0F120042},
+{0x002A02BE},
+{0x0F120000},
+{0x0F120001},
+{0x0F1201F4},
+{0x0F1201F4},
+{0x002A02D0},
+{0x0F120000},
+{0x0F120000},
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+#endif
 
 
 }
@@ -4601,28 +4529,29 @@ GLOBAL const u32 reg_main_fps_fixed_20[]
 GLOBAL const u32 reg_main_fps_fixed_25[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A02B4},
-	{0x0F120052},
-	{0x002A02BE},
-	{0x0F120000},
-	{0x0F120001},
-	{0x0F120190},
-	{0x0F120190},
-	{0x002A02D0},
-	{0x0F120000},
-	{0x0F120000},
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
+#if 1
 
-	CAMACQ_MAIN_BTM_OF_DATA
+{0xFCFCD000},
+{0x00287000},
+{0x002A02B4},
+{0x0F120042},
+{0x002A02BE},
+{0x0F120000},
+{0x0F120001},
+{0x0F120190},
+{0x0F120190},
+{0x002A02D0},
+{0x0F120000},
+{0x0F120000},
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+#endif
 
 }
 #endif /* _CAMACQ_API_C_ */
@@ -4634,28 +4563,29 @@ GLOBAL const u32 reg_main_fps_fixed_25[]
 GLOBAL const u32 reg_main_fps_fixed_30[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A02B4},
-	{0x0F120052},
-	{0x002A02BE},
-	{0x0F120000},
-	{0x0F120001},
-	{0x0F12014D},
-	{0x0F12014D},
-	{0x002A02D0},
-	{0x0F120000},
-	{0x0F120000},
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A02B4},
+{0x0F120042},
+{0x002A02BE},
+{0x0F120000},
+{0x0F120001},
+{0x0F12014D},
+{0x0F12014D},
+{0x002A02D0},
+{0x0F120000},
+{0x0F120000},
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+#endif
 
 }
 #endif /* _CAMACQ_API_C_ */
@@ -4680,12 +4610,29 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_brightness_level_0[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
-{0x002A1484},
-{0x0F120018},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
-
+{0x002A02B4},
+{0x0F120042},
+{0x002A02BE},
+{0x0F120000},
+{0x0F120001},
+{0x0F12029A},
+{0x0F12014A},
+{0x002A02D0},
+{0x0F120000},
+{0x0F120000},
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4696,12 +4643,13 @@ GLOBAL const u32 reg_main_brightness_level_0[]
 GLOBAL const u32 reg_main_brightness_level_1[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
 {0x0F12001E},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4712,12 +4660,13 @@ GLOBAL const u32 reg_main_brightness_level_1[]
 GLOBAL const u32 reg_main_brightness_level_2[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
-{0x0F120025},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
-
+{0x0F120025},   //TVAR_ae_BrAved
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4728,11 +4677,13 @@ GLOBAL const u32 reg_main_brightness_level_2[]
 GLOBAL const u32 reg_main_brightness_level_3[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
 {0x0F120030},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4743,13 +4694,13 @@ GLOBAL const u32 reg_main_brightness_level_3[]
 GLOBAL const u32 reg_main_brightness_level_4[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
-{0x0F12003C},   //TVAR_ae_BrAve
-
-CAMACQ_MAIN_BTM_OF_DATA
-
+{0x0F12003C},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4760,11 +4711,13 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_brightness_level_5[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
 {0x0F12004E},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4775,12 +4728,13 @@ GLOBAL const u32 reg_main_brightness_level_5[]
 GLOBAL const u32 reg_main_brightness_level_6[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
 {0x0F120060},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4791,11 +4745,13 @@ GLOBAL const u32 reg_main_brightness_level_6[]
 GLOBAL const u32 reg_main_brightness_level_7[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
 {0x0F120070},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -4806,12 +4762,13 @@ GLOBAL const u32 reg_main_brightness_level_7[]
 GLOBAL const u32 reg_main_brightness_level_8[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
+
 {0xFCFCD000},
 {0x00287000},
 {0x002A1484},
 {0x0F120080},   //TVAR_ae_BrAve
-	CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5032,49 +4989,18 @@ CAMACQ_MAIN_BTM_OF_DATA
 ;
 
 GLOBAL const u32 reg_main_return_manual_af[]
-// s5k4ecgx_AF_Return_Inf_pos_EVT1
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A15D6},
-{0x0F12D000},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
 ;
 
 GLOBAL const u32 reg_main_return_macro_af[]
-//s5k4ecgx_AF_Return_Macro_pos_EVT1
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A15E8},
-{0x0F120018},
-{0x0F12002A},
-{0x0F120030},
-{0x0F120036},
-{0x0F12003C},
-{0x0F120042},
-{0x0F120048},
-{0x0F12004E},
-{0x0F120054},
-{0x0F12005A},
-{0x0F120060},
-{0x0F120066},
-{0x0F12006C},
-{0x0F120072},
-{0x0F120078},
-{0x0F12007E},
-{0x0F120084},
-{0x0F12008A},
-{0x0F120090},
-{0x0F120096},
-{0x0F12009C},
-{0x0F1200A2},
-{0x0F1200A8},
-{0x0F1200AE},
-{0x0F1200B4},
-{0x0F1200BA},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5083,9 +5009,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_set_af_normal_mode_1[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A028E},
-{0x0F120000},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5094,9 +5018,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_set_af_normal_mode_2[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A028C},
-{0x0F120004},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5105,34 +5027,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_set_af_normal_mode_3[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A1648},
-{0x0F129002},
 
-{0x002A15E8},
-{0x0F120015},   //af_pos_usTableLastInd
-{0x0F120032},
-{0x0F120038},
-{0x0F12003E},
-{0x0F120044},
-{0x0F12004A},
-{0x0F120050},
-{0x0F120056},
-{0x0F12005C},
-{0x0F120062},
-{0x0F120068},
-{0x0F12006E},
-{0x0F120074},
-{0x0F12007A},
-{0x0F120080},
-{0x0F120086},
-{0x0F12008C},
-{0x0F120092},
-{0x0F120098},
-{0x0F12009E},
-{0x0F1200A4},
-{0x0F1200AA},
-{0x0F1200B0},
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5141,9 +5036,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_set_af_macro_mode_1[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A028E},
-{0x0F1200D0},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5152,9 +5045,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_set_af_macro_mode_2[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A028C},
-{0x0F120004},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5163,37 +5054,7 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_set_af_macro_mode_3[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0x00287000},
-{0x002A1648},
-{0x0F129042},
 
-{0x002A15E8},
-{0x0F120015},   //af_pos_usTableLastInd
-{0x0F120032},
-{0x0F120038},
-{0x0F12003E},
-{0x0F120044},
-{0x0F12004A},
-{0x0F120050},
-{0x0F120056},
-{0x0F12005C},
-{0x0F120062},
-{0x0F120068},
-{0x0F12006E},
-{0x0F120074},
-{0x0F12007A},
-{0x0F120080},
-{0x0F120086},
-{0x0F12008C},
-{0x0F120092},
-{0x0F120098},
-{0x0F12009E},
-{0x0F1200A4},
-{0x0F1200AA},
-{0x0F1200B0},
-
-{0x002A15DA},
-{0x0F121500},   // 16 start number of table 00 End number of table
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5206,30 +5067,31 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_iso_auto[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},	//afit_bUseNB_Afit
-	{0x0F120000},	 
-	{0x0F120014},	//SARR_uNormBrInDoor_0_
-	{0x0F1200D2},	//SARR_uNormBrInDoor_1_
-	{0x0F120384},	//SARR_uNormBrInDoor_2_
-	{0x0F1207D0},	//SARR_uNormBrInDoor_3_
-	{0x0F121388},	//SARR_uNormBrInDoor_4_
-					
-	{0x002A0F2A},	//AFC_Default60Hz
-	{0x0F120000},	//00:50Hz 01:60Hz			 
-					
-				   // 0x002A04E6 S/W Program
-				   // 0x0F12077F
-					
-	{0x002A04D0},	
-	{0x0F120000},	//REG_SF_USER_IsoType	 
-	{0x0F120000},	//REG_SF_USER_IsoVal	 
-	{0x0F120001},	//REG_SF_USER_IsoChanged 
-	{0x002A06C2},							 
-	{0x0F120200},	//lt_bUseSecISODgain  
+#if 1
 
-	CAMACQ_MAIN_BTM_OF_DATA
+{0xFCFCD000},
+{0x00287000},
+{0x002A0938},   //afit_bUseNB_Afit
+{0x0F120000},    
+{0x0F120014},   //SARR_uNormBrInDoor_0_
+{0x0F1200D2},   //SARR_uNormBrInDoor_1_
+{0x0F120384},   //SARR_uNormBrInDoor_2_
+{0x0F1207D0},   //SARR_uNormBrInDoor_3_
+{0x0F121388},   //SARR_uNormBrInDoor_4_
+
+{0x002A0F2A},   //AFC_Default60Hz
+{0x0F120000},   //00:50Hz 01:60Hz            
+ 
+               // 0x002A04E6 S/W Program
+               // 0x0F12077F
+
+{0x002A04D0},   
+{0x0F120000},   //REG_SF_USER_IsoType    
+{0x0F120000},   //REG_SF_USER_IsoVal     
+{0x0F120001},   //REG_SF_USER_IsoChanged 
+{0x002A06C2},                            
+{0x0F120200},   //lt_bUseSecISODgain  
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5241,30 +5103,31 @@ GLOBAL const u32 reg_main_iso_auto[]
 GLOBAL const u32 reg_main_iso_50[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},
-	{0x0F120001},	//afit_bUseNB_Afit
-	{0x0F120014},	//SARR_uNormBrInDoor_0_
-	{0x0F1200D2},	//SARR_uNormBrInDoor_1_
-	{0x0F120384},	//SARR_uNormBrInDoor_2_
-	{0x0F1207D0},	//SARR_uNormBrInDoor_3_
-	{0x0F121388},	//SARR_uNormBrInDoor_4_
-	
-				   // 0x002A04E6 S/W Program
-				   // 0x0F12065F
-	{0x002A04D6},	
-	{0x0F120000},	//REG_SF_USER_FlickerQuant		 
-	{0x0F120001},	//REG_SF_USER_FlickerQuantChanged
-					
-	{0x002A04D0},	
-	{0x0F120001},	//REG_SF_USER_IsoType	 
-	{0x0F120100},	//REG_SF_USER_IsoVal	 
-	{0x0F120001},	//REG_SF_USER_IsoChanged 
-	{0x002A06C2},							 
-	{0x0F120100},	//lt_bUseSecISODgain  
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0938},
+{0x0F120001},   //afit_bUseNB_Afit
+{0x0F120014},   //SARR_uNormBrInDoor_0_
+{0x0F1200D2},   //SARR_uNormBrInDoor_1_
+{0x0F120384},   //SARR_uNormBrInDoor_2_
+{0x0F1207D0},   //SARR_uNormBrInDoor_3_
+{0x0F121388},   //SARR_uNormBrInDoor_4_
+
+               // 0x002A04E6 S/W Program
+               // 0x0F12065F
+{0x002A04D6},   
+{0x0F120000},   //REG_SF_USER_FlickerQuant       
+{0x0F120001},   //REG_SF_USER_FlickerQuantChanged
+ 
+{0x002A04D0},   
+{0x0F120001},   //REG_SF_USER_IsoType    
+{0x0F120100},   //REG_SF_USER_IsoVal     
+{0x0F120001},   //REG_SF_USER_IsoChanged 
+{0x002A06C2},                            
+{0x0F120100},   //lt_bUseSecISODgain  
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5276,30 +5139,31 @@ GLOBAL const u32 reg_main_iso_50[]
 GLOBAL const u32 reg_main_iso_100[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},
-	{0x0F120001},	//afit_bUseNB_Afit
-	{0x0F120014},	//SARR_uNormBrInDoor_0_
-	{0x0F1200D2},	//SARR_uNormBrInDoor_1_
-	{0x0F120384},	//SARR_uNormBrInDoor_2_
-	{0x0F1207D0},	//SARR_uNormBrInDoor_3_
-	{0x0F121388},	//SARR_uNormBrInDoor_4_
-					
-				   // 0x002A04E6 S/W Program
-				   // 0x0F12065F
-	{0x002A04D6},	
-	{0x0F120000},	//REG_SF_USER_FlickerQuant		 
-	{0x0F120001},	//REG_SF_USER_FlickerQuantChanged
-					
-	{0x002A04D0},	
-	{0x0F120001},	//REG_SF_USER_IsoType	 
-	{0x0F1201BA},	//REG_SF_USER_IsoVal	 
-	{0x0F120001},	//REG_SF_USER_IsoChanged 
-	{0x002A06C2},							 
-	{0x0F120100},	//lt_bUseSecISODgain 
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0938},
+{0x0F120001},   //afit_bUseNB_Afit
+{0x0F120014},   //SARR_uNormBrInDoor_0_
+{0x0F1200D2},   //SARR_uNormBrInDoor_1_
+{0x0F120384},   //SARR_uNormBrInDoor_2_
+{0x0F1207D0},   //SARR_uNormBrInDoor_3_
+{0x0F121388},   //SARR_uNormBrInDoor_4_
+
+               // 0x002A04E6 S/W Program
+               // 0x0F12065F
+{0x002A04D6},   
+{0x0F120000},   //REG_SF_USER_FlickerQuant       
+{0x0F120001},   //REG_SF_USER_FlickerQuantChanged
+
+{0x002A04D0},   
+{0x0F120001},   //REG_SF_USER_IsoType    
+{0x0F1201BA},   //REG_SF_USER_IsoVal     
+{0x0F120001},   //REG_SF_USER_IsoChanged 
+{0x002A06C2},                            
+{0x0F120100},   //lt_bUseSecISODgain     
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5311,32 +5175,33 @@ GLOBAL const u32 reg_main_iso_100[]
 GLOBAL const u32 reg_main_iso_200[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},
-	{0x0F120001},	//afit_bUseNB_Afit
-	{0x0F120114},	//SARR_uNormBrInDoor_0_
-	{0x0F1204A2},	//SARR_uNormBrInDoor_1_
-	{0x0F120584},	//SARR_uNormBrInDoor_2_
-	{0x0F1208D0},	//SARR_uNormBrInDoor_3_
-	{0x0F121388},	//SARR_uNormBrInDoor_4_
-	
-	
-					
-				   // 0x002A04E6 S/W Program
-				   // 0x0F12065F
-	{0x002A04D6},	
-	{0x0F120000},	//REG_SF_USER_FlickerQuant		 
-	{0x0F120001},	//REG_SF_USER_FlickerQuantChanged
-					
-	{0x002A04D0},	
-	{0x0F120001},	//REG_SF_USER_IsoType	 
-	{0x0F12036A},	//REG_SF_USER_IsoVal	 
-	{0x0F120001},	//REG_SF_USER_IsoChanged 
-	{0x002A06C2},							 
-	{0x0F120100},	//lt_bUseSecISODgain  
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0938},
+{0x0F120001},   //afit_bUseNB_Afit
+{0x0F120114},   //SARR_uNormBrInDoor_0_
+{0x0F1204A2},   //SARR_uNormBrInDoor_1_
+{0x0F120584},   //SARR_uNormBrInDoor_2_
+{0x0F1208D0},   //SARR_uNormBrInDoor_3_
+{0x0F121388},   //SARR_uNormBrInDoor_4_
+
+ 
+
+               // 0x002A04E6 S/W Program
+               // 0x0F12065F
+{0x002A04D6},   
+{0x0F120000},   //REG_SF_USER_FlickerQuant       
+{0x0F120001},   //REG_SF_USER_FlickerQuantChanged
+
+{0x002A04D0},   
+{0x0F120001},   //REG_SF_USER_IsoType    
+{0x0F12036A},   //REG_SF_USER_IsoVal     
+{0x0F120001},   //REG_SF_USER_IsoChanged 
+{0x002A06C2},                            
+{0x0F120100},   //lt_bUseSecISODgain  
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5347,30 +5212,31 @@ GLOBAL const u32 reg_main_iso_200[]
 GLOBAL const u32 reg_main_iso_400[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},
-	{0x0F120001},	//afit_bUseNB_Afit
-	{0x0F120214},	//SARR_uNormBrInDoor_0_
-	{0x0F120BD2},	//SARR_uNormBrInDoor_1_
-	{0x0F120C84},	//SARR_uNormBrInDoor_2_
-	{0x0F1210D0},	//SARR_uNormBrInDoor_3_
-	{0x0F121388},	//SARR_uNormBrInDoor_4_
-					
-				   // 0x002A04E6 S/W Program
-				   // 0x0F12065F
-	{0x002A04D6},	
-	{0x0F120000},	//REG_SF_USER_FlickerQuant		 
-	{0x0F120001},	//REG_SF_USER_FlickerQuantChanged
-					
-	{0x002A04D0},	
-	{0x0F120001},	//REG_SF_USER_IsoType	 
-	{0x0F1206F4},	//REG_SF_USER_IsoVal	 
-	{0x0F120001},	//REG_SF_USER_IsoChanged 
-	{0x002A06C2},							 
-	{0x0F120100},	//lt_bUseSecISODgain 
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0938},
+{0x0F120001},   //afit_bUseNB_Afit
+{0x0F120214},   //SARR_uNormBrInDoor_0_
+{0x0F120BD2},   //SARR_uNormBrInDoor_1_
+{0x0F120C84},   //SARR_uNormBrInDoor_2_
+{0x0F1210D0},   //SARR_uNormBrInDoor_3_
+{0x0F121388},   //SARR_uNormBrInDoor_4_
+
+               // 0x002A04E6 S/W Program
+               // 0x0F12065F
+{0x002A04D6},   
+{0x0F120000},   //REG_SF_USER_FlickerQuant       
+{0x0F120001},   //REG_SF_USER_FlickerQuantChanged
+ 
+{0x002A04D0},   
+{0x0F120001},   //REG_SF_USER_IsoType    
+{0x0F1206F4},   //REG_SF_USER_IsoVal     
+{0x0F120001},   //REG_SF_USER_IsoChanged 
+{0x002A06C2},                            
+{0x0F120100},   //lt_bUseSecISODgain  
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5417,195 +5283,196 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_scene_auto[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A1492},
-	{0x0F120100},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120001},
-	{0x0F120101},
-	{0x0F120201},
-	{0x0F120102},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120202},
-	{0x0F120202},
-	{0x0F120101},
-	{0x0F120201},
-	{0x0F120302},
-	{0x0F120203},
-	{0x0F120102},
-	{0x0F120201},
-	{0x0F120302},
-	{0x0F120203},
-	{0x0F120102},
-	{0x0F120201},
-	{0x0F120202},
-	{0x0F120202},
-	{0x0F120102},
-	{0x0F120101},
-	{0x0F120202},
-	{0x0F120202},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-					//scene Backlight landscape end
-	
-	{0x002A0F2A},	//AFC_Default60Hz	  
-	{0x0F120000},	//00:50Hz 01:60Hz	
-	
-					//Scene_Duskdawn Candle_LightSunset
-	{0x002A04E6},
-	{0x0F12077F},
-					//Scene_Duskdawn Candle_LightSunset end
-	
-					//Beach_Snow
-	{0x002A1484},
-	{0x0F12003C},
-					//Beach_Snow End
-	
-					//NightShot
-	{0x002A06B8},
-	{0x0F12452C},
-	{0x0F120005},
-	
-	{0x002A0608},
-	{0x0F120001},
-	{0x0F120001},
-	
-	{0x002A058C},
-	{0x0F123520},
-	{0x0F120000},
-	{0x0F12C350},
-	{0x0F120000},
-	{0x0F123520},
-	{0x0F120000},
-	{0x0F12C350},
-	{0x0F120000},
-	{0x0F120470},
-	{0x0F120C00},
-	{0x0F120100},
-	{0x0F121000},
-	
-	{0x002A02C2}, 
-	{0x0F12029A},
-	{0x0F12014A},
-	
-	{0x002A0A1E},
-	{0x0F120340},	//AFIT8_ccm_oscar_iSaturation	[7:0] AFIT8_RGB2YUV_iYOffset
-					//Night End
-	
-					//Scene portrait landscape Text default
-	{0x002A0A28},	//Sharpness_Default
-	{0x0F126024},
-	{0x002A0ADE},
-	{0x0F126024},
-	{0x002A0B94},
-	{0x0F126024},
-	{0x002A0C4A},
-	{0x0F126024},
-	{0x002A0D00},
-	{0x0F126024},
-					//Scene portrait Text default end
-	
-	{0x002A0234},	//Saturation_Default
-	{0x0F120000},
-					//Scene landscape party_indoor Fall_Color default end
-	
-					//Fireworks
-	{0x002A03B4},
-	{0x0F120535},
-	{0x0F12029A},
-	
-					//Sports mode
-	{0x002A0638}, 
-	{0x0F120001}, 
-	{0x0F120000},	//lt_ExpGain_ExpCurveGainMaxStr_0__ulExpOut_0_
-	{0x0F120A3C}, 
-	{0x0F120000}, 
-	{0x0F120D05}, 
-	{0x0F120000}, 
-	{0x0F123408}, 
-	{0x0F120000}, 
-	{0x0F123408}, 
-	{0x0F120000}, 
-	{0x0F126810}, 
-	{0x0F120000}, 
-	{0x0F128214}, 
-	{0x0F120000}, 
-	{0x0F12C350},
-	{0x0F120000},
-	{0x0F12C350},
-	{0x0F120000},
-	{0x0F12C350},
-	{0x0F120000},
-	
-					//Party_Indoor Beach_Snow
-	{0x002A0938},
-	{0x0F120000},
-	
-	{0x002A04D0},
-	{0x0F120000},
-	{0x0F120000},
-	{0x0F120001},
-	{0x002A06C2},						   
-	{0x0F120200},	//lt_bUseSecISODgain 
-	
-	
-	{0x002A023C},	//Effect_Normal
-	{0x0F120000},
-		
-	{0x002A0232},	//Contrast_Default
-	{0x0F120000},
-	
-	{0x002A1BEA},
-	{0x0F120001},	//Auto Contrast Off
-	
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
-	{0x002A0270},
-	{0x0F120001},
-	{0x002A023E},
-	{0x0F120001},
-	{0x0F120001},
-	
-	{0x002A1648},
-	{0x0F129002},	// 2nd search on when 2nd search lens oppsite direction moving
-	
-	{0x002A15E8},
-	{0x0F120015},	//af_pos_usTableLastInd
-	{0x0F120032},
-	{0x0F120038},
-	{0x0F12003E},
-	{0x0F120044},
-	{0x0F12004A},
-	{0x0F120050},
-	{0x0F120056},
-	{0x0F12005C},
-	{0x0F120062},
-	{0x0F120068},
-	{0x0F12006E},
-	{0x0F120074},
-	{0x0F12007A},
-	{0x0F120080},
-	{0x0F120086},
-	{0x0F12008C},
-	{0x0F120092},
-	{0x0F120098},
-	{0x0F12009E},
-	{0x0F1200A4},
-	{0x0F1200AA},
-	{0x0F1200B0},
+#if 1   //temp_denis  0 => 1
+{0x00287000},
+{0x002A1492},
+{0x0F120100},
+{0x0F120101},
+{0x0F120101},
+{0x0F120001},
+{0x0F120101},
+{0x0F120201},
+{0x0F120102},
+{0x0F120101},
+{0x0F120101},
+{0x0F120202},
+{0x0F120202},
+{0x0F120101},
+{0x0F120201},
+{0x0F120302},
+{0x0F120203},
+{0x0F120102},
+{0x0F120201},
+{0x0F120302},
+{0x0F120203},
+{0x0F120102},
+{0x0F120201},
+{0x0F120202},
+{0x0F120202},
+{0x0F120102},
+{0x0F120101},
+{0x0F120202},
+{0x0F120202},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+                //scene Backlight landscape end
 
-CAMACQ_MAIN_BTM_OF_DATA
+{0x002A0F2A},   //AFC_Default60Hz     
+{0x0F120000},   //00:50Hz 01:60Hz   
+
+                //Scene_Duskdawn Candle_LightSunset
+{0x002A04E6},
+{0x0F12077F},
+                //Scene_Duskdawn Candle_LightSunset end
+
+                //Beach_Snow
+{0x002A1484},
+{0x0F12003C},
+                //Beach_Snow End
+
+                //NightShot
+{0x002A06B8},
+{0x0F12452C},
+{0x0F120005},
+
+{0x002A0608},
+{0x0F120001},
+{0x0F120001},
+
+{0x002A058C},
+{0x0F123520},
+{0x0F120000},
+{0x0F12C350},
+{0x0F120000},
+{0x0F123520},
+{0x0F120000},
+{0x0F12C350},
+{0x0F120000},
+{0x0F120470},
+{0x0F120C00},
+{0x0F120100},
+{0x0F121000},
+ 
+{0x002A02C2}, 
+{0x0F12029A},
+{0x0F12014A},
+
+{0x002A0A1E},
+{0x0F120340},   //AFIT8_ccm_oscar_iSaturation   [7:0] AFIT8_RGB2YUV_iYOffset
+                //Night End
+
+                //Scene portrait landscape Text default
+{0x002A0A28},   //Sharpness_Default
+{0x0F126024},
+{0x002A0ADE},
+{0x0F126024},
+{0x002A0B94},
+{0x0F126024},
+{0x002A0C4A},
+{0x0F126024},
+{0x002A0D00},
+{0x0F126024},
+                //Scene portrait Text default end
+
+{0x002A0234},   //Saturation_Default
+{0x0F120000},
+                //Scene landscape party_indoor Fall_Color default end
+
+                //Fireworks
+{0x002A03B4},
+{0x0F120535},
+{0x0F12029A},
+
+                //Sports mode
+{0x002A0638}, 
+{0x0F120001}, 
+{0x0F120000},   //lt_ExpGain_ExpCurveGainMaxStr_0__ulExpOut_0_
+{0x0F120A3C}, 
+{0x0F120000}, 
+{0x0F120D05}, 
+{0x0F120000}, 
+{0x0F123408}, 
+{0x0F120000}, 
+{0x0F123408}, 
+{0x0F120000}, 
+{0x0F126810}, 
+{0x0F120000}, 
+{0x0F128214}, 
+{0x0F120000}, 
+{0x0F12C350},
+{0x0F120000},
+{0x0F12C350},
+{0x0F120000},
+{0x0F12C350},
+{0x0F120000},
+
+                //Party_Indoor Beach_Snow
+{0x002A0938},
+{0x0F120000},
+
+{0x002A04D0},
+{0x0F120000},
+{0x0F120000},
+{0x0F120001},
+{0x002A06C2},                          
+{0x0F120200},   //lt_bUseSecISODgain 
+                                     
+                                     
+{0x002A023C},   //Effect_Normal
+{0x0F120000},
+
+{0x002A0232},   //Contrast_Default
+{0x0F120000},
+
+{0x002A1BEA},
+{0x0F120001},   //Auto Contrast Off
+
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+{0x002A0270},
+{0x0F120001},
+{0x002A023E},
+{0x0F120001},
+{0x0F120001},
+
+{0x002A1648},
+{0x0F129002},   // 2nd search on when 2nd search lens oppsite direction moving
+
+{0x002A15E8},
+{0x0F120015},   //af_pos_usTableLastInd
+{0x0F120032},
+{0x0F120038},
+{0x0F12003E},
+{0x0F120044},
+{0x0F12004A},
+{0x0F120050},
+{0x0F120056},
+{0x0F12005C},
+{0x0F120062},
+{0x0F120068},
+{0x0F12006E},
+{0x0F120074},
+{0x0F12007A},
+{0x0F120080},
+{0x0F120086},
+{0x0F12008C},
+{0x0F120092},
+{0x0F120098},
+{0x0F12009E},
+{0x0F1200A4},
+{0x0F1200AA},
+{0x0F1200B0},
+
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5616,89 +5483,75 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_scene_night[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A06B8},
-	{0x0F12FFFF},
-	{0x0F1200FF},
-	
-	{0x002A0608},
-	{0x0F120000},
-	{0x0F120000},
-	
-	{0x002A058C},
-	{0x0F12F424},
-	{0x0F120001},
-	{0x0F12D090},
-	{0x0F120007},
-	{0x0F12F424},
-	{0x0F120001},
-	{0x0F12D090},
-	{0x0F120007},
-	{0x0F120100},
-	{0x0F120800},
-	{0x0F120100},
-	{0x0F122000},
-	
-	{0x002A03B4},
-	{0x0F121388},
-	{0x0F121388},
-	{0x002A02C2},
-	{0x0F1209C4},
-	{0x0F12014A},
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
-	{0x002A0270},
-	{0x0F120001},
-	{0x002A023E},
-	{0x0F120001},
-	{0x0F120001},
-	
-	{0x002A0A1E},
-	{0x0F121580},
-	
-	{0x002A1648},	//1st scan only
-	{0x0F129000},
-	
-	{0x002A15E8},
-	{0x0F120006},	//#af_pos_usTableLastInd//
-	{0x0F120036},
-	{0x0F12003A},
-	{0x0F120040},
-	{0x0F120048},
-	{0x0F120050},
-	{0x0F120058},
-	{0x0F120060},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A06B8},
+{0x0F12FFFF},
+{0x0F1200FF},
+
+{0x002A0608},
+{0x0F120000},
+{0x0F120000},
+
+{0x002A058C},
+{0x0F12F424},
+{0x0F120001},
+{0x0F12D090},
+{0x0F120007},
+{0x0F12F424},
+{0x0F120001},
+{0x0F12D090},
+{0x0F120007},
+{0x0F120100},
+{0x0F120800},
+{0x0F120100},
+{0x0F122000},
+
+{0x002A03B4},
+{0x0F121388},
+{0x0F121388},
+{0x002A02C2},
+{0x0F1209C4},
+{0x0F12014A},
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+{0x002A0270},
+{0x0F120001},
+{0x002A023E},
+{0x0F120001},
+{0x0F120001},
+
+{0x002A0A1E},
+{0x0F121580},
+
+{0x002A1648},   //1st scan only
+{0x0F129000},
+                                     
+{0x002A15E8},
+{0x0F120006},	//#af_pos_usTableLastInd//
+{0x0F120036},
+{0x0F12003A},
+{0x0F120040},
+{0x0F120048},
+{0x0F120050},
+{0x0F120058},
+{0x0F120060},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
 
 
-GLOBAL const u32 reg_main_scene_night_dark[] //Scene_Duskdawn_EVT1
+GLOBAL const u32 reg_main_scene_night_dark[]
 #if defined(_CAMACQ_API_C_)
 ={
-{0xFCFCD000},
-{0x00287000},
-               // 0x002A04E6 S/W Program
-               // 0x0F120777
-{0x002A04BA},
-{0x0F120505},
-
-{0x002A04BE},
-{0x0F120400},
-
-{0x002A04C2},
-{0x0F120875},
-
-{0x002A04C6},
-{0x0F120001},
 		CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -5710,55 +5563,56 @@ GLOBAL const u32 reg_main_scene_night_dark[] //Scene_Duskdawn_EVT1
 GLOBAL const u32 reg_main_scene_landscape[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A1492},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x0F120101},
-	{0x002A0A28},
-	{0x0F12E082},
-	{0x002A0ADE},
-	{0x0F12E082},
-	{0x002A0B94},
-	{0x0F12E082},
-	{0x002A0C4A},
-	{0x0F12E082},
-	{0x002A0D00},
-	{0x0F12E082},
-	{0x002A0234},
-	{0x0F120030},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A1492},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x0F120101},
+{0x002A0A28},
+{0x0F12E082},
+{0x002A0ADE},
+{0x0F12E082},
+{0x002A0B94},
+{0x0F12E082},
+{0x002A0C4A},
+{0x0F12E082},
+{0x002A0D00},
+{0x0F12E082},
+{0x002A0234},
+{0x0F120030},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5769,23 +5623,24 @@ GLOBAL const u32 reg_main_scene_landscape[]
 GLOBAL const u32 reg_main_scene_sunset[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-				   // 0x002A04E6 S/W Program
-				   // 0x0F120777
-	{0x002A04BA},
-	{0x0F1205E0},
-	
-	{0x002A04BE},
-	{0x0F120400},
-	
-	{0x002A04C2},
-	{0x0F120530},
-	
-	{0x002A04C6},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+               // 0x002A04E6 S/W Program
+               // 0x0F120777
+{0x002A04BA},
+{0x0F1205E0},
+
+{0x002A04BE},
+{0x0F120400},
+
+{0x002A04C2},
+{0x0F120530},
+                 
+{0x002A04C6},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5796,6 +5651,7 @@ GLOBAL const u32 reg_main_scene_sunset[]
 GLOBAL const u32 reg_main_scene_portrait[]
 #if defined(_CAMACQ_API_C_)
 ={
+#if 1
 
 {0x00287000},
 {0x002A0A28},
@@ -5808,9 +5664,7 @@ GLOBAL const u32 reg_main_scene_portrait[]
 {0x0F124020},
 {0x002A0D00},
 {0x0F124020},
-
-CAMACQ_MAIN_BTM_OF_DATA
-
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5821,23 +5675,25 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_scene_sunrise[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-				   // 0x002A04E6 S/W Program
-				   // 0x0F120777
-	{0x002A04BA},
-	{0x0F1205E0},
-	
-	{0x002A04BE},
-	{0x0F120400},
-	
-	{0x002A04C2},
-	{0x0F120530},
-	
-	{0x002A04C6},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+//Cam_Cfg_WB_Fluorescent
+{0xFCFCD000},
+{0x00287000},
+               // 0x002A04E6 S/W Program
+               // 0x0F120777
+{0x002A04BA},
+{0x0F1205E0},
+
+{0x002A04BE},
+{0x0F120400},
+
+{0x002A04C2},
+{0x0F120530},
+
+{0x002A04C6},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5848,22 +5704,7 @@ GLOBAL const u32 reg_main_scene_sunrise[]
 GLOBAL const u32 reg_main_scene_indoor[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},
-	{0x0F120001}, //afit_bUseNB_Afit
-	
-	
-	{0x002A04D0},
-	{0x0F120001}, //REG_SF_USER_IsoType    
-	{0x0F120340}, //REG_SF_USER_IsoVal	   
-	{0x0F120001}, //REG_SF_USER_IsoChanged 
-	{0x002A06C2},						   
-	{0x0F120180}, //lt_bUseSecISODgain	
-	
-	{0x002A0234},
-	{0x0F120030},
-	CAMACQ_MAIN_BTM_OF_DATA
+		CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5874,23 +5715,24 @@ GLOBAL const u32 reg_main_scene_indoor[]
 GLOBAL const u32 reg_main_scene_party[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0938},
-	{0x0F120001}, //afit_bUseNB_Afit
-	
-	
-	{0x002A04D0},
-	{0x0F120001}, //REG_SF_USER_IsoType    
-	{0x0F120340}, //REG_SF_USER_IsoVal	   
-	{0x0F120001}, //REG_SF_USER_IsoChanged 
-	{0x002A06C2},						   
-	{0x0F120180}, //lt_bUseSecISODgain	
-	
-	{0x002A0234},
-	{0x0F120030},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0938},
+{0x0F120001}, //afit_bUseNB_Afit
+
+
+{0x002A04D0},
+{0x0F120001}, //REG_SF_USER_IsoType    
+{0x0F120340}, //REG_SF_USER_IsoVal     
+{0x0F120001}, //REG_SF_USER_IsoChanged 
+{0x002A06C2},                          
+{0x0F120180}, //lt_bUseSecISODgain  
+
+{0x002A0234},
+{0x0F120030},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5901,59 +5743,60 @@ GLOBAL const u32 reg_main_scene_party[]
 GLOBAL const u32 reg_main_scene_sports[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0638},
-	{0x0F120001},
-	{0x0F120000},	//lt_ExpGain_ExpCurveGainMaxStr_0__ulExpOut_0_
-	{0x0F120A3C},
-	{0x0F120000},
-	{0x0F120D05},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	{0x0F123408},
-	{0x0F120000},
-	
-					//ISO x2
-	{0x002A0938},
-	{0x0F120001},	//NB mode
-	
-	
-	
-	{0x002A04D0},
-	{0x0F120003},
-	{0x0F120200},
-	{0x0F120001},
-	{0x002A06C2},						   
-	{0x0F120150},	//lt_bUseSecISODgain 
-	
-				   //ISO x2
-	
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
-	{0x002A0270},
-	{0x0F120001},
-	{0x002A023E},
-	{0x0F120001},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0638},
+{0x0F120001},
+{0x0F120000},   //lt_ExpGain_ExpCurveGainMaxStr_0__ulExpOut_0_
+{0x0F120A3C},
+{0x0F120000},
+{0x0F120D05},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+{0x0F123408},
+{0x0F120000},
+
+                //ISO x2
+{0x002A0938},
+{0x0F120001},   //NB mode
+
+
+
+{0x002A04D0},
+{0x0F120003},
+{0x0F120200},
+{0x0F120001},
+{0x002A06C2},                          
+{0x0F120150},   //lt_bUseSecISODgain 
+
+               //ISO x2
+
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+{0x002A0270},
+{0x0F120001},
+{0x002A023E},
+{0x0F120001},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5965,26 +5808,28 @@ GLOBAL const u32 reg_main_scene_beach[]
 #if defined(_CAMACQ_API_C_)
 ={
 
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A1484},
-	{0x0F120045},   //TVAR_ae_BrAve
+#if 1
 
-	{0x002A0938},
-	{0x0F120001}, //afit_bUseNB_Afit
+//04. BEACH_SNOW
+{0xFCFCD000},
+{0x00287000},
+{0x002A1484},
+{0x0F120045},   //TVAR_ae_BrAve
+
+{0x002A0938},
+{0x0F120001}, //afit_bUseNB_Afit
 
 
-	{0x002A04D0},
-	{0x0F120001}, //REG_SF_USER_IsoType    
-	{0x0F1200D0}, //REG_SF_USER_IsoVal     
-	{0x0F120001}, //REG_SF_USER_IsoChanged 
-	{0x002A06C2},                          
-	{0x0F120150}, //lt_bUseSecISODgain  
+{0x002A04D0},
+{0x0F120001}, //REG_SF_USER_IsoType    
+{0x0F1200D0}, //REG_SF_USER_IsoVal     
+{0x0F120001}, //REG_SF_USER_IsoChanged 
+{0x002A06C2},                          
+{0x0F120150}, //lt_bUseSecISODgain  
 
-	{0x002A0234},
-	{0x0F120030},
-	CAMACQ_MAIN_BTM_OF_DATA
-
+{0x002A0234},
+{0x0F120030},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -5995,26 +5840,8 @@ GLOBAL const u32 reg_main_scene_beach[]
 GLOBAL const u32 reg_main_scene_snow[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A1484},
-	{0x0F120045},	//TVAR_ae_BrAve
-	
-	{0x002A0938},
-	{0x0F120001}, //afit_bUseNB_Afit
-	
-	
-	{0x002A04D0},
-	{0x0F120001}, //REG_SF_USER_IsoType    
-	{0x0F1200D0}, //REG_SF_USER_IsoVal	   
-	{0x0F120001}, //REG_SF_USER_IsoChanged 
-	{0x002A06C2},						   
-	{0x0F120150}, //lt_bUseSecISODgain	
-	
-	{0x002A0234},
-	{0x0F120030},
 
-	CAMACQ_MAIN_BTM_OF_DATA
+CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6025,10 +5852,12 @@ GLOBAL const u32 reg_main_scene_snow[]
 GLOBAL const u32 reg_main_scene_fallcolor[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0234},
-	{0x0F120060},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
+
+{0x00287000},
+{0x002A0234},
+{0x0F120060},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6039,64 +5868,65 @@ GLOBAL const u32 reg_main_scene_fallcolor[]
 GLOBAL const u32 reg_main_scene_fireworks[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0638},
-	{0x0F120001},
-	{0x0F120000},
-	{0x002A063C},
-	{0x0F121478},
-	{0x0F120000},
-	{0x002A0640},
-	{0x0F121A0A},
-	{0x0F120000},
-	{0x002A0644},
-	{0x0F126810},
-	{0x0F120000},
-	{0x002A0648},
-	{0x0F126810},
-	{0x0F120000},
-	{0x002A064C},
-	{0x0F12D020},
-	{0x0F120000},
-	{0x002A0650},
-	{0x0F120428},
-	{0x0F120001},
-	{0x002A0654},
-	{0x0F121A80},
-	{0x0F120006},
-	{0x002A0658},
-	{0x0F121A80},
-	{0x0F120006},
-	{0x002A065C},
-	{0x0F121A80},
-	{0x0F120006},
-	
-	{0x002A03B4},
-	{0x0F122710},
-	{0x0F122710},
-	
-	{0x002A04D0},
-	{0x0F120001}, //REG_SF_USER_IsoType    
-	{0x0F1200D0}, //REG_SF_USER_IsoVal	   
-	{0x0F120001}, //REG_SF_USER_IsoChanged 
-	{0x002A06C2},						   
-	{0x0F120150}, //lt_bUseSecISODgain	
-	
-	{0x002A0266},
-	{0x0F120000},
-	{0x002A026A},
-	{0x0F120001},
-	{0x002A024E},
-	{0x0F120001},
-	{0x002A0268},
-	{0x0F120001},
-	{0x002A0270},
-	{0x0F120001},
-	{0x002A023E},
-	{0x0F120001},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0638},
+{0x0F120001},
+{0x0F120000},
+{0x002A063C},
+{0x0F121478},
+{0x0F120000},
+{0x002A0640},
+{0x0F121A0A},
+{0x0F120000},
+{0x002A0644},
+{0x0F126810},
+{0x0F120000},
+{0x002A0648},
+{0x0F126810},
+{0x0F120000},
+{0x002A064C},
+{0x0F12D020},
+{0x0F120000},
+{0x002A0650},
+{0x0F120428},
+{0x0F120001},
+{0x002A0654},
+{0x0F121A80},
+{0x0F120006},
+{0x002A0658},
+{0x0F121A80},
+{0x0F120006},
+{0x002A065C},
+{0x0F121A80},
+{0x0F120006},
+
+{0x002A03B4},
+{0x0F122710},
+{0x0F122710},
+
+{0x002A04D0},
+{0x0F120001}, //REG_SF_USER_IsoType    
+{0x0F1200D0}, //REG_SF_USER_IsoVal     
+{0x0F120001}, //REG_SF_USER_IsoChanged 
+{0x002A06C2},                          
+{0x0F120150}, //lt_bUseSecISODgain  
+
+{0x002A0266},
+{0x0F120000},
+{0x002A026A},
+{0x0F120001},
+{0x002A024E},
+{0x0F120001},
+{0x002A0268},
+{0x0F120001},
+{0x002A0270},
+{0x0F120001},
+{0x002A023E},
+{0x0F120001},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6107,23 +5937,24 @@ GLOBAL const u32 reg_main_scene_fireworks[]
 GLOBAL const u32 reg_main_scene_candlelight[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-				   // 0x002A04E6 S/W Program
-				   // 0x0F120777
-	{0x002A04BA},
-	{0x0F1205E0},
-	
-	{0x002A04BE},
-	{0x0F120400},
-	
-	{0x002A04C2},
-	{0x0F120530},
-	
-	{0x002A04C6},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+               // 0x002A04E6 S/W Program
+               // 0x0F120777
+{0x002A04BA},
+{0x0F120600},
+
+{0x002A04BE},
+{0x0F120440},
+
+{0x002A04C2},
+{0x0F1209E0},
+
+{0x002A04C6},
+{0x0F120001},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6135,41 +5966,7 @@ GLOBAL const u32 reg_main_scene_againstlight[]
 #if defined(_CAMACQ_API_C_)
 ={
 //Cam_Cfg_Exposure_Spot
-{0xFCFCD000},
-{0x00287000},
-{0x002A1492},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120101},
-{0x0F120101},
-{0x0F120000},
-{0x0F120000},
-{0x0F12010F},
-{0x0F120F01},
-{0x0F120000},
-{0x0F120000},
-{0x0F12010F},
-{0x0F120F01},
-{0x0F120000},
-{0x0F120000},
-{0x0F120101},
-{0x0F120101},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
-{0x0F120000},
+
 CAMACQ_MAIN_BTM_OF_DATA
 }
 #endif /* _CAMACQ_API_C_ */
@@ -6181,19 +5978,20 @@ CAMACQ_MAIN_BTM_OF_DATA
 GLOBAL const u32 reg_main_scene_text[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0A28},
-	{0x0F12A060},
-	{0x002A0ADE},
-	{0x0F12A060},
-	{0x002A0B94},
-	{0x0F12A060},
-	{0x002A0C4A},
-	{0x0F12A060},
-	{0x002A0D00},
-	{0x0F12A060},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0A28},
+{0x0F12A060},
+{0x002A0ADE},
+{0x0F12A060},
+{0x002A0B94},
+{0x0F12A060},
+{0x002A0C4A},
+{0x0F12A060},
+{0x002A0D00},
+{0x0F12A060},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6204,12 +6002,13 @@ GLOBAL const u32 reg_main_scene_text[]
 GLOBAL const u32 reg_main_adjust_contrast_m2[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0232},
-	{0x0F12FFC0},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0232},
+{0x0F12FFC0},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6220,13 +6019,16 @@ GLOBAL const u32 reg_main_adjust_contrast_m2[]
 GLOBAL const u32 reg_main_adjust_contrast_m1[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0232},
-	{0x0F12FFE0},
+#if 1
+
+{0xFCFCD000},
+{0x00287000},
+{0x002A0232},
+{0x0F12FFE0},
+
 
 	CAMACQ_MAIN_BTM_OF_DATA
-
+	#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6237,11 +6039,13 @@ GLOBAL const u32 reg_main_adjust_contrast_m1[]
 GLOBAL const u32 reg_main_adjust_contrast_default[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0232},
-	{0x0F120000},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
+
+{0xFCFCD000},
+{0x00287000},
+{0x002A0232},
+{0x0F120000},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6252,12 +6056,13 @@ GLOBAL const u32 reg_main_adjust_contrast_default[]
 GLOBAL const u32 reg_main_adjust_contrast_p1[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0232},
-	{0x0F120020},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0232},
+{0x0F120020},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6268,12 +6073,13 @@ GLOBAL const u32 reg_main_adjust_contrast_p1[]
 GLOBAL const u32 reg_main_adjust_contrast_p2[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0xFCFCD000},
-	{0x00287000},
-	{0x002A0232},
-	{0x0F120040},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0xFCFCD000},
+{0x00287000},
+{0x002A0232},
+{0x0F120040},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6284,19 +6090,20 @@ GLOBAL const u32 reg_main_adjust_contrast_p2[]
 GLOBAL const u32 reg_main_adjust_sharpness_m2[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0A28},
-	{0x0F122010},
-	{0x002A0ADE},
-	{0x0F122010},
-	{0x002A0B94},
-	{0x0F122010},
-	{0x002A0C4A},
-	{0x0F122010},
-	{0x002A0D00},
-	{0x0F122010},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0A28},
+{0x0F122010},
+{0x002A0ADE},
+{0x0F122010},
+{0x002A0B94},
+{0x0F122010},
+{0x002A0C4A},
+{0x0F122010},
+{0x002A0D00},
+{0x0F122010},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6307,19 +6114,20 @@ GLOBAL const u32 reg_main_adjust_sharpness_m2[]
 GLOBAL const u32 reg_main_adjust_sharpness_m1[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0A28},
-	{0x0F124020},
-	{0x002A0ADE},
-	{0x0F124020},
-	{0x002A0B94},
-	{0x0F124020},
-	{0x002A0C4A},
-	{0x0F124020},
-	{0x002A0D00},
-	{0x0F124020},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0A28},
+{0x0F124020},
+{0x002A0ADE},
+{0x0F124020},
+{0x002A0B94},
+{0x0F124020},
+{0x002A0C4A},
+{0x0F124020},
+{0x002A0D00},
+{0x0F124020},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6331,19 +6139,20 @@ GLOBAL const u32 reg_main_adjust_sharpness_m1[]
 GLOBAL const u32 reg_main_adjust_sharpness_default[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0A28},
-	{0x0F126024},
-	{0x002A0ADE},
-	{0x0F126024},
-	{0x002A0B94},
-	{0x0F126024},
-	{0x002A0C4A},
-	{0x0F126024},
-	{0x002A0D00},
-	{0x0F126024},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0A28},
+{0x0F126024},
+{0x002A0ADE},
+{0x0F126024},
+{0x002A0B94},
+{0x0F126024},
+{0x002A0C4A},
+{0x0F126024},
+{0x002A0D00},
+{0x0F126024},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6355,19 +6164,20 @@ GLOBAL const u32 reg_main_adjust_sharpness_default[]
 GLOBAL const u32 reg_main_adjust_sharpness_p1[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0A28},
-	{0x0F128040},
-	{0x002A0ADE},
-	{0x0F128040},
-	{0x002A0B94},
-	{0x0F128040},
-	{0x002A0C4A},
-	{0x0F128040},
-	{0x002A0D00},
-	{0x0F128040},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0A28},
+{0x0F128040},
+{0x002A0ADE},
+{0x0F128040},
+{0x002A0B94},
+{0x0F128040},
+{0x002A0C4A},
+{0x0F128040},
+{0x002A0D00},
+{0x0F128040},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6379,19 +6189,20 @@ GLOBAL const u32 reg_main_adjust_sharpness_p1[]
 GLOBAL const u32 reg_main_adjust_sharpness_p2[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0A28},
-	{0x0F12A060},
-	{0x002A0ADE},
-	{0x0F12A060},
-	{0x002A0B94},
-	{0x0F12A060},
-	{0x002A0C4A},
-	{0x0F12A060},
-	{0x002A0D00},
-	{0x0F12A060},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0A28},
+{0x0F12A060},
+{0x002A0ADE},
+{0x0F12A060},
+{0x002A0B94},
+{0x0F12A060},
+{0x002A0C4A},
+{0x0F12A060},
+{0x002A0D00},
+{0x0F12A060},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6402,11 +6213,12 @@ GLOBAL const u32 reg_main_adjust_sharpness_p2[]
 GLOBAL const u32 reg_main_adjust_saturation_m2[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0234},
-	{0x0F12FF81},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0234},
+{0x0F12FF81},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6417,11 +6229,12 @@ GLOBAL const u32 reg_main_adjust_saturation_m2[]
 GLOBAL const u32 reg_main_adjust_saturation_m1[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0234},
-	{0x0F12FFC0},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0234},
+{0x0F12FFC0},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6432,11 +6245,12 @@ GLOBAL const u32 reg_main_adjust_saturation_m1[]
 GLOBAL const u32 reg_main_adjust_saturation_default[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0234},
-	{0x0F120000},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0234},
+{0x0F120000},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6447,11 +6261,12 @@ GLOBAL const u32 reg_main_adjust_saturation_default[]
 GLOBAL const u32 reg_main_adjust_saturation_p1[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0234},
-	{0x0F120040},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0234},
+{0x0F120040},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6462,11 +6277,12 @@ GLOBAL const u32 reg_main_adjust_saturation_p1[]
 GLOBAL const u32 reg_main_adjust_saturation_p2[]
 #if defined(_CAMACQ_API_C_)
 ={
-	{0x00287000},
-	{0x002A0234},
-	{0x0F12007F},
-	CAMACQ_MAIN_BTM_OF_DATA
+#if 1
 
+{0x00287000},
+{0x002A0234},
+{0x0F12007F},
+#endif
 }
 #endif /* _CAMACQ_API_C_ */
 ;
@@ -6993,12 +6809,10 @@ GLOBAL const u32 reg_main_dtp_on[]
 ={
 #if 1
 
-	{0xFCFCD000},
-	{0x0028D000},
-	{0x002AB054},
-	{0x0F120001},
-	CAMACQ_MAIN_BTM_OF_DATA
-
+{0xFCFCD000},
+{0x0028D000},
+{0x002AB054},
+{0x0F120001},
 #endif
 }
 #endif /* _CAMACQ_API_C_ */
@@ -7009,12 +6823,10 @@ GLOBAL const u32 reg_main_dtp_off[]
 ={
 #if 1
 
-	{0xFCFCD000},
-	{0x0028D000},
-	{0x002AB054},
-	{0x0F120000},
-	CAMACQ_MAIN_BTM_OF_DATA
-
+{0xFCFCD000},
+{0x0028D000},
+{0x002AB054},
+{0x0F120000},
 #endif
 }
 #endif /* _CAMACQ_API_C_ */

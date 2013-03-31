@@ -12,13 +12,7 @@ endif
 ifeq ($(CONFIG_ARCH_BCM21553_B1),y)
 EXTRA_CFLAGS				+= -DCHIP_REVISION=20
 endif
-ifeq ($(CONFIG_FB_BRCM_DSI),y)
-EXTRA_CFLAGS                           += -mfloat-abi=softfp
-endif
 
 obj-y	+= chal_dma.o
 obj-y   += chal_lcdc.o
 obj-y   += chal_cam.o
-ifeq ($(CONFIG_FB_BRCM_DSI),y)
-obj-y   += chal_dsi.o
-endif

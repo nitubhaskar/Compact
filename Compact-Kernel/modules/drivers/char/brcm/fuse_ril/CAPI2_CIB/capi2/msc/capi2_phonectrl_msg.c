@@ -1,16 +1,18 @@
 
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_phonectrl_msg.c
@@ -86,6 +88,7 @@ the GPL, without Broadcom's express prior written consent.
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -94,8 +97,6 @@ the GPL, without Broadcom's express prior written consent.
 #include "xassert.h"
 
 #define _xdr_u_int32_t(a,b,c) xdr_u_long(a,b)
-
-#define PLMN_NAME_SIZE 60
 
 XDR_ENUM_DECLARE(PlmnCause_t)
 XDR_ENUM_DECLARE(MSNwOperationMode_t)
@@ -112,7 +113,6 @@ XDR_ENUM_FUNC(PowerDownState_t)
 
 XDR_ENUM_FUNC(RegisterStatus_t)
 XDR_ENUM_FUNC(PCHRejectCause_t)
-XDR_ENUM_FUNC(SIM_INSTANCE_STATUS_t)
 XDR_ENUM_FUNC(PlmnCause_t)
 XDR_ENUM_FUNC(TimeZoneUpdateMode_t)
 XDR_ENUM_FUNC(SysFilterEnable_t)
@@ -130,7 +130,6 @@ XDR_ENUM_FUNC(GANSelect_t)
 XDR_ENUM_FUNC(GANStatus_t) 
 XDR_ENUM_FUNC(PhonectrlDomain_t)
 XDR_ENUM_FUNC(PhonectrlCipherContext_t)
-XDR_ENUM_FUNC(SATKGenDataInt_t)
 
 XDR_ENUM_FUNC(MS_UmtsRrcMsg)
 
@@ -311,7 +310,6 @@ xdr_lsaIdentity_t(XDR* xdrs, lsaIdentity_t* data)
 		return(FALSE);
 }
 
-bool_t
 xdr_MSUarfcnList_t(XDR* xdrs, MSUarfcnList_t* data)
 {
 	XDR_LOG(xdrs, "MSUarfcnList_t")
@@ -607,14 +605,8 @@ xdr_GASConfigParam_t(XDR *xdrs, GASConfigParam_t *args)
 		_xdr_u_char(xdrs, &args->eda_support,"eda_support") && 
 		_xdr_u_char(xdrs, &args->darp_support_updated,"darp_support_updated") && 
 		_xdr_u_char(xdrs, &args->darp_support,"darp_support") &&
-		_xdr_u_char(xdrs, &args->early_tbf_updated,"early_tbf_updated") && 
-		_xdr_u_char(xdrs, &args->early_tbf_req,"early_tbf_req") &&
-		_xdr_u_char(xdrs, &args->gmsk_multislot_pwr_profile_updated,"gmsk_multislot_pwr_profile_updated") && 
-		_xdr_u_char(xdrs, &args->gmsk_multislot_pwr_profile,"gmsk_multislot_pwr_profile") &&
-		_xdr_u_char(xdrs, &args->random_l2_fill_bits_updated,"random_l2_fill_bits_updated") && 
-		_xdr_u_char(xdrs, &args->random_l2_fill_bits,"random_l2_fill_bits") &&
-		_xdr_u_char(xdrs, &args->psk8_multislot_pwr_profile_updated,"psk8_multislot_pwr_profile_updated") && 
-		_xdr_u_char(xdrs, &args->psk8_multislot_pwr_profile,"psk8_multislot_pwr_profile")
+		_xdr_u_char(xdrs, &args->darp_support_updated,"early_tbf_updated") && 
+		_xdr_u_char(xdrs, &args->darp_support,"early_tbf_req")
 	  )
 		return(TRUE);
 	else
@@ -636,24 +628,7 @@ xdr_UASConfigParam_t(XDR *xdrs, UASConfigParam_t *args)
 		_xdr_u_char(xdrs, &args->fake_security_updated,"fake_security_updated") && 
 		_xdr_u_char(xdrs, &args->fake_security,"fake_security") && 
 		_xdr_u_char(xdrs, &args->interrat_nacc_updated,"interrat_nacc_updated") && 
-		_xdr_u_char(xdrs, &args->interrat_nacc_support,"interrat_nacc_support") &&
-		_xdr_u_char(xdrs, &args->primary_power_on_wcdma_band_updated,"primary_power_on_wcdma_band_updated") && 
-		_xdr_u_char(xdrs, &args->primary_power_on_wcdma_band,"primary_power_on_wcdma_band") &&
-		_xdr_u_char(xdrs, &args->fast_dormancy_support_updated, "fast_dormancy_support_updated") &&
-		_xdr_u_char(xdrs, &args->fast_dormancy_support, "fast_dormancy_support") &&
-		_xdr_u_char(xdrs, &args->enhanced_fdpch_supported_updated, "enhanced_fdpch_supported_updated") &&
-		_xdr_u_char(xdrs, &args->enhanced_fdpch_supported, "enhanced_fdpch_supported") &&
-		_xdr_u_char(xdrs, &args->CPC_support_updated, "CPC_support_updated") &&
-		_xdr_u_char(xdrs, &args->CPC_support, "CPC_support") &&
-		_xdr_u_char(xdrs, &args->cs_voice_over_hspa_supported_updated, "cs_voice_over_hspa_supported_updated") &&
-		_xdr_u_char(xdrs, &args->cs_voice_over_hspa_supported, "cs_voice_over_hspa_supported") &&
-		_xdr_u_char(xdrs, &args->enhanced_cell_fach_dl_support_updated, "enhanced_cell_fach_dl_support_updated") &&
-		_xdr_u_char(xdrs, &args->enhanced_cell_fach_dl_supported, "enhanced_cell_fach_dl_supported") &&
-		_xdr_u_char(xdrs, &args->hsdpa_support_updated, "hsdpa_support_updated") &&
-		_xdr_u_char(xdrs, &args->hsdpa_support, "hsdpa_support") &&
-		_xdr_u_char(xdrs, &args->hsupa_support_updated, "hsupa_support_updated") &&
-		_xdr_u_char(xdrs, &args->hsupa_support, "hsupa_support")	 
-
+		_xdr_u_char(xdrs, &args->interrat_nacc_support,"interrat_nacc_support")
 	  )
 		return(TRUE);
 	else
@@ -675,55 +650,7 @@ xdr_NASConfigParam_t(XDR *xdrs, NASConfigParam_t *args)
 		_xdr_u_char(xdrs, &args->r7_qos_ext_updated,"r7_qos_ext_updated") && 
 		_xdr_u_char(xdrs, &args->r7_qos_ext,"r7_qos_ext") && 
 		_xdr_u_char(xdrs, &args->acq_order_updated,"acq_order_updated") && 
-		_xdr_u_char(xdrs, &args->rat_acq_order,"rat_acq_order") &&
-		_xdr_u_char(xdrs, &args->non_3gpp_hplmn_timer_updated,"non_3gpp_hplmn_timer_updated") && 
-		_xdr_u_char(xdrs, &args->non_3gpp_hplmn_timer_supported,"non_3gpp_hplmn_timer_supported") &&
-		_xdr_u_char(xdrs, &args->r7_qos_ext_updated,"r7_qos_ext_updated") && 
-		_xdr_u_char(xdrs, &args->r7_qos_ext,"r7_qos_ext") && 
-		_xdr_u_char(xdrs, &args->watermark_updated,"watermark_updated") &&
-		_xdr_u_char(xdrs, &args->high_watermark,"high_watermark") && 
-		_xdr_u_char(xdrs, &args->low_watermark,"low_watermark") &&
-		_xdr_u_char(xdrs, &args->three_g_bmc_support_updated,"three_g_bmc_support_updated") && 
-		_xdr_u_char(xdrs, &args->three_g_bmc_support,"three_g_bmc_support") &&
-		_xdr_u_char(xdrs, &args->hplmn_over_lreg_in_manual_start_updated,"hplmn_over_lreg_in_manual_start_updated") && 
-		_xdr_u_char(xdrs, &args->hplmn_over_lreg_in_manual_start,"hplmn_over_lreg_in_manual_start") &&
-		_xdr_u_char(xdrs, &args->modem_ens_updated,"modem_ens_updated") && 
-		_xdr_u_char(xdrs, &args->modem_ens,"modem_ens") &&
-		_xdr_u_char(xdrs, &args->pref_hplmn_rat_updated,"pref_hplmn_rat_updated") && 
-		_xdr_u_char(xdrs, &args->pref_hplmn_rat,"pref_hplmn_rat") &&
-		_xdr_u_char(xdrs, &args->pref_startup_rat_updated,"pref_startup_rat_updated") && 
-		_xdr_u_char(xdrs, &args->pref_startup_rat,"pref_startup_rat") &&
-		_xdr_u_char(xdrs, &args->wcdma_hs_channel_support_updated,"wcdma_hs_channel_support_updated") && 
-		_xdr_u_char(xdrs, &args->wcdma_hs_channel_support,"wcdma_hs_channel_support") &&
-		_xdr_u_char(xdrs, &args->gps_ms_a_updated,"gps_ms_a_updated") &&  
-		_xdr_u_char(xdrs, &args->gps_ms_a_supported,"gps_ms_a_supported") &&
-		_xdr_u_char(xdrs, &args->gps_ms_b_updated,"gps_ms_b_updated") && 
-		_xdr_u_char(xdrs, &args->gps_ms_b_supported,"gps_ms_b_supported") &&
-		_xdr_u_char(xdrs, &args->gps_ms_conv_updated,"gps_ms_conv_updated") && 
-		_xdr_u_char(xdrs, &args->gps_ms_conv_supported,"gps_ms_conv_supported") &&
-		_xdr_u_char(xdrs, &args->gps_ms_lcsva_updated,"gps_ms_lcsva_updated") && 
-		_xdr_u_char(xdrs, &args->gps_ms_lcsva_supported,"gps_ms_lcsva_supported") &&
-		_xdr_u_char(xdrs, &args->gps_timing_of_cell_meas_updated,"gps_timing_of_cell_meas_updated") && 
-		_xdr_u_char(xdrs, &args->gps_timing_of_cell_meas_supported,"gps_timing_of_cell_meas_supported") &&
-		_xdr_u_char(xdrs, &args->gps_rrc_ue_a_updated,"gps_rrc_ue_a_updated") && 
-		_xdr_u_char(xdrs, &args->gps_rrc_ue_a_supported,"gps_rrc_ue_a_supported") &&
-		_xdr_u_char(xdrs, &args->gps_rrc_ue_b_updated,"gps_rrc_ue_b_updated") && 
-		_xdr_u_char(xdrs, &args->gps_rrc_ue_b_supported,"gps_rrc_ue_b_supported") &&
-		_xdr_u_char(xdrs, &args->gps_rrc_standalone_updated,"gps_rrc_standalone_updated") && 
-		_xdr_u_char(xdrs, &args->gps_rrc_standalone_supported,"gps_rrc_standalone_supported") &&
-		_xdr_u_char(xdrs, &args->h3g_cs_call_int_ps_stream_updated,"h3g_cs_call_int_ps_stream_updated") && 
-		_xdr_u_char(xdrs, &args->h3g_cs_call_int_ps_stream,"h3g_cs_call_int_ps_stream") &&
-		_xdr_u_char(xdrs, &args->ps_act_ind_for_svc_rqst_updated,"ps_act_ind_for_svc_rqst_updated") && 
-		_xdr_u_char(xdrs, &args->ps_act_ind_for_svc_rqst,"ps_act_ind_for_svc_rqst") &&
-		_xdr_u_char(xdrs, &args->hplmn_over_lreg_in_auto_mode_updated,"hplmn_over_lreg_in_auto_mode_updated") && 
-		_xdr_u_char(xdrs, &args->hplmn_over_lreg_in_auto_mode,"hplmn_over_lreg_in_auto_mode") &&
-		_xdr_u_char(xdrs, &args->fido_sim_in_rogers_nw_updated,"fido_sim_in_rogers_nw_updated") &&
-		_xdr_u_char(xdrs, &args->fido_sim_in_rogers_nw_supported,"fido_sim_in_rogers_nw_supported") &&
-		_xdr_u_char(xdrs, &args->xsim_lock_active_updated,"xsim_lock_active_updated") && 
-		_xdr_u_char(xdrs, &args->xsim_lock_active,"xsim_lock_active") &&
-		_xdr_u_char(xdrs, &args->u2_sor_support_updated, "u2_sor_support_updated") &&
-		_xdr_u_char(xdrs, &args->u2_sor_support, "u2_sor_support")
-
+		_xdr_u_char(xdrs, &args->rat_acq_order,"rat_acq_order")
 	  )
 		return(TRUE);
 	else
@@ -849,11 +776,11 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_LOCAL_SATK_ELEM_SS_CONTROL_CTR,_T("MS_LOCAL_SATK_ELEM_SS_CONTROL_CTR"),		(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_USSD_CONTROL_CTR,_T("MS_LOCAL_SATK_ELEM_USSD_CONTROL_CTR"),	(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_SMS_CONTROL_CTR,_T("MS_LOCAL_SATK_ELEM_SMS_CONTROL_CTR"),		(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
-		{ (int)MS_LOCAL_SATK_ELEM_GENERIC_INTERFACE_CTR,_T("MS_LOCAL_SATK_ELEM_GENERIC_INTERFACE_CTR"),	(xdrproc_t)XDR_ENUM_DEF(SATKGenDataInt_t), sizeof( SATKGenDataInt_t ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
+		{ (int)MS_LOCAL_SATK_ELEM_GENERIC_INTERFACE_CTR,_T("MS_LOCAL_SATK_ELEM_GENERIC_INTERFACE_CTR"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE,_T("MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP,_T("MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED,_T("MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
-		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
+		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR,_T("MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 
 		{ (int)MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE,_T("MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE"),			XDR_ENUM_DEF(MSAttachMode_t), sizeof( MSAttachMode_t ), NULL_capi2_proc_t, XDR_ENUM_DEF(MSAttachMode_t) ,0 },
@@ -890,16 +817,9 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_LOCAL_SMS_ELEM_CLIENT_HANDLE_MT_SMS,_T("MS_LOCAL_SMS_ELEM_CLIENT_HANDLE_MT_SMS"),	(xdrproc_t)xdr_u_char, sizeof( UInt8 ),		NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0},
 		{ (int)MS_LOCAL_SMS_ELEM_CLIENT_HANDLE_MO_SMS_RETRY,_T("MS_LOCAL_SMS_ELEM_CLIENT_HANDLE_MO_SMS_RETRY"),	(xdrproc_t)xdr_u_char, sizeof( UInt8 ),		NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0},
 		{ (int)MS_LOCAL_AT_ELEM_AUDIO_CTRL,_T("MS_LOCAL_AT_ELEM_AUDIO_CTRL"),					(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
-
-		{ (int)MS_STACK_ELEM_DTX_STATUS,_T("MS_STACK_ELEM_DTX_STATUS"),	(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
-		{ (int)MS_STACK_ELEM_CELL_BARR_STATUS,_T("MS_STACK_ELEM_CELL_BARR_STATUS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
-		{ (int)MS_STACK_ELEM_IS_DEDICATED_MODE,_T("MS_STACK_ELEM_IS_DEDICATED_MODE"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
-		{ (int)MS_STACK_ELEM_CURR_TIMING_ADVANCE,_T("MS_STACK_ELEM_CURR_TIMING_ADVANCE"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
-		{ (int)MS_STACK_ELEM_SPEECHCODEC_BITMAP,_T("MS_STACK_ELEM_SPEECHCODEC_BITMAP"),	(xdrproc_t)xdr_u_int16_t, sizeof( UInt16 ), 	NULL_capi2_proc_t, (xdrproc_t)xdr_u_int16_t,0 },
-		{ (int)MS_STACK_ELEM_CHANNELMODE_SUPPORTED,_T("MS_STACK_ELEM_CHANNELMODE_SUPPORTED"), (xdrproc_t)xdr_u_int16_t, sizeof( UInt16 ), 	NULL_capi2_proc_t, (xdrproc_t)xdr_u_int16_t,0 },
-
 		{ (int)MS_STACK_ELEM_NVRAM_CLASSMARK,_T("MS_STACK_ELEM_NVRAM_CLASSMARK"),	(xdrproc_t)xdr_NVRAMClassmark_t, sizeof( NVRAMClassmark_t ),		NULL_capi2_proc_t, (xdrproc_t)xdr_NVRAMClassmark_t ,0},
         { (int)MS_STACK_ELEM_NW_MEAS_RESULT,_T("MS_STACK_ELEM_NW_MEAS_RESULT"),	(xdrproc_t)xdr_u_char, 0,		NULL_capi2_proc_t, (xdrproc_t)xdr_default_proc ,0},
+
 
 		{ (int)MS_DRIVER_ELEM_SPINNER_SLEEP_MODE,_T("MS_DRIVER_ELEM_SPINNER_SLEEP_MODE"),		(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
 
@@ -920,9 +840,6 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_LOCAL_PHCTRL_ELEM_IMEI, _T("MS_LOCAL_PHCTRL_ELEM_IMEI"),                        (xdrproc_t)xdr_MS_LOCAL_PHCTRL_ELEM_IMEI, sizeof(UInt8)*15, NULL_capi2_proc_t, (xdrproc_t)xdr_MS_LOCAL_PHCTRL_ELEM_IMEI ,0 },
 		{ (int)MS_LOCAL_PHCTRL_ELEM_SW_VERSION, _T("MS_LOCAL_PHCTRL_ELEM_SW_VERSION"),             (xdrproc_t)xdr_MS_LOCAL_PHCTRL_ELEM_SW_VERSION, sizeof(UInt8)*2, NULL_capi2_proc_t, (xdrproc_t)xdr_MS_LOCAL_PHCTRL_ELEM_SW_VERSION ,0 },
 		{ (int)MS_LOCAL_PHCTRL_ELEM_FORCE_SIM_NOT_RDY, _T("MS_LOCAL_PHCTRL_ELEM_FORCE_SIM_NOT_RDY"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
-		{ (int)MS_LOCAL_PHCTRL_ELEM_ON_DEMAND_ATTACH_ALWAYS,_T("MS_LOCAL_PHCTRL_ELEM_ON_DEMAND_ATTACH_ALWAYS"), 		(xdrproc_t)xdr_u_char, sizeof( UInt8 ), 	NULL_capi2_proc_t, (xdrproc_t)xdr_u_char,0 },
-		{ (int)MS_LOCAL_NETREG_ELEM_IS_GPRS_DETACHED, _T("MS_LOCAL_NETREG_ELEM_IS_GPRS_DETACHED"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
-		{ (int)MS_LOCAL_PHCTRL_ELEM_CURR_ATTACH_MODE,_T("MS_LOCAL_PHCTRL_ELEM_CURR_ATTACH_MODE"),			(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 
         { (int)MS_SIM_ELEM_PIN1_STATUS, _T("MS_SIM_ELEM_PIN1_STATUS"),                          (xdrproc_t)xdr_u_char, sizeof( UInt8 ),		NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
         { (int)MS_SIM_ELEM_PIN2_STATUS, _T("MS_SIM_ELEM_PIN2_STATUS"),                          (xdrproc_t)xdr_u_char, sizeof( UInt8 ),		NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
@@ -951,19 +868,16 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_NETWORK_ELEM_REG_INFO, _T("MS_NETWORK_ELEM_REG_INFO"),    (xdrproc_t)xdr_MsState_t, sizeof(MsState_t), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_LOCAL_SS_ELEM_ENABLE_OLD_SS_MSG, _T("MS_LOCAL_SS_ELEM_ENABLE_OLD_SS_MSG"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 
-		{ (int)MS_LOCAL_PHCTRL_ELEM_EMERGENCY_IDLE_MODE, _T("MS_LOCAL_PHCTRL_ELEM_EMERGENCY_IDLE_MODE"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
+	//	{ (int)MS_LOCAL_PHCTRL_ELEM_EMERGENCY_IDLE_MODE, _T("MS_LOCAL_PHCTRL_ELEM_EMERGENCY_IDLE_MODE"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_LOCAL_PHCTRL_ELEM_MASTER_SIM_MODE, _T("MS_LOCAL_PHCTRL_ELEM_MASTER_SIM_MODE"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_LOCAL_SS_ELEM_ENABLE_OLD_SS_MSG, _T("MS_LOCAL_SS_ELEM_ENABLE_OLD_SS_MSG"),    (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 		
 		{ (int)MS_CFG_ELEM_DUAL_SIM_SUPPORTED, _T("MS_CFG_ELEM_DUAL_SIM_SUPPORTED"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
-		{ (int)MS_LOCAL_PHCTRL_ELEM_DUALSIM_VM_PWR_OPTIMIZATION, _T("MS_LOCAL_PHCTRL_ELEM_DUALSIM_VM_PWR_OPTIMIZATION"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
-		{ (int)MS_LOCAL_SS_ELEM_NOTIFICATION_SWITCH, _T("MS_LOCAL_SS_ELEM_NOTIFICATION_SWITCH"),  (xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_CFG_ELEM_HOMEZONE_SUPPORTED, _T("MS_CFG_ELEM_HOMEZONE_SUPPORTED"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_CFG_ELEM_SIM_LOCK_SUPPORTED, _T("MS_CFG_ELEM_SIM_LOCK_SUPPORTED"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_CFG_ELEM_SIM_CINGULAR_ENS_ENABLED, _T("MS_CFG_ELEM_SIM_CINGULAR_ENS_ENABLED"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_CFG_ELEM_SKT_AUTO_SEND_CONFIRMATION, _T("MS_CFG_ELEM_SKT_AUTO_SEND_CONFIRMATION"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_CFG_ELEM_PLMN_NAME_FLAGS, _T("MS_CFG_ELEM_PLMN_NAME_FLAGS"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		{ (int)MS_CFG_ELEM_CSD_SUPPORTED, _T("MS_CFG_ELEM_CSD_SUPPORTED"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
-		{ (int)MS_SIM_ELEM_HOT_SWAP_SUPPORTED, _T("MS_SIM_ELEM_HOT_SWAP_SUPPORTED"),	(xdrproc_t)xdr_u_char, sizeof(UInt8), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 }, 
 		
 		// We do not support FAX in CP, no need to pass the fax param to CP. 		// We do not support FAX in CP, no need to pass the fax param to CP. 
 		// { (int)MS_LOCAL_CC_ELEM_FAX_PARAMS,_T("MS_LOCAL_CC_ELEM_FAX_PARAMS"),	(xdrproc_t)xdr_Fax_Param_t, sizeof(Fax_Param_t),		NULL_capi2_proc_t, (xdrproc_t)xdr_Fax_Param_t ,0},
@@ -1937,8 +1851,7 @@ bool_t xdr_MS_Ext_RLCParam_t(void* xdrs, MS_Ext_RLCParam_t *param)
 		_xdr_u_char(xdrs, &param->mac_mode,"mac_mode")  &&
         _xdr_u_char(xdrs, &param->rlc_mode,"rlc_mode")  &&
         _xdr_u_char(xdrs, &param->tbf_type,"tbf_type")  &&
-		xdr_u_int32_t(xdrs, (u_int32_t *)(void*) &param->n3102)  &&
-        _xdr_u_char(xdrs, &param->usf_granularity,"usf_granularity")  
+		xdr_u_int32_t(xdrs, (u_int32_t *)(void*) &param->n3102)  
         )
 	    return(TRUE);
 	else
@@ -2024,9 +1937,7 @@ bool_t xdr_MS_Ext_MMParam_t(void* xdrs, MS_Ext_MMParam_t *param)
         _xdr_u_char(xdrs, &param->gea_supported,"gea_supported")  &&
         _xdr_u_char(xdrs, &param->split_pg_cycle_code,"split_pg_cycle_code")  &&
         _xdr_u_char(xdrs, &param->non_drx_tmr_val,"non_drx_tmr_val")  &&
-        xdr_EQUIV_PLMN_LIST_t(xdrs, &param->eqv_plmn_list) &&
-        _xdr_u_char(xdrs, &param->force_to_standby,"force_to_standby")  &&
-        _xdr_u_char(xdrs, &param->ps_suspended,"ps_suspended")  
+        xdr_EQUIV_PLMN_LIST_t(xdrs, &param->eqv_plmn_list)
 	  	)
 	    return(TRUE);
 	else

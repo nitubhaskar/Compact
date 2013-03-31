@@ -37,7 +37,6 @@ static void SetConfigDefaults( void )
 	g_config.logcat_dump_dev  = BCMLOG_OUTDEV_NONE ;	// logcat crash dump disabled
 	g_config.runlog_dev       = BCMLOG_OUTDEV_NONE ;	// set default MTT log path to NONE
 	g_config.cp_crashdump_dev = BCMLOG_CPCRASH_MTD ;	// CP dump to SD card
-	g_config.sd_file_max      = 20 ;			// Max size of MTT SD file (MB)
 }
 
 /**
@@ -56,10 +55,8 @@ static void safe_strncat( char *dst, const char *src, int len )
 /**
  *	build device status string and append to 'buf'
  **/
-static void bld_device_status_str( char *buf, int len, char *label, int device, int sd_max_size )
+static void bld_device_status_str( char *buf, int len, char *label, int device )
 {
-	char sd_max[5];
-
 	safe_strncat( buf, label, len ) ;
 
 	switch( device )
@@ -74,15 +71,7 @@ static void bld_device_status_str( char *buf, int len, char *label, int device, 
 		safe_strncat( buf, "-> MTT\n", len ) ;
 		break ;
 	case BCMLOG_OUTDEV_SDCARD:
-		if (sd_max_size == 0) {
 		safe_strncat( buf, "-> SD card\n", len ) ;
-		} else {
-			sprintf(sd_max, "%d",sd_max_size);
-			safe_strncat( buf, "-> SD card", len ) ;
-			safe_strncat( buf, " (Max file size : ", len ) ;
-			safe_strncat( buf, sd_max, len ) ;
-			safe_strncat( buf, " MB)\n", len ) ;
-		}
 		break ;
 	case BCMLOG_OUTDEV_UART:
 		safe_strncat( buf, "-> UART\n", len ) ;
@@ -115,9 +104,9 @@ static void bld_device_status_str( char *buf, int len, char *label, int device, 
 static int proc_read(char *page, char **start, off_t offset, int count, int *eof, void *data)
 {
 	*page = 0 ;
-	bld_device_status_str( page, count, "    BMTT logging", g_config.runlog_dev, g_config.sd_file_max ) ;
-	bld_device_status_str( page, count, "  APP crash dump", g_config.logcat_dump_dev, 0 ) ;
-	bld_device_status_str( page, count, "  CP crash dump ", g_config.cp_crashdump_dev, 0 ) ;
+	bld_device_status_str( page, count, "    BMTT logging", g_config.runlog_dev ) ;
+	bld_device_status_str( page, count, "  APP crash dump", g_config.logcat_dump_dev ) ;
+	bld_device_status_str( page, count, "  CP crash dump ", g_config.cp_crashdump_dev ) ;
 	*eof = 1 ;
 	return 1+strlen( page ) ;
 }
@@ -137,8 +126,6 @@ static int proc_read(char *page, char **start, off_t offset, int count, int *eof
  **/
 static ssize_t proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
 {	
-	int val = simple_strtol(buffer, NULL, 10);
-
 	if( count > 0 )
 	{
 		switch( *buffer )
@@ -189,9 +176,6 @@ static ssize_t proc_write(struct file *file, const char *buffer, unsigned long c
 			break;
 			
 		default:
-			if ((val >= 10) && (val <= 1024)) {
-				g_config.sd_file_max = val ;
-			}
 			break ;
 		}
 	}
@@ -377,19 +361,10 @@ void BCMLOG_InitConfig( void )
 	
 	schedule_delayed_work( &g_load_config_wq, 1*HZ ) ;
 }
+
 int BCMLOG_GetRunlogDevice( void ) 
 {
 	return g_config.runlog_dev ;
-}
-
-void BCMLOG_SetRunlogDevice( run_log_dev ) 
-{
-	g_config.runlog_dev = run_log_dev;
-}
-
-int BCMLOG_GetSdFileMax ( void ) 
-{
-	return (g_config.sd_file_max * 1024 * 1024);
 }
 
 int BCMLOG_GetCpCrashDumpDevice( void )

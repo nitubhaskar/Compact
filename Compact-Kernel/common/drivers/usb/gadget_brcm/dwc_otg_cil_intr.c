@@ -80,14 +80,12 @@ static void set_charging_current(struct work_struct * work)
 	my_work_t *current_work = (my_work_t *)work;
 
 	pr_debug("set_charging_current\n");
-/* DLG start */
-#if 1//defined(CONFIG_MFD_MAX8986) sehyoung temp
+	
 	if (current_work->mode == SUSP_CURRENT)
 		pmu_stop_charging();
 	else
 		pmu_start_charging();
-#endif
-/* DLG end */ 
+
 	kfree( (void *)current_work);
 }
 /*

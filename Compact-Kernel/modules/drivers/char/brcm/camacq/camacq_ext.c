@@ -1,24 +1,12 @@
-  /*
- *
- * sensor link for camera senser value
- *
-. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2010   
- *
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
+/*.......................................................................................................
+. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2009           
+. All rights are reserved. Reproduction and redistiribution in whole or 
+. in part is prohibited without the written consent of the copyright owner.
+. 
+.   Developer:
+.   Date:
+.   Description:  
+..........................................................................................................
 */
 
 #if !defined(_CAMACQ_EXT_C_)
@@ -27,7 +15,6 @@
 /* Include */
 #include "camacq_ext.h"
 #include "camacq_api.h"
-#include <linux/gpio.h>
 
 
 /* Init global variable */
@@ -90,18 +77,6 @@ _stCamacqSensorRegs g_stCamacqMainSensorRegs =
     pvBrightness_7_Regs     : CAMACQ_MAIN_REG_BRIGHTNESS_LEVEL_7,
     pvBrightness_8_Regs     : CAMACQ_MAIN_REG_BRIGHTNESS_LEVEL_8,
 
-#ifdef CONFIG_BCM_CAM_S5K4ECGX // for amazing only
-    pvCCDBrightness_0_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_0,
-    pvCCDBrightness_1_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_1,
-    pvCCDBrightness_2_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_2,
-    pvCCDBrightness_3_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_3,
-    pvCCDBrightness_4_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_4,
-    pvCCDBrightness_5_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_5,
-    pvCCDBrightness_6_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_6,
-    pvCCDBrightness_7_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_7,
-    pvCCDBrightness_8_Regs     : CAMACQ_MAIN_REG_CCD_BRIGHTNESS_LEVEL_8,
-#endif   //CONFIG_BCM_CAM_S5K4ECGX // for amazing only
-
     /* Exposure Compensation */
     pvExpCompensation_0_Regs     : CAMACQ_MAIN_REG_EXPCOMPENSATION_LEVEL_0,
     pvExpCompensation_1_Regs     : CAMACQ_MAIN_REG_EXPCOMPENSATION_LEVEL_1,
@@ -113,18 +88,6 @@ _stCamacqSensorRegs g_stCamacqMainSensorRegs =
     pvExpCompensation_7_Regs     : CAMACQ_MAIN_REG_EXPCOMPENSATION_LEVEL_7,
     pvExpCompensation_8_Regs     : CAMACQ_MAIN_REG_EXPCOMPENSATION_LEVEL_8,
 
-
-#ifdef CONFIG_BCM_CAM_S5K4ECGX // for amazing only
-    pvAELockRegs            : CAMACQ_MAIN_AE_LOCK,
-    pvAEUnlockRegs          : CAMACQ_MAIN_AE_UNLOCK,
-    pvAWBLockRegs           : CAMACQ_MAIN_AWB_LOCK,
-    pvAWBUnlockReg          : CAMACQ_MAIN_AWB_UNLOCK,
-    pvSingleAFStartRegs     : CAMACQ_MAIN_REG_SINGLE_AF_START,   // start af
-    pvPreviewRetRegs        : CAMACQ_MAIN_REG_PREVIEW_RETURN,
-    pvFlashLowCapOff        : CAMACQ_MAIN_REG_LOW_CAP_OFF,
-    pvFlashLowCapOn         : CAMACQ_MAIN_REG_LOW_CAP_ON,
-    
-#endif    
     /* AF */
     pvSetAFRegs             : CAMACQ_MAIN_REG_SET_AF,   // start af
     pvOffAFRegs             : CAMACQ_MAIN_REG_OFF_AF,
@@ -206,6 +169,7 @@ _stCamacqSensorRegs g_stCamacqMainSensorRegs =
 
     /* Jpeg output size */
     pvJpegOutSize5M         : CAMACQ_MAIN_REG_JPEG_5M,
+    pvJpegOutSize5M_2       : CAMACQ_MAIN_REG_JPEG_5M_2,
     pvJpegOutSize4M         : CAMACQ_MAIN_REG_JPEG_W4M,
     pvJpegOutSize3M         : CAMACQ_MAIN_REG_JPEG_3M,
     pvJpegOutSize2M         : CAMACQ_MAIN_REG_JPEG_2M,
@@ -243,76 +207,18 @@ _stCamacqSensorRegs g_stCamacqMainSensorRegs =
     pvShandingTable_3	: CAMACQ_MAIN_REG_SHADING_3,
     pvShandingTable_4    : CAMACQ_MAIN_REG_SHADING_4,
     pvCalibrationDefault	: CAMACQ_MAIN_REG_DEFAULT_CAL,	
-    #elif defined(CONFIG_BCM_CAM_S5K5CCGX)||defined (CONFIG_BCM_CAM_S5K4ECGX)
+    #elif defined(CONFIG_BCM_CAM_S5K5CCGX)
     pvSnapshotOutdoorRegs	: CAMACQ_MAIN_REG_HIGHLIGHT,
     pvSnapshotLowlightRegs	: CAMACQ_MAIN_REG_LOWLIGHT,
     pvSnapshotNightsceneRegs	: CAMACQ_MAIN_REG_NIGHTSHOT,
-     #elif defined(CONFIG_BCM_CAM_SR300PC20)
-    pvSnapshotNightsceneRegs	: CAMACQ_MAIN_REG_NIGHTSHOT,
    #endif
  	
-
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-
-#if 0
-	pvFlashInit				         	: CAMACQ_MAIN_REG_FLASH_INIT,
-	pvFlashPreOn						: CAMACQ_MAIN_REG_PRE_FLASH_ON,
-	pvFlashPreOff						: CAMACQ_MAIN_REG_PRE_FLASH_OFF,
-	pvFlashOn							: CAMACQ_MAIN_REG_FLASH_ON,
-	pvFlashOff							: CAMACQ_MAIN_REG_FLASH_OFF,
-	#endif	
-	pvFlashLowCapOn				: CAMACQ_MAIN_REG_LOW_CAP_ON,
-	pvFlashLowCapOff				: CAMACQ_MAIN_REG_LOW_CAP_OFF,
-
-
-	pvZoom_1_25_reg_0	: CAMACQ_MAIN_REG_1_25_ZOOM0,
-	pvZoom_1_25_reg_1	: CAMACQ_MAIN_REG_1_25_ZOOM1,
-	pvZoom_1_25_reg_2	: CAMACQ_MAIN_REG_1_25_ZOOM2,
-	pvZoom_1_25_reg_3	: CAMACQ_MAIN_REG_1_25_ZOOM3,
-	pvZoom_1_25_reg_4	: CAMACQ_MAIN_REG_1_25_ZOOM4,
-	pvZoom_1_25_reg_5	: CAMACQ_MAIN_REG_1_25_ZOOM5,
-	pvZoom_1_25_reg_6	: CAMACQ_MAIN_REG_1_25_ZOOM6,
-	pvZoom_1_25_reg_7	: CAMACQ_MAIN_REG_1_25_ZOOM7,
-	pvZoom_1_25_reg_8	: CAMACQ_MAIN_REG_1_25_ZOOM8,
-	
-	pvZoom_1_6_reg_0	: CAMACQ_MAIN_REG_1_6_ZOOM0,
-	pvZoom_1_6_reg_1	: CAMACQ_MAIN_REG_1_6_ZOOM1,
-	pvZoom_1_6_reg_2	: CAMACQ_MAIN_REG_1_6_ZOOM2,
-	pvZoom_1_6_reg_3	: CAMACQ_MAIN_REG_1_6_ZOOM3,
-	pvZoom_1_6_reg_4	: CAMACQ_MAIN_REG_1_6_ZOOM4,
-	pvZoom_1_6_reg_5	: CAMACQ_MAIN_REG_1_6_ZOOM5,
-	pvZoom_1_6_reg_6	: CAMACQ_MAIN_REG_1_6_ZOOM6,
-	pvZoom_1_6_reg_7	: CAMACQ_MAIN_REG_1_6_ZOOM7,
-	pvZoom_1_6_reg_8	: CAMACQ_MAIN_REG_1_6_ZOOM8,
-	
-	pvZoom_2_reg_0	: CAMACQ_MAIN_REG_2_ZOOM0,
-	pvZoom_2_reg_1	: CAMACQ_MAIN_REG_2_ZOOM1,
-	pvZoom_2_reg_2	: CAMACQ_MAIN_REG_2_ZOOM2,
-	pvZoom_2_reg_3	: CAMACQ_MAIN_REG_2_ZOOM3,
-	pvZoom_2_reg_4	: CAMACQ_MAIN_REG_2_ZOOM4,
-	pvZoom_2_reg_5	: CAMACQ_MAIN_REG_2_ZOOM5,
-	pvZoom_2_reg_6	: CAMACQ_MAIN_REG_2_ZOOM6,
-	pvZoom_2_reg_7	: CAMACQ_MAIN_REG_2_ZOOM7,
-	pvZoom_2_reg_8	: CAMACQ_MAIN_REG_2_ZOOM8,
-
-	pvZoom_4_reg_0	: CAMACQ_MAIN_REG_4_ZOOM0,
-	pvZoom_4_reg_1	: CAMACQ_MAIN_REG_4_ZOOM1,
-	pvZoom_4_reg_2	: CAMACQ_MAIN_REG_4_ZOOM2,
-	pvZoom_4_reg_3	: CAMACQ_MAIN_REG_4_ZOOM3,
-	pvZoom_4_reg_4	: CAMACQ_MAIN_REG_4_ZOOM4,
-	pvZoom_4_reg_5	: CAMACQ_MAIN_REG_4_ZOOM5,
-	pvZoom_4_reg_6	: CAMACQ_MAIN_REG_4_ZOOM6,
-	pvZoom_4_reg_7	: CAMACQ_MAIN_REG_4_ZOOM7,
-	pvZoom_4_reg_8	: CAMACQ_MAIN_REG_4_ZOOM8,
-
-#endif 	
 };
 
 #if (CAMACQ_SENSOR_MAX==2)
 _stCamacqSensorRegs g_stCamacqSubSensorRegs =
 {
     pvInitRegs              : CAMACQ_SUB_REG_INIT,
-    pvInitVtRegs            : CAMACQ_SUB_REG_VT_INIT,
     pvSleepRegs             : CAMACQ_SUB_REG_SLEEP,
     pvWakeupRegs            : CAMACQ_SUB_REG_WAKEUP,
     pvPreviewRegs           : CAMACQ_SUB_REG_PREVIEW,
@@ -417,7 +323,6 @@ _stCamacqSensorRegs g_stCamacqSubSensorRegs =
     pvFlicker60Hz           : CAMACQ_SUB_REG_FLICKER_60HZ,
     pvFlickerAuto           : CAMACQ_SUB_REG_FLICKER_AUTO,
 
-    pvCamcorderPreview          : CAMACQ_SUB_REG_CAMCORDER,  //ccd_preview
 };
 #endif /* CAMACQ_SENSOR_MAX==2 */
 
@@ -441,6 +346,8 @@ S32 Reset_MAIN(void)
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO113 ), CAMACQ_OFF ); // RF_IF1 -> MCAM_RSTN
     CamacqExtDelay(10);
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO113 ), CAMACQ_ON ); // RF_IF1 -> MCAM_RSTN
+#elif defined(TOTORO)
+
 #endif
     
 
@@ -455,6 +362,8 @@ S32 Standby_MAIN(void)
 
 #if defined(GFORCE)
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO114 ), CAMACQ_OFF ); // RF_IF2 -> MCAM_STBYN
+#elif defined(TOTORO)
+
 #endif
 
     
@@ -469,6 +378,8 @@ S32 Wakeup_MAIN(void)
     
 #if defined(GFORCE)
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO114 ), CAMACQ_OFF ); // RF_IF2 -> MCAM_STBYN
+#elif defined(TOTORO)
+
 #endif
 
     CamacqTraceOUT();
@@ -632,6 +543,8 @@ S32 PowerOn_MAIN(void)
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO114 ), CAMACQ_ON ); // RF_IF2 -> MCAM_STBYN
     CamacqExtDelay(100); 
     
+#elif defined(TOTORO)
+    
 #else
 
 #endif /* __ISX006_SONY__ */ 
@@ -739,6 +652,8 @@ S32 PowerOff_MAIN(void)
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO106 ), CAMACQ_MAIN_EN_OFF ); // GPIO106 -> CAM_EN -> VCAM_IO_2.8V
     gpio_direction_output( mfp_to_gpio( MFP_PIN_GPIO109 ), CAMACQ_MAIN_EN_OFF ); // GPIO109 -> CAM_EN4 -> VCAM_AVDD_2.8V	& VCAM_AF_2.8V
     CamacqExtDelay(10);
+
+#elif defined(TOTORO)
 
 #endif
     CamacqTraceOUT();
@@ -2236,10 +2151,11 @@ S32 CamacqExtReadI2c( struct i2c_client *pClient, U16 usAddr, U8 ucAddrSize, U8 
     }
     else if( ucAddrSize == 2 )
     {
-     
+      //  CamacqTraceErr( " AddrSize ucAddrSize[%d]", ucAddrSize );
        if(CAMACQ_MAIN_EXT_RD_SZ >=2)
        	{
         ucrgAddrBuf[0] = (U8)((usAddr&(0xff00))>>8);
+       // ucrgAddrBuf[1] = (U8)(usAddr);
         ucrgAddrBuf[1] = (U8)(usAddr&(0x00ff));//BYKIM_PREVENT		
     }
     else
@@ -2300,23 +2216,17 @@ S32 CamacqExtWriteI2c( struct i2c_client *pClient, U8 * pucValue, U8 ucSize )
 
     stMsg.addr = pClient->addr;
 
-#if defined(GFORCE)
-    stMsg.flags = I2C_M_TEN;    // Marvell ??
-#else
+#if defined(TOTORO)
     stMsg.flags = pClient->flags;
+#else
+    stMsg.flags = I2C_M_TEN;    // Marvell ??
 #endif
 
     stMsg.buf = pucValue;   
     stMsg.len = ucSize; 
 
-#if 1 /* for debug */
- if(Drv_Capturemode)
-{
+#if 0 /* for debug */
     CamacqTraceDbg("Length[%d] : 0x%02X%02X%02X%02X\n ", stMsg.len,stMsg.buf[0] ,stMsg.buf[1] ,stMsg.buf[2] ,stMsg.buf[3]);
-}
-#else
-	//    CamacqExtDelay(1);
-	msleep( 1 );
 #endif /* for debug */
 
     iRet =i2c_transfer( pClient->adapter, &stMsg, CAMACQ_EXT_MODE_W );
@@ -2332,7 +2242,6 @@ CAMACQ_EXT_OUT:
 
     return iRet;
 }
-#if defined(CONFIG_BCM_CAM_S5K4ECGX)
 
 S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int iResType )
 {
@@ -2343,14 +2252,21 @@ S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int i
 
     CamacqTraceDbg_v("IN");
 
+#if defined(__ISX006_SONY__) ||defined(__ISX005_SONY__)
+    // check Sony sensor, temp code
+  //  if( !strcmp( pClient->name, "isx006" ) )
+    {
+        return CamacqExtWriteI2cLists_Sony( pClient, pvArg, iResType );
+    }
+#endif /* __ISX006_SONY__ */
     	
 	if( iResType == CAMACQ_SENSOR_MAIN )
     {
-//#if (CAMACQ_MAIN_BURST_MODE) 
+#if (CAMACQ_MAIN_BURST_MODE) 
         U8  rgucNextRegs[4] = {0, };
         U8  ucBurstCnt = 0;
         U8  rgucBurstRegs[CAMACQ_MAIN_BURST_MAX] = {0, };   
-//#endif /* CAMACQ_BURST_MODE */
+#endif /* CAMACQ_BURST_MODE */
 
 ///// init reglists variable. ///////////////////////////////////////////////////////
 #if (CAMACQ_MAIN_FS_MODE)
@@ -2395,7 +2311,7 @@ S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int i
                 CamacqTraceDbg(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
 #else
                 usDealy = (rgucWriteRegs[2]<<8 | rgucWriteRegs[3]);
-            //    CamacqTraceDbg(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
+                CamacqTraceDbg(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
 #endif /* CAMACQ_MAIN_2BYTE_SENSOR */
                 CamacqExtDelay(usDealy);
                 iRet = 0;
@@ -2403,8 +2319,6 @@ S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int i
             else
             {
 #if (CAMACQ_MAIN_BURST_MODE)
-//CamacqTraceDbg("swsw_CAMACQ_MAIN_BURST_MODE");
-//CamacqTraceDbg_v("swsw_CAMACQ_MAIN_BURST_MODE");
                 CAMACQ_MAIN_EXT_REG_GET_DATA(rgucNextRegs, pvRegLists, iNext+1)
                 if( CAMACQ_MAIN_EXT_REG_IS_CNTS(rgucWriteRegs) && CAMACQ_MAIN_EXT_REG_IS_CNTS(rgucNextRegs) )
                 {
@@ -2427,7 +2341,13 @@ S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int i
 
                     } while( CAMACQ_MAIN_EXT_REG_IS_CNTS(rgucWriteRegs) );
 
-
+#if (CAMACQ_MAIN_BURST_I2C_TRACE)
+                    int i;
+                    for( i=2 ; i<ucBurstCnt; i+=2) {
+                    camacq_trace_dbg(": 0x%02X%02X%02X%02X" , rgucBurstRegs[0], rgucBurstRegs[1], rgucBurstRegs[i] , rgucBurstRegs[i+1]);
+                    }
+                    camacq_trace_dbg(":burst count[%d]", ucBurstCnt);
+#endif /* CAMACQ_MAIN_BURST_I2C_TRACE */
 					
                     iRet = CamacqExtWriteI2c( pClient, rgucBurstRegs, ucBurstCnt );
                     if(iRet < 0)
@@ -2443,7 +2363,7 @@ S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int i
 #if (CAMACQ_MAIN_2BYTE_SENSOR)         
                     // CamacqTraceDbg_v(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
 #else
-                 //    CamacqTraceDbg(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
+                    // CamacqTraceDbg(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
 #endif
 
                     iRet = CamacqExtWriteI2c( pClient, rgucWriteRegs, CAMACQ_MAIN_REG_SET_SZ*CAMACQ_MAIN_REG_DAT_SZ );
@@ -2597,300 +2517,6 @@ S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int i
     return iRet;
 }
 
-#else
-S32 CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int iResType )
-{
-
-
-CamacqTraceDbg("swsw_CamacqExtWriteI2cLists IN");
-        S8 isBurst = 0;
-        S8 numByte =0;
-    S32 iRet = 0;
-    S32 iNext = 0;
-        U8	ucBurstCnt = 0;
-        U8	rgucWriteRegs[CAMACQ_MAIN_I2C_NUM_OF_BYTE] = {0, };
-        U8	rgucNextRegs[CAMACQ_MAIN_I2C_NUM_OF_BYTE] = {0, };
-        U8	rgucBurstRegs[CAMACQ_MAIN_BURST_MAX] = {0, };	
-    U16	usDealy;
-
-    CamacqTraceDbg_v("IN");
-
-#if defined(__ISX006_SONY__) ||defined(__ISX005_SONY__)
-    // check Sony sensor, temp code
-   if( !strcmp( pClient->name, "cami2c_main" ) )
-    {
-        return CamacqExtWriteI2cLists_Sony( pClient, pvArg, iResType );
-    }
-#endif /* __ISX006_SONY__ */
-    	
-	if( iResType == CAMACQ_SENSOR_MAIN )
-    {
-
-///// init reglists variable. ///////////////////////////////////////////////////////
-#if (CAMACQ_MAIN_FS_MODE)
-#if (CAMACQ_MAIN_INT_MODE)
-        U8* pvRegLists = CamacqExtReadFs( pvArg, CAMACQ_EXT_LEN_4BYTE_INT, iResType );
-#else
-        U8* pvRegLists = CamacqExtReadFs( pvArg, CAMACQ_EXT_LEN_4BYTE_ARY, iResType );
-#endif /* CAMACQ_MAIN_INT_MODE */
-#else // CAMACQ_MAIN_FS_MODE
-#if (CAMACQ_MAIN_2BYTE_SENSOR)
-
-#if (CAMACQ_MAIN_REG_DAT_SZ==1)
-        U8 (*pvRegLists)[CAMACQ_MAIN_REG_SET_SZ] = (U8(*)[CAMACQ_MAIN_REG_SET_SZ])(pvArg);
-#elif (CAMACQ_MAIN_REG_DAT_SZ==2)
-        U16* pvRegLists = (U16*)(pvArg);
-#endif
-
-#else // CAMACQ_MAIN_2BYTE_SENSOR
-
-#if (CAMACQ_MAIN_REG_DAT_SZ==2)
-        U16 (*pvRegLists)[CAMACQ_MAIN_REG_SET_SZ] = (U16(*)[CAMACQ_MAIN_REG_SET_SZ])(pvArg);
-#elif (CAMACQ_MAIN_REG_DAT_SZ==1) 
-        U8 (*pvRegLists)[CAMACQ_MAIN_REG_SET_SZ] = (U8(*)[CAMACQ_MAIN_REG_SET_SZ])(pvArg);
-#elif (CAMACQ_MAIN_REG_DAT_SZ==4)
-        U32* pvRegLists = (U32*)(pvArg);
-#endif 
-#endif /* CAMACQ_MAIN_2BYTE_SENSOR */ 
-#endif /* CAMACQ_MAIN_FS_MODE */
-//// init reglists valiable. ///////////////////////////////////////////////////////
-
-        if( pvRegLists == NULL )
-            return -1;
-
-        // start!!
-        CAMACQ_MAIN_EXT_REG_GET_DATA( rgucWriteRegs, pvRegLists, iNext )
-        while( !CAMACQ_MAIN_EXT_REG_IS_BTM_OF_DATA(rgucWriteRegs) )
-        {
-            if( CAMACQ_MAIN_EXT_REG_IS_DELAY(rgucWriteRegs) )
-            {
-#if (CAMACQ_MAIN_2BYTE_SENSOR)
-                usDealy = rgucWriteRegs[1];
-               // CamacqTraceDbg(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
-#else
-                usDealy = (rgucWriteRegs[2]<<8 | rgucWriteRegs[3]);
-              //  CamacqTraceDbg(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
-#endif /* CAMACQ_MAIN_2BYTE_SENSOR */
-                CamacqExtDelay(usDealy);
-                iRet = 0;
-            }
-            else
-            {
-			//	CamacqTraceDbg_v(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
-#if(CAMACQ_MAIN_2BYTE_SENSOR)
-                if( CAMACQ_MAIN_EXT_REG_IS_BURST(rgucWriteRegs))
-                {
-					isBurst = TRUE;
-					numByte = CAMACQ_MAIN_I2C_NUM_OF_BYTE;
-
-					CamacqTraceDbg(": %d BYTE_BURST_MODE_START",CAMACQ_MAIN_I2C_NUM_OF_BYTE);
-					CamacqTraceDbg(": BURST_MODE_START");
-
-					iNext++;
-					CAMACQ_MAIN_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext)
-			//			CamacqTraceDbg_v(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
-
-                    memset(rgucBurstRegs, 0x00, CAMACQ_MAIN_BURST_MAX);
-
-                    ucBurstCnt = 0;
-					memcpy(rgucBurstRegs + ucBurstCnt, rgucWriteRegs, (CAMACQ_MAIN_I2C_NUM_OF_BYTE));
-					ucBurstCnt+=(CAMACQ_MAIN_I2C_NUM_OF_BYTE);
-
-                    iNext++;
-
-                    CAMACQ_MAIN_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext) 
-
-                    do
-                    {
-                        memcpy(rgucBurstRegs+ucBurstCnt, rgucWriteRegs+(CAMACQ_MAIN_I2C_NUM_OF_BYTE/2), (CAMACQ_MAIN_I2C_NUM_OF_BYTE/2));
-                        ucBurstCnt+=(CAMACQ_MAIN_I2C_NUM_OF_BYTE/2);
-                        iNext++;
-                        CAMACQ_MAIN_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext) 
-                        if(ucBurstCnt == CAMACQ_MAIN_BURST_MAX)
-                    	{
-                        	
-							CamacqTraceDbg(": BREAK");
-                        break;
-                    	}
-
-                    } while( !CAMACQ_MAIN_EXT_REG_IS_BURST_END(rgucWriteRegs) );
-
-#if (CAMACQ_MAIN_BURST_I2C_TRACE)
-                    int i;
-					for( i=0 ; i<ucBurstCnt; i+=2) 
-					{
-						CamacqTraceDbg(": 0x%02X%02X" , rgucBurstRegs[i] , rgucBurstRegs[i+1]);
-                    }
-					CamacqTraceDbg(":iNext count[%d]", iNext);
-	                CamacqTraceDbg(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
-                    CamacqTraceDbg(":burst count[%d]", ucBurstCnt);
-#endif /* CAMACQ_MAIN_BURST_I2C_TRACE */
-					
-                    iRet = CamacqExtWriteI2c( pClient, rgucBurstRegs, ucBurstCnt );
-                    if(iRet < 0)
-                    {
-                        CamacqTraceErr( ":write failed" );
-						isBurst = 0;
-                        break;
-                    }
-                    //continue;
-                }
-#endif
-               // else //CAMACQ_MAIN_EXT_REG_IS_BURST
-                {
-//					CamacqTraceDbg_v(": NORMAL_MODE_START");
-                    iRet = CamacqExtWriteI2c( pClient, rgucWriteRegs, CAMACQ_MAIN_REG_SET_SZ*CAMACQ_MAIN_REG_DAT_SZ );
-                    if(iRet < 0)
-                    {
-                        CamacqTraceErr( ":write failed" );
-                        break;
-                    }
-                }
-            } 
-	                
-            iNext++;
-            CAMACQ_MAIN_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext)
-        } // while
-
-#if (CAMACQ_MAIN_FS_MODE)
-        CamacqFree( pvRegLists );
-#endif /* CAMACQ_MAIN_FS_MODE */
-
-    }
-#if (CAMACQ_SENSOR_MAX==2)
-    else // irestype == CAMACQ_SENSOR_LOW
-    {
-#if (CAMACQ_SUB_BURST_MODE) 
-        U8  rgucNextRegs[4] = {0, };
-        U8  ucBurstCnt = 0;
-        U8  rgucBurstRegs[CAMACQ_SUB_BURST_MAX] = {0, };   
-#endif /* CAMACQ_BURST_MODE */
-
-//// init reglists variable. ///////////////////////////////////////////////////////
-#if (CAMACQ_SUB_FS_MODE)
-#if (CAMACQ_SUB_INT_MODE)
-        U8* pvRegLists = CamacqExtReadFs( pvArg, CAMACQ_EXT_LEN_4BYTE_INT, iResType );
-#else
-        U8* pvRegLists = CamacqExtReadFs( pvArg, CAMACQ_EXT_LEN_4BYTE_ARY, iResType );
-#endif /* CAMACQ_SUB_INT_MODE */
-#else // CAMACQ_SUB_FS_MODE
-#if (CAMACQ_SUB_2BYTE_SENSOR)
-
-#if (CAMACQ_SUB_REG_DAT_SZ==1)
-        U8 (*pvRegLists)[CAMACQ_SUB_REG_SET_SZ] = (U8(*)[CAMACQ_SUB_REG_SET_SZ])(pvArg);
-#elif (CAMACQ_SUB_REG_DAT_SZ==2)
-        U16* pvRegLists = (U16*)(pvArg);
-#endif
-
-#else // CAMACQ_SUB_2BYTE_SENSOR
-
-#if (CAMACQ_SUB_REG_DAT_SZ==2)
-        U16 (*pvRegLists)[CAMACQ_SUB_REG_SET_SZ] = (U16(*)[CAMACQ_SUB_REG_SET_SZ])(pvArg);
-#elif (CAMACQ_SUB_REG_DAT_SZ==1) 
-        U8 (*pvRegLists)[CAMACQ_SUB_REG_SET_SZ] = (U8(*)[CAMACQ_SUB_REG_SET_SZ])(pvArg);
-#elif (CAMACQ_SUB_REG_DAT_SZ==4)
-        U32* pvRegLists = (U32*)(pvArg);
-#endif 
-#endif /* CAMACQ_SUB_2BYTE_SENSOR */ 
-#endif /* CAMACQ_SUB_FS_MODE */
-//// init reglists valiable. ///////////////////////////////////////////////////////
-
-        if( pvRegLists == NULL )
-            return -1;
-
-        // start!!
-        CAMACQ_SUB_EXT_REG_GET_DATA( rgucWriteRegs, pvRegLists, iNext )
-        while( !CAMACQ_SUB_EXT_REG_IS_BTM_OF_DATA(rgucWriteRegs) )
-        {
-            if( CAMACQ_SUB_EXT_REG_IS_DELAY(rgucWriteRegs) )
-            {
-#if (CAMACQ_SUB_2BYTE_SENSOR)
-                usDealy = rgucWriteRegs[1];
-                CamacqTraceDbg_v(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
-#else
-                usDealy = (rgucWriteRegs[2]<<8 | rgucWriteRegs[3]);
-                CamacqTraceDbg(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
-#endif /* CAMACQ_SUB_2BYTE_SENSOR */
-                CamacqExtDelay(usDealy);
-                iRet = 0;
-            }
-            else
-            {
-#if (CAMACQ_SUB_BURST_MODE)
-                CAMACQ_SUB_EXT_REG_GET_DATA(rgucNextRegs, pvRegLists, iNext+1)
-                if( CAMACQ_SUB_EXT_REG_IS_CNTS(rgucWriteRegs) && CAMACQ_SUB_EXT_REG_IS_CNTS(rgucNextRegs) )
-                {
-                    memset(rgucBurstRegs, 0x00, CAMACQ_SUB_BURST_MAX);
-                    // copy first 0x0f12 data
-                    ucBurstCnt = 0;
-                    memcpy(rgucBurstRegs + ucBurstCnt, rgucWriteRegs, sizeof(rgucWriteRegs));
-                    ucBurstCnt+=sizeof(rgucWriteRegs);
-
-                    iNext++;
-                    CAMACQ_SUB_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext) 
-                    do
-                    {
-                        memcpy(rgucBurstRegs+ucBurstCnt, rgucWriteRegs+2, 2);
-                        ucBurstCnt+=2;
-                        iNext++;
-                        CAMACQ_SUB_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext) 
-                        if(ucBurstCnt == CAMACQ_SUB_BURST_MAX)
-                        break;
-
-                    } while( CAMACQ_SUB_EXT_REG_IS_CNTS(rgucWriteRegs) );
-
-#if (CAMACQ_SUB_BURST_I2C_TRACE)
-                    int i;
-                    for( i=2 ; i<ucBurstCnt; i+=2) {
-                    camacq_trace_dbg(": 0x%02X%02X%02X%02X" , rgucBurstRegs[0], rgucBurstRegs[1], rgucBurstRegs[i] , rgucBurstRegs[i+1]);
-                    }
-                    camacq_trace_dbg(":burst count[%d]", ucBurstCnt);
-#endif /* CAMACQ_SUB_BURST_I2C_TRACE */
-					
-                    iRet = CamacqExtWriteI2c( pClient, rgucBurstRegs, ucBurstCnt );
-                    if(iRet < 0)
-                    {
-                        CamacqTraceErr( ":write failed" );
-                        break;
-                    }
-                    continue;
-                }
-                else
-#endif /* CAMACQ_SUB_BURST_MODE */
-                {
-#if (CAMACQ_SUB_2BYTE_SENSOR)         
-                    CamacqTraceDbg_v(": 0x%02x%02x" , rgucWriteRegs[0], rgucWriteRegs[1]);
-#else
-                    CamacqTraceDbg_v(": 0x%02X%02X%02X%02X" , rgucWriteRegs[0] , rgucWriteRegs[1], rgucWriteRegs[2] , rgucWriteRegs[3]);
-#endif
-
-                    iRet = CamacqExtWriteI2c( pClient, rgucWriteRegs, CAMACQ_SUB_REG_SET_SZ*CAMACQ_SUB_REG_DAT_SZ );
-                    if(iRet < 0)
-                    {
-                        CamacqTraceErr( ":write failed" );
-                        break;
-                    }
-                } // else
-            } // else
-	                
-            iNext++;
-            CAMACQ_SUB_EXT_REG_GET_DATA(rgucWriteRegs, pvRegLists, iNext)
-        } // while
-
-#if (CAMACQ_SUB_FS_MODE)
-        CamacqFree( pvRegLists );
-#endif /* CAMACQ_SUB_FS_MODE */
-
-    }
-#endif /* CAMACQ_SENSOR_MAX==2 */
-	
-    CamacqTraceDbg( ":size[%d]", iNext );
-    CamacqTraceDbg_v("OUT");
-
-    return iRet;
-}
-#endif
-//swsw
 #if defined(__ISX006_SONY__)||defined(__ISX005_SONY__)
 S32 CamacqExtWriteI2cLists_Sony( struct i2c_client *pClient, const void *pvArg, int iResType )
 {
@@ -3108,17 +2734,19 @@ S32 CamacqExtWriteI2cLists_Sony( struct i2c_client *pClient, const void *pvArg, 
 }
 #endif /* __ISX006_SONY__ */
 
+
+
+
 S32 CamacqExtDirectlyWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int iResType )
-    {
+{
     S32 iRet = 0;
     S32 iNext = 0;
     U8	rgucWriteRegs[4] = {0, };
     U16	usDealy;
-CamacqTraceDbg("swsw_CamacqExtDirectlyWriteI2cLists IN");
+
     CamacqTraceDbg("CamacqExtDirectlyWriteI2cLists IN");
 
 #if defined(__ISX006_SONY__) ||defined(__ISX005_SONY__)
-    if( iResType == CAMACQ_SENSOR_MAIN )
     {
         return CamacqExtDirectlyWriteI2cLists_Sony( pClient, pvArg, iResType );
     }
@@ -3270,9 +2898,9 @@ CamacqTraceDbg("swsw_CamacqExtDirectlyWriteI2cLists IN");
 
         // start!!
         CAMACQ_SUB_EXT_REG_GET_DATA( rgucWriteRegs, pvRegLists, iNext )
-        while( !CAMACQ_SUB_EXT_REG_IS_BTM_OF_DATA(rgucWriteRegs) )
+        while( !CAMACQ_MAIN_EXT_REG_IS_BTM_OF_DATA(rgucWriteRegs) )
         {
-            if( CAMACQ_SUB_EXT_REG_IS_DELAY(rgucWriteRegs) )
+            if( CAMACQ_MAIN_EXT_REG_IS_DELAY(rgucWriteRegs) )
             {
 #if (CAMACQ_SUB_2BYTE_SENSOR)
                 usDealy = rgucWriteRegs[1];
@@ -3521,6 +3149,7 @@ CAMACQ_EXT_OUT:
 
 /* File System API */
 /* Must need to release return point value by caller side */
+#if (CAMACQ_MAIN_FS_MODE)
 U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
 {
     U8* pucRet;
@@ -3545,7 +3174,7 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
     set_fs(get_ds());
 #endif /* _LINUX_ */
 
-    CamacqTraceDbg_v( ":eLen[%d]", eLen );
+    CamacqTraceDbg( ":eLen[%d]", eLen );
     switch( eLen )
     {
         case CAMACQ_EXT_LEN_2BYTE_ARY:
@@ -3565,9 +3194,9 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
             ucHexLen = strlen( CAMACQ_EXT_HEX_INT );
         break;
     }
-//    CamacqTraceDbg_v( " :ucHexLen[%d] ", ucHexLen );
+    CamacqTraceDbg( " :ucHexLen[%d] ", ucHexLen );
     
-    CamacqTraceDbg_v( " : szFileName[%s] ", szFileName );
+    CamacqTraceDbg( " : szFileName[%s] ", szFileName );
     memset( rgcPath, 0x00, sizeof(S8)*(CAMACQ_EXT_MAX_PATH+1) );
     if( iResType == CAMACQ_SENSOR_MAIN )
         sprintf( rgcPath, CAMACQ_MAIN_PATH_SET_FILE, szFileName );
@@ -3576,12 +3205,7 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
         sprintf( rgcPath, CAMACQ_SUB_PATH_SET_FILE, szFileName );
 #endif /* CAMACQ_SENSOR_MAX==2 */
 
-
-
-    CamacqTraceDbg_v( " :rgcPath[%s] ", rgcPath );
-
-
-
+    CamacqTraceDbg( " :rgcPath[%s] ", rgcPath );
 
     fd = CamacqOpen( rgcPath, CAMACQ_RDONLY );
     if( IS_ERR(fd) )
@@ -3606,16 +3230,11 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
     memset( pucRet, 0x00, uiLen/2 );
     
     uiLen = CamacqRead( fd, pucBuff, uiLen );
-//    CamacqTraceDbg_v( ":uiLen[%d]", uiLen );
+    CamacqTraceDbg( ":uiLen[%d]", uiLen );
 
     if(uiLen<0)   //BYKIM_PREVENT
     {
         CamacqTraceErr( " :invalid uiLen[%d] ",uiLen );
-		
-		CamacqFree( pcHex );
-		CamacqFree( pucBuff );
-		CamacqFree( pucRet );
-		
         return NULL;
     }
 	
@@ -3625,7 +3244,7 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
         pucCurBuffPos = pucBuff + uiIdx;
         if( CAMACQ_EXT_COMMENT_START(pucCurBuffPos) ) /* Comment Start '/*'  or '//'  */
         {
-//            CamacqTraceDbg_v( "pucCurBuffPos[0x%0x]", pucCurBuffPos );
+            CamacqTraceDbg( "pucCurBuffPos[0x%0x]", pucCurBuffPos );
             pucMovBuffPos = (U8*)strstr( (S8*)pucCurBuffPos, CAMACQ_EXT_COMMENT_CLOSE);
             if(pucMovBuffPos != NULL)
             {
@@ -3633,10 +3252,10 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
              }	
 	    else
 	     {
-//                CamacqTraceDbg_v( "There is no */ : Old style" );
-//                CamacqTraceDbg_v( "pucCurBuffPos[0x%0x]", pucCurBuffPos );
+                CamacqTraceDbg( "There is no */ : Old style" );
+                CamacqTraceDbg( "pucCurBuffPos[0x%0x]", pucCurBuffPos );
                 pucCurBuffPos = pucBuff + uiIdx;
-//                CamacqTraceDbg_v( "pucCurBuffPos[0x%0x]", pucCurBuffPos );
+                CamacqTraceDbg( "pucCurBuffPos[0x%0x]", pucCurBuffPos );
                 pucMovBuffPos = (U8*)strstr( (S8*)pucCurBuffPos, CAMACQ_EXT_START);
                 if(pucMovBuffPos != NULL)
                 {
@@ -3665,7 +3284,7 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
                     for( ucIdy = 0; ucIdy < ( ucHexLen-CAMACQ_EXT_HEX_HALF_LEN ); ucIdy+=2 )
                     {
                         rgucSonyAddr[ ucIdy / 2 ] = CamacqExtAsc2Hex( pcHex + CAMACQ_EXT_HEX_HALF_LEN + ucIdy );
-//                        CamacqTraceDbg_v( " : rgucSonyAddr[ %d ] = %x ", ucIdy / 2, rgucSonyAddr[ ucIdy / 2 ] );
+                        CamacqTraceDbg_v( " : rgucSonyAddr[ %d ] = %x ", ucIdy / 2, rgucSonyAddr[ ucIdy / 2 ] );
                     }
                     uiIdx += ucHexLen;
                     ucSonyFlag = 2;
@@ -3674,7 +3293,7 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
                 else if( ucSonyFlag == 2 )
                 {
                     memcpy( szSonyData, pcHex, ucHexLen );
-//                    CamacqTraceDbg_v( " szSonyData : %s", szSonyData );
+                    CamacqTraceDbg_v( " szSonyData : %s", szSonyData );
                     uiIdx += CAMACQ_EXT_HEX_HALF_LEN;
                     ucSonyFlag = 3;
                 }
@@ -3683,7 +3302,7 @@ U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType )
                 {
                     ucSonyLen = CamacqExtAsc2Hex( pcHex + CAMACQ_EXT_HEX_HALF_LEN );
 
-//                    CamacqTraceDbg_v( " ucSonyLen : %d", ucSonyLen );
+                    CamacqTraceDbg_v( " ucSonyLen : %d", ucSonyLen );
 
                     // 1. save length
                     pucRet[ uiCnt++ ] = ucSonyLen;
@@ -3766,6 +3385,7 @@ U8  CamacqExtAsc2Hex( S8 *pcAscii )
 
     return ucRetHex;
 }
+#endif
 
 #undef _CAMACQ_EXT_C_
 #endif /* _CAMACQ_EXT_C_ */

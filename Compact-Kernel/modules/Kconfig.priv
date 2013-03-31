@@ -32,7 +32,6 @@ source "../modules/drivers/char/brcm/v3d/Kconfig"
 
 source "../modules/drivers/sound/brcm/alsa/Kconfig"
 source "../modules/drivers/sound/brcm/alsa_athena/Kconfig"
-
 # Headset module
 source "../modules/drivers/sound/brcm/headset/Kconfig"
 source "../modules/drivers/gps/brcm/Kconfig"

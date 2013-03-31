@@ -83,10 +83,7 @@ AUDDRV_MIC_Enum_t   currVoiceMic = AUDDRV_MIC_NONE;   //used in pcm i/f control.
 AUDDRV_SPKR_Enum_t  currVoiceSpkr = AUDDRV_SPKR_NONE;  //used in pcm i/f control. assume one mic, one spkr.
 Boolean inVoiceCall = FALSE;
 
-//this is needed because DSPCMD_AUDIO_ENABLE sets/clears AMCR.AUDEN
-extern Boolean vopath_enabled;
-extern Boolean vipath_enabled;
-
+extern Boolean voicePlayOutpathEnabled;  //this is needed because DSPCMD_AUDIO_ENABLE sets/clears AMCR.AUDEN
 extern Boolean controlFlagForCustomGain;
 
 //=============================================================================
@@ -98,13 +95,15 @@ extern Boolean controlFlagForCustomGain;
 #define ANACR0_DrvrSelMask (0x006000) //Drvr_selR, Drvr_selL
 #endif
 
+Boolean voiceInPathEnabled = FALSE;  //this is needed because DSPCMD_AUDIO_ENABLE sets/clears AMCR.AUDEN for both voiceIn and voiceOut
+
 static AudioEqualizer_en_t	sEqualizerType = EQU_NORMAL;
 static void *sUserCB = NULL;
 
 //=============================================================================
 // Private function prototypes
 //=============================================================================
-extern void auddrv_FinshTelephonyDeinit( void );
+
 
 //=============================================================================
 // Functions
@@ -121,6 +120,7 @@ extern void auddrv_FinshTelephonyDeinit( void );
 
 
 #if defined(FUSE_APPS_PROCESSOR)
+
 // intentionally put this static var here to prevent any code above this lines to use this var.
 static AudioApp_t currAudioApp = AUDIO_APP_VOICE_CALL;
 static AudioMode_t currAudioMode = AUDIO_MODE_HANDSET;  //need to update this on AP and also in audioapi.c on CP.
@@ -288,31 +288,23 @@ void AUDDRV_Enable_Output (
 				AUDDRV_SPKR_Enum_t     mixer_speaker_selection,
 				Boolean                enable_speaker,
 				AUDIO_SAMPLING_RATE_t  sample_rate,
-				AUDIO_CHANNEL_NUM_t    input_to_mixer,
-				void *                 callback
+				AUDIO_CHANNEL_NUM_t    input_to_mixer
 				)
 {
 	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Enable_Output mixer %d, en %d input_path_to_mixer %d invoicecall %d, sample_rate %d *\n\r", 
           mixer_speaker_selection, enable_speaker, input_path_to_mixer, inVoiceCall, sample_rate);
 
 #if defined(FUSE_APPS_PROCESSOR)
+	AUDDRV_EnableHWOutput( input_path_to_mixer, mixer_speaker_selection, enable_speaker, sample_rate, input_to_mixer,
+		AUDDRV_REASON_HW_CTRL );
+	OSTASK_Sleep( 5 );  //sometimes BBC video has no audio. This delay may help the mixer filter and mixer gain loading.
+
 	switch(input_path_to_mixer)
 	{
 		case AUDDRV_VOICE_OUTPUT:
-			//at first
-			currVoiceSpkr = mixer_speaker_selection;
 			
-			if(inVoiceCall == FALSE)
+			if(inVoiceCall != TRUE)
 			{
-				AUDDRV_EnableHWOutput( input_path_to_mixer,
-					mixer_speaker_selection,
-					enable_speaker,
-					sample_rate,
-					input_to_mixer,
-					AUDDRV_REASON_HW_CTRL,
-					(audio_HWEnabled_Cb_t)callback );
-				OSTASK_Sleep( 5 );  //sometimes BBC video has no audio. This delay may help the mixer filter and mixer gain loading.
-
 				//if inVoiceCall== TRUE, assume the telphony_init() function sends ENABLE and CONNECT_DL
 				if (sample_rate == AUDIO_SAMPLING_RATE_8000)
 				{
@@ -324,24 +316,31 @@ void AUDDRV_Enable_Output (
 					audio_control_dsp(DSPCMD_TYPE_AUDIO_ENABLE, 1, 1, 0, 0, 0 );
 					audio_control_dsp(DSPCMD_TYPE_AUDIO_CONNECT_DL, 1, 1, 0, 0, 0 );
 				}
+				voicePlayOutpathEnabled = TRUE;
 
+				Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Enable_Output: inVoiceCall = %d, voicePlayOutpathEnabled = %d\n\r", inVoiceCall, voicePlayOutpathEnabled);
 			}	
-			//else	//if inVoiceCall== TRUE, assume the telphony_init() already sent ENABLE and CONNECT_DL
 			
-			Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Enable_Output: inVoiceCall = %d, vipath_enabled = %d, vopath_enabled = %d\n\r", inVoiceCall, vipath_enabled, vopath_enabled);
-			vopath_enabled = TRUE;
+			currVoiceSpkr = mixer_speaker_selection;
+			if(inVoiceCall != TRUE)
+			{
+				if (currVoiceSpkr == AUDDRV_SPKR_PCM_IF)
+					AUDDRV_SetPCMOnOff( 1 );
+				else
+				{
+					if(currVoiceMic != AUDDRV_MIC_PCM_IF) //need to check mic too.
+						AUDDRV_SetPCMOnOff( 0 );
+				}
+				
+			}
+			//else, Enable_Input( ) set pcm i/f.
+
 			break;
 
 		case AUDDRV_AUDIO_OUTPUT:
+			break;
+
 		case AUDDRV_RINGTONE_OUTPUT:
-			AUDDRV_EnableHWOutput( input_path_to_mixer,
-				mixer_speaker_selection,
-				enable_speaker,
-				sample_rate,
-				input_to_mixer,
-				AUDDRV_REASON_HW_CTRL,
-				(audio_HWEnabled_Cb_t)callback );
-			OSTASK_Sleep( 5 );  //sometimes BBC video has no audio. This delay may help the mixer filter and mixer gain loading.
 			break;
 
 		default:
@@ -368,35 +367,38 @@ void AUDDRV_Disable_Output ( AUDDRV_InOut_Enum_t  path )
 				
 			Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Disable_Output *\n\r" );
 
-			if(inVoiceCall == FALSE)
+			if(inVoiceCall != TRUE)
 			{
-				AUDDRV_DisableHWOutput ( path, AUDDRV_REASON_HW_CTRL );
-
-				if ( vipath_enabled == FALSE )
+				if ( voiceInPathEnabled==FALSE )
 				{
 				//if inVoiceCall== TRUE, assume the telphony_init() function sends ENABLE and CONNECT_DL
 				audio_control_dsp(DSPCMD_TYPE_AUDIO_CONNECT_DL, 0, 0, 0, 0, 0 );
 				audio_control_dsp(DSPCMD_TYPE_AUDIO_ENABLE, 0, 0, 0, 0, 0 );
-				}
-				else  //if ( vipath_enabled ==TRUE )
-			{
-					audio_control_dsp(DSPCMD_TYPE_AUDIO_CONNECT_DL, 0, 0, 0, 0, 0 );
+				voicePlayOutpathEnabled = FALSE;
+				Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Disable_Output: inVoiceCall = %d, voicePlayOutpathEnabled = %d\n\r", voicePlayOutpathEnabled);
 				}
 			}
-			//else	//if inVoiceCall== TRUE, do nothing
+			
+			if (currVoiceSpkr == AUDDRV_SPKR_PCM_IF)  //turn off PCM i/f
+			{
+				currVoiceSpkr = AUDDRV_SPKR_NONE;
+				if(currVoiceMic != AUDDRV_MIC_PCM_IF)
+					VPRIPCMDQ_DigitalSound( FALSE );
+			} //else, no need to care PCM i/f.
 
-			Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Disable_Output: inVoiceCall = %d, vipath_enabled = %d, vopath_enabled = %d\n\r", inVoiceCall, vipath_enabled, vopath_enabled);
-			//at last:
-			vopath_enabled = FALSE;
 			currVoiceSpkr = AUDDRV_SPKR_NONE;
-			auddrv_FinshTelephonyDeinit();
+
 			break;
 			
 		default:
-			AUDDRV_DisableHWOutput ( path, AUDDRV_REASON_HW_CTRL );
 			break;
 	}
+
+	OSTASK_Sleep( 3 ); //make sure audio is done
+
+	AUDDRV_DisableHWOutput ( path, AUDDRV_REASON_HW_CTRL );
 #endif //#if defined(FUSE_APPS_PROCESSOR)	
+
 }
 
 
@@ -417,19 +419,16 @@ void AUDDRV_Enable_Input (
 #if defined(FUSE_APPS_PROCESSOR)
 	currInputSamplingRate = sample_rate;
 	
+	AUDDRV_EnableHWInput ( input_path, mic_selection, sample_rate,
+		AUDDRV_REASON_HW_CTRL );
+
 	switch(input_path) {
 	case AUDDRV_VOICE_INPUT:
 		
 		Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Enable_Input mic_selection %d *\n\r", mic_selection );
-		//at first
-		currVoiceMic = mic_selection;
 
-		if(inVoiceCall == FALSE)
+		if(inVoiceCall != TRUE)
 		{
-			AUDDRV_EnableHWInput ( input_path, mic_selection, sample_rate, AUDDRV_REASON_HW_CTRL );
-
-			OSTASK_Sleep( 5 );  // symmetric design for DL.
-
 			//if inVoiceCall== TRUE, assume the telphony_init() function sends ENABLE and CONNECT_UL
 			if (sample_rate == AUDIO_SAMPLING_RATE_8000)
 			{
@@ -444,17 +443,20 @@ void AUDDRV_Enable_Input (
 				audio_control_dsp(DSPCMD_TYPE_AUDIO_ENABLE, 1, 1, 0, 0, 0 );
 			}
 			
-			// ensure recording gain as gain is not controller spearately.
-			audio_control_dsp( DSPCMD_TYPE_UNMUTE_DSP_UL, 0, 0, 0, 0, 0 );
 		}
-		//else,	if inVoiceCall== TRUE, assume the telphony_init() already sent ENABLE and CONNECT_UL
+        voiceInPathEnabled = TRUE;
+		currVoiceMic = mic_selection;
+		if (currVoiceMic == AUDDRV_MIC_PCM_IF)
+			AUDDRV_SetPCMOnOff( 1 );
+		else
+		{
+			if (currVoiceSpkr != AUDDRV_SPKR_PCM_IF) //need to check spkr too.
+				AUDDRV_SetPCMOnOff( 0 );
+		}
 			
-		Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Enable_Input: inVoiceCall = %d, vipath_enabled = %d, vopath_enabled = %d\n\r", inVoiceCall, vipath_enabled, vopath_enabled);
-		vipath_enabled = TRUE;
 		break;
 
 	default:
-		AUDDRV_EnableHWInput ( input_path, mic_selection, sample_rate, AUDDRV_REASON_HW_CTRL );
 		break;
 	}
 #endif //#if defined(FUSE_APPS_PROCESSOR)
@@ -476,29 +478,33 @@ void AUDDRV_Disable_Input (  AUDDRV_InOut_Enum_t      path )
 
 		Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Disable_Input *\n\r" );
 
-		if(inVoiceCall == FALSE)
+		
+		if(inVoiceCall != TRUE)
 		{
-			AUDDRV_DisableHWInput ( path, AUDDRV_REASON_HW_CTRL );
-
-			audio_control_dsp( DSPCMD_TYPE_MUTE_DSP_UL, 0, 0, 0, 0, 0 );
-
-			if ( vopath_enabled == FALSE )
+			if ( voicePlayOutpathEnabled == FALSE )
 			{
 			//if inVoiceCall== TRUE, assume the telphony_init() function sends ENABLE and CONNECT_UL
 			audio_control_dsp(DSPCMD_TYPE_AUDIO_ENABLE, 0, 0, 0, 0, 0 );
 			audio_control_dsp(DSPCMD_TYPE_AUDIO_CONNECT_UL, FALSE, 0, 0, 0, 0);
 			}
-			else  //if ( vopath_enabled ==TRUE )
+			
+		
+		    if (currVoiceMic == AUDDRV_MIC_PCM_IF)  //turn off PCM
+		    {
+			    currVoiceMic = AUDDRV_MIC_NONE;
+			    if (currVoiceSpkr != AUDDRV_SPKR_PCM_IF)  //turn off PCM
 			    {
-				audio_control_dsp(DSPCMD_TYPE_AUDIO_CONNECT_UL, FALSE, 0, 0, 0, 0);
+				    VPRIPCMDQ_DigitalSound( FALSE );
 			    }
-		} //else,	if inVoiceCall== TRUE, do nothing
+		    } //else, no need to care PCM i/f.
 
-		Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_Disable_Input: inVoiceCall = %d, vipath_enabled = %d, vopath_enabled = %d\n\r", inVoiceCall, vipath_enabled, vopath_enabled);
-		//at last:
-		vipath_enabled = FALSE;
+		    OSTASK_Sleep( 3 ); //make sure audio is done
+
 		    currVoiceMic = AUDDRV_MIC_NONE;
-		auddrv_FinshTelephonyDeinit();
+        }
+        voiceInPathEnabled = FALSE;
+	    AUDDRV_DisableHWInput ( path, AUDDRV_REASON_HW_CTRL );
+
         break;
 
 	default:
@@ -544,7 +550,6 @@ void AUDDRV_SaveAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 	else if (( audio_mode >= AUDIO_MODE_NUMBER ) && (audio_mode < AUDIO_MODE_NUMBER_VOICE ))
     {
 		if (audio_app == AUDIO_APP_VOICE_CALL) currAudioApp = AUDIO_APP_VOICE_CALL_WB;
-        else if (audio_app == AUDIO_APP_VT_CALL) currAudioApp = AUDIO_APP_VT_CALL_WB;
 	}
 }
 
@@ -563,36 +568,14 @@ AudioMode_t AUDDRV_GetAudioMode( void )
 
 	AudioMode_t mode = currAudioMode;;
 	
-    if ((currAudioApp == AUDIO_APP_VOICE_CALL) ||
-         (currAudioApp == AUDIO_APP_VT_CALL))//NB application
+    if (currAudioApp == AUDIO_APP_VOICE_CALL) //NB application
 		mode = currAudioMode;
-	else if((currAudioApp == AUDIO_APP_VOICE_CALL_WB) ||
-             (currAudioApp == AUDIO_APP_VT_CALL_WB))//WB application
+	else if(currAudioApp == AUDIO_APP_VOICE_CALL_WB) //WB application
 		mode =  (AudioMode_t)(currAudioMode + AUDIO_MODE_NUMBER);
 
 	return mode;
 	//extend to check further applications to be NB or WB mode
 
-}
-
-AudioApp_t GetWbApp(AudioApp_t app)
-{
-    if(app == AUDIO_APP_VOICE_CALL)
-        app = AUDIO_APP_VOICE_CALL_WB;
-    else if(app == AUDIO_APP_VT_CALL)
-        app = AUDIO_APP_VT_CALL_WB;
-
-    return app;
-}
-
-AudioApp_t GetNbApp(AudioApp_t app)
-{
-    if(app == AUDIO_APP_VOICE_CALL_WB)
-        app = AUDIO_APP_VOICE_CALL;
-    else if(app == AUDIO_APP_VT_CALL_WB)
-        app = AUDIO_APP_VT_CALL;
-
-    return app;
 }
 
 
@@ -611,39 +594,18 @@ void AUDDRV_SetAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 
 	// load DSP parameters:
 	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetAudioMode() audio_app==%d\n\r", audio_app );
-    if ( AUDDRV_InVoiceCall() )
-	{
-		// BTM needs to support NB or WB too
-		if (AUDDRV_IsCall16K(audio_mode)) 
-		{
-			if (audio_mode != AUDIO_MODE_BLUETOOTH)
-				AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_16000 ); //WB call
-			else if (AUDDRV_IsBTMWB())
-				AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_16000 ); //WB call to WB BTM
-			else 
-			{
-				audio_app = GetNbApp(audio_app); 
-				AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_8000 ); //WB call to NB BTM
-			}
-		}
-		else //NB call
-		{
-			if (audio_mode != AUDIO_MODE_BLUETOOTH)
-				AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_8000 ); //NB call
-			else if (AUDDRV_IsBTMWB())
-			{
-				audio_app = GetWbApp(audio_app); 
-				AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_16000 ); //NB call to WB BTM
-			}
-			else 
-				AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_8000 ); //NB call to NB BTM
-		}
-    	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetAudioMode() AUDDRV_InVoiceCall audio_app==%d \n\r", audio_app );
-	}
 	
 	currAudioMode = (AudioMode_t)(audio_mode % AUDIO_MODE_NUMBER); // update mode
 	currMusicAudioMode = currAudioMode;
 	currAudioApp = audio_app;
+
+	if (( audio_mode >= AUDIO_MODE_NUMBER ) && (audio_mode < AUDIO_MODE_NUMBER_VOICE ))
+	{
+		if (audio_app == AUDIO_APP_VOICE_CALL)
+			currAudioApp = AUDIO_APP_VOICE_CALL_WB;
+	}
+	else if ((audio_app == AUDIO_APP_VOICE_CALL_WB) && (audio_mode < AUDIO_MODE_NUMBER))
+		audio_mode = (AudioMode_t)(audio_mode + AUDIO_MODE_NUMBER);
 
 #ifdef SEPARATE_MODE_FOR_GVS_WTIH_RATE
 	// remap audio mdoe to separate 8 kHz and 16 kHz for GVS function.
@@ -656,7 +618,6 @@ void AUDDRV_SetAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 
     AUDDRV_SetFilter( AUDDRV_VoiceADC, (UInt16*) AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).voice_adc);
 	AUDDRV_SetFilter( AUDDRV_VoiceDAC, (UInt16*) AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).voice_dac);
-
 
 	//AUDDRV_VoiceDAC
 #if 0
@@ -733,16 +694,23 @@ void AUDDRV_SetAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 
 	if ( controlFlagForCustomGain == FALSE )
 	{
-		AUDDRV_SetGain_Hex( AUDDRV_GAIN_MIC, AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).mic_pga);
+		AUDDRV_SetGain_Hex( AUDDRV_MIC, AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).mic_pga);
 	}
-//After Android CP update enable this code 
-//#ifdef GVS_TEST
-	// disable VP COMPANDER for GVS:
+
+	if ( AUDDRV_GetVCflag() )
+	{
+		  // AUDIO_MODE_BLUETOOTH_WB should not be used for voice call. it should be convert to AUDIO_MODE_BLUETOOTH.
+		if ((currAudioApp == AUDIO_APP_VOICE_CALL_WB ) && (currAudioMode != AUDIO_MODE_BLUETOOTH) )
+			AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_16000 );
+		else
+			AUDDRV_SetVoicePathSampRate( AUDIO_SAMPLING_RATE_8000 );
+	}
+
+	// Test to disable VP COMPANDER for GVS:
 	if (currAudioApp == AUDIO_APP_RECORDING_GVS)
 		audio_control_generic(AUDDRV_CPCMD_SET_VP_COMPANDER, (UInt32)2, 0, 0, 0, 0); // bit 0 compressr, bit 1 expander
 	else if (currAudioApp == AUDIO_APP_RECORDING)
 		audio_control_generic(AUDDRV_CPCMD_SET_VP_COMPANDER, (UInt32)3, 0, 0, 0, 0);
-//#endif
 }
 
 //=============================================================================
@@ -765,13 +733,16 @@ void AUDDRV_SetMusicMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 	UInt16 AUDVOC_AEQPATHOFST[ EQPATH_SIZE];
 
 
-	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetMusicMode() audio_app=%d, audio_mode=%d\n\r", audio_app, audio_mode );
+	Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetMusicMode() audio_mode==%d\n\r", audio_mode );
 
 	currAudioMode = (AudioMode_t)(audio_mode % AUDIO_MODE_NUMBER); // update mode
 	currMusicAudioMode = currAudioMode;
 	currAudioApp = audio_app;
 
-	
+	if (( audio_mode >= AUDIO_MODE_NUMBER ) && (audio_mode < AUDIO_MODE_NUMBER_VOICE ))
+	{
+		if (audio_app == AUDIO_APP_VOICE_CALL) currAudioApp = AUDIO_APP_VOICE_CALL_WB;
+	}
 
 #if 0
 		//should be part of audio mode API
@@ -808,19 +779,6 @@ void AUDDRV_SetMusicMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 	//AUDDRV_SetFilter( AUDDRV_PEQPATHOFST, & SYSPARM_GetAudioParmAccessPtr()->AUDVOC_PEQPATHOFST[0][0] );
 	AUDDRV_SetFilter( AUDDRV_PIIR,			(const UInt16 *) & AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).PR_DAC_IIR[0] );
 
-	if (currAudioApp == AUDIO_APP_VOIP || currAudioApp == AUDIO_APP_VOIP_INCOMM)
-	{
-		Log_DebugPrintf(LOGID_AUDIO, "\n\r\t* AUDDRV_SetMusicMode(): forced gain setting for VoIP\n\r");
-
-		// forced to set aslopgain loaded from sysparm, because VoIP is possibly detected at recording time.
-		AUDDRV_SetGain_Hex( AUDDRV_GAIN_AUDIO_OUTPUT_L, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_aslopgain );
-		AUDDRV_SetGain_Hex( AUDDRV_GAIN_AUDIO_OUTPUT_R, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_aslopgain );
-
-		// forced to set pslopgain loaded from sysparm, because VoIP is possibly detected at recording time.
-		AUDDRV_SetGain_Hex( AUDDRV_GAIN_RINGTONE_OUTPUT_L, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_pslopgain );
-		AUDDRV_SetGain_Hex( AUDDRV_GAIN_RINGTONE_OUTPUT_R, AUDIOMODE_PARM_MM_ACCESSOR(currAudioApp,currAudioMode).audvoc_pslopgain );
-	}
-
 	AUDDRV_SetMPM( AUDDRV_Mixer_BIQUAD_CFG, AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).MPMbiquad_cfg );
 
 	AUDDRV_SetFilter( AUDDRV_Mixer1_MPMIIR, (const UInt16 *) & AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).AUDVOC_MIXER_IIR[0] );
@@ -845,7 +803,7 @@ void AUDDRV_SetMusicMode( AudioMode_t audio_mode, AudioApp_t audio_app)
 
 	if ( controlFlagForCustomGain == FALSE )
 	{
-		AUDDRV_SetGain_Hex( AUDDRV_GAIN_MIC, AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).mic_pga);
+		AUDDRV_SetGain_Hex( AUDDRV_MIC, AUDIOMODE_PARM_ACCESSOR(currAudioApp,currAudioMode).mic_pga);
     }
 }
 

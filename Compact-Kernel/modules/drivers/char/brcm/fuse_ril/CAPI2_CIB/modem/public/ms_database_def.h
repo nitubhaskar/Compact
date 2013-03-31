@@ -51,14 +51,12 @@ typedef enum
 	MS_LOCAL_SS_ELEM_CCWA,							///<Element type {::UInt8}, CCWA
 	MS_LOCAL_SS_ELEM_LONG_FTN_SUPPORTED,			///<Element type {::UInt8}, Long Forwarded To Number Supported
 	MS_LOCAL_SS_ELEM_FDN_CHECK,						///<Element type {::UInt8}, SS FDN check
-	MS_LOCAL_SS_ELEM_NOTIFICATION_SWITCH,			///<Element type {::Uint8}, TRUE if SS Notification Switch is ON (e.g. multiple CFU notifications)
 	MS_LOCAL_SS_ELEM_TX_USSD_DATA_ENCODE,			///<Element type {::UInt8}, Whether the Tx USSD phase 2 data is encoded by the client as per DCS (1/0 : encoded/not encoded)
 	MS_LOCAL_SS_ELEM_RX_USSD_DATA_ENCODE,			///<Element type {::UInt8}, Whether the Rx USSD phase 2 data shall be encoded by the MNSS module as per DCS (1/0 : encoded/not encoded)
 	MS_LOCAL_SS_ELEM_INCLUDE_FACILITY_IE,			///<Element type {::UInt8}, Include Facility IE in the res/ind/data for the client
 	MS_LOCAL_SS_ELEM_INVOKE_ID,						///<Element type {::UInt8}, Invoke Identifier for each MO SS related session
 	MS_LOCAL_SS_ELEM_ENABLE_OLD_SS_MSG,				///<Element type {::UInt8}, TRUE if old SS API MSG will be generated and send to client
 	MS_LOCAL_SS_ELEM_CLIENT_HANDLE_USSD_NOTIFY,		///<Element type {::Uint8}, TRUE if client will handle USSD Notification response
-	
 	
 	//----Test Local Elements
 	MS_LOCAL_TEST_ELEM_CHAN,						///<Element type {::MS_TestChan_t}, the test frequencies for each band  
@@ -134,11 +132,11 @@ typedef enum
 	MS_LOCAL_SATK_ELEM_SS_CONTROL_CTR,				///<Element type {::Boolean}, Whether BRCM STK module handles STK SS Call Control by SIM
 	MS_LOCAL_SATK_ELEM_USSD_CONTROL_CTR,			///<Element type {::Boolean}, Whether BRCM STK module handles STK USSD Call Control by SIM
 	MS_LOCAL_SATK_ELEM_SMS_CONTROL_CTR,				///<Element type {::Boolean}, Whether BRCM STK module handles STK SMS Control by SIM
-	MS_LOCAL_SATK_ELEM_GENERIC_INTERFACE_CTR,		///<Element type {::SATKGenDataInt_t}, Whether BRCM STK module uses generic data interface
+	MS_LOCAL_SATK_ELEM_GENERIC_INTERFACE_CTR,		///<Element type {::Boolean}, Whether BRCM STK module uses generic data interface for most STK commands
 	MS_LOCAL_SATK_ELEM_DYN_TERM_PROFILE,		    ///<Element type {::Boolean}, Whether USIMAP to wait for terminal profile.
     MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP,///<Element type {::Boolean}, Whether proactive cmd fetching is enabled at startup 
 	MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED,         ///<Element type {::Boolean}, Whether client supports icons display or not 
-    MS_LOCAL_SATK_ELEM_ENABLE_TEXT_CONVERSIONS,     ///<Element type {::Boolean}, Whether CAPI should perform string conversion for 7-bit data. e.g. @ sign 
+    MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS,     ///<Element type {::Boolean}, Whether CAPI should perform string conversion for 7-bit data. e.g. @ sign 
 	MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR,	    ///<Element type {::Boolean}, Whether BRCM STK module handles Setup Event list 
 
 	//Phonebook Elements
@@ -161,8 +159,6 @@ typedef enum
 	MS_LOCAL_PHCTRL_ELEM_IS_PWRDWN_REFRESH_SIM_RESET, ///< Modem is being powered down for STK refresh of SIM reset type 
 	MS_LOCAL_PHCTRL_ELEM_EMERGENCY_IDLE_MODE,		///<Element type {::Boolean},Force emergency idle mode so that we camp on a cell for limited service only
 	MS_LOCAL_PHCTRL_ELEM_MASTER_SIM_MODE,           ///< Element type {::Boolean}, If SIM1 not inserted, tag SIM2 with SIM1 ID (required if MMI has a master SIM design)
-	MS_LOCAL_PHCTRL_ELEM_DUALSIM_VM_PWR_OPTIMIZATION,   ///< Element type {::Boolean}, If we should enable dual-sim VM power optimization (automatically power-down one VM if two VM's are powered up 
-														///< and at least one VM has abnormal SIM status, e.g. SIM PIN locked/blocked) 
 	MS_LOCAL_PHCTRL_ELEM_CGEREP, 					///<Element type {::UInt8[2]}, group event reporting details  
 	MS_LOCAL_PHCTRL_ELEM_SELECTED_PLMN,				///<Element type {::PLMN_t}, the current selected plmn  
 	MS_LOCAL_PHCTRL_ELEM_PREV_SEL_PLMN, 			///<Element type {::PLMN_t}, previous selected plmn  
@@ -183,18 +179,13 @@ typedef enum
 	MS_LOCAL_PHCTRL_ELEM_FAST_BAND_SELECT_DISABLE,	///<Element type {::Boolean}, Disable fast band select during RAT/band switch
 	MS_LOCAL_PHCTRL_ELEM_SMSME_STORAGE_ENABLE,		///<Element type {::Boolean}, SMS ME Storage Enable flag 
 	MS_LOCAL_PHCTRL_ELEM_SMSME_MAX_CAPACITY,		///<Element type {::UInt16},  SMS ME Max capacity
-	MS_LOCAL_PHCTRL_ELEM_GAN_MODE,					///<Element type {::GANSelect_t},  the preferrence for GERAN or GAN	
+	MS_LOCAL_PHCTRL_ELEM_GAN_MODE,						///<Element type {::GANSelect_t},  the preferrence for GERAN or GAN
 	MS_LOCAL_PHCTRL_ELEM_CELL_LOCK_PARAMS,			///< cell lock values to be set to the stack at powerup or afer internal deactivation.
 	MS_LOCAL_PHCTRL_ELEM_PLMNSEL_REGISTERED_PLMN,	///< If this element is TRUE then enable the full manual selection even if the selected PLMN is
 													///< the current registered PLMN. ( Disabled by default )
 	MS_LOCAL_PHCTRL_ELEM_FREQ_SEARCH_LIST,			///< stores the freq search list set by MMI before power up.													
 	MS_LOCAL_PHCTRL_ELEM_EM_ENABLED,				///< indicates if the engineering mode is enabled by MMI
 	MS_LOCAL_PHCTRL_ELEM_EM_PERIODIC_TIME_INTERVL,	///< indicates the periodicity of the engineering mode measurement reporting by stack.
-	MS_LOCAL_PHCTRL_ELEM_ON_DEMAND_ATTACH_ALWAYS,	///< Boolean. TRUE = attach mode will be GSM_ONLY from powerup. no configuration of attach mode allowed 
-														///< till this flag is TRUE. FALSE = user configuration of attach mode allowed. msclass conflict check will 
-														///< be enabled. 
-	MS_LOCAL_PHCTRL_ELEM_CURR_ATTACH_MODE,			///< reflects the current status of attach required by user (changed by cgatt and ATTACH_MODE)
-
 
 	//-----AT Elements	
 	MS_LOCAL_AT_ELEM_AUDIO_CTRL,					///<Element type {::Boolean}, AT audio control setting  
@@ -231,9 +222,6 @@ typedef enum
 	MS_LOCAL_NETREG_ELEM_IS_REGISTER_IN_PROGRESS,	///<Element type {::Boolean}, returns  TRUE if we are in the middle of Attach for CS or PS
 	MS_LOCAL_NETREG_ELEM_IS_DEREGISTER_IN_PROGRESS, ///<Element type {::Boolean}, returns  TRUE if we are in the middle of detach for either CS or PS
 	MS_LOCAL_NETREG_ELEM_GPRSATTACH_STATUS,			///<Element type {::AttachState_t}, returns  ATTACHED if we are PS attached else returns DETACHED		
-	MS_LOCAL_NETREG_ELEM_IS_GPRS_DETACHED,          ///<Element type {::Boolean}, returns TRUE if we have GPRS service detached,i.e. never send ATTACH_REQ for PS service or have detached from it. 
-													///< Only if this element returns TRUE shall client activate PDP Ctx on the other VM because only one VM can be PS attached for dual-sim build. 
-
 	MS_LOCAL_NETREG_ELEM_MANUAL_PLMN_SELECT_RAT,	///<Element type {::UInt8}, returns the RAT selected by the user for manual plmn selection.
 	
 	//-----Network Elements
@@ -270,8 +258,7 @@ typedef enum
 	MS_NETWORK_ELEM_GPRS_CALL_ACTIVE_BY_CHAN,		///<Element type {::MS_ElemGprsParam_t}, in param: MS_ElemGprsParam_t.chan
 	MS_NETWORK_ELEM_GPRS_CID_BY_CHAN,				///<Element type {::MS_ElemGprsParam_t}, in param: MS_ElemGprsParam_t.chan
 	MS_NETWORK_ELEM_GPRS_CALL_ACTIVE_BY_CID,		///<Element type {::MS_ElemGprsParam_t}, ReadOnly, in param: MS_ElemGprsParam_t.cid.
-	MS_NETWORK_ELEM_INITIATE_REATTACH, 				///<Element type {::Boolean}, returns TRUE if we need to reinitiate attach after detach as per GMMREG_SERVICE_IND
-	
+   
 	//-----SIM Elements
 
 	MS_SIM_ELEM_PIN1_STATUS,                        ///<Element type {::CHVStatus_t},  SIM PIN1 Status
@@ -297,8 +284,6 @@ typedef enum
 	MS_CFG_ELEM_DUAL_SIM_SUPPORTED, 				///<Element type {::UInt8}, TRUE if Broadcom platform supports the DUAL SIM feature
 	MS_CFG_ELEM_HOMEZONE_SUPPORTED,					///<Element type {::UInt8}, TRUE if Broadcom platform supports the German O2 HomeZone feature; FALSE otherwise
 	MS_CFG_ELEM_CSD_SUPPORTED, 				///<Element type {::UInt8}, TRUE if Broadcom platform supports the low speed CSD; FALSE otherwise
-
-	MS_SIM_ELEM_HOT_SWAP_SUPPORTED,					///<Element type {::UInt8}, TRUE if Broadcom platform supports the HOT SWAP feature for sim card; FALSE otherwise
 
 	//------GPRS Data
     

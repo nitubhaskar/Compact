@@ -114,7 +114,6 @@ void KRIL_CapiRpcHandler(struct work_struct *data)
 //		CAPI_GenCommsMsgHnd( entry->pMsg, pReq );
         
         RPC_SYSFreeResultDataBuffer(entry->dataBufHandle);
-
         spin_lock_irqsave(&sKrilCapiRpcWq.lock, irql);
 
         list_del(ptr); // delete response capi2

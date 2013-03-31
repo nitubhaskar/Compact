@@ -71,7 +71,8 @@ typedef enum {
 typedef enum {
 	AUDDRV_GAIN_SPKR_IHF,  //100mW,
 	AUDDRV_GAIN_SPKR_EP,  //100mW,
-	AUDDRV_GAIN_MIC,
+	AUDDRV_MIC, //used in at_phone.c, to be removed
+	AUDDRV_GAIN_MIC = AUDDRV_MIC,
 	AUDDRV_GAIN_VOICE_IN,
 	AUDDRV_GAIN_AUDIO_IN,
 	AUDDRV_GAIN_AUDIO_OUTPUT_L,
@@ -144,7 +145,6 @@ typedef enum {
 
 typedef Boolean (*BufDoneCB_t)( UInt8  *pBuf,  UInt32 nSize );
 
-typedef void ( *audio_HWEnabled_Cb_t )( void );
 
 /**
 *  @brief  Initialize audio system
@@ -217,8 +217,7 @@ void AUDDRV_EnableHWOutput (
 		   Boolean                 enable_speaker,
 		   AUDIO_SAMPLING_RATE_t   sample_rate,
 		   AUDIO_CHANNEL_NUM_t     input_to_mixer,
-		   AUDDRV_REASON_Enum_t	   reason,
-		   audio_HWEnabled_Cb_t    callback
+		   AUDDRV_REASON_Enum_t	   from
 		   );
 
 /**
@@ -569,15 +568,7 @@ void AUDDRV_RegisterCB_setAudioMode( CB_SetAudioMode_t	cb );
 *
 ****************************************************************************/
 void AUDDRV_RegisterCB_setMusicMode( CB_SetMusicMode_t	cb );
-/**
-*  @brief  Set DSP PCM interface rate to WB (16k) or NB (8k)
-*
-*  @param  isWB			(in) =TRUE to set 16k PCM interface; =FALSE to set 8k
-*
-*  @return none
-*
-****************************************************************************/
-void AUDDRV_SetPCMRate (Boolean     isWB);
+
 
 #ifdef __cplusplus
 }

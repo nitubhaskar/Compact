@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*																			
+*     Copyright (c) 2007-2008 Broadcom Corporation								
+*																			
+*   Unless you and Broadcom execute a separate written software license		
+*   agreement governing use of this software, this software is licensed to you	
+*   under the terms of the GNU General Public License version 2, available	
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").	
+*																			
+*   Notwithstanding the above, under no circumstances may you combine this	
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.	
+*																			
+****************************************************************************/
 
 #define xdr_Boolean		xdr_u_char
 #define _xdr_Boolean	_xdr_u_char
@@ -37,6 +39,7 @@ bool_t xdr_void_ptr_t(XDR *xdrs, void** ptr);
 
 bool_t xdr_USIM_EST_SERVICE_t(XDR* xdrs, USIM_EST_SERVICE_t* data);
 bool_t xdr_SIMServiceStatus_t(XDR* xdrs, SIMServiceStatus_t *data);
+bool_t xdr_CAPI2_Patch_Revision_Ptr_t(XDR* xdrs, CAPI2_Patch_Revision_Ptr_t* data);
 
 
 #define CAPI2_CcApi_SetElement_inCompareObjPtr_union_dscrm	CAPI2_CcApi_CompareObjPtr_union_dscrm

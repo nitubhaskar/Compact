@@ -34,6 +34,9 @@
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -142,6 +145,7 @@
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -2934,7 +2938,7 @@ void CAPI2_SsApi_ResetSsAlsFlag(UInt32 tid, UInt8 clientID)
 	CAPI2_SerializeReqRsp(&req, tid, MSG_SS_RESETSSALSFLAG_REQ, (UInt8)clientID, result, &stream, &u32len);
 }
 
-void CAPI2_SimLockApi_GetStatus_RSP(ClientInfo_t* inClientInfoPtr, SIMLOCK_STATE_t simlock_state)
+void CAPI2_SIMLOCK_GetStatus_RSP(UInt32 tid, UInt8 clientID, SIMLOCK_STATE_t simlock_state)
 {
 	CAPI2_ReqRep_t req;
 	char* stream;
@@ -2942,9 +2946,9 @@ void CAPI2_SimLockApi_GetStatus_RSP(ClientInfo_t* inClientInfoPtr, SIMLOCK_STATE
 	Result_t result = RESULT_OK;
 	memset(&req, 0, sizeof(CAPI2_ReqRep_t));
 	
-	req.req_rep_u.CAPI2_SimLockApi_GetStatus_RSP_Rsp.simlock_state = simlock_state;
+	req.req_rep_u.CAPI2_SIMLOCK_GetStatus_RSP_Rsp.simlock_state = simlock_state;
 	req.respId = (MsgType_t)0;
-	CAPI2_SerializeRspEx(&req, MSG_SIMLOCK_GET_STATUS_RSP, inClientInfoPtr, result, &stream, &u32len);
+	CAPI2_SerializeRsp(&req, tid, MSG_SIMLOCK_GET_STATUS_RSP, (UInt8)clientID, result, &stream, &u32len);
 }
 
 void CAPI2_DIALSTR_IsValidString(UInt32 tid, UInt8 clientID, const UInt8* str)
@@ -5801,7 +5805,7 @@ void CAPI2_SS_QueryCallForwardStatus(UInt32 tid, UInt8 clientID, SS_CallFwdReaso
 	CAPI2_SerializeReqRsp(&req, tid, MSG_SS_QUERYCALLFORWARDSTATUS_REQ, (UInt8)clientID, result, &stream, &u32len);
 }
 
-void CAPI2_SS_SendCallBarringReq(UInt32 tid, UInt8 clientID, SS_Mode_t mode, SS_CallBarType_t callBarType, SS_SvcCls_t svcCls, UInt8* password)
+void CAPI2_SS_SendCallBarringReq(UInt32 tid, UInt8 clientID, SS_Mode_t mode, SS_CallBarType_t callBarType, SS_SvcCls_t svcCls, UInt8 *password)
 {
 	CAPI2_ReqRep_t req;
 	char* stream;
@@ -5831,7 +5835,7 @@ void CAPI2_SS_QueryCallBarringStatus(UInt32 tid, UInt8 clientID, SS_CallBarType_
 	CAPI2_SerializeReqRsp(&req, tid, MSG_SS_QUERYCALLBARRINGSTATUS_REQ, (UInt8)clientID, result, &stream, &u32len);
 }
 
-void CAPI2_SS_SendCallBarringPWDChangeReq(UInt32 tid, UInt8 clientID, SS_CallBarType_t callBarType, UInt8* oldPwd, UInt8* newPwd, UInt8* reNewPwd)
+void CAPI2_SS_SendCallBarringPWDChangeReq(UInt32 tid, UInt8 clientID, SS_CallBarType_t callBarType, UInt8 *oldPwd, UInt8 *newPwd, UInt8 *reNewPwd)
 {
 	CAPI2_ReqRep_t req;
 	char* stream;
@@ -6347,7 +6351,7 @@ void CAPI2_StkApi_SendBrowsingStatusEvent(ClientInfo_t* inClientInfoPtr, UInt8 *
 	CAPI2_SerializeReqRspEx(&req, MSG_STK_SEND_BROWSING_STATUS_EVT_REQ, inClientInfoPtr, result, &stream, &u32len);
 }
 
-void CAPI2_SatkApi_SendCcSetupReq(ClientInfo_t* inClientInfoPtr, TypeOfNumber_t ton, NumberPlanId_t npi, char* number, BearerCapability_t *bc1, Subaddress_t *subaddr_data, BearerCapability_t *bc2, UInt8 bc_repeat_ind, Boolean simtk_orig)
+void CAPI2_SatkApi_SendCcSetupReq(ClientInfo_t* inClientInfoPtr, TypeOfNumber_t ton, NumberPlanId_t npi, char *number, BearerCapability_t *bc1, Subaddress_t *subaddr_data, BearerCapability_t *bc2, UInt8 bc_repeat_ind, Boolean simtk_orig)
 {
 	CAPI2_ReqRep_t req;
 	char* stream;
@@ -7413,19 +7417,6 @@ void CAPI2_NetRegApi_SetSupportedRATandBandEx(ClientInfo_t* inClientInfoPtr, RAT
 	CAPI2_SerializeReqRspEx(&req, MSG_MS_SET_RAT_BAND_EX_REQ, inClientInfoPtr, result, &stream, &u32len);
 }
 
-void CAPI2_SimApi_ResetSIM(ClientInfo_t* inClientInfoPtr, Boolean resetMode)
-{
-	CAPI2_ReqRep_t req;
-	char* stream;
-	UInt32 u32len;
-	Result_t result = RESULT_OK;
-	memset(&req, 0, sizeof(CAPI2_ReqRep_t));
-	
-	req.req_rep_u.CAPI2_SimApi_ResetSIM_Req.resetMode = resetMode;
-	req.respId = MSG_SIM_RESET_SIM_RSP;
-	CAPI2_SerializeReqRspEx(&req, MSG_SIM_RESET_SIM_REQ, inClientInfoPtr, result, &stream, &u32len);
-}
-
 void CAPI2_NetRegApi_SetTZUpdateMode(ClientInfo_t* inClientInfoPtr, TimeZoneUpdateMode_t mode)
 {
 	CAPI2_ReqRep_t req;
@@ -7449,19 +7440,6 @@ void CAPI2_NetRegApi_GetTZUpdateMode(ClientInfo_t* inClientInfoPtr)
 	
 	req.respId = MSG_TIMEZONE_GET_UPDATE_MODE_RSP;
 	CAPI2_SerializeReqRspEx(&req, MSG_TIMEZONE_GET_UPDATE_MODE_REQ, inClientInfoPtr, result, &stream, &u32len);
-}
-
-void CAPI2_SEC_HostToModemInd(UInt32 tid, UInt8 clientID, UInt8 state)
-{
-	CAPI2_ReqRep_t req;
-	char* stream;
-	UInt32 u32len;
-	Result_t result = RESULT_OK;
-	memset(&req, 0, sizeof(CAPI2_ReqRep_t));
-	
-	req.req_rep_u.CAPI2_SEC_HostToModemInd_Req.state = state;
-	req.respId = MSG_SEC_HOST_TO_MODEM_RSP;
-	CAPI2_SerializeReqRsp(&req, tid, MSG_SEC_HOST_TO_MODEM_REQ, (UInt8)clientID, result, &stream, &u32len);
 }
 
 void CAPI2_SimApi_GetAdData(ClientInfo_t* inClientInfoPtr)
@@ -7500,16 +7478,4 @@ void CAPI2_MS_SetSupportedRATandBand(UInt32 tid, UInt8 clientID, RATSelect_t RAT
 	req.req_rep_u.CAPI2_MS_SetSupportedRATandBand_Req.band_cap = band_cap;
 	req.respId = MSG_MS_SET_RAT_AND_BAND_RSP;
 	CAPI2_SerializeReqRsp(&req, tid, MSG_MS_SET_RAT_AND_BAND_REQ, (UInt8)clientID, result, &stream, &u32len);
-}
-
-void CAPI2_SecModemApi_ConfigModemReq(ClientInfo_t* inClientInfoPtr)
-{
-	CAPI2_ReqRep_t req;
-	char* stream;
-	UInt32 u32len;
-	Result_t result = RESULT_OK;
-	memset(&req, 0, sizeof(CAPI2_ReqRep_t));
-	
-	req.respId = MSG_SECMODEM_CONFIG_MODEM_RSP;
-	CAPI2_SerializeReqRspEx(&req, MSG_SECMODEM_CONFIG_MODEM_REQ, inClientInfoPtr, result, &stream, &u32len);
 }

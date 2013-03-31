@@ -650,7 +650,8 @@ static int lcdfb_pan_display(struct fb_var_screeninfo *var,
 #endif
 
 	if (var->vmode & FB_VMODE_YWRAP) {
-		if (var->yoffset >= info->var.yres_virtual || var->xoffset)
+		if (var->yoffset < 0
+		    || var->yoffset >= info->var.yres_virtual || var->xoffset)
 			return -EINVAL;
 	} else {
 		if (var->xoffset + var->xres > info->var.xres_virtual ||
@@ -997,7 +998,7 @@ static void lcdfb_early_suspend(struct early_suspend *h)
 #endif
       if (current_intensity==0)
       {
-	if (h->level == EARLY_SUSPEND_LEVEL_STOP_DRAWING + 1)
+	if (h->level == EARLY_SUSPEND_LEVEL_STOP_DRAWING)
 	{
             //printk("[LCD] lcdfb_early_suspend==>EARLY_SUSPEND_LEVEL_STOP_DRAWING\n");
 		gLcdfbEarlySuspendStopDraw = 1;
@@ -1026,8 +1027,9 @@ static void lcdfb_late_resume(struct early_suspend *h)
 	pr_info("[lcdfb__resume]+++ level=%d\n", h->level);
 #endif
 
-	if (h->level == EARLY_SUSPEND_LEVEL_STOP_DRAWING + 1)
+	if (h->level == EARLY_SUSPEND_LEVEL_STOP_DRAWING)
 	{
+             //printk("[LCD] lcdfb_late_resume==> EARLY_SUSPEND_LEVEL_STOP_DRAWING\n");
                gLcdfbEarlySuspendStopDraw = 0;
 	}
 	else if (h->level == EARLY_SUSPEND_LEVEL_DISABLE_FB) {
@@ -1041,12 +1043,13 @@ static void lcdfb_late_resume(struct early_suspend *h)
 			acquire_console_sem();
 			fb_set_suspend(fbinfo, FBINFO_STATE_RUNNING);
 			release_console_sem();
+                 //printk("[LCD] lcdfb_late_resume==> EARLY_SUSPEND_LEVEL_DISABLE_FB\n");
 		}
 	}
 }
 
 static struct early_suspend lcdfb_early_suspend_stopdraw_desc = {
-	.level = EARLY_SUSPEND_LEVEL_STOP_DRAWING + 1,
+	.level = EARLY_SUSPEND_LEVEL_STOP_DRAWING,
 	.suspend = lcdfb_early_suspend,
 	.resume = lcdfb_late_resume,
 };
@@ -1224,7 +1227,7 @@ int __init lcdfb_init(void)
 {
 	LCD_Info_t lcdInfo;
 	int ret = 0;
-	memset(&lcdInfo, 0, sizeof(LCD_Info_t));
+
 #ifndef MODULE
 	char *option = NULL;
 

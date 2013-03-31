@@ -34,6 +34,7 @@
 #include "sys_rpc.h"
 #include "sysrpc_init.h"
 
+
 extern void KRIL_Capi2HandleFlowCtrl(RPC_FlowCtrlEvent_t event, UInt8 channel);
 extern HAL_EM_BATTMGR_ErrorCode_en_t _HAL_EM_BATTMGR_RegisterEventCB(
 	HAL_EM_BATTMGR_Events_en_t event,		///< (in) Event type
@@ -42,7 +43,7 @@ extern HAL_EM_BATTMGR_ErrorCode_en_t _HAL_EM_BATTMGR_RegisterEventCB(
 
 // temporary for passing battery level events back to PMU; sysrpc will soon be 
 // a standalone module, with a different interface for PMU
-extern void PoressDeviceNotifyCallbackFun(int SimId, UInt32 msgType, void* dataBuf, UInt32 dataLength);
+extern void PoressDeviceNotifyCallbackFun(UInt32 msgType, void* dataBuf, UInt32 dataLength);
 
 static void HandleBattMgrEmptyEvent( void );
 static void HandleBattMgrLowEvent( void );
@@ -56,7 +57,6 @@ static void HandleBattMgrExtremeTempEvent( EM_BATTMGR_ExtTempState_en_t temp_sta
 #define ONE_PT_EIGHT_VOLTS_IN_MICRO_VOLTS 1800000
 
 static struct regulator* sim_regulator = NULL;
-static struct regulator * sim_regulatorEx = NULL;
 
 typedef struct
 {
@@ -80,18 +80,6 @@ KRIL_SysRpcWq_t sKrilSysRpcWq;
 struct wake_lock sKrilSysRpcWakeLock;
 #endif
 
-static struct regulator* get_krilregulator(PMU_SIMLDO_t simldo)
-{
-    if (SIMLDO2 == simldo)
-    {
-        return sim_regulatorEx;
-    }
-    else
-    {
-        return sim_regulator;
-    }
-}
-
 // initialize sysrpc interface
 void KRIL_SysRpc_Init( void )
 {
@@ -99,11 +87,34 @@ void KRIL_SysRpc_Init( void )
 
     if ( !inited )
     {
+        int ret;
+        
         HAL_EM_BATTMGR_ErrorCode_en_t errCode;
         
         wake_lock_init(&sKrilSysRpcWakeLock, WAKE_LOCK_SUSPEND, "kril_sysrpc_wake_lock");
 
+        // **FIXME** add this to actual module init? Need a way to shut it down as well...
+        KRIL_DEBUG(DBG_ERROR,"calling regulator_get...\n");
+        sim_regulator = regulator_get(NULL,"sim_vcc");
+        if ( sim_regulator > 0 )
+        {
+            KRIL_DEBUG(DBG_ERROR," regulator_get OK\n");
+        }
+        else
+        {
+            KRIL_DEBUG(DBG_ERROR," **regulator_get FAILED %d\n", sim_regulator);
+        }
+        
+        // **FIXME** workaround for SIM LDO being enabled on startup by the driver; this 
+        // just bumps up our ref count in the sim_regulator struct, so that the 
+        // regulator_disable() call below doesn't fail
+        KRIL_DEBUG(DBG_INFO," calling regulator_enable...\n");
+        ret = regulator_enable(sim_regulator);
+        KRIL_DEBUG(DBG_INFO," regulator_enable returned %d\n",ret);
+
+        KRIL_DEBUG(DBG_INFO," calling SYS_InitRpc\n");
         SYS_InitRpc();
+
 
         errCode = _HAL_EM_BATTMGR_RegisterEventCB( BATTMGR_EMPTY_BATT_EVENT, HandleBattMgrEmptyEvent );
         KRIL_DEBUG(DBG_INFO," reg empty rtnd %d\n", (int)errCode );
@@ -116,6 +127,7 @@ void KRIL_SysRpc_Init( void )
 
         errCode = _HAL_EM_BATTMGR_RegisterEventCB( BATTMGR_BATT_EXTREME_TEMP_EVENT , HandleBattMgrExtremeTempEvent ) ;
         KRIL_DEBUG(DBG_INFO," reg extreme temp rtnd %d\n", (int)errCode );
+
     }
 }
 
@@ -134,7 +146,7 @@ void KRIL_SysRpc_SendFFSControlRsp( UInt32 inTid, UInt8 inClientId, UInt32 inFFS
     SYS_ReqRep_t data;
     RPC_Msg_t rsp;
 
-    KRIL_DEBUG(DBG_INFO, "KRIL_SysRpc_SendFFSControlRsp: result 0x%lx\r\n", inFFSCtrlResult );
+    KRIL_DEBUG(DBG_INFO, "KRIL_SysRpc_SendFFSControlRsp: result 0x%x\r\n", inFFSCtrlResult );
     memset(&data, 0, sizeof(SYS_ReqRep_t));
     data.req_rep_u.CAPI2_CPPS_Control_Rsp.val = inFFSCtrlResult;
     data.result = RESULT_OK;
@@ -174,7 +186,7 @@ Result_t Handle_CAPI2_CP2AP_PedestalMode_Control(RPC_Msg_t* pReqMsg, UInt32 enab
     return result;
 }
 
-static Boolean gSimInited[2] = {FALSE, FALSE};
+static Boolean gSimInited = FALSE;
 
 Result_t Handle_CAPI2_PMU_IsSIMReady(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo)
 {
@@ -182,16 +194,17 @@ Result_t Handle_CAPI2_PMU_IsSIMReady(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo)
 	SYS_ReqRep_t data;
     int ret=0;
     
-    ret = regulator_is_enabled(get_krilregulator(simldo));
-    KRIL_DEBUG(DBG_INFO," regulator_is_enabled simldo:%d return %d\n", simldo, ret);
+    KRIL_DEBUG(DBG_ERROR," enter Handle_CAPI2_PMU_IsSIMReady\n");
+    ret = regulator_is_enabled(sim_regulator);
+    KRIL_DEBUG(DBG_ERROR," regulator_is_enabled return %d\n", ret);
     
 	memset(&data, 0, sizeof(SYS_ReqRep_t));
-	data.req_rep_u.CAPI2_PMU_IsSIMReady_Rsp.val = gSimInited[simldo]; //(Boolean)(regulator_is_enabled > 0);
+	data.req_rep_u.CAPI2_PMU_IsSIMReady_Rsp.val = gSimInited; //(Boolean)(regulator_is_enabled > 0);
 
 	data.result = result;
 	Send_SYS_RspForRequest(pReqMsg, MSG_PMU_IS_SIM_READY_RSP, &data);
 
-    KRIL_DEBUG(DBG_INFO," Handle_CAPI2_PMU_IsSIMReady DONE %d\n", (int)gSimInited[simldo]);
+    KRIL_DEBUG(DBG_ERROR," Handle_CAPI2_PMU_IsSIMReady DONE %d\n", (int)gSimInited);
     return result;
 }
 
@@ -201,53 +214,14 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
     Result_t result = RESULT_OK;
 	SYS_ReqRep_t data;
     int simMicroVolts = 0;
-    int ret;
     
-    KRIL_DEBUG(DBG_INFO," enter Handle_CAPI2_PMU_ActivateSIM::simldo:%d\n", simldo);
+    KRIL_DEBUG(DBG_ERROR," enter Handle_CAPI2_PMU_ActivateSIM\n");
     
-// for SIM 2
-    // **FIXME** add this to actual module init? Need a way to shut it down as well...
-    if (SIMLDO2 == simldo && NULL == sim_regulatorEx)
-    {
-        sim_regulatorEx = regulator_get(NULL,"sim1_vcc");
-        if ( sim_regulatorEx > 0 )
-        {
-            KRIL_DEBUG(DBG_INFO," SIM2 regulator_get OK\n");
-        }
-        else
-        {
-            KRIL_DEBUG(DBG_ERROR," **SIM2 regulator_get FAILED 0x%p\n", sim_regulatorEx);
-        }
-        // **FIXME** workaround for SIM LDO being enabled on startup by the driver; this
-        // just bumps up our ref count in the sim_regulator struct, so that the
-        // regulator_disable() call below doesn't fail
-        ret = regulator_enable(sim_regulatorEx);
-        KRIL_DEBUG(DBG_INFO," SIM2 regulator_enable returned %d\n",ret);
-    }
-// for SIM 1
-    else if (SIMLDO1 == simldo && NULL == sim_regulator)
-    {
-        sim_regulator = regulator_get(NULL,"sim_vcc");
-        if ( sim_regulator > 0 )
-        {
-            KRIL_DEBUG(DBG_INFO," regulator_get OK\n");
-        }
-        else
-        {
-            KRIL_DEBUG(DBG_ERROR," **regulator_get FAILED 0x%p\n", sim_regulator);
-        }
-        // **FIXME** workaround for SIM LDO being enabled on startup by the driver; this
-        // just bumps up our ref count in the sim_regulator struct, so that the
-        // regulator_disable() call below doesn't fail
-        ret = regulator_enable(sim_regulator);
-        KRIL_DEBUG(DBG_INFO," regulator_enable returned %d\n",ret);
-    }
-
     switch (volt)
     {
         case PMU_SIM3P0Volt:
         {
-            KRIL_DEBUG(DBG_INFO," PMU_SIM3P0Volt\n");
+            KRIL_DEBUG(DBG_ERROR," PMU_SIM3P0Volt\n");
             // 3.0 V SIM
             simMicroVolts = THREE_VOLTS_IN_MICRO_VOLTS;
             break;
@@ -256,7 +230,7 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
 #ifdef PMU_BCM59038
         case PMU_SIM3P3Volt:
         {
-            KRIL_DEBUG(DBG_INFO," PMU_SIM3P3Volt\n");
+            KRIL_DEBUG(DBG_ERROR," PMU_SIM3P3Volt\n");
             // 3.3 V SIM
             simMicroVolts = THREE_PT_THREE_VOLTS_IN_MICRO_VOLTS;
             break;
@@ -266,7 +240,7 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
 #ifdef PMU_MAX8986
 		 case PMU_SIM3P1Volt:
 		 {
-			 KRIL_DEBUG(DBG_INFO," PMU_SIM3P1Volt\n");
+			 KRIL_DEBUG(DBG_ERROR," PMU_SIM3P1Volt\n");
 			 // 3.1 V SIM
 			 simMicroVolts = THREE_PT_ONE_VOLTS_IN_MICRO_VOLTS;
 			 break;
@@ -275,7 +249,7 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
 
         case PMU_SIM2P5Volt:
         {
-            KRIL_DEBUG(DBG_INFO," PMU_SIM2P5Volt\n");
+            KRIL_DEBUG(DBG_ERROR," PMU_SIM2P5Volt\n");
             // 2.5 V SIM
             simMicroVolts = TWO_PT_FIVE_VOLTS_IN_MICRO_VOLTS;
             break;
@@ -283,7 +257,7 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
         
         case PMU_SIM1P8Volt:
         {
-            KRIL_DEBUG(DBG_INFO," PMU_SIM1P8Volt\n");
+            KRIL_DEBUG(DBG_ERROR," PMU_SIM1P8Volt\n");
             // 1.8 V SIM
             simMicroVolts = ONE_PT_EIGHT_VOLTS_IN_MICRO_VOLTS;
             break;
@@ -291,22 +265,23 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
         
         case PMU_SIM0P0Volt:
         {
-            int enabled = regulator_is_enabled(get_krilregulator(simldo));
-            KRIL_DEBUG(DBG_INFO," ** PMU_SIM0P0Volt - regulator_is_enabled returned %d\n", enabled);
+            int enabled = regulator_is_enabled(sim_regulator);
+            KRIL_DEBUG(DBG_ERROR," ** PMU_SIM0P0Volt - regulator_is_enabled returned %d\n", enabled);
             
             simMicroVolts = 0;
-            gSimInited[simldo] = FALSE;
+            gSimInited = FALSE;
             if ( enabled > 0 )
             {
                 int ret;
-                ret = regulator_disable(get_krilregulator(simldo));
-                KRIL_DEBUG(DBG_INFO," regulator_disable returned 0x%x\n", ret);
+                KRIL_DEBUG(DBG_ERROR," ** PMU_SIM0P0Volt - turn off regulator (FORCE)\n");
+                ret = regulator_disable(sim_regulator);
+                KRIL_DEBUG(DBG_ERROR," regulator_disable returned 0x%x\n", ret);
  
             }
             else
             {
                 //int ret;
-                KRIL_DEBUG(DBG_INFO," ** PMU_SIM0P0Volt - regulator not enabled, do nothing...\n");
+                KRIL_DEBUG(DBG_ERROR," ** PMU_SIM0P0Volt - regulator not enabled, do nothing...\n");
                 //ret = regulator_enable(sim_regulator);
                 //KRIL_DEBUG(DBG_ERROR," regulator_enable returned 0x%x\n", ret);
                 //ret = regulator_disable(sim_regulator);
@@ -323,23 +298,24 @@ Result_t Handle_CAPI2_PMU_ActivateSIM(RPC_Msg_t* pReqMsg, PMU_SIMLDO_t simldo, P
             
     }
     
-    memset(&data, 0, sizeof(SYS_ReqRep_t));
-
-    if ( simMicroVolts > 0 )
-    {
-        int ret = regulator_set_voltage(get_krilregulator(simldo),simMicroVolts,simMicroVolts);
-        KRIL_DEBUG(DBG_INFO," regulator_set_voltage returned %d\n", ret);
-        if ( regulator_is_enabled(get_krilregulator(simldo)) > 0 )
+	memset(&data, 0, sizeof(SYS_ReqRep_t));
+	
+	if ( simMicroVolts > 0 )
+	{
+        int ret = regulator_set_voltage(sim_regulator,simMicroVolts,simMicroVolts);
+        KRIL_DEBUG(DBG_ERROR," regulator_set_voltage returned %d\n", ret);
+        if ( regulator_is_enabled(sim_regulator) > 0 )
         {
-            KRIL_DEBUG(DBG_INFO," regulator already enabled \n");
+            KRIL_DEBUG(DBG_ERROR," regulator already enabled \n");
         }
         else
         {
-            ret = regulator_enable(get_krilregulator(simldo));
-            KRIL_DEBUG(DBG_INFO," regulator_enable returned %d\n", ret);
+            ret = regulator_enable(sim_regulator);
+            KRIL_DEBUG(DBG_ERROR," regulator_enable returned %d\n", ret);
         }
-        gSimInited[simldo] = TRUE;
-    }
+        gSimInited = TRUE;
+	}
+	//PMU_ActivateSIM(volt);
 
 	data.result = result;
 	Send_SYS_RspForRequest(pReqMsg, MSG_PMU_ACTIVATE_SIM_RSP, &data);
@@ -400,7 +376,7 @@ static void HandleBattMgrEmptyEvent( void )
     battLevel.inAdc_avg = 0;
     battLevel.inTotal_levels = 0;
     // dispatch back to PMU if it is registered
-    PoressDeviceNotifyCallbackFun(SIM_DUAL_FIRST, RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
+    PoressDeviceNotifyCallbackFun(RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
 }
 static void HandleBattMgrLowEvent( void )
 {
@@ -412,7 +388,7 @@ static void HandleBattMgrLowEvent( void )
     battLevel.inAdc_avg = 0;
     battLevel.inTotal_levels = 0;
     // dispatch back to PMU if it is registered
-    PoressDeviceNotifyCallbackFun(SIM_DUAL_FIRST, RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
+    PoressDeviceNotifyCallbackFun(RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
 }
 
 static void HandleBattMgrLevelEvent( UInt16 level, UInt16 adc_avg, UInt16 total_levels )
@@ -425,7 +401,7 @@ static void HandleBattMgrLevelEvent( UInt16 level, UInt16 adc_avg, UInt16 total_
     battLevel.inAdc_avg = adc_avg;
     battLevel.inTotal_levels = total_levels;
     // dispatch back to PMU if it is registered
-    PoressDeviceNotifyCallbackFun(SIM_DUAL_FIRST, RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
+    PoressDeviceNotifyCallbackFun(RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
 }
 
 static void HandleBattMgrExtremeTempEvent( EM_BATTMGR_ExtTempState_en_t temp_state, Int16 temp_in_C )
@@ -437,8 +413,9 @@ static void HandleBattMgrExtremeTempEvent( EM_BATTMGR_ExtTempState_en_t temp_sta
     battLevel.inLevel = temp_state;
     battLevel.inAdc_avg = temp_in_C;
     // dispatch back to PMU if it is registered
-    PoressDeviceNotifyCallbackFun(SIM_DUAL_FIRST, RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
+    PoressDeviceNotifyCallbackFun(RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL, &battLevel, sizeof(HAL_EM_BatteryLevel_t));
 }
+
 
 // stub for sysrpc
 void SYS_SyncTaskMsg( void )

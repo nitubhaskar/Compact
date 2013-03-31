@@ -34,6 +34,9 @@
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -141,7 +144,9 @@
 #include "capi2_msnu.h"
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
-#include "capi2_ss_msg.h"#include "capi2_cp_msg.h"
+#include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
+#include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
 #include "capi2_phonectrl_api.h"
@@ -232,7 +237,6 @@ void CAPI2_SYS_SelectBand(UInt32 tid, UInt8 clientId, BandSelect_t bandSelect)
 	CAPI2_InitClientInfo(&clientInfo, tid, clientId);
 
 	CAPI2_NetRegApi_SelectBand ( &clientInfo,bandSelect);
-
 }
 
 void CAPI2_MS_PlmnSelect(UInt32 tid, UInt8 clientId, Boolean ucs2, PlmnSelectMode_t selectMode, PlmnSelectFormat_t format, char* plmnValue)

@@ -70,9 +70,6 @@ static UInt8 telephony_started = 0;
 static UInt8 telephony_codecId = 6;// Set default to AMR-NB
 static int telephony_stream_number = 0;
 static Boolean musicduringcall = FALSE;
-static UInt32 bt_wb_mode = 0;
-static UInt32 vt_call_mode = 0;
-static UInt32 hac_mode = 0;
 /* ---- Data structure  ------------------------------------------------- */
 
 //++++++++++++++++++++++++++++++++++++++++++++++
@@ -90,6 +87,7 @@ typedef	struct	_TMsgBrcmAudioCtrl
 }TMsgAudioCtrl, *PTMsgAudioCtrl;
 
 extern int playback_prev_time;
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 //	The thread private data structure
@@ -220,19 +218,10 @@ Result_t AUDIO_Ctrl_Trigger(
 
 
 	msgAudioCtrl.action_code = action_code;
-
-	int arg_param_size = 0;
-	arg_param_size = AUDIO_BRCMAudioParamSize(action_code);
-
-	if(arg_param_size == 0)
-		return RESULT_ERROR;
-	
 	if(arg_param)
-		memcpy(&msgAudioCtrl.param, arg_param, arg_param_size);
+		memcpy(&msgAudioCtrl.param, arg_param, sizeof(BRCM_AUDIO_Control_Params_un_t));
 	else
-		return RESULT_ERROR;
-		
-		
+		memset(&msgAudioCtrl.param, 0, sizeof(BRCM_AUDIO_Control_Params_un_t));
 	msgAudioCtrl.pCallBack = callback;
     msgAudioCtrl.block = block;
 
@@ -263,8 +252,10 @@ Result_t AUDIO_Ctrl_Trigger(
 			    DEBUG("Error AUDIO_Ctrl_Trigger len=%d expected %d in=%d, out=%d\n", len, sizeof(TMsgAudioCtrl), sgThreadData.m_pkfifo_out.in, sgThreadData.m_pkfifo_out.out);
 		    if(len == 0) //FIFO empty sleep
 			    return status;
-		        memcpy(arg_param,&msgAudioCtrl.param,  arg_param_size);
-			
+            if(arg_param)
+		        memcpy(arg_param,&msgAudioCtrl.param,  sizeof(BRCM_AUDIO_Control_Params_un_t));
+	        else
+		        memset(arg_param, 0, sizeof(BRCM_AUDIO_Control_Params_un_t));
 	    }
     }
 	
@@ -300,21 +291,8 @@ void AUDIO_Ctrl_Process(
         {
             BRCM_AUDIO_Param_Start_t* param_start = (BRCM_AUDIO_Param_Start_t*) arg_param;
             
-            AudioMode_t  new_mode = AUDIO_MODE_SPEAKERPHONE;
-
-        new_mode = sgTableIDChannelOfDev[param_start->substream_number].speaker;
-            new_mode = AUDIO_Policy_Get_Mode(new_mode);
-
+		//20110905 	//prev_app_profile = AUDDRV_GetAudioApp();
             app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_MUSIC);
-
-            if(app_profile == AUDIO_APP_VOIP || app_profile == AUDIO_APP_VOIP_INCOMM)
-            {
-                new_mode = sgTableIDChannelOfDev[param_start->substream_number].speaker;
-            }
-
-            DEBUG("ACTION_AUD_StartPlay : substream_number -  %d, app_profile - %d, new_mode - %d\n",param_start->substream_number, app_profile, new_mode);
-
-            AUDCTRL_SaveAudioModeFlag( new_mode,app_profile);
 
             AUDIO_DRIVER_Ctrl(param_start->drv_handle,AUDIO_DRIVER_START,NULL);
 
@@ -328,9 +306,7 @@ void AUDIO_Ctrl_Process(
                      sgTableIDChannelOfDev[param_start->substream_number].speaker == AUDCTRL_SPK_BTM )
                 {
                     DEBUG("Play Music During Voice call to HEADSET or BTM\n");
-                    if ( ( app_profile == AUDIO_APP_VOICE_CALL ) ||
-                        ( app_profile == AUDIO_APP_VT_CALL ))
-
+                    if ( app_profile == AUDIO_APP_VOICE_CALL )
                     {
                         DEBUG(" Play music during Voice call with BT Tap at 8k \r\n");
                         AUDCTRL_EnableTap (AUDIO_HW_TAP_VOICE, AUDCTRL_SPK_BTM, 8000);
@@ -359,8 +335,7 @@ void AUDIO_Ctrl_Process(
                 else
                 {
                     DEBUG("Play Music During Voice call to HANDSET or LOUDSPEAKER\n");
-                    if (( app_profile == AUDIO_APP_VOICE_CALL ) ||
-                         ( app_profile == AUDIO_APP_VT_CALL ))
+                    if ( app_profile == AUDIO_APP_VOICE_CALL )
                     {
                         DEBUG(" Play music during Voice call with BT Tap at 8k \r\n");
                         AUDCTRL_EnableTap (AUDIO_HW_TAP_VOICE, AUDCTRL_SPK_HEADSET, 8000);
@@ -382,6 +357,8 @@ void AUDIO_Ctrl_Process(
             }
             else
             {
+               	AUDCTRL_SaveAudioModeFlag( sgTableIDChannelOfDev[param_start->substream_number].speaker,app_profile);
+            
                 if( sgTableIDChannelOfDev[param_start->substream_number].speaker == AUDCTRL_SPK_BTM )
                 {
                     AUDCTRL_EnableTap (AUDIO_HW_TAP_VOICE, sgTableIDChannelOfDev[param_start->substream_number].speaker, 8000);
@@ -417,7 +394,6 @@ void AUDIO_Ctrl_Process(
                 }
             }
 
-            
             // set the slopgain register to max value
             AUDCTRL_SetPlayVolume(sgTableIDChannelOfDev[param_start->substream_number].hw_id,
                                   sgTableIDChannelOfDev[param_start->substream_number].speaker,
@@ -432,8 +408,6 @@ void AUDIO_Ctrl_Process(
             playback_prev_time = 0;
             playback_triggered = 1;
 
-            
-
         }
         break;
         case ACTION_AUD_StopPlay:
@@ -442,7 +416,6 @@ void AUDIO_Ctrl_Process(
 
             // stop DMA first
             AUDIO_DRIVER_Ctrl(param_stop->drv_handle,AUDIO_DRIVER_PAUSE,NULL);
-
 
             AUDIO_DRIVER_Ctrl(param_stop->drv_handle,AUDIO_DRIVER_GET_DRV_TYPE,(void*)&drv_type);
             //if (param_stop->substream_number == 5)  // Ring case
@@ -453,6 +426,8 @@ void AUDIO_Ctrl_Process(
 									  AUDCTRL_SPK_LOUDSPK				  //		  AUDCTRL_SPEAKER_t 	spk
                     );
             }
+
+		//20110905	//AUDCTRL_SaveAudioModeFlag( AUDDRV_GetAudioMode(), prev_app_profile );
 
             //disable the playback path
             if (AUDIO_Policy_GetState() == BRCM_STATE_INCALL)
@@ -500,7 +475,7 @@ void AUDIO_Ctrl_Process(
             playback_triggered = 0;
 
             
-            
+
         }
         break;
         case ACTION_AUD_PausePlay:
@@ -564,17 +539,13 @@ void AUDIO_Ctrl_Process(
             AudioMode_t cur_mode;
 
             BRCM_AUDIO_Param_Start_t* param_start = (BRCM_AUDIO_Param_Start_t*) arg_param;
+            DEBUG("ACTION_AUD_StartRecord : param_start->substream_number -  %d \n",param_start->substream_number);
 
 			prev_app_profile = AUDDRV_GetAudioApp();
             cur_mode = AUDCTRL_GetAudioMode();
 
-            DEBUG("ACTION_AUD_StartRecord : substream_number -  %d, prev_app_profile - %d, cur_mode - %d\n",param_start->substream_number, prev_app_profile, cur_mode);
-
             if ( cur_mode >= AUDIO_MODE_NUMBER )
                 cur_mode = (AudioMode_t) (cur_mode - AUDIO_MODE_NUMBER);
-
-            if (param_start->rate == AUDIO_SAMPLING_RATE_8000 || param_start->rate == AUDIO_SAMPLING_RATE_16000)
-                app_prof = AUDIO_APP_RECORDING_NB;
 
             if (param_start->substream_number == 6 || param_start->substream_number == 7) // record request with Google voice search profile
 			{
@@ -587,13 +558,7 @@ void AUDIO_Ctrl_Process(
             if (param_start->substream_number == 9 || param_start->substream_number == 10) // record request with voip profile
             {
 				app_prof = AUDIO_APP_VOIP;
-                if(param_start->substream_number == 9)
-                {
-                    if(cur_mode == AUDIO_MODE_HANDSET)
-                    {
-                        new_mode = cur_mode;
-                    }
-                }
+                new_mode = cur_mode; // use current mode based on earpiece or speaker
             }
             
             if (param_start->substream_number == 11 || param_start->substream_number == 12) // record request with voip incomm profile
@@ -607,11 +572,7 @@ void AUDIO_Ctrl_Process(
                 new_mode = AUDIO_MODE_HEADSET;
 
             app_profile = AUDIO_Policy_Get_Profile(app_prof);
-
             new_mode = AUDIO_Policy_Get_Mode(new_mode);
-			
-            DEBUG("ACTION_AUD_StartRecord : app_profile - %d, new_mode - %d\n",app_profile, new_mode);
-
             AUDCTRL_SaveAudioModeFlag(new_mode,app_profile);
 
             AUDCTRL_EnableRecord(sgTableIDChannelOfCaptDev[param_start->substream_number].hw_id,
@@ -623,8 +584,6 @@ void AUDIO_Ctrl_Process(
             AUDIO_DRIVER_Ctrl(param_start->drv_handle,AUDIO_DRIVER_START,NULL);
 
              AUDIO_Policy_SetState(BRCM_STATE_RECORD);
-
-
 
         }
         break;
@@ -701,50 +660,27 @@ void AUDIO_Ctrl_Process(
         {
             BRCM_VOICE_Param_Start_t* param_voice_start = (BRCM_VOICE_Param_Start_t*)arg_param;
             int vol_level;
-			AudioMode_t  audio_mode = AUDIO_MODE_SPEAKERPHONE;
 
             telephony_stream_number = param_voice_start->substream_number;
-			audio_mode = sgTableIDChannelOfVoiceCallDev[telephony_stream_number-VOICE_CALL_SUB_DEVICE].speaker;
-			
-			// if we are in handset mode and HAC is enabled 
-			// set to HAC mode
-			if((audio_mode == AUDCTRL_SPK_HANDSET) &&
-				(hac_mode == 1))
-				{
-					audio_mode = AUDIO_MODE_HAC;
-				}
-			
-			
-            if(vt_call_mode)
-            {
-                DEBUG("Enable telephony VT Call \r\n");
 
-                
-                // Wideband VT is not supported now
-                app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VT_CALL);
-                AUDCTRL_SaveAudioModeFlag( audio_mode,app_profile);
-
-            }
-            else if ( telephony_codecId == 10 )
+            if ( telephony_codecId == 10 )
             {
                 DEBUG("Enable telephony WB Call \r\n");
                 app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL_WB);
-                AUDCTRL_SaveAudioModeFlag( audio_mode + AUDIO_MODE_NUMBER,app_profile);
+                AUDCTRL_SaveAudioModeFlag( sgTableIDChannelOfVoiceCallDev[telephony_stream_number-VOICE_CALL_SUB_DEVICE].speaker + AUDIO_MODE_NUMBER,app_profile);
             }
             else if ( telephony_codecId == 6 )
             {
                 DEBUG("Enable telephony NB Call \r\n");
                 app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL);
-                AUDCTRL_SaveAudioModeFlag( audio_mode,app_profile);
+                AUDCTRL_SaveAudioModeFlag( sgTableIDChannelOfVoiceCallDev[telephony_stream_number-VOICE_CALL_SUB_DEVICE].speaker,app_profile);
             }
             else
             {
                 DEBUG("Enable telephony Invalid Codec : Setting as NB \r\n");
                 app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL);
-                AUDCTRL_SaveAudioModeFlag( audio_mode,app_profile);
+                AUDCTRL_SaveAudioModeFlag( sgTableIDChannelOfVoiceCallDev[telephony_stream_number-VOICE_CALL_SUB_DEVICE].speaker,app_profile);
             }
-
-           
 
             if ( (telephony_stream_number-VOICE_CALL_SUB_DEVICE) == 4 )
             {
@@ -756,19 +692,9 @@ void AUDIO_Ctrl_Process(
             	}
             	else if ( telephony_codecId == 6 )
             	{
-                    DEBUG("Enable telephony NB Call BT NREC \r\n");
-
-                    if(vt_call_mode)
-                    {
-                        DEBUG("Enable telephony VT Call - BT NREC \r\n");
-                        // Wideband VT is not supported now
-                        app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VT_CALL);
-                    }
-                    else
-                    {
-                        app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL);
-                    }
-                    AUDCTRL_SaveAudioModeFlag(AUDCTRL_SPK_HANDSFREE, app_profile);
+                	DEBUG("Enable telephony NB Call BT NREC \r\n");
+                	app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL);
+                	AUDCTRL_SaveAudioModeFlag(AUDCTRL_SPK_HANDSFREE, app_profile);
             	}
 
                 DEBUG(" Telephony : Turning Off EC and NS \r\n");
@@ -782,18 +708,9 @@ void AUDIO_Ctrl_Process(
                 //AUDCTRL_NS(TRUE);
             }
 
-            // check if we need to use wideband BT
-            if( (telephony_stream_number-VOICE_CALL_SUB_DEVICE) == 4 || (telephony_stream_number-VOICE_CALL_SUB_DEVICE) == 3 )
-            {
-                // set the BT mode
-                DEBUG("Set BT Mode - %d \r\n",bt_wb_mode);
-                AUDCTRL_SetBTMTypeWB(bt_wb_mode);
-            }
-
             vol_level= GetCtrlValue(BRCM_CTL_EAR_Playback_Volume);
             if(vol_level > 5)
                 vol_level = 5;
-
             AUDCTRL_SetPlayVolume(AUDIO_HW_VOICE_OUT,AUDCTRL_SPK_HANDSET,AUDIO_GAIN_FORMAT_DSP_VOICE_VOL_GAIN,vol_level,vol_level);
 
             AUDCTRL_RateChangeTelephony();
@@ -828,18 +745,8 @@ void AUDIO_Ctrl_Process(
         {
             int local_sub_stream_number = 0;
             BRCM_VOICE_Param_Update_t* param_voice_update = (BRCM_VOICE_Param_Update_t*)arg_param;
-			AudioMode_t  audio_mode = AUDIO_MODE_SPEAKERPHONE;
 
             DEBUG("TELEPHONY UPDATE codecId = %d \r\n", param_voice_update->voicecall_codecId);
-
-			audio_mode = sgTableIDChannelOfVoiceCallDev[telephony_stream_number-VOICE_CALL_SUB_DEVICE].speaker;
-			// if we are in handset mode and HAC is enabled 
-			// set to HAC mode
-			if((audio_mode == AUDCTRL_SPK_HANDSET) &&
-				(hac_mode == 1))
-				{
-					audio_mode = AUDIO_MODE_HAC;
-				}			
 
             if ( telephony_codecId != param_voice_update->voicecall_codecId )
             {
@@ -851,14 +758,14 @@ void AUDIO_Ctrl_Process(
                     {
                         app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL_WB);
                         DEBUG("call_CodedId_hander : changing Mode to AMR-WB ===>\r\n");
-                        AUDCTRL_SaveAudioModeFlag( audio_mode + AUDIO_MODE_NUMBER,app_profile);
+                        AUDCTRL_SaveAudioModeFlag( sgTableIDChannelOfVoiceCallDev[telephony_stream_number - VOICE_CALL_SUB_DEVICE].speaker + AUDIO_MODE_NUMBER,app_profile);
                         DEBUG("call_CodedId_hander : changing Mode to AMR-WB <===\r\n");
                     }
                     else
                     {
                         app_profile = AUDIO_Policy_Get_Profile(AUDIO_APP_VOICE_CALL);
                         DEBUG("call_CodedId_hander : changing Mode to AMR-NB ===>\r\n");
-                        AUDCTRL_SaveAudioModeFlag( audio_mode,app_profile );
+                        AUDCTRL_SaveAudioModeFlag( sgTableIDChannelOfVoiceCallDev[telephony_stream_number - VOICE_CALL_SUB_DEVICE].speaker,app_profile );
                         DEBUG("call_CodedId_hander : changing Mode to AMR-NB <===\r\n");
                     }
                     DEBUG("call_CodedId_hander : AUDCTRL_RateChangeTelephony ===>\r\n");
@@ -993,31 +900,6 @@ void AUDIO_Ctrl_Process(
                 }
             }
             break;
-        case ACTON_BT_WB_MODE:
-            {
-                // update the BT mode
-                BRCM_AUDIO_Param_Bt_Wbmode_t* parm_mode = (BRCM_AUDIO_Param_Bt_Wbmode_t*)arg_param;
-                // update the BT mode
-                bt_wb_mode = parm_mode->enable;
-            }
-            break;
-        case ACTON_VT_CALL_MODE:
-            {
-                // update the VT mode
-                BRCM_AUDIO_Param_Vt_Callmode_t* parm_vt_mode = (BRCM_AUDIO_Param_Vt_Callmode_t*)arg_param;
-                // update the VT mode
-                vt_call_mode = parm_vt_mode->enable;
-            }
-            break;
-        case ACTON_HAC_MODE:
-            {
-                // update the HAC mode
-                BRCM_AUDIO_Param_Hac_Mode_t* parm_hac_mode = (BRCM_AUDIO_Param_Hac_Mode_t*)arg_param;
-                // update the HAC mode
-                hac_mode = parm_hac_mode->enable;
-            }
-            break;
-			
         default:
             DEBUG("Error AUDIO_Ctrl_Process Invalid acction command \n");
     }
@@ -1025,7 +907,10 @@ void AUDIO_Ctrl_Process(
     {
         // put the message in output fifo if waiting
         msgAudioCtrl.action_code = action_code;
+	    if(arg_param)
 		    memcpy(&msgAudioCtrl.param, arg_param, sizeof(BRCM_AUDIO_Control_Params_un_t));
+	    else
+		    memset(&msgAudioCtrl.param, 0, sizeof(BRCM_AUDIO_Control_Params_un_t));
 	    msgAudioCtrl.pCallBack = callback;
         msgAudioCtrl.block = block;
 
@@ -1040,116 +925,3 @@ void AUDIO_Ctrl_Process(
     }
 
 }
-
-
-int AUDIO_BRCMAudioParamSize(BRCM_AUDIO_ACTION_en_t action_code)
-	{
-		int ret = 0;
-		
-		switch(action_code)
-		{
-			case ACTION_AUD_StartPlay:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Start_t);
-			}
-			break;
-			case ACTION_AUD_StopPlay:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Stop_t);
-			}
-			break;
-			case ACTION_AUD_PausePlay:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Pause_t);
-			}
-			break;
-			case ACTION_AUD_ResumePlay:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Resume_t);
-			}
-			break;
-			case ACTION_AUD_StartRecord:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Start_t);
-			}
-			break;
-			case ACTION_AUD_StopRecord:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Stop_t);
-			}
-			break;
-			case ACTION_AUD_OpenPlay:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Open_t);
-			}
-			break;
-			case ACTION_AUD_ClosePlay:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Close_t);
-			}
-			break;
-			case ACTION_AUD_OpenRecord:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Open_t);
-			}
-			break;
-			case ACTION_AUD_CloseRecord:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Close_t);
-			}
-			break;
-			case ACTON_VOICECALL_START:
-			{
-				ret =  sizeof(BRCM_VOICE_Param_Start_t);
-			}
-			break;
-			case ACTON_VOICECALL_STOP:
-			{
-				ret =  sizeof(BRCM_VOICE_Param_Stop_t);
-			}
-			break;
-			case ACTON_VOICECALL_UPDATE:
-			{
-				ret =  sizeof(BRCM_VOICE_Param_Update_t);
-			}
-			break;
-			case ACTON_FM_START:
-			{
-				ret =  sizeof(BRCM_FM_Param_Start_t);
-			}
-			break;
-			case ACTON_FM_STOP:
-			{
-				ret =  sizeof(BRCM_FM_Param_Stop_t);
-			}
-			break;
-			case ACTON_ROUTE:
-			{
-				ret =  sizeof(BRCM_AUDIO_Param_Route_t);
-			}
-			break;
-            case ACTON_BT_WB_MODE:
-            {
-                ret =  sizeof(BRCM_AUDIO_Param_Bt_Wbmode_t);
-            }
-            break;
-             case ACTON_VT_CALL_MODE:
-            {
-                ret =  sizeof(BRCM_AUDIO_Param_Vt_Callmode_t);
-            }
-            break;
-           case ACTON_HAC_MODE:
-            {
-                ret =  sizeof(BRCM_AUDIO_Param_Hac_Mode_t);
-            }
-            break;			
-			default:
-			{
-				ret =  0;
-			}
-				
-		}
-		return ret;
-		
-	}
-

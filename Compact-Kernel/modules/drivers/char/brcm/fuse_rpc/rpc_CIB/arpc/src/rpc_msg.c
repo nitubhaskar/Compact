@@ -100,6 +100,7 @@ static bool_t xdr_RPC_Msg_t(XDR *xdrs, RPC_Msg_t* rpcMsg)
 		}
 		else
 		{
+			//Coverity[unchecked_value]
 			xdr_pointer(xdrs, (char**)&(rpcMsg->dataBuf), entry.xdrInfo->xdr_size, entry.xdrInfo->xdr_proc);
 		}
 

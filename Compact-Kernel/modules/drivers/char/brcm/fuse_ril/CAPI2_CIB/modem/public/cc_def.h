@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   cc_def.h
@@ -249,6 +251,17 @@ typedef struct
 
 ///	Call Configuration Parameters
 typedef struct {
+  //Data-call related
+  //hscsd_report is set when ATDS_REPORT_IND is recieved
+  HSCSDParamReport_t hscsd_report;			///< Reported in ATDS_REPORT_IND message
+  
+  /* If the call is hscsd call */
+  BitField hscsd_call: 1;				///< Boolean value indicating CSD/HSCSD call
+
+  //UInt16 CHSD[5];	// Information about HSCSD features
+  //UInt16 CHST[2];	// HSCSD transparent call configuration
+  //UInt16 CHSN[4];	// HSCSD non-transparent call configuration
+  //UInt8  CHSU;	    // HSCSD automatic user initiated upgrading
  
   UInt8  rx;			///< current call receive slots	
   UInt8  tx;			///< current call transmit slots
@@ -338,7 +351,7 @@ typedef struct
 {
 	SS_NotifySs_t		notifySs;				///< Notify SS
 	UInt8				facIeBuf[255];			///< Facility IE
-    CCallType_t	        callType;			    ///< Call type(MO, MT, MO Data, MT Data , etc)
+    CCallType_t	        callType;			    ///< Call type(SS, Voice, data, video etc)
 }CC_NotifySsInd_t;								///< CC Notify SS Indication Type
 
 
@@ -515,12 +528,12 @@ typedef struct
 
 typedef struct
   {
-    UInt8 A[MAX_ADDRESS_LEN+1];
+    UInt8 A[22];
   }SUBADDR_t;
 
 typedef struct
   {
-    UInt8 A[(MAX_DIGITS>>1)+2];
+    UInt8 A[23];
   }TEL_NUMBER_t;
 
 typedef struct 
@@ -701,7 +714,7 @@ response was successful or failed.
 typedef struct
 {
 	ClientCmd_t			clientCmdType;	///< The client ID
-	ApiClientCmd_CcParam_t	param;		///< parameters
+	ApiClientCmd_CcParam_t*	paramPtr;		///< The pointer to the parameters
 } ApiClientCmdInd_t;
 
 

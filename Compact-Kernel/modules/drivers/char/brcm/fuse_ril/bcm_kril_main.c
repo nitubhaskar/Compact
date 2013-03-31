@@ -35,8 +35,6 @@ struct wake_lock kril_rsp_wake_lock;
 struct wake_lock kril_notify_wake_lock;
 struct wake_lock kril_result_wake_lock;
 #endif
-extern Boolean gDualSIMBoot;
-
 extern Int32 KRIL_GetRsp(struct file *filp, UInt32 cmd, UInt32 arg);
 extern bcm_kril_dev_result_t bcm_dev_results[TOTAL_BCMDEVICE_NUM];
 
@@ -56,10 +54,6 @@ extern RPC_Result_t RPC_SYS_EndPointRegister(RpcProcessorType_t processorType);
 extern void KRIL_InitDVFSHandler( void );
 extern void KRIL_UnregDVFSHandler( void );
 #endif
-    
-
-// for MT USSD case
-extern UInt32 gDialogID;
 
 static int KRIL_Open(struct inode *inode, struct file *filp)
 {
@@ -76,29 +70,21 @@ static int KRIL_Open(struct inode *inode, struct file *filp)
 
     /*init response*/
     spin_lock_init(&(priv->recv_lock));
+    INIT_LIST_HEAD(&(gKrilResultQueue.list));
+
+    init_waitqueue_head(&gKrilParam.read_wait);
     mutex_init(&priv->recv_mutex);
-    gKrilParam.recv_lock = priv->recv_lock;
+
     KRIL_DEBUG(DBG_INFO, "i_private=%p private_data=%p, wait=%p\n", inode->i_private, filp->private_data, &priv->recv_wait);
+
+    gKrilParam.recv_lock = priv->recv_lock;
     return 0;
 }
 
 static int KRIL_Release(struct inode *inode, struct file *filp)
 {
-    int state=0;
-    KRIL_DEBUG(DBG_ERROR, "KRIL_Release %s: major %d minor %d (pid %d)\n", __func__, imajor(inode), iminor(inode), current->pid);
-    KRIL_DEBUG(DBG_ERROR, "i_private=%p private_data=%p\n", inode->i_private, filp->private_data);
-    kfree(filp->private_data);
-    if(!KRIL_DevSpecific_Cmd(BCM_KRIL_CLIENT, SIM_DUAL_FIRST, BRCM_RIL_REQUEST_RADIO_POWER, &state, sizeof(int)))
-    {
-        KRIL_DEBUG(DBG_ERROR,"KRIL_Release::BRCM_RIL_REQUEST_RADIO_POWER SIM1 failed\n");
-    }
-    if(TRUE == gDualSIMBoot)
-    {
-        if(!KRIL_DevSpecific_Cmd(BCM_KRIL_CLIENT, SIM_DUAL_SECOND, BRCM_RIL_REQUEST_RADIO_POWER, &state, sizeof(int)))
-        {
-            KRIL_DEBUG(DBG_ERROR,"KRIL_Release::BRCM_RIL_REQUEST_RADIO_POWER SIM2 failed\n");
-        }
-    }
+    KRIL_DEBUG(DBG_INFO, "KRIL_Release %s: major %d minor %d (pid %d)\n", __func__, imajor(inode), iminor(inode), current->pid);
+    KRIL_DEBUG(DBG_INFO, "i_private=%p private_data=%p\n", inode->i_private, filp->private_data);
     return 0;
 }
 
@@ -187,10 +173,10 @@ static struct file_operations kril_ops =
 void AGPS_CP_Init(void)
 {
 	ClientInfo_t lcsClientInfo;
-
 	CAPI2_InitClientInfo(&lcsClientInfo, GetNewTID(), GetClientID());
-	lcsClientInfo.simId = SIM_DUAL_FIRST;
 
+	//CAPI2_LCS_RegisterRrcDataHandler(GetNewTID(), GetClientID(), lcsClientInfo);
+	//CAPI2_LCS_RegisterRrlpDataHandler(GetNewTID(), GetClientID(), lcsClientInfo);
 	CAPI2_LcsApi_RrlpRegisterDataHandler(&lcsClientInfo);
 	CAPI2_LcsApi_RrcRegisterDataHandler(&lcsClientInfo);
 	KRIL_DEBUG(DBG_ERROR, "CAPI2_LCS_RegisterRrlpDataHandler ClientID:0x%x\n", lcsClientInfo.clientId);
@@ -241,14 +227,7 @@ void G_RPC_RespCbk(RPC_Msg_t* pMsg, ResultDataBufHandle_t dataBufHandle, UInt32 
     CAPI2_ReqRep_t* reqRep =  (CAPI2_ReqRep_t*)pMsg->dataBuf;
     CAPI2_GetPayloadInfo(reqRep, pMsg->msgId, &dataBuf, &len);
 
-    // Save the dialogID for MT USSD (the dialogID is allocated in CP side and binded with the MNSS context)
-    if (pMsg->msgId == MSG_MNSS_CLIENT_SS_SRV_IND)
-    {
-       gDialogID = reqRep->clientInfo.dialogId;
-       KRIL_DEBUG(DBG_INFO, "G_RPC_RespCbk:: Set gDialogID = %x\n", gDialogID);
-    }
-
-    KRIL_Capi2HandleRespCbk(pMsg->tid, pMsg->clientID, pMsg->msgId, reqRep->clientInfo.simId, reqRep->clientInfo.dialogId, reqRep->result, dataBuf, len, dataBufHandle);
+    KRIL_Capi2HandleRespCbk(pMsg->tid, pMsg->clientID, pMsg->msgId, reqRep->clientInfo.dialogId, reqRep->result, dataBuf, len, dataBufHandle);
 }
 
 /****************************************************************************

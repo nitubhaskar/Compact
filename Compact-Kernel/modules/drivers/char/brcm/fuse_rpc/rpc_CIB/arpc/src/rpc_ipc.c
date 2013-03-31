@@ -81,7 +81,6 @@ static RPC_IPCInfo_t		ipcInfoList[INTERFACE_TOTAL]={0};
 static RPC_IPCBufInfo_t		ipcBufList[INTERFACE_TOTAL]={0};
 
 static RpcProcessorType_t gRpcProcType;
-static int gRpcInit = 0;
 
 //static function prototypes
 static void RPC_CreateBufferPool(PACKET_InterfaceType_t type, int channel_index);
@@ -426,11 +425,6 @@ Boolean RPC_SetProperty(RPC_PropType_t type, UInt32 value)
 {
 	Boolean ret = FALSE;
 	
-	if(!gRpcInit)
-	{
-		return FALSE;
-	}
-
 	if (gRpcProcType == RPC_APPS)
 	{
 		if(type > RPC_PROP_START_AP && type < RPC_PROP_END_AP)
@@ -452,9 +446,8 @@ Boolean RPC_SetProperty(RPC_PropType_t type, UInt32 value)
 
 Boolean RPC_GetProperty(RPC_PropType_t type, UInt32 *value)
 {
-	*value = 0;
 	//Call IPC function when ready
-	return (gRpcInit) ? IPC_GetProperty(type, (IPC_U32 *)value) : FALSE;
+	return IPC_GetProperty(type, (IPC_U32 *)value);
 }
 
 
@@ -467,8 +460,6 @@ RPC_Result_t RPC_IPC_EndPointInit(RpcProcessorType_t rpcProcType)
 	memset(ipcInfoList, 0, sizeof(ipcInfoList));
 
 	gRpcProcType = rpcProcType;
-
-	gRpcInit = 1;
 
 	if (rpcProcType == RPC_COMMS)
 	{

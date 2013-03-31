@@ -266,7 +266,6 @@ void chal_audioaipath_SelectInput(
 		CHAL_AUDIO_MIC_INPUT_en		sourceR
 		)
 {
-
 	  //set ADCCONTROL correct mode: 16-bit mode, ena audio int
 	BRCM_WRITE_REG_FIELD( sAIPath.base, DSP_AUDIO_ADCCONTROL_R, AUDIOIN_BITMODE, 1 );  // 1 - 16-bit Audio IIR2 output
 	BRCM_WRITE_REG_FIELD( sAIPath.base, DSP_AUDIO_ADCCONTROL_R, AUDIOIN_INTEN, 1 );  //should be in enable( )

@@ -15,17 +15,10 @@
 #define UNDEF_SYS_GEN_MIDS
 #define DEFINE_SYS_GEN_MIDS_NEW
 
-#include "mobcom_types.h"
-#include "resultcode.h"
-#include "taskmsgs.h"
+#ifndef UNDER_LINUX
+#include "string.h"
+#endif
 
-#include "ipcproperties.h"
-#include "rpc_global.h"
-#include "rpc_ipc.h"
-
-#include "xdr_porting_layer.h"
-#include "xdr.h"
-#include "rpc_api.h"
 #include "mobcom_types.h"
 #include "resultcode.h"
 #include "taskmsgs.h"

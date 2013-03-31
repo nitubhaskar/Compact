@@ -50,9 +50,6 @@ static struct cpufreq_client_desc *lcdc_client;
 int gInitialized;
 EXPORT_SYMBOL(gInitialized);
 
-int check_initial =1;
-EXPORT_SYMBOL(check_initial);
-
 #ifdef CONFIG_HAS_WAKELOCK
 static struct wake_lock glcdfb_wake_lock;
 #endif
@@ -100,8 +97,6 @@ EXPORT_SYMBOL(lcd_enable);
 
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
 uint8_t	lcd_frame_inversion_during_call = 0;
-uint8_t write_lcd_sequence_start_call = 0;
-uint8_t write_lcd_sequence_end_call = 0;
 #endif
 
 extern int bcm_gpio_pull_up(unsigned int gpio, bool up);
@@ -116,10 +111,6 @@ static CSL_LCDC_PAR_CTRL_T busCfg;
 
 #define ON  1
 #define OFF 0
-/*These structures will be updated during boot time based on the values
- * present in timingReg_ns and timingMem_ns and the AHB clock speed*/
-CSL_LCDC_PAR_SPEED_t timingReg;
-CSL_LCDC_PAR_SPEED_t timingMem;
 
 static struct workqueue_struct *lcd_wq;
 /****************************************************************************
@@ -207,6 +198,38 @@ uint32_t lcd_read_reg(uint32_t reg)
 	return data;
 }
 
+#if defined (CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)	
+uint32_t LCD_DRV_ID_Check(void)
+{
+
+	uint8_t Read_buf[3] = {0,};
+	uint32_t Read_value = 0;
+
+	CSL_LCD_RES_T ret;
+	uint32_t data;
+	int i;
+	UInt8 CMD_readId[] = {0xDA, 0xDB, 0xDC};
+
+	for(i=0; i< 3; i++)
+	{
+		ret=CSL_LCDC_WrCmnd(handle, CMD_readId[i]);
+		if (CSL_LCD_OK != ret)
+			printk("CSL_LCDC_WrCmnd failed error: %d", ret);
+
+		ret = CSL_LCDC_PAR_RdData(handle, &data);		// dummy data
+		ret = CSL_LCDC_PAR_RdData(handle, &data);		
+		Read_buf[i] =data;		
+		printk("lcd_read_reg_id data:%x\n", Read_buf[i]);	
+	
+	}
+ 
+	Read_value += Read_buf[0] << 16;
+	Read_value += Read_buf[1] << 8;
+	Read_value += Read_buf[2];
+
+    return Read_value;
+}
+#else
 
 void lcd_read_reg_id(UInt8 reg, UInt8 * Read_value, UInt8 num)
 {
@@ -247,6 +270,7 @@ uint32_t LCD_DRV_ID_Check(UInt8 reg, UInt8 num)
 
     return Read_value;
 }
+#endif
  
 
 /***************************************************************************
@@ -257,22 +281,6 @@ uint32_t LCD_DRV_ID_Check(UInt8 reg, UInt8 num)
 ***************************************************************************/
 static void lcd_csl_cb(CSL_LCD_RES_T res, CSL_LCD_HANDLE handle, void *cbRef)
 {
-#if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
-	if (write_lcd_sequence_start_call == 1)
-	{
-		printk("[LCD] %s, %d, Start Call\n", __func__, __LINE__);
-		lcd_send_cmd_sequence(enter_during_call_seq); /* during call */
-		write_lcd_sequence_start_call = 0;
-	}
-
-	if (write_lcd_sequence_end_call == 1)
-	{
-		printk("[LCD] %s, %d, End Call\n", __func__, __LINE__);
-		lcd_send_cmd_sequence(restore_during_call_seq); /* Idle */
-		write_lcd_sequence_end_call = 0;
-	}
-#endif
-	
 	up(&gDmaSema);
 	if ((CSL_LCD_OK != res)&&lcd_enable)
 		pr_info("lcd_csl_cb: res =%d\n", res);
@@ -319,23 +327,12 @@ static inline bool is_tx_done_32(LCD_dev_info_t * dev)
 static void lcd_dev_dirty_rect(LCD_dev_info_t * dev,
 			       LCD_DirtyRect_t * dirtyRect)
 {
-	if(lcd_id == 0)
-		return;
-		
 	CSL_LCD_RES_T ret;
 	int i;
 	int err = -EINVAL;
 
 	OSDAL_Dma_Buffer_List *buffer_list, *temp_list;
 
-    if(!dev) {
-        pr_info("dev pointer is NULL\n");
-        return;
-    }
-    if(!dirtyRect) {
-        pr_info("dirtyRect pointer is NULL\n");
-        return;
-    }
 	if ((dirtyRect->top > dirtyRect->bottom)
 	    || ((dirtyRect->bottom - dirtyRect->top) >= dev->height)
 	    || (dirtyRect->left > dirtyRect->right)
@@ -440,9 +437,6 @@ done:
 
 void lcd_dev_dirty_rows(LCD_dev_info_t * dev, LCD_DirtyRows_t * dirtyRows)
 {
-	if(lcd_id == 0)
-		return;
-	
 	LCD_DirtyRect_t dirtyRect = {
 		.top = dirtyRows->top,
 		.bottom = dirtyRows->bottom,
@@ -740,11 +734,9 @@ static void lcd_late_resume(struct early_suspend *h)
                    	gpio_direction_input(LCD_DET); 
                    enable_irq(lcd_esd);
                    lcd_esd_ckeck=1;
-				   printk("lcd_late_resume : ESD\n");
     	}
     	else if (h->level == EARLY_SUSPEND_LEVEL_DISABLE_FB + 1) {
 	lcd_pm_update(PM_COMP_PWR_ON, 0);
-	printk("lcd_late_resume : LCD\n");
 }
 }
 
@@ -800,60 +792,30 @@ static struct early_suspend lcd_early_suspend_esd = {
 			if (!IS_ERR_OR_NULL(lcdc_regulator))
 				regulator_disable(lcdc_regulator);
 #endif
-
-			#if defined(CONFIG_BCM_LCD_ILI9486_BOE)
-			lcd_poweroff_panels();    
-			#else
 			lcd_poweroff_panels();              
 			lcd_pwr_on_controll(OFF);
-			#endif
-          
 #ifdef CONFIG_CPU_FREQ_GOV_BCM21553
 			cpufreq_bcm_dvfs_enable(lcdc_client);
 #endif
-
-			#if defined(CONFIG_BCM_LCD_ILI9486_BOE)
-			board_sysconfig(SYSCFG_LCD, SYSCFG_DISABLE);
-			#endif
-			
-			check_initial=0;
 			break;
 		}
 	case PM_COMP_PWR_ON:
 		{
 			pr_info("\n[%02d:%02d:%02d.%03lu]  LCDC: Power on panel\n", tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
-
 #ifdef CONFIG_CPU_FREQ_GOV_BCM21553
 			cpufreq_bcm_dvfs_disable(lcdc_client);
 #endif
-
 #ifdef CONFIG_REGULATOR
 			if (!IS_ERR_OR_NULL(lcdc_regulator))
 				regulator_enable(lcdc_regulator);
 #endif
-
-			#if defined(CONFIG_BCM_LCD_ILI9486_BOE)
-			lcd_pwr_on_controll(OFF);
-		      msleep(10); 	
 			lcd_pwr_on_controll(ON);
-		      msleep(120); 	
-		      #else
-			lcd_pwr_on_controll(ON);		
-			#endif
-			  
 #if defined(CONFIG_ENABLE_QVGA) || defined(CONFIG_ENABLE_HVGA)
 			display_black_background();
 #endif
 
 			lcd_init_panels();
-
-			#if defined(CONFIG_BCM_LCD_ILI9486_BOE)
-			board_sysconfig(SYSCFG_LCD, SYSCFG_INIT);
-			#endif
-			
-            		lcd_dev_dirty_rows(&LCD_device[LCD_main_panel], &init_dirtyRect);
-			
-			check_initial=1;
+            lcd_dev_dirty_rows(&LCD_device[LCD_main_panel], &init_dirtyRect);
 			gInitialized = 1;
 			break;
 		}
@@ -878,6 +840,7 @@ static void lcd_esd_detect(struct work_struct *work)
 
       gpio_direction_output(LCD_DET, 1);    
 	printk("[LCD] lcd_esd_detect_enter\n");
+
       if(lcd_esd_ckeck==1){
 	printk("[LCD] %s, %d\n", __func__, __LINE__ );
 	lcd_poweroff_panels();              
@@ -905,72 +868,10 @@ static irqreturn_t lcd_esd_irq_handler(int irq, void *dev_id)
 
 	return IRQ_HANDLED;
 }
-#define MHz 1000000UL
-#define KHz 1000UL
 
-bool __is_setup_hold_more(unsigned long clk_Mhz, CSL_LCDC_PAR_SPEED_t *timing_ns, CSL_LCDC_PAR_SPEED_t *timing_ahb)
-{
-	int reqd = (timing_ns->wrSetup + timing_ns->wrHold) ? (((timing_ns->wrSetup + timing_ns->wrHold) * clk_Mhz + KHz - 1) / KHz) : 0;
-	int actual = timing_ahb->wrSetup + timing_ahb->wrHold + 2;
-	return (actual > reqd);
-}
-
-void convert_ns_to_ahb(unsigned long clk_rate, CSL_LCDC_PAR_SPEED_t timing_ns, CSL_LCDC_PAR_SPEED_t *timing)
-{
-	unsigned long clk_Mhz = clk_rate / MHz;
-	CSL_LCDC_PAR_SPEED_t timing_ahb;
-
-	/*Actual time on bus = (n + 1) cycles where n is the value computed below.
-	Hence the values have to be rounded to the floor by integer division*/
-	timing_ahb.rdHold = timing_ns.rdHold ? ((timing_ns.rdHold * clk_Mhz - 1) / KHz) : 0;
-	timing_ahb.rdPulse = timing_ns.rdPulse ? ((timing_ns.rdPulse * clk_Mhz - 1) / KHz) : 0;
-	timing_ahb.rdSetup = timing_ns.rdSetup ? ((timing_ns.rdSetup * clk_Mhz - 1) / KHz) : 0;
-	timing_ahb.wrHold = timing_ns.wrHold ? ((timing_ns.wrHold * clk_Mhz - 1) / KHz) : 0;
-	timing_ahb.wrPulse = timing_ns.wrPulse ? ((timing_ns.wrPulse * clk_Mhz - 1) / KHz) : 0;
-	timing_ahb.wrSetup = timing_ns.wrSetup ? ((timing_ns.wrSetup * clk_Mhz - 1) / KHz) : 0;
-
-	if(timing_ns.wrSetup == 0) {
-		/*Even if the required SetupTime = 0ns, BRCM LCDC imposes a minimum of
-		1AHB cycle. Hence we can reduce the HoldTime by 1AHB cycle since the
-		next Setup will immediately follow the current Hold duration*/
-		if(timing_ahb.wrHold != 0)
-			--timing_ahb.wrHold;
-	} else if (__is_setup_hold_more(clk_Mhz, &timing_ns, &timing_ahb)) {
-		if(timing_ahb.wrSetup != 0)
-			--timing_ahb.wrSetup;
-		else if (timing_ahb.wrHold != 0)
-			--timing_ahb.wrHold;
-	}
-
-	*timing = timing_ahb;
-
-	pr_info("%lu %lu %lu %lu %lu %lu\n", timing->rdHold, timing->rdPulse,
-		timing->rdSetup, timing->wrHold, timing->wrPulse, timing->wrSetup);
-
-}
-
-/*
-* lcd_calibrate_timing_values
-*
-* Converts values in CSL_LCDC_PAR_SPEED_t structures from ns to timing values
-* in multiples of AHB cycle.
-*
-*/
-void lcd_calibrate_timing_values(void)
-{
-	unsigned long clk_rate;
-	struct clk *ahb_clk;
-
-	ahb_clk = clk_get(NULL, "ahb");
-	clk_rate = clk_get_rate(ahb_clk);
-	pr_info("clk_speed=%lu\n", clk_rate);
-
-//	convert_ns_to_ahb(clk_rate, timingReg_ns, &timingReg);
-//	convert_ns_to_ahb(clk_rate, timingMem_ns, &timingMem);
-}
 static int __init lcdc_probe(struct platform_device *pdev)
 {
-	int rc, i, j;
+	int rc, i;
 	struct resource *res;
 	struct lcdc_platform_data_t *pdata;
 	CSL_LCD_RES_T ret;
@@ -1010,7 +911,6 @@ static int __init lcdc_probe(struct platform_device *pdev)
 		LCD_device[LCD_main_panel].te_supported = false;
 	}
       INIT_WORK(&pdata->work, lcd_esd_detect);
-
 #ifdef CONFIG_REGULATOR
 	lcdc_regulator = regulator_get(NULL, "lcd_vcc");
 	if (!IS_ERR_OR_NULL(lcdc_regulator))
@@ -1038,7 +938,6 @@ static int __init lcdc_probe(struct platform_device *pdev)
 	frame_buf_mark.bpp = LCD_device[0].bits_per_pixel;     // it has dependency on h/w 
 	//}} Mark for GetLog - 2/2
 
-
       lcd_esd=GPIO_TO_IRQ(LCD_DET);
     
     #if defined(CONFIG_BCM_LCD_ILI9341_BOE) || defined(CONFIG_BCM_LCD_ILI9341_BOE_REV05)
@@ -1057,7 +956,6 @@ static int __init lcdc_probe(struct platform_device *pdev)
 	/*GPIO configuration must be done before CSL Init */
 	lcd_pwr_on_controll(ON);
 #endif
-	board_sysconfig(SYSCFG_LCD, SYSCFG_INIT);
 
 	sema_init(&gDmaSema, 1);
 
@@ -1079,12 +977,12 @@ static int __init lcdc_probe(struct platform_device *pdev)
 		busCfg.cfg.colModeIn = LCD_IF_CM_I_RGB565P;
 		busCfg.cfg.colModeOut = LCD_IF_CM_O_RGB666;
 	}
-
-	/*This will convert the timing values in ns to values as expected by LCDC
-	in multiples of AHB cycles*/
-	lcd_calibrate_timing_values();
-
-	busCfg.speed = timingReg;
+	busCfg.speed.rdHold = 24;
+	busCfg.speed.rdPulse = 25;
+	busCfg.speed.rdSetup = 0;
+	busCfg.speed.wrHold = 3;
+	busCfg.speed.wrPulse = 3;
+	busCfg.speed.wrSetup = 0;
 	busCfg.io.slewFast = FALSE;
 	busCfg.io.driveStrength = 3;
 	if (LCD_device[LCD_main_panel].te_supported) {
@@ -1105,22 +1003,16 @@ static int __init lcdc_probe(struct platform_device *pdev)
 
 	CSL_LCDC_Enable_CE(handle, false);
 
-
-	for(j=0;j<5;j++)
-	{
-
-    		lcd_id = LCD_DRV_ID_Check(0x04,4);
-   	 		printk("lcd_probe : %x\n",   lcd_id );
-
-		if(lcd_id>0)
-			break;
-	}
+#if defined (CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)	
+    lcd_id = LCD_DRV_ID_Check();
+    printk("lcd_probe : %x\n",   lcd_id );
+#else 
+    lcd_id = LCD_DRV_ID_Check(0x04,4);
+    printk("lcd_probe : %x\n",   lcd_id );
+#endif /*CONFIG_BCM_LCD_S6D05A1X31_COOPERVE*/
 
     if(lcd_id == 0)
         lcd_enable=0;
-
-printk("lcd_probe end: %x, lcd_enable : %x\n",	 lcd_id, lcd_enable );
-
     
 #ifndef CONFIG_BCM_LCD_SKIP_INIT
 	lcd_init_panels();
@@ -1198,8 +1090,6 @@ static int __init lcd_init(void)
 {
 	LCD_PUTS("enter");
 
-	board_sysconfig(SYSCFG_LCD, SYSCFG_INIT);
-
     	gpio_request(LCD_DET, "lcd_esd");
 	gpio_direction_input(LCD_DET);
 
@@ -1221,19 +1111,13 @@ void lcd_pwr_on_controll(int value)
 {
 	LCD_PUTS("enter");
 
-	#if defined(CONFIG_BCM_LCD_ILI9486_BOE)
-	gpio_request(lcd_reset_gpio, "LCD Reset");
-	/* Configure the GPIO pins */
-	gpio_direction_output(lcd_reset_gpio, value);
-	msleep(2);
-	#else
 	board_sysconfig(SYSCFG_LCD, SYSCFG_INIT);
 	gpio_request(lcd_reset_gpio, "LCD Reset");
 	/* Configure the GPIO pins */
 	gpio_direction_output(lcd_reset_gpio, value);
 	msleep(2);
 	board_sysconfig(SYSCFG_LCD, SYSCFG_DISABLE);
-	#endif
+
 }
 
 /****************************************************************************
@@ -1302,9 +1186,6 @@ static long lcd_ioctl(struct file *file,
 			    0)
 				return -EFAULT;
 
-			if(lcd_id==0)
-				break;
-			
 			lcd_display_rect(dev, &r);
 			break;
 		}
@@ -1317,11 +1198,8 @@ static long lcd_ioctl(struct file *file,
 			LCD_DirtyRows_t dirtyRows;
 
 			if (copy_from_user(&dirtyRows, (LCD_DirtyRows_t *) arg,
-					   sizeof (LCD_DirtyRows_t)) != 0)
+					   sizeof dirtyRows) != 0)
 				return -EFAULT;
-				
-			if(lcd_id==0)
-				break;
 
 			lcd_dev_dirty_rows(dev, &dirtyRows);
 			break;
@@ -1332,12 +1210,9 @@ static long lcd_ioctl(struct file *file,
 			LCD_DirtyRect_t dirtyRect;
 
 			if (copy_from_user(&dirtyRect, (LCD_DirtyRect_t *) arg,
-					   sizeof (LCD_DirtyRect_t)) != 0)
+					   sizeof dirtyRect) != 0)
 				return -EFAULT;
 
-			if(lcd_id==0)
-				break;
-			
 			lcd_dev_dirty_rect(dev, &dirtyRect);
 			break;
 		}
@@ -1550,33 +1425,28 @@ static void lcd_send_cmd_sequence(Lcd_init_t *init)
 
 static inline void lcd_init_panels(void)
 {
-	int j;
-
-
-    if(!lcd_id) {	
-		for(j=0;j<5;j++)
-		{	
-				lcd_id = LCD_DRV_ID_Check(0x04,4);
-				printk("lcd_probe : %x\n",	 lcd_id );
-		
-			if(lcd_id>0)
-				break;
-		}
+    	if(!lcd_id) {
+#if defined (CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
+	   	lcd_id = LCD_DRV_ID_Check();
+#else
+	   	lcd_id = LCD_DRV_ID_Check(0x04,4);
+#endif
 	}
-
+		
+#if 0
+	lcd_pwr_on_controll(OFF);
+    mdelay(100);
+	lcd_pwr_on_controll(ON);
+        mdelay(100);
+#endif
 
 #if defined(CONFIG_BCM_LCD_S6D04H0A01) || defined(CONFIG_BCM_LCD_ILI9341_BOE) || defined(CONFIG_BCM_LCD_ILI9341_BOE_REV05) //TOTORO
     if(lcd_id==PANEL_BOE)
         lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
-    else
-	lcd_send_cmd_sequence(power_on_seq_s6d04k1_sdi);
-			
-#elif defined(CONFIG_BCM_LCD_ILI9486_BOE)
-	lcd_send_cmd_sequence(power_on_seq_ili9486_boe);	
-
+    else if(lcd_id==PANEL_SMD)
+	lcd_send_cmd_sequence(power_on_seq_s6d04h0_smd);
 #elif defined(CONFIG_BCM_LCD_S6D04K1)//LUISA_HW00
 	lcd_send_cmd_sequence(power_on_seq_s6d04k1_sdi);
-
 #elif defined(CONFIG_BCM_LCD_S6D04K1_LUISA_HW02)
 	#if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
 	if (lcd_frame_inversion_during_call == 1)//during call
@@ -1584,22 +1454,38 @@ static inline void lcd_init_panels(void)
 	else//idle
 	#endif
 	lcd_send_cmd_sequence(power_on_seq_s6d04k1_sdi);
-
 #elif defined(CONFIG_BCM_LCD_S6D04H0A01_TASSVE)
 	lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
-#else
-	lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
+#elif defined(CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
+	if(lcd_id == PANEL_DTC)
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_DTC);
+	else if(lcd_id==PANEL_AUO)
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_AUO);
+	else if(lcd_id==PANEL_SHARP)
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_SHARP);
+	else
+	{
+		printk("[Caution] Unknown lcd (id: 0x%x )\r\n", lcd_id);	
+		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_DTC);
+	}
 #endif
 
 }
 
 static inline void lcd_poweroff_panels(void)
 {
-	#if defined(CONFIG_BCM_LCD_ILI9486_BOE)
-	lcd_send_cmd_sequence(power_off_seq_ili9486_boe);
-	#else
+#if defined(CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
+	if(lcd_id == PANEL_DTC)	
+		lcd_send_cmd_sequence(power_off_seq_DTC);
+	else if(lcd_id==PANEL_AUO)
+		lcd_send_cmd_sequence(power_off_seq_AUO);
+	else if(lcd_id==PANEL_SHARP)
+		lcd_send_cmd_sequence(power_off_seq_SHARP);		
+	else
+		lcd_send_cmd_sequence(power_off_seq_DTC);
+#else
 	lcd_send_cmd_sequence(power_off_seq);
-	#endif
+#endif
 }
 
 
@@ -1649,19 +1535,18 @@ void lcd_display_test(LCD_dev_info_t * dev)
 
 void lcd_display_rect(LCD_dev_info_t * dev, LCD_Rect_t * r)
 {
-	if(lcd_id == 0)
-		return;
-	
 	int i, j;
 	uint16_t *fb;
 	LCD_DirtyRows_t dirtyRows;
 
 	fb = dev->frame_buffer.virtPtr;
 
-
+	if (r->top < 0)
+		r->top = 0;
 	if (r->top > dev->height)
 		r->top = dev->height;
-
+	if (r->left < 0)
+		r->left = 0;
 	if (r->left > dev->width)
 		r->left = dev->width;
 
@@ -1685,8 +1570,7 @@ void lcd_enter_during_call(void)
 {
 	printk("[LCD] %s, %d\n", __func__, __LINE__ );
 	lcd_frame_inversion_during_call = 1;
-	//lcd_send_cmd_sequence(enter_during_call_seq);
-	write_lcd_sequence_start_call = 1;
+	lcd_send_cmd_sequence(enter_during_call_seq);
 }
 EXPORT_SYMBOL(lcd_enter_during_call);
 
@@ -1694,9 +1578,8 @@ EXPORT_SYMBOL(lcd_enter_during_call);
 void lcd_restore_during_call(void)
 {
 	printk("[LCD] %s, %d\n", __func__, __LINE__ );
-	lcd_frame_inversion_during_call = 0;	
-	//lcd_send_cmd_sequence(restore_during_call_seq);
-	write_lcd_sequence_end_call = 1;
+	lcd_frame_inversion_during_call = 0;
+	lcd_send_cmd_sequence(restore_during_call_seq);
 }
 EXPORT_SYMBOL(lcd_restore_during_call);
 /* -- LCD frame inversion during call -- */

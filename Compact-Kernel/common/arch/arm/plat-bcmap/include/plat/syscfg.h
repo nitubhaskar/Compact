@@ -44,9 +44,6 @@ enum syscfg_mod {
 	SYSCFG_SENSORS,
 	SYSCFG_OTP,
 	SYSCFG_KEYLED,
-#if defined(CONFIG_BOARD_ACAR)	
-	SYSCFG_SERIAL,
-#endif	
 };
 
 enum syscfg_op {

@@ -1,5 +1,5 @@
 /*
-	©2007 Broadcom Corporation
+	?007 Broadcom Corporation
 
 	Unless you and Broadcom execute a separate written software license
 	agreement governing use of this software, this software is licensed to you
@@ -29,9 +29,12 @@
 #include "ipc_buffer.h"
 #include "ipc_trace.h"
 
+#ifndef UNDER_LINUX
+#include <stdlib.h>
+#endif
+
 extern UInt32 TIMER_GetValue(void);
 
-#define MAX_WAIT_TIME 20000 //20 secs
 //============================================================
 // Defines
 //============================================================
@@ -443,6 +446,7 @@ void IPC_ReportFlowControlEvent (IPC_BufferPool_T *	PoolPtr, IPC_FlowCtrlEvent_T
 			// Something badly wrong
 		break;
 		}
+
 #ifndef UNDER_LINUX
 		if (PoolPtr->DestinationEndpointId != IPC_EP_LogApps)
 		{
@@ -573,7 +577,7 @@ IPC_Buffer IPC_AllocateBufferWait (IPC_BufferPool Pool, IPC_U32 MilliSeconds)
 	IPC_BufferPool_T *	PoolPtr	= IPC_PoolToPtr (Pool);
 	IPC_Buffer			Buffer;
 	IPC_ReturnCode_T	errCode;
-	UInt32				curTick, endTick, waitTime;
+	UInt32				curTick, endTick;
 	UInt32				beforeTick, afterTick;
 
 	curTick = 0;
@@ -581,74 +585,54 @@ IPC_Buffer IPC_AllocateBufferWait (IPC_BufferPool Pool, IPC_U32 MilliSeconds)
 
 	while(curTick < endTick)
 	{
-		// Try straight allocate first (saves event operations most of the time)
-		Buffer = IPC_AllocateBuffer (Pool);
-		if (Buffer)
-		{
-			return Buffer;
-		}
+	// Try straight allocate first (saves event operations most of the time)
+	Buffer = IPC_AllocateBuffer (Pool);
+	if (Buffer)
+	{
+		return Buffer;
+	}
 
-		// Check Event exists
-		if (!PoolPtr->EmptyEvent)
-		{
-			// Can't suspend without an event flag
-			IPC_TRACE (IPC_Channel_Error, "IPC_AllocateBufferWait", "No Event Flag for Pool %08X", Pool, 0, 0, 0);
-			return 0;
-		}
+	// Check Event exists
+	if (!PoolPtr->EmptyEvent)
+	{
+		// Can't suspend without an event flag
+		IPC_TRACE (IPC_Channel_Error, "IPC_AllocateBufferWait", "No Event Flag for Pool %08X", Pool, 0, 0, 0);
+		return 0;
+	}
 
-		// Clear event before waiting on it
-		if (IPC_OK != IPC_EVENT_CLEAR (PoolPtr->EmptyEvent))
-		{
-			IPC_TRACE (IPC_Channel_Error, "IPC_AllocateBufferWait", "Cannot clear Event Flag %08P for Pool %08X",
-				PoolPtr->EmptyEvent, Pool,  0, 0);
-			return 0;
-		}
+	// Clear event before waiting on it
+	if (IPC_OK != IPC_EVENT_CLEAR (PoolPtr->EmptyEvent))
+	{
+		IPC_TRACE (IPC_Channel_Error, "IPC_AllocateBufferWait", "Cannot clear Event Flag %08P for Pool %08X",
+			PoolPtr->EmptyEvent, Pool,  0, 0);
+		return 0;
+	}
 
-		// Check in case the event was set  before the clear
-		Buffer = IPC_AllocateBuffer (Pool);
-		if (Buffer)
-		{
-			return Buffer;
-		}
+	// Check in case the event was set  before the clear
+	Buffer = IPC_AllocateBuffer (Pool);
+	if (Buffer)
+	{
+		return Buffer;
+	}
 
-		// Now can safely wait for the event to be set by the buffer free
+	// Now can safely wait for the event to be set by the buffer free
 		IPC_TRACE (IPC_Channel_FlowControl, "IPC_AllocateBufferWait", "Pool %08X Empty, waiting for %d Milliseconds, total=%d", Pool, (endTick - curTick), MilliSeconds, 0);
 
 
-		/*
-		
-	    Race Condition:
-		T1 PC is just before IPC_EVENT_WAIT
-		T2 PC is just before IPC_EVENT_CLEAR
-		(T1 & T2 preempted ) HIPC frees several buffers and sets IPC_EVENT_SET
-		T2 resumes and calls IPC_EVENT_CLEAR and then IPC_AllocateBuffer() which is successfull and returns
-		T1 resume and calls IPC_EVENT_WAIT
-		HIPC resume but nevers calls IPC_EVENT_SET since there are more than 1 free buffer available 
-		
-		Solution ( Patch ):
-		T1 will wait atmost 20 secs and retries again. So if the race condition happen, then T1 will recover after 20 secs wait.
-		*/
-		waitTime = (endTick - curTick);
-#ifndef UNDER_LINUX
-		if (PoolPtr->DestinationEndpointId == IPC_EP_Capi2App || PoolPtr->DestinationEndpointId == IPC_EP_Capi2Cp)
-		{
-			waitTime = (waitTime < MAX_WAIT_TIME) ? waitTime : MAX_WAIT_TIME;
-		}
-#endif
 
 		beforeTick = TIMER_GetValue();
-		errCode = IPC_EVENT_WAIT (PoolPtr->EmptyEvent, waitTime);
+		errCode = IPC_EVENT_WAIT (PoolPtr->EmptyEvent, (endTick - curTick));
 		afterTick = TIMER_GetValue();
 
 		//Handle wrap around for 0xFFFFFFFF
 		curTick += (UInt32)(afterTick - beforeTick);
 
 		if (IPC_ERROR == errCode )
-		{
-			IPC_TRACE (IPC_Channel_Error, "IPC_AllocateBufferWait", "Error from IPC_EVENT_WAIT; Event Flag %08P for Pool %08X",
-				PoolPtr->EmptyEvent, Pool,	0, 0);
-			return 0;
-		}
+	{
+		IPC_TRACE (IPC_Channel_Error, "IPC_AllocateBufferWait", "Error from IPC_EVENT_WAIT; Event Flag %08P for Pool %08X",
+			PoolPtr->EmptyEvent, Pool,	0, 0);
+		return 0;
+	}
 		else if(IPC_OK == errCode)
 		{
 			continue;//retry

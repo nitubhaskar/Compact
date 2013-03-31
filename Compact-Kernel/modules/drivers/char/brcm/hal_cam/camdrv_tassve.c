@@ -196,6 +196,7 @@ CAM_Sensor_Supported_Params_t CamPrimaryDefault_st =
 	1,   //Number of video or preview mode the sensor can support
 	{
 		{640,480}
+
 	}, 
 	1, //Number of output format for preview/video mode
 	{CamDataFmtYCbCr},  //output format for preview/video mode
@@ -687,7 +688,6 @@ typedef struct samsung_short_t{
         unsigned short data;
 } sr200pc10_short_t;
 #endif
-
 
 // --------I2C Specific Variables  
 static CamIntfConfig_I2C_st_t CamIntfCfgI2C = {0, 0, 0, 0, 0, 0};                                                 
@@ -2056,6 +2056,7 @@ HAL_CAM_Result_en_t CAMDRV_SetDTPmode(unsigned int testmode,CamSensorSelect_t se
     return result;
 }
 
+//BYKIM_MODE
 HAL_CAM_Result_en_t CAMDRV_Setmode(
         CamMode_t mode,
         CamSensorSelect_t sensor

@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_phonebk_msg.c
@@ -32,6 +34,9 @@ the GPL, without Broadcom's express prior written consent.
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -83,6 +88,7 @@ the GPL, without Broadcom's express prior written consent.
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -211,7 +217,7 @@ xdr_USIM_PBK_INFO_t(XDR *xdrs, USIM_PBK_INFO_t* info)
 {
 	XDR_LOG(xdrs,"USIM_PBK_INFO_t")
 
-	if( xdr_USIM_PBK_ADN_SET_t(xdrs, &info->adn_set) &&
+	if( xdr_USIM_PBK_ADN_SET_t(xdrs, &info->adn_set)&&
 		xdr_USIM_PBK_CONFIG_LIST_t(xdrs, &info->config_info) &&
 		xdr_opaque(xdrs, (caddr_t) info->num_of_anr_entry, MAX_NUM_OF_ADN_SET) && 
 		xdr_opaque(xdrs, (caddr_t) info->num_of_anr_digit, MAX_NUM_OF_ADN_SET) && 

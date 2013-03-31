@@ -75,8 +75,6 @@ LCD_dev_info_t LCD_device[1] = {
 	 .width		= LCD_WIDTH,
 	 .bits_per_pixel= LCD_BITS_PER_PIXEL,
 	 .te_supported	= true,
-	 .physical_height = 40,	 
-	 .physical_width = 50,	
 	 }
 };
 

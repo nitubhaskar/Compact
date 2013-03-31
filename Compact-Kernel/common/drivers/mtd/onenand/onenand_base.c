@@ -3761,15 +3761,13 @@ static int onenand_probe(struct mtd_info *mtd)
 
 	/* Restore system configuration 1 */
 	this->write_word(syscfg, this->base + ONENAND_REG_SYS_CFG1);
+#endif
 
 	/* Workaround */
 	if (syscfg & ONENAND_SYS_CFG1_SYNC_WRITE) {
 		bram_maf_id = this->read_word(this->base + ONENAND_REG_MANUFACTURER_ID);
 		bram_dev_id = this->read_word(this->base + ONENAND_REG_DEVICE_ID);
 	}
-#endif
-	bram_maf_id = this->read_word(this->base + ONENAND_REG_MANUFACTURER_ID);
-	bram_dev_id = this->read_word(this->base + ONENAND_REG_DEVICE_ID);
 
 	/* Check manufacturer ID */
 	if (onenand_check_maf(bram_maf_id))

@@ -34,6 +34,9 @@
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -142,6 +145,7 @@
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -193,7 +197,7 @@ Result_t CAPI2_GenAppsMsgHnd(RPC_Msg_t* pMsg, CAPI2_ReqRep_t* reqRep)
 
 
 	case MSG_SIMLOCK_GET_STATUS_REQ:
-		_DEF(CAPI2_SimLockApi_GetStatus)(&(reqRep->clientInfo),reqRep->req_rep_u.CAPI2_SimLockApi_GetStatus_Req.sim_data,reqRep->req_rep_u.CAPI2_SimLockApi_GetStatus_Req.is_testsim);
+		_DEF(CAPI2_SIMLOCK_GetStatus)(pMsg->tid, pMsg->clientID,reqRep->req_rep_u.CAPI2_SIMLOCK_GetStatus_Req.sim_data,reqRep->req_rep_u.CAPI2_SIMLOCK_GetStatus_Req.is_testsim);
 		break;
 	case MSG_INTERTASK_MSG_TO_AP_REQ:
 		_DEF(CAPI2_InterTaskMsgToAP)(pMsg->tid, pMsg->clientID,reqRep->req_rep_u.CAPI2_InterTaskMsgToAP_Req.inPtrMsg);

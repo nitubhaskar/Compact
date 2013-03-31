@@ -837,8 +837,8 @@ int netpoll_setup(struct netpoll *np)
 	unsigned long flags;
 	int err;
 
-	/* Coverity check */ 
-	ndev = dev_get_by_name(&init_net, np->dev_name);
+	if (np->dev_name)
+		ndev = dev_get_by_name(&init_net, np->dev_name);
 	if (!ndev) {
 		printk(KERN_ERR "%s: %s doesn't exist, aborting.\n",
 		       np->name, np->dev_name);

@@ -39,8 +39,6 @@ typedef enum {
   SVC_MODE_MONITOR,                      /* 0x04 : Monitor screen mode */
   SVC_MODE_PHONE_TEST,                /* 0x05 : Phone test mode ( just for the debugging ) */
   SVC_MODE_OPERATOR_SPECIFIC_TEST,    /*0x06: Specific test mode required by operator*/
-  SVC_MODE_MONITOR_S,    /*+20110822 HKPARK FOR DebugScreen Slave*/
-  SVC_MODE_TEST_MANUAL_S, /*+20110824 HKPARK SLAVE BAND SELECTION*/	
   SVC_MODE_MAX
 } svc_mode_type;
 
@@ -233,8 +231,7 @@ typedef enum{
 /* If Service mode is SVC_MODE_NAM */ 
 typedef enum { 
 	SVC_MODE_UPDATE_READSWVER=0x0001,
-	SVC_MODE_UPDATE_MONITOR,
-	SVC_MODE_UPDATE_MONITOR_S /*+20110822 HKPARK FOR DebugScreen Slave*/
+	SVC_MODE_UPDATE_MONITOR
 } svc_mode_update_menu;
 /*-20110418 BCOM PATCH FOR DebugScreen*/
 

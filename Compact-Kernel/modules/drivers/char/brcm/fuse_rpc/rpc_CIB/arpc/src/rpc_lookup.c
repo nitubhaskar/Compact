@@ -20,6 +20,11 @@
 *	serialize/deserialize.
 *
 ****************************************************************************/
+#ifndef UNDER_LINUX
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h> /* for strlen */
+#endif
 #include "mobcom_types.h"
 #include "rpc_global.h"
 

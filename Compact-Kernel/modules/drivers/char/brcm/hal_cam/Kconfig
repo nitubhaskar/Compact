@@ -45,20 +45,6 @@ config BCM_CAM_SR200PC10
         ---help---
         Camera driver for SR200PC10
 
-config BCM_CAM_SR300PC20
-        bool "Camera SR300PC20"
-        depends on BRCM_HAL_CAM
-        default Y
-        ---help---
-        Camera driver for SR300PC20
-
-config BCM_CAM_SR030PC30
-        bool "Camera SR030PC30"
-        depends on BRCM_HAL_CAM
-        default Y
-        ---help---
-        Camera driver for SR030PC30
-
 config BCM_CAM_ISX005
         bool "Camera ISX005"
         depends on BRCM_HAL_CAM
@@ -80,13 +66,6 @@ config BCM_CAM_S5K4ECGX
         ---help---
         Camera driver for S5K4ECGX
 
-config BCM_CAM_DB8V61A
-        bool "Camera DB8V61A"
-        depends on BRCM_HAL_CAM
-        default Y
-        ---help---
-        Camera driver for DB8V61A
-
 config CAM_CSI2
 	bool "CSI2 interface for STV0987"
 	depends on BCM_CAM_STV0987
@@ -96,7 +75,7 @@ config CAM_CSI2
 
 config CAM_CPI
 	bool "CPI interface for SR200PC10"
-	depends on (BCM_CAM_STV0987 && !CAM_CSI2)||BCM_CAM_SR200PC10||BCM_CAM_ISX005||BCM_CAM_S5K5CCGX||BCM_CAM_S5K4ECGX||BCM_CAM_SR300PC20
+	depends on (BCM_CAM_STV0987 && !CAM_CSI2)||BCM_CAM_SR200PC10||BCM_CAM_ISX005||BCM_CAM_S5K5CCGX||BCM_CAM_S5K4ECGX
         default Y
         ---help---
         Camera host interface CPI for SR200PC10

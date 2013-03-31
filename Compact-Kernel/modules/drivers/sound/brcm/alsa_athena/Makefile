@@ -38,7 +38,7 @@
 #EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/inc/
 
 EXTRA_CFLAGS += -DUNDER_LINUX
-EXTRA_CFLAGS += -D _ATHENA_  -D MSP -D FUSE_DUAL_PROCESSOR_ARCHITECTURE -D FUSE_APPS_PROCESSOR -D PMU_MAX8986 -D CHAL_NDEBUG_BUILD -D CHIP_REVISION=20 -D VPU_INCLUDED -D ATHENA_INCLUDE_VOIP -DENABLE_GPIO -DENABLE_VOIF
+EXTRA_CFLAGS += -D _ATHENA_  -D MSP -D FUSE_DUAL_PROCESSOR_ARCHITECTURE -D FUSE_APPS_PROCESSOR -D PMU_MAX8986 -D CHAL_NDEBUG_BUILD -D CHIP_REVISION=20 -D VPU_INCLUDED -D ATHENA_INCLUDE_VOIP -DENABLE_GPIO
 #EXTRA_CFLAGS += -D NO_SYSPARAM -D NO_PMU
 
 
@@ -115,7 +115,7 @@ snd-brcm-omx-objs := brcm_alsa_dev.o
 snd-brcm-omx-objs += brcm_alsa_pcm.o
 snd-brcm-omx-objs += brcm_alsa_ctl.o
 snd-brcm-omx-objs += brcm_audio_thread.o
-#snd-brcm-omx-objs += audio_stubs.o
+snd-brcm-omx-objs += audio_stubs.o
 snd-brcm-omx-objs += brcm_auddrv_test.o
 snd-brcm-omx-objs += brcm_audio_policy.o
 snd-brcm-omx-objs += audio/audio_controller/src/audio_controller_audvoc.o
@@ -134,7 +134,6 @@ snd-brcm-omx-objs += soc/chal/modules/audio/audvoc/src/chal_audiopcmif.o
 snd-brcm-omx-objs += soc/chal/modules/audio/audvoc/src/chal_audiomixertap.o
 snd-brcm-omx-objs += soc/chal/modules/audio/audvoc/src/chal_audiomixer.o
 snd-brcm-omx-objs += soc/chal/modules/audio/audvoc/src/chal_audiomic.o
-snd-brcm-omx-objs += soc/chal/modules/audio/audvoc/src/chal_dsppcm.o
 
 #CSL Source Files
 snd-brcm-omx-objs += soc/csl/audio/src/csl_aud_drv_hw.o

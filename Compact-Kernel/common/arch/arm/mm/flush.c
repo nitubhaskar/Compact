@@ -17,7 +17,6 @@
 #include <asm/smp_plat.h>
 #include <asm/system.h>
 #include <asm/tlbflush.h>
-#include <asm/outercache.h>
 
 #include "mm.h"
 
@@ -71,10 +70,8 @@ void flush_cache_range(struct vm_area_struct *vma, unsigned long start, unsigned
 		    : "cc");
 	}
 
-	if (vma->vm_flags & VM_EXEC) {
+	if (vma->vm_flags & VM_EXEC)
 		__flush_icache_all();
-                outer_clean_range(0, 130*1024);
-        }
 }
 
 void flush_cache_page(struct vm_area_struct *vma, unsigned long user_addr, unsigned long pfn)
@@ -87,7 +84,6 @@ void flush_cache_page(struct vm_area_struct *vma, unsigned long user_addr, unsig
 	if (cache_is_vipt_aliasing()) {
 		flush_pfn_alias(pfn, user_addr);
 		__flush_icache_all();
-                outer_clean_range(0, 130*1024);
 	}
 
 	if (vma->vm_flags & VM_EXEC && icache_is_vivt_asid_tagged())
@@ -119,7 +115,6 @@ void flush_ptrace_access(struct vm_area_struct *vma, struct page *page,
 	if (cache_is_vipt_aliasing()) {
 		flush_pfn_alias(page_to_pfn(page), uaddr);
 		__flush_icache_all();
-                outer_clean_range(0, 130*1024);
 		return;
 	}
 
@@ -241,7 +236,6 @@ static void __flush_dcache_aliases(struct address_space *mapping, struct page *p
 void flush_dcache_page(struct page *page)
 {
 	struct address_space *mapping;
-	unsigned int paddr;
 
 	/*
 	 * The zero page is never written to, so never has any dirty
@@ -264,9 +258,6 @@ void flush_dcache_page(struct page *page)
 		else if (mapping)
 			__flush_icache_all();
 	}
-
-	paddr = page_to_phys(page);
-	outer_flush_range(paddr, paddr + PAGE_SIZE);
 }
 EXPORT_SYMBOL(flush_dcache_page);
 
@@ -300,7 +291,6 @@ void __flush_anon_page(struct vm_area_struct *vma, struct page *page, unsigned l
 		 */
 		flush_pfn_alias(pfn, vmaddr);
 		__flush_icache_all();
-                outer_clean_range(0, 130*1024);
 	}
 
 	/*

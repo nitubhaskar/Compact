@@ -260,8 +260,7 @@ Result_t csl_audio_render_start ( UInt32 streamID )
 			FALSE,	//this param bears no meaning in this context.
 			AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 			AUDIO_CHANNEL_STEREO,
-			AUDDRV_REASON_DATA_DRIVER,
-			NULL
+			AUDDRV_REASON_DATA_DRIVER
        );
 
 	return RESULT_OK;
@@ -355,8 +354,7 @@ Result_t csl_audio_render_resume( UInt32 streamID )
 			FALSE,	//this param bears no meaning in this context.
 			AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 			AUDIO_CHANNEL_STEREO,
-			AUDDRV_REASON_DATA_DRIVER,
-			NULL
+			AUDDRV_REASON_DATA_DRIVER
        );
 	}
 	else if (streamID == CSL_AUDVOC_STREAM_POLYRINGER)
@@ -371,8 +369,7 @@ Result_t csl_audio_render_resume( UInt32 streamID )
 			FALSE,	//this param bears no meaning in this context.
 			AUDIO_SAMPLING_RATE_UNDEFINED,  //this param bears no meaning in this context.
 			AUDIO_CHANNEL_STEREO,
-			AUDDRV_REASON_DATA_DRIVER,
-			NULL
+			AUDDRV_REASON_DATA_DRIVER
        );			
 	}
 #else
@@ -424,7 +421,7 @@ Result_t csl_audio_render_get_dma_params( UInt32 streamID, UInt32* dma_addr, UIn
     *xfer_size =  *((UInt32*)(dma_ch0_control_address + CHAN_REG_INCREMENT * dmaChAudio));
 
     *xfer_size &= (0x00000fff);
-    return RESULT_OK;
+
 }
 //
 // local functionss

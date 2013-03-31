@@ -62,10 +62,6 @@ bma222acc_t g_acc;
 
 #define	ACC_ENABLED 1
 
-#if defined(CONFIG_SENSORS_LUISA)
-extern void prox_ctrl_regulator_forced(void);
-#endif
-
 /* globe variant */
 static struct i2c_client *bma222_client = NULL;
 struct class *acc_class;
@@ -119,68 +115,6 @@ static int bma222_proc_read(char *page, char **start, off_t off, int count, int 
 	return len;
 }
 #endif	//BMA222_PROC_FS
-
-
-#if defined(CONFIG_SENSORS_HSCD)
-static atomic_t flgEna;
-static atomic_t delay;
-
-int accsns_get_acceleration_data(int *xyz)
-{    
-	bma222acc_t acc;
-	int err = -1;
-
-        err = bma222_read_accel_xyz(&acc);
-
-        xyz[0] = ((int)(acc.x)*4);   // raw * 4
-        xyz[1] = ((int)(acc.y)*4);
-        xyz[2] = ((int)(acc.z)*4);               
-    
-	ACCDBG("[BMA222] Acc_I2C, x:%d, y:%d, z:%d\n", xyz[0], xyz[1], xyz[2]);
-
-        g_acc.x = acc.x;
-        g_acc.y = acc.y;
-        g_acc.z = acc.z;
-
-	return err;
-}
-
-void accsns_activate(int flgatm, int flg, int dtime)
-{
-    int ret = 0;    
-
-    printk(KERN_INFO "[BMA222] accsns_activate : %d, dtime=%d\n", flg, dtime);
-
-    if (flg != 0) flg = 1;
-
-    //Power modes
-    if (flg == 0) //sleep
-    {
-        if((ret = bma222_set_mode(bma222_MODE_SUSPEND)) != 0)	// 2: suspend mode
-            printk(KERN_ERR "[%s] Change to Suspend Mode is failed\n",__FUNCTION__);            
-    }
-    else 
-    {            
-        if((ret = bma222_set_mode(bma222_MODE_NORMAL)) != 0)	// Normal mode
-            printk(KERN_ERR "[%s] Change to Normal Mode is failed\n",__FUNCTION__);
-
-        if((ret = bma222_set_range(0)) != 0)	// range +/- 2G
-            printk(KERN_ERR "[%s] Set range is failed\n",__FUNCTION__);
-
-	if((ret = bma222_set_bandwidth(1)) != 0)	//bandwidth 250Hz(5) 125Hz(4) 62.50Hz(3) 31.25Hz(2) 15.63Hz(1) for filtering noise
-            printk(KERN_ERR "[%s] Set Bandwidth is failed\n",__FUNCTION__);        
-    }
-
-    mdelay(2);
-    
-    if (flgatm) {
-        atomic_set(&flgEna, flg);
-        atomic_set(&delay, dtime);
-    }
-}
-EXPORT_SYMBOL(accsns_get_acceleration_data);
-EXPORT_SYMBOL(accsns_activate);
-#endif
 
 /*************************************************************************/
 /*						BMA220 I2C_API						   */
@@ -267,16 +201,9 @@ static ssize_t bma222_fs_read(struct device *dev, struct device_attribute *attr,
 	bma222acc_t acc;
 	//bma222_read_accel_xyz(&acc);
 
-	if (g_bma222->state & ACC_ENABLED)     
-	{
-            acc.x = g_acc.x;
-            acc.y = g_acc.y;
-            acc.z = g_acc.z;
-	}
-        else
-        {
-	    bma222_read_accel_xyz(&acc);
-        }        
+        acc.x = g_acc.x;
+        acc.y = g_acc.y;
+        acc.z = g_acc.z;
 
        // printk("x: %d,y: %d,z: %d\n", acc.x, acc.y, acc.z);
 	count = sprintf(buf,"%d,%d,%d\n", acc.x, acc.y, acc.z );
@@ -1058,8 +985,8 @@ static int bma222_resume(struct i2c_client *client)
 	return 0;
 }
 
-//static unsigned short normal_i2c[] = { I2C_CLIENT_END};
-//I2C_CLIENT_INSMOD_1(bma222);
+static unsigned short normal_i2c[] = { I2C_CLIENT_END};
+I2C_CLIENT_INSMOD_1(bma222);
 
 static const struct i2c_device_id bma222_id[] = {
 	{ "bma222", 0 },
@@ -1078,11 +1005,9 @@ static struct i2c_driver bma222_driver = {
 //	.address_data	= &addr_data,		// 3.2 Kernel
 	.probe		= bma222_probe,
 	.remove		= bma222_remove,
-//	.detect		= bma222_detect,
-#if !defined(CONFIG_SENSORS_HSCD)
+	.detect		= bma222_detect,
 	.suspend	= bma222_suspend,
 	.resume		= bma222_resume,
-#endif	
 };
 
 static int __init BMA222_init(void)
@@ -1090,15 +1015,6 @@ static int __init BMA222_init(void)
 	struct device *dev_t;
 
 	printk(KERN_INFO "[BMA222] %s\n",__FUNCTION__);
-
-#if defined(CONFIG_SENSORS_LUISA)
-        prox_ctrl_regulator_forced();
-#endif
-
-#if defined(CONFIG_SENSORS_HSCD)
-	atomic_set(&flgEna, 0);
-	atomic_set(&delay, 200);
-#endif
 
 	acc_class = class_create(THIS_MODULE, "accelerometer");
 

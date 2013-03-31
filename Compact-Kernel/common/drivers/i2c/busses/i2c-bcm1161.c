@@ -314,10 +314,12 @@ static void bcm1161_i2c_reset_controller(void *base)
 	int timeout = 100;
 
 	REG_I2C_SFTRST(base) = 0x01;
-	udelay(10);
-	REG_I2C_SFTRST(base) = 0x00;
-	udelay(10);
 
+	while ((REG_I2C_SFTRST(base) != 0x00) && --timeout)
+		udelay(10);
+
+	if (!timeout)
+		pr_err("Error resetting I2C controller %x\n", base);
 #else
 	REG_I2C_CS(base) = 0;
 	udelay(80);
@@ -445,7 +447,7 @@ void setrate(void *base, struct bcm1161_i2c *i2c, unsigned short spd)
 				       REG_I2C_CLKEN_AUTOSENSE_EN) |
 		    (I2C_M << 4) | (I2C_N << 1) | REG_I2C_CLKEN_CLKEN;
 	}
-	return;
+	return 0;
 
 	/* pr_info("setrate rate=%d, m=%d, n=%d, p=%d, div=%d, tim=0x%X,
 	   clk_en=0x%X\n", spd, I2C_M, I2C_N, I2C_P, DIV,
@@ -804,7 +806,7 @@ static int bcm1161_xfer(struct i2c_adapter *i2c_adap,
 	struct i2c_msg *pmsg;
 	struct bcm1161_i2c *i2c;
 
-	int i, ret = -EIO;
+	int i, ret;
 	unsigned short nak_ok;
 	struct i2c_host_platform_data *pdata;
 	struct i2c_client *client = NULL;
@@ -818,10 +820,6 @@ static int bcm1161_xfer(struct i2c_adapter *i2c_adap,
 
 	if (dev) {
 		client = i2c_verify_client(dev);
-		if(client == NULL){
-			goto ver_client_fail;
-		}
-
 		pcdata =
 		    (struct i2c_slave_platform_data *)client->dev.platform_data;
 		if (num && pcdata)
@@ -896,7 +894,6 @@ xferend:
 
 	if (pdata && pdata->set_oeb)
 		pdata->set_oeb(i2c->adapter.id, true);
-ver_client_fail:
 	clk_disable(i2c->clk);
 
 	if (ret < 0 && i2c_adap->retries)
@@ -953,7 +950,7 @@ int __init i2c_bcm1161_probe(struct platform_device *pdev)
 	int rc;
 	struct resource *res;
 	struct i2c_host_platform_data *pdata = pdev->dev.platform_data;
-	int irq, str_length;
+	int irq;
 
 	dev_dbg(&pdev->dev, "<%s>\n", __func__);
 
@@ -975,13 +972,7 @@ int __init i2c_bcm1161_probe(struct platform_device *pdev)
 	if (!i2c)
 		return -ENOMEM;
 
-	if(strlen(pdev->name) > (sizeof(char) * 48)){
-		dev_err(&pdev->dev, "device name too long\n");
-		return -E2BIG;
-	} else {
-		strcpy(i2c->adapter.name, pdev->name);
-	}
-
+	strcpy(i2c->adapter.name, pdev->name);
 	i2c->adapter.owner = THIS_MODULE;
 	i2c->adapter.algo = &bcm1161_algo;
 	i2c->adapter.dev.parent = &pdev->dev;

@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   audio_consts.h
@@ -96,7 +97,7 @@ typedef enum  AUDIO_INPUT_CHANNEL_t
 }AUDIO_INPUT_CHANNEL_t;
 
 #define	AUDIO_MODE_NUMBER		9	///< Up to 9 Audio Profiles (modes) after 213x1
-#define	AUDIO_APP_NUMBER		12	///< number of profiles (applications), can be extended
+#define	AUDIO_APP_NUMBER		8	///< number of profiles (applications), can be extended
 #define NUM_OF_ENTRY_IN_DSP_VOICE_VOLUME_TABLE		15 
 #define NUM_OF_ENTRY_IN_FM_RADIO_DIGITAL_VOLUME		15 
 
@@ -350,7 +351,7 @@ typedef enum {
     PARAM_VOICE_DAC,									// 76
 	//PARAM_AUDIO_CHANNEL,								// 77
 	//PARAM_AUDIO_DEVICE_TYPE,							// 78
-	PARAM_NOISE_SUPP_MIN = 79,								// 79
+	PARAM_NOISE_SUPP_MIN=79,								// 79
 	PARAM_NOISE_SUPP_MAX,								// 80
 	PARAM_VOLUME_STEP_SIZE,								// 81
 	PARAM_NUM_SUPPORTED_VOLUME_LEVELS,					// 82
@@ -549,12 +550,12 @@ typedef enum {
 
 	PARAM_ECHO_CANCEL_MIC2_INPUT_GAIN=247,			   	// 247
 	PARAM_ECHO_CANCEL_MIC2_OUTPUT_GAIN,					// 248
-	PARAM_ECHO_MIC2_FEED_FORWARD_GAIN,					// 249 
+	PARAM_ECHO_MIC2_FEED_FORWARD_GAIN,					// 249
 
 	PARAM_NLP_DISTORTION_COUPLING = 250,				// 250
 
 	PARAM_DSP_VOICE_VOLUME_TABLE = 291,					// 291
-	PARAM_FM_RADIO_DIGITAL_VOLUME = 292,				// 292
+	PARAM_FM_RADIO_DIGITAL_VOLUME = 292,					// 292
 	PARAM_REVERB_TIME_CONSTANT 	  = 293,				// 293
 	PARAM_REVERB_LEVEL 			  = 294,				// 294
 	PARAM_SMART_COMPRESS_G1LIN 	  = 295,				// 295

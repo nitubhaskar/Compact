@@ -77,20 +77,13 @@ static struct miscdevice ecs_ctrl_device = {
 	.fops = &ecs_ctrl_fops,
 };
 
+extern int proximity_get_int_value(void);
+
 #if defined(CONFIG_SENSORS_TAOS)          
 extern short taos_get_proximity_value(void);
 #else
 extern int gp2a_get_proximity_value(void);
 #endif
-
-
-void proximity_set_init_value(void)
-{
-        input_report_abs(ecs_data_device, ABS_DISTANCE, 1);
-        input_sync(ecs_data_device);        
-}
-EXPORT_SYMBOL(proximity_set_init_value);
-
 
 static int ecs_ctrl_open(struct inode *inode, struct file *file)
 {
@@ -205,6 +198,13 @@ static int ecs_ctrl_ioctl(struct inode *inode, struct file *file,
 		if (flag < 0 || flag > 1)
 			return -EINVAL;
 		atomic_set(&p_flag, flag);
+
+                if(flag==1)
+                {
+                    input_report_abs(ecs_data_device, ABS_DISTANCE, ((proximity_get_int_value() == 0)? 0:1));
+                    input_sync(ecs_data_device);                    
+                }
+        
 		break;
 	case ECOMPASS_IOC_GET_PFLAG:
 		MECSDBG("[MECS] ECOMPASS_IOC_GET_PFLAG\n");               

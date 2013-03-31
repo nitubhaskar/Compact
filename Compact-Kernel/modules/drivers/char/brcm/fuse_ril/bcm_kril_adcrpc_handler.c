@@ -142,7 +142,7 @@ void HandleAdcEventRspCb(RPC_Msg_t* pMsg,
 		}
 		else
 		{
-            KRIL_DEBUG(DBG_ERROR, "** Unexpected RPC simple message type: %ld\r\n", pSimpMsg->type );
+            KRIL_DEBUG(DBG_ERROR, "** Unexpected RPC simple message type: %d\r\n", pSimpMsg->type );
 		}
 	}
 	else 

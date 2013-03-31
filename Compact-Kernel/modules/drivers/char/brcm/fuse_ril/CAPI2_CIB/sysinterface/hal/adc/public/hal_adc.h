@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-  
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *	@file		hal_adc.h
@@ -24,45 +25,14 @@ the GPL, without Broadcom's express prior written consent.
 *	@brief		Device Independent API for ADC.
 
 \section setup Setup
-To initialize ADC driver and read the ADC channels.
+To initialize ADC driver and configure the ADC using the default configuration from the system data base:
 \code
-
-HAL_ADC_Result_en_t ret;
-
-	ret = HAL_ADC_Init(void);
-
-	if(HAL_ADC_RESULT_OK!=ret)
-			printf("HAL_ADC_Init failed");
-
+HAL_ADC_Init(void);
 \endcode
 
 \section actions Actions
 
-The HAL_ADC_Ctrl() is used to control the read request of the ADC hardware. The action
-field specified by HAL_ADC_Action_en_t. The data feild is depending on which action. 
-The callback assigns a callback function the complete of the request. The following example
-shows how to get a general reading from ADC channel number 2 and update a variable "adc2data".
-
-\code
-HAL_ADC_Result_en_t ret;
-HAL_ADC_ReadConfig_st_t unalRd;
-static UInt16 adc2data;
-
-	unalRd.adc_basic.ch=2;
-	unalRd.adc_basic.pAdcData=&adc2data
-
-	ret = HAL_ADC_Ctrl( (HAL_ADC_Action_en_t) HAL_ADC_ACTION_GET_UNALIGN,	&unalRd, NULL);	
-	if(HAL_ADC_RESULT_OK==ret)
-		printf("Adc channel %d is a value of %x", unalRd.adc_basic.ch,adc2data);
-	
-\endcode
-
 ****************************************************************************/
-/**
- * @addtogroup HAL_ADC
- * @{
- */
-
 #if !defined( _HAL_ADC_H_ )
 #define _HAL_ADC_H_
 
@@ -102,10 +72,10 @@ typedef enum
 typedef enum
 {
 	HAL_ADC_RESULT_OK,  			///< Get ADC Measurement result.
-	HAL_ADC_RESULT_ERROR,			///< Error ADC read result invalid.
+	HAL_ADC_RESULT_ERROR,		///< Error ADC read result invalid.
 	HAL_ADC_RESULT_BUSY, 			///< ADC read aligned request in progress.
 	HAL_ADC_RESULT_NOT_INIT,		///< Register the ADC RealTimeMeasurement read complete callback
-	HAL_ADC_RESULT_NO_SUPPORT,		///< The HAL feature is not supported by the driver
+	HAL_ADC_RESULT_NO_SUPPORT,	///< The HAL feature is not supported by the driver
 }HAL_ADC_Result_en_t;
 
 //! The ADC Callback results.
@@ -121,7 +91,7 @@ typedef struct
 {
 	HAL_ADC_Ch_en_t 		ch;			///< input ADC channel
 	UInt16 					*pAdcData;	///< pointer to output ADC read data (Valid when cb is NULL)
-	HAL_ADC_Cb_Result_en_t 	cb_res; 	///< Output ADC read completion result
+	HAL_ADC_Cb_Result_en_t 	cb_res; 		///< Output ADC read completion result
 	UInt32					cntxt;		///< input memory context
 }HAL_ADC_BasicInfo_st_t;
 
@@ -140,7 +110,7 @@ typedef struct
 typedef struct
 {
 	HAL_ADC_BasicInfo_st_t 		adc_basic;		///< Basic information for the channel
-	HAL_ADC_MultiInfo_st_t			adc_mult;	///< Multiple read unaligned specific
+	HAL_ADC_MultiInfo_st_t			adc_mult;		///< Multiple read unaligned specific
 	HAL_ADC_RfAlignedInfo_st_t 	adc_rf_algn; 	///< RF Aligned specific
 }HAL_ADC_ReadConfig_st_t;
 
@@ -148,6 +118,7 @@ typedef struct
 /**
 *
 *  This function will initialize the ADC driver.  There is no variable settings for the ADCinitialization.
+*   @param    void (in)   void
 *   @return   Result_t           Result of the HAL ADC action
 *   @note      
 *	
@@ -171,9 +142,9 @@ HAL_ADC_Result_en_t HAL_ADC_Init(void);
 *
 **********************************************************************/
 HAL_ADC_Result_en_t HAL_ADC_Ctrl(
-	HAL_ADC_Action_en_t action,		
-	void *data,						
-	void *callback					
+	HAL_ADC_Action_en_t action,		///< (in) Action request
+	void *data,						///< (io) Input/Output parameters associated with the action
+	void *callback					///< (in) Callback function associated with the action
 	);	
 
 //*********************************************************************
@@ -187,11 +158,18 @@ HAL_ADC_Result_en_t HAL_ADC_Ctrl(
 *
 **********************************************************************/
 typedef void (*AdcCbResult_t)(	
-	HAL_ADC_ReadConfig_st_t* config_result		
+	HAL_ADC_ReadConfig_st_t* config_result		///< (in) Result of ADC reading
 	);
 
 
-/** @} */	
+
+typedef void (*AdcGenericCbResult_t)(	
+	UInt32 fnc_result,		///< (in) Return Function Status
+	void* config_result		///< (in) Result of ADC reading
+	);
+
+
+	
 #endif /*_HAL_ADC_H_*/
 
 

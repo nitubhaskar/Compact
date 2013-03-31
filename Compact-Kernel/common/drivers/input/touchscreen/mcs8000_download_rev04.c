@@ -24,12 +24,10 @@
 //
 //============================================================
 
-#if defined(CONFIG_TOUCHSCREEN_MMS128_COOPERVE) //CooperVE
+#ifdef CONFIG_TOUCHSCREEN_TMA340_COOPERVE //CooperVE
 #include "MCS8000_bin_rev04.c"
-#elif defined(CONFIG_TOUCHSCREEN_MMS128_TASSVE) //TassVE
+#else //CONFIG_TOUCHSCREEN_TMA340 //TassVE
 #include "MCS8000_bin_rev04_TassVE.c"
-#else
-#error "[TSP][Error] Mcs8000_download_rev04.c : Feature missing!!"
 #endif
 
 UINT8  ucVerifyBuffer[MELFAS_TRANSFER_LENGTH];		//	You may melloc *ucVerifyBuffer instead of this

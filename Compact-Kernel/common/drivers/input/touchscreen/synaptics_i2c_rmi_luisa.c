@@ -103,14 +103,14 @@ unsigned char touch_hw_ver = 0;
 unsigned char touch_sw_ver = 0;
 
 #define TSP_VENDER_ID	0xF0
-#define TSP_HW_VER1		0x01
-#define TSP_SW_VER1		0x03
+#define TSP_HW_VER1		0x03
+#define TSP_SW_VER1		0x0B
 
-//#define TSP_HW_VER2		0x04
-//#define TSP_SW_VER2		0x08
+#define TSP_HW_VER2		0x04
+#define TSP_SW_VER2		0x09
 
-//#define TSP_HW_VER3		0x05
-//#define TSP_SW_VER3		0x03
+#define TSP_HW_VER3		0x05
+#define TSP_SW_VER3		0x04
 
 int tsp_irq_num = 0;
 int tsp_workqueue_num = 0;
@@ -825,7 +825,7 @@ static int synaptics_ts_resume(struct i2c_client *client)
 		prev_wdog_val = -1;
 		
 		if(touch_present == 1)
-			hrtimer_start(&ts->timer, ktime_set(2, 0), HRTIMER_MODE_REL);
+			hrtimer_start(&ts->timer, ktime_set(4, 0), HRTIMER_MODE_REL);
 
        enable_irq(client->irq);
 	}
@@ -940,18 +940,22 @@ static ssize_t firmware_show(struct device *dev, struct device_attribute *attr, 
 	HW_ver = touch_hw_ver;
 
 	 		
-	if ( HW_ver == 1 )
+	if ( HW_ver == 2 )//touch_hw_ver
+	{
+		phone_ver = 3;  /* change this value if New firmware be released */ 	
+	}
+	else if ( HW_ver == 3 )
 	{
 		phone_ver = TSP_SW_VER1;  /* change this value if New firmware be released */ 	
 	}
-//	else if ( HW_ver == 4 )
-//	{
-//		phone_ver = TSP_SW_VER2;  /* change this value if New firmware be released */ 	
-//	}
-//	else if ( HW_ver == 5 )
-//	{
-//		phone_ver = TSP_SW_VER3;  /* change this value if New firmware be released */ 	
-//	}	
+	else if ( HW_ver == 4 )
+	{
+		phone_ver = TSP_SW_VER2;  /* change this value if New firmware be released */ 	
+	}
+	else if ( HW_ver == 5 )
+	{
+		phone_ver = TSP_SW_VER3;  /* change this value if New firmware be released */ 	
+	}	
 	else
 	{
 		printk("[TSP] %s:%d,HW_ver is wrong!!\n", __func__,__LINE__ );

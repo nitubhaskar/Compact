@@ -404,7 +404,7 @@ UInt16 dspif_AMRWB_record_GetReadIndex (void)
 // Description: Start the data transfer of VPU record
 //
 // =========================================================================
-void dspif_VPU_record_set_cb (record_data_ready_cb_t record_data_ready)
+Result_t dspif_VPU_record_set_cb (record_data_ready_cb_t record_data_ready)
 
 {
    record_ready = record_data_ready;

@@ -25,7 +25,6 @@
 #include <linux/broadcom/bcmtypes.h>
 
 #include <linux/broadcom/bcm_fuse_sysparm_CIB.h>
-#include <linux/broadcom/bcm_kril_Interface.h>
 
 static int sysparm_init(void);
 
@@ -237,8 +236,6 @@ int SYSPARM_GetParmU32ByName(char *name, unsigned int *parm)
 
 int SYSPARM_GetPMURegSettings(int index, unsigned int *parm)
 {
-/* DLG start */
-#if defined(CONFIG_MFD_MAX8986)
 	UInt32  parm_addr;
 	UInt8   *parm_ptr;
 
@@ -269,8 +266,6 @@ int SYSPARM_GetPMURegSettings(int index, unsigned int *parm)
 	*parm = ioread8(parm_ptr + index);
 
 	iounmap(parm_ptr);
-#endif
-/* DLG end */
 	return 0;
 }
 
@@ -859,7 +854,7 @@ UInt8* SYSPARM_GetGPIO_Default_Value(UInt8 gpio_index)
 //						 be at least 16-byte in size.
 //
 //******************************************************************************
-Boolean SYSPARM_GetImeiStr(UInt8 sim_id, UInt8* inImeiStr)
+Boolean SYSPARM_GetImeiStr(UInt8* inImeiStr)
 {
 	UInt8	indexA = 0;
 	UInt8	indexB = 0;
@@ -873,7 +868,7 @@ Boolean SYSPARM_GetImeiStr(UInt8 sim_id, UInt8* inImeiStr)
 	 * 2. The IMEI digits in Sysparm are invalid
 	 */
 //	static const UInt8 default_imei[SYS_IMEI_LEN] = { 0x0F, 0x10, 0x60, 0x00, 0x00, 0x10, 0x32, 0xF4 };
-	static const UInt8 default_imei[SYS_IMEI_LEN] = { 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0 };
+	static const UInt8 default_imei[SYS_IMEI_LEN] = { 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0 };	
 	
 	// sanity check 
 	if ( !inImeiStr )
@@ -892,21 +887,7 @@ Boolean SYSPARM_GetImeiStr(UInt8 sim_id, UInt8* inImeiStr)
     }
 
     // lookup address of IMEI sysparm data by name
-    switch (sim_id)
-    {
-       case SIM_SINGLE:
-       case SIM_DUAL_FIRST:
-            imei_addr = SYSPARM_GePAtByIndex("imei", IMEI_SIZE, 1);
-            break;
-
-       case SIM_DUAL_SECOND:
-            imei_addr = SYSPARM_GePAtByIndex("imei_2", IMEI_SIZE, 1);
-            break;
-
-       default:
-            return FALSE;
-    }
-
+    imei_addr = SYSPARM_GePAtByIndex("imei", IMEI_SIZE, 1);
     if(!imei_addr)
     {
         pr_err("[sysparm]: Get imei_addr PA failed\n");

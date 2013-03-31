@@ -19,6 +19,11 @@
 *   @brief  This file implements RPC system api functions
 *
 ****************************************************************************/
+#ifndef UNDER_LINUX
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h> /* for strlen */
+#endif
 #include "mobcom_types.h"
 #include "rpc_global.h"
 
@@ -299,8 +304,8 @@ UInt8 GetClientIndex(ResultDataBuffer_t* pDataBuf, Boolean* isUnsolicited)
 	else
 	{
 		//Lookup clientIndex based on XDR table registered client
-		if(ret && entry.clientIndex < MAX_RPC_CLIENTS)
-		{
+	if(ret && entry.clientIndex < MAX_RPC_CLIENTS)
+	{
 			index = entry.clientIndex;
 	}
 	}
@@ -342,13 +347,13 @@ void RPC_DispatchMsg(ResultDataBuffer_t* pDataBuf)
 		else //RPC_TYPE_RESPONSE
 		{
 			if(clientIndex > 0 && (pMsg->tid != 0 || pMsg->clientID != 0) && !(isUnsolicited))
-			{
+		{
 				_DBG_(RPC_TRACE_INFO("RPC_DispatchMsg Unicast msgId=0x%x cIndex=%d tid=%d cid=%d unsol=%d", pMsg->msgId, clientIndex, pMsg->tid, pMsg->clientID, isUnsolicited));
-				if(gClientMap[clientIndex].respCb != NULL)
-				{
-					(gClientMap[clientIndex].respCb)(pMsg, (ResultDataBufHandle_t)pDataBuf,gClientMap[clientIndex].userData);
-				}
+			if(gClientMap[clientIndex].respCb != NULL)
+			{
+				(gClientMap[clientIndex].respCb)(pMsg, (ResultDataBufHandle_t)pDataBuf,gClientMap[clientIndex].userData);
 			}
+		}
 			else if((pMsg->tid == 0 && pMsg->clientID == 0) || isUnsolicited)//unsolicited
 			{
 				UInt32 numClients = 0;

@@ -20,9 +20,6 @@
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/wakelock.h>
-#include <linux/rtc.h>
-
-#define KEY_EVENT_BUF_NUM	100
 
 struct gpio_kp {
 	struct gpio_event_input_devs *input_devs;
@@ -35,30 +32,8 @@ struct gpio_kp {
 	unsigned int last_key_state_changed:1;
 	unsigned int some_keys_pressed:2;
 	unsigned int disabled_irq:1;
-#ifdef CONFIG_BOARD_LUISA_DS
-	unsigned long *keys_pressed;
-	unsigned long *old_keys_pressed;
-#else
 	unsigned long keys_pressed[0];
-#endif
-
 };
-
-struct key_log_info
-{
-	int M;
-	int S;
-	long N;	
-	int V;
-	int P;	
-};
-
-struct key_log_info key_event_buf[KEY_EVENT_BUF_NUM];
-
-uint32_t check_key[2]={0,0};
-int key_count=0;
-int key_pressed;;
-int check_4key_vk1,check_4key_press1,check_4key_vk2, check_4key_press2=0;
 
 static void clear_phantom_key(struct gpio_kp *kp, int out, int in)
 {
@@ -68,26 +43,17 @@ static void clear_phantom_key(struct gpio_kp *kp, int out, int in)
 	unsigned short keycode = keyentry & MATRIX_KEY_MASK;
 	unsigned short dev = keyentry >> MATRIX_CODE_BITS;
 
-#ifdef CONFIG_BOARD_LUISA_DS
-	if (!test_bit(key_index, kp->old_keys_pressed)) {
-#else
 	if (!test_bit(keycode, kp->input_devs->dev[dev]->key)) {
-#endif
-		#if 0
 		if (mi->flags & GPIOKPF_PRINT_PHANTOM_KEYS)
-
 			pr_info("gpiomatrix: phantom key %x, %d-%d (%d-%d) "
 				"cleared\n", keycode, out, in,
 				mi->output_gpios[out], mi->input_gpios[in]);
-		#endif
 		__clear_bit(key_index, kp->keys_pressed);
 	} else {
-		#if 0
 		if (mi->flags & GPIOKPF_PRINT_PHANTOM_KEYS)
 			pr_info("gpiomatrix: phantom key %x, %d-%d (%d-%d) "
 				"not cleared\n", keycode, out, in,
 				mi->output_gpios[out], mi->input_gpios[in]);
-		#endif
 	}
 }
 
@@ -138,107 +104,29 @@ static void remove_phantom_keys(struct gpio_kp *kp)
 	}
 }
 
-static int report_key(struct gpio_kp *kp, int key_index, int out, int in)
+static void report_key(struct gpio_kp *kp, int key_index, int out, int in)
 {
 	struct gpio_event_matrix_info *mi = kp->keypad_info;
- 	struct timespec ts;
-  	struct rtc_time tm;
-	
 	int pressed = test_bit(key_index, kp->keys_pressed);
 	unsigned short keyentry = mi->keymap[key_index];
 	unsigned short keycode = keyentry & MATRIX_KEY_MASK;
 	unsigned short dev = keyentry >> MATRIX_CODE_BITS;
 
-	getnstimeofday(&ts);
-	rtc_time_to_tm(ts.tv_sec, &tm);
-
-#ifdef CONFIG_BOARD_LUISA_DS
-	if (pressed != test_bit(key_index, kp->old_keys_pressed)) {
-#else
 	if (pressed != test_bit(keycode, kp->input_devs->dev[dev]->key)) {
-#endif
-
-		if(key_count==KEY_EVENT_BUF_NUM)	key_count=0;
-		
-		key_event_buf[key_count].M = tm.tm_min; 
-		key_event_buf[key_count].S = tm.tm_sec;
-		key_event_buf[key_count].N = ts.tv_nsec; 
-		key_event_buf[key_count].V = keycode;
-		key_event_buf[key_count].P = pressed;
-		
-		key_count=key_count+1;
-
 		if (keycode == KEY_RESERVED) {
-			#if 0
 			if (mi->flags & GPIOKPF_PRINT_UNMAPPED_KEYS)
-
 				pr_info("gpiomatrix: unmapped key, %d-%d "
 					"(%d-%d) changed to %d\n",
 					out, in, mi->output_gpios[out],
 					mi->input_gpios[in], pressed);
-			#endif
 		} else {
-			#if 0
 			if (mi->flags & GPIOKPF_PRINT_MAPPED_KEYS)
-
-				pr_info("[%02d:%02d:%02d.%03lu] [KEY]: key %x, %d-%d (%d-%d) "
-					"changed to %d\n",   tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec, keycode,
+				pr_info("gpiomatrix: key %x, %d-%d (%d-%d) "
+					"changed to %d\n", keycode,
 					out, in, mi->output_gpios[out],
 					mi->input_gpios[in], pressed);
-			#endif
-			if((keycode==KEY_HOME)||(keycode==KEY_MENU))
-			{
-				if(((check_4key_vk1==KEY_MENU)&&(check_4key_press1==1)&&(keycode==KEY_HOME))||((check_4key_vk1==KEY_HOME)&&(check_4key_press1==1)&&(keycode==KEY_MENU)))
-				{
-					//printk("[%02d:%02d:%02d.%03lu] check_4key_press1 ignore =%d\n",  tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec, keycode);
-					return 0;
-				}
-				else
-				{
-					if(pressed==0)
-					{
-					//printk("check_4key_press check_4key_vk1 =%d, check_4key_press1=%d, keycode=%d\n",  check_4key_vk1, check_4key_press1, keycode);
-					check_4key_vk1=keycode;
-					check_4key_press1=0;
-					}
-					else
-					{
-					//printk("check_4key_rlease check_4key_vk1 =%d, check_4key_press1=%d, keycode=%d\n",  check_4key_vk1, check_4key_press1, keycode);
-					check_4key_vk1=keycode;
-					check_4key_press1=1;
-					}
-				}
-			}
-			else if((keycode==KEY_BACK)||(keycode==KEY_SEARCH))
-			{
-				if(((check_4key_vk2==KEY_BACK)&&(check_4key_press2==1)&&(keycode==KEY_SEARCH))||((check_4key_vk2==KEY_SEARCH)&&(check_4key_press2==1)&&(keycode==KEY_BACK)))
-				{
-					//printk("[%02d:%02d:%02d.%03lu] check_4key_press2 ignore =%d\n",  tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec, keycode);
-					return 0;
-				}
-				else
-				{
-					if(pressed==0)
-					{
-					//printk("check_4key_press check_4key_vk2 =%d, check_4key_press2=%d, keycode=%d\n",  check_4key_vk2, check_4key_press2, keycode);
-					check_4key_vk2=keycode;
-					check_4key_press2=0;
-					}
-					else
-					{
-					//printk("check_4key_rlease check_4key_vk2 =%d, check_4key_press2=%d, keycode=%d\n",  check_4key_vk2, check_4key_press2, keycode);
-					check_4key_vk2=keycode;
-					check_4key_press2=1;
-					}
-				}
-			
-			}
-			key_pressed = pressed;
-
 			input_report_key(kp->input_devs->dev[dev], keycode, pressed);
-			input_sync(kp->input_devs->dev[dev]);
 		}
-		return 0;
 	}
 }
 
@@ -253,7 +141,6 @@ static enum hrtimer_restart gpio_keypad_timer_func(struct hrtimer *timer)
 	unsigned polarity = !!(gpio_keypad_flags & GPIOKPF_ACTIVE_HIGH);
 
 	out = kp->current_output;
-
 	if (out == mi->noutputs) {
 		out = 0;
 		kp->last_key_state_changed = kp->key_state_changed;
@@ -263,14 +150,11 @@ static enum hrtimer_restart gpio_keypad_timer_func(struct hrtimer *timer)
 		key_index = out * mi->ninputs;
 		for (in = 0; in < mi->ninputs; in++, key_index++) {
 			gpio = mi->input_gpios[in];
-
 			if (gpio_get_value(gpio) ^ !polarity) {
-
 				if (kp->some_keys_pressed < 3)
 					kp->some_keys_pressed++;
 				kp->key_state_changed |= !__test_and_set_bit(
 						key_index, kp->keys_pressed);
-
 			} else
 				kp->key_state_changed |= __test_and_clear_bit(
 						key_index, kp->keys_pressed);
@@ -307,12 +191,6 @@ static enum hrtimer_restart gpio_keypad_timer_func(struct hrtimer *timer)
 		for (out = 0; out < mi->noutputs; out++)
 			for (in = 0; in < mi->ninputs; in++, key_index++)
 				report_key(kp, key_index, out, in);
-
-#ifdef CONFIG_BOARD_LUISA_DS		
-		// keep the current keys_pressed in old_keys_pressed
-		memcpy((void*)kp->old_keys_pressed, (void*)kp->keys_pressed, sizeof(long)*BITS_TO_LONGS(key_index));
-#endif
-
 	}
 	if (!kp->use_irq || kp->some_keys_pressed) {
 		hrtimer_start(timer, mi->poll_time, HRTIMER_MODE_REL);
@@ -338,9 +216,6 @@ static irqreturn_t gpio_keypad_irq_handler(int irq_in, void *dev_id)
 	struct gpio_kp *kp = dev_id;
 	struct gpio_event_matrix_info *mi = kp->keypad_info;
 	unsigned gpio_keypad_flags = mi->flags;
-
-	//printk("[KEY] gpio_keypad_irq_handler\n");
-
 
 	if (!kp->use_irq) {
 		/* ignore interrupt while registering the handler */
@@ -370,9 +245,6 @@ static int gpio_keypad_request_irqs(struct gpio_kp *kp)
 	unsigned int irq;
 	unsigned long request_flags;
 	struct gpio_event_matrix_info *mi = kp->keypad_info;
-
-
-	printk("[KEY] gpio_keypad_request_irqs\n");
 
 	switch (mi->flags & (GPIOKPF_ACTIVE_HIGH|GPIOKPF_LEVEL_TRIGGERED_IRQ)) {
 	default:
@@ -447,30 +319,19 @@ int gpio_event_matrix_func(struct gpio_event_input_devs *input_devs,
 		}
 		key_count = mi->ninputs * mi->noutputs;
 
-#ifdef CONFIG_BOARD_LUISA_DS
-		*data = kp = kzalloc(sizeof(*kp) + 2* sizeof(long)*
-				     BITS_TO_LONGS(key_count), GFP_KERNEL);
-#else
 		*data = kp = kzalloc(sizeof(*kp) + sizeof(kp->keys_pressed[0]) *
 				     BITS_TO_LONGS(key_count), GFP_KERNEL);
-#endif
 		if (kp == NULL) {
 			err = -ENOMEM;
 			pr_err("gpiomatrix: Failed to allocate private data\n");
 			goto err_kp_alloc_failed;
 		}
-		kp->input_devs = input_devs;	
+		kp->input_devs = input_devs;
 		kp->keypad_info = mi;
-#ifdef CONFIG_BOARD_LUISA_DS
-		kp->keys_pressed = *data + sizeof(*kp);
-		kp->old_keys_pressed = *data + sizeof(*kp) + sizeof(long)*BITS_TO_LONGS(key_count);
-#endif
-
 		for (i = 0; i < key_count; i++) {
 			unsigned short keyentry = mi->keymap[i];
 			unsigned short keycode = keyentry & MATRIX_KEY_MASK;
 			unsigned short dev = keyentry >> MATRIX_CODE_BITS;
-			kp->input_devs->dev[dev]->name = "sec_keypad";	
 			if (dev >= input_devs->count) {
 				pr_err("gpiomatrix: bad device index %d >= "
 					"%d for key code %d\n",

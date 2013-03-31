@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   stk_def.h
@@ -174,14 +176,6 @@ typedef enum
 	LAUNCH_BROWSER_CLOSE_EXIST_NORMAL 	= 3,	///< Close existing browser session, launch new browser making a connection
 	LAUNCH_BROWSER_CLOSE_EXIST_SECURE 	= 4		///< Close existing browser session, launch new browser using a secure session
 } SIM_LAUNCH_BROWSER_ACTION_t;
-
-/// STK Generic Data Interface
-typedef enum
-{
-    SATK_GENERIC_DATA_INTERFACE_NONE    = 0,    ///< The SATK generic data interface is not used.
-    SATK_GENERIC_DATA_INTERFACE_PARTIAL = 1,    ///< The SATK generic data interface is partially used (to check STK Support_Table).
-    SATK_GENERIC_DATA_INTERFACE_ALL     = 2     ///< The SATK generic data interface is completely used.
-} SATKGenDataInt_t;
 
 /// STK string type
 typedef struct{
@@ -386,7 +380,7 @@ typedef struct
 	UInt8				sca_len;		///< number of bytes in sca_data
 	UInt8				sca_data[20];	///< Service Center Number encoded in BCD format
 	UInt8				pdu_len;		///< number of bytes in pdu_data
-	UInt8				pdu_data[250];	///< SMS PDU data
+	UInt8				pdu_data[176];	///< SMS PDU data
 } STK_SMS_DATA_t;
 
 /// STK send MO SMS event type
@@ -395,7 +389,7 @@ typedef struct {
 	SATKString_t	text;	 				///< valid or No alphaid
 	SATKIcon_t		icon;					///< icon
 	STK_SMS_DATA_t	sms_data;				///< SMS Service Center Address and TPDU data
-	Boolean         packingReq;             ///< TRUE if packing required
+	Boolean			packingReq;
 } SendMOSMS_t;
 
 /// STK Send SS type
@@ -755,7 +749,7 @@ typedef struct
 
 	gsm_TON_t ton;	///< Called party type of number
 	gsm_NPI_t npi;	///< Called party nuber plan identifier
-	char number[MAX_DIGITS + 2];	///< ASCII encoded dialling number 
+	char number[MAX_DIGITS + 1];	///< ASCII encoded dialling number 
 
 } StkCallControlDisplay_t;
 

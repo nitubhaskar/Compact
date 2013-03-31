@@ -27,6 +27,6 @@
 
 
 
-void _DEF(CAPI2_SimLockApi_GetStatus)(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_t *sim_data, Boolean is_testsim);
+void _DEF(CAPI2_SIMLOCK_GetStatus)(UInt32 tid, UInt8 clientID, SIMLOCK_SIM_DATA_t *sim_data, Boolean is_testsim);
 void _DEF(CAPI2_InterTaskMsgToAP)(UInt32 tid, UInt8 clientID, InterTaskMsg_t *inPtrMsg);
 #endif

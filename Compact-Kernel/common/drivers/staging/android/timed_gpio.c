@@ -14,46 +14,128 @@
  *
  */
 
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
-#include <linux/hrtimer.h>
+//#include <linux/hrtimer.h>
 #include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/timed_gpio.h>
 
+#ifdef CONFIG_REGULATOR
+#include <linux/workqueue.h>
+#include <linux/regulator/consumer.h>
+#endif
+
 #include "timed_output.h"
 
+typedef struct {
+	struct delayed_work haptic_delayed_work;
+	struct timeval time;
+	unsigned 	gpio;
+	int 		max_timeout;
+	u8 		active_low;
+	int enable;
+	int value;
+	struct regulator * vcc;
+} haptic_work_t;
+
+haptic_work_t *haptic_work;
 
 struct timed_gpio_data {
 	struct timed_output_dev dev;
-	struct hrtimer timer;
+	/*struct hrtimer timer;*/
+	haptic_work_t *work;
 	spinlock_t lock;
 	unsigned 	gpio;
 	int 		max_timeout;
 	u8 		active_low;
+	struct regulator	*vcc;
 };
 
-static enum hrtimer_restart gpio_timer_func(struct hrtimer *timer)
-{
-	struct timed_gpio_data *data =
-		container_of(timer, struct timed_gpio_data, timer);
+/* lock to protect work execution in multi processor systems */
+static DEFINE_MUTEX(wq_lock);
 
-	gpio_direction_output(data->gpio, data->active_low ? 1 : 0);
-	return HRTIMER_NORESTART;
+static void haptic_regulator_control(struct delayed_work *haptic_delayed_work)
+{
+	haptic_work_t *reg_work =
+		container_of(haptic_delayed_work, haptic_work_t, haptic_delayed_work);
+
+	mutex_lock(&wq_lock);
+
+	if (reg_work->enable) {
+		if (reg_work->vcc && !regulator_is_enabled(reg_work->vcc)) {
+			/* Enable regulator if not already enabled */
+			regulator_enable(reg_work->vcc);
+		}
+
+		/* Set GPIO direction */
+		gpio_direction_output(reg_work->gpio,
+			(reg_work->active_low ?
+			!reg_work->value : !!reg_work->value));
+
+		if (reg_work->value > 0) {
+			if (reg_work->value > reg_work->max_timeout)
+				reg_work->value = reg_work->max_timeout;
+
+			/* compute expiry time */
+			do_gettimeofday(&reg_work->time);
+			reg_work->time.tv_sec += (reg_work->value / 1000);
+			reg_work->time.tv_usec += ((reg_work->value % 1000) * 1000);
+			if (reg_work->time.tv_usec > 1000000) {
+				reg_work->time.tv_usec -= 1000000;
+				reg_work->time.tv_sec++;
+			}
+
+			/*
+			 * Schedule another work after specified delay to
+			 * disable the regulator
+			 */
+			reg_work->enable = 0;
+			schedule_delayed_work((struct delayed_work *)reg_work,
+				msecs_to_jiffies(reg_work->value));
+		}
+	} else {
+		if (reg_work->vcc && regulator_is_enabled(reg_work->vcc)) {
+			/* Disable regulator here */
+			regulator_disable(reg_work->vcc);
+		}
+
+		/* Clear time */
+		reg_work->time.tv_sec = 0;
+		reg_work->time.tv_usec = 0;
+
+		/* toggle GPIO direction */
+		gpio_direction_output(reg_work->gpio,
+			(reg_work->active_low ? 1 : 0));
+	}
+
+	mutex_unlock(&wq_lock);
+	return;
 }
 
 static int gpio_get_time(struct timed_output_dev *dev)
 {
+	struct timeval curr_time, exp_time;
 	struct timed_gpio_data	*data =
 		container_of(dev, struct timed_gpio_data, dev);
+	unsigned long	flags;
 
-	if (hrtimer_active(&data->timer)) {
-		ktime_t r = hrtimer_get_remaining(&data->timer);
-		struct timeval t = ktime_to_timeval(r);
-		return t.tv_sec * 1000 + t.tv_usec / 1000;
-	} else
-		return 0;
+	spin_lock_irqsave(&data->lock, flags);
+
+	if (data->work->time.tv_sec || data->work->time.tv_usec) {
+		do_gettimeofday(&curr_time);
+
+		exp_time.tv_sec = data->work->time.tv_sec - curr_time.tv_sec;
+		exp_time.tv_usec = data->work->time.tv_usec - curr_time.tv_usec;
+
+		spin_unlock_irqrestore(&data->lock, flags);
+		return exp_time.tv_sec * 1000 + exp_time.tv_usec / 1000;
+	}
+
+	spin_unlock_irqrestore(&data->lock, flags);
+	return 0;
 }
 
 static void gpio_enable(struct timed_output_dev *dev, int value)
@@ -64,17 +146,16 @@ static void gpio_enable(struct timed_output_dev *dev, int value)
 
 	spin_lock_irqsave(&data->lock, flags);
 
-	/* cancel previous timer and set GPIO according to value */
-	hrtimer_cancel(&data->timer);
-	gpio_direction_output(data->gpio, data->active_low ? !value : !!value);
+	if (haptic_work) {
+		haptic_work->vcc = data->vcc;
+		haptic_work->gpio = data->gpio;
+		haptic_work->active_low = data->active_low;
+		haptic_work->max_timeout = data->max_timeout;
+		haptic_work->value = value;
+		haptic_work->enable = 1;
 
-	if (value > 0) {
-		if (value > data->max_timeout)
-			value = data->max_timeout;
-
-		hrtimer_start(&data->timer,
-			ktime_set(value / 1000, (value % 1000) * 1000000),
-			HRTIMER_MODE_REL);
+		/* Schedule work with a delay of zero to enable regulator */
+		schedule_delayed_work((struct delayed_work *)haptic_work, 0);
 	}
 
 	spin_unlock_irqrestore(&data->lock, flags);
@@ -99,14 +180,27 @@ static int timed_gpio_probe(struct platform_device *pdev)
 		cur_gpio = &pdata->gpios[i];
 		gpio_dat = &gpio_data[i];
 
-		hrtimer_init(&gpio_dat->timer, CLOCK_MONOTONIC,
-				HRTIMER_MODE_REL);
-		gpio_dat->timer.function = gpio_timer_func;
 		spin_lock_init(&gpio_dat->lock);
 
 		gpio_dat->dev.name = cur_gpio->name;
 		gpio_dat->dev.get_time = gpio_get_time;
 		gpio_dat->dev.enable = gpio_enable;
+
+		/* INIT_WORK to system work queue */
+		haptic_work = (haptic_work_t *)kzalloc(sizeof(haptic_work_t), GFP_KERNEL);
+		if (!haptic_work)
+			return -ENOMEM;
+
+		gpio_dat->work = haptic_work;
+		INIT_DELAYED_WORK(&haptic_work->haptic_delayed_work, haptic_regulator_control);
+
+		if (cur_gpio->regl_id) {
+			/* Fetch a regulator */
+			gpio_dat->vcc = regulator_get(NULL, cur_gpio->regl_id);
+			if (IS_ERR(gpio_dat->vcc))
+				gpio_dat->vcc = NULL;
+		}
+
 		ret = gpio_request(cur_gpio->gpio, cur_gpio->name);
 		if (ret >= 0) {
 			ret = timed_output_dev_register(&gpio_dat->dev);
@@ -143,6 +237,9 @@ static int timed_gpio_remove(struct platform_device *pdev)
 		timed_output_dev_unregister(&gpio_data[i].dev);
 		gpio_free(gpio_data[i].gpio);
 	}
+
+	if (haptic_work)
+		kfree((void *)haptic_work);
 
 	kfree(gpio_data);
 

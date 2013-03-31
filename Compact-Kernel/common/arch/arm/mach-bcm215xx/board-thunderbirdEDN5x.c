@@ -41,7 +41,6 @@
 #include <linux/i2c.h>
 #include <linux/i2c-id.h>
 #include <linux/leds.h>
-#include <linux/gpio_event.h>
 
 #if defined (CONFIG_ANDROID_PMEM)
 #include <linux/android_pmem.h>
@@ -67,7 +66,7 @@
 #ifdef CONFIG_USB_DWC_OTG
 #include <mach/usbctl.h>
 #endif
-#if defined(CONFIG_KEYBOARD_BCM) || defined(CONFIG_INPUT_GPIO)
+#ifdef CONFIG_KEYBOARD_BCM
 #include <mach/bcm_keymap.h>
 #include <plat/bcm_keypad.h>
 #endif
@@ -175,7 +174,7 @@ int bcmsdhc_finish_cfg_pullup(void __iomem *ioaddr, u8 ctrl_slot);
 
 static struct bcmsdhc_platform_data bcm21553_sdhc_data1 = {
 	.base_clk = FREQ_MHZ(50),
-	.flags = SDHC_DEVTYPE_SDIO | SDHC_MANUAL_SUSPEND_RESUME | SDHC_DISABLE_PED_MODE,
+	.flags = SDHC_DEVTYPE_SDIO | SDHC_MANUAL_SUSPEND_RESUME,
 	.cd_pullup_cfg = SDCD_PULLUP | SDCD_UPDOWN_ENABLE,
 	.irq_cd = -1,
 	.regl_id = "vddo_sdio1",
@@ -207,7 +206,7 @@ static struct bcmsdhc_platform_data bcm21553_sdhc_data2 = {
 
 static struct bcmsdhc_platform_data bcm21553_sdhc_data3 = {
 	.base_clk = FREQ_MHZ(50),
-	.flags = SDHC_DEVTYPE_SD | SDHC_DISABLE_PED_MODE,
+	.flags = SDHC_DEVTYPE_SD,
 	.cd_pullup_cfg = SDCD_PULLUP | SDCD_UPDOWN_ENABLE,
 	.irq_cd = 24,
 	.regl_id = "sd_b_vdd",
@@ -503,127 +502,7 @@ static struct bcm_keypad_platform_info bcm215xx_keypad_data = {
 	.iocr_cfg = bcm_keypad_config_iocr,
 	.bcm_keypad_base = (void *)__iomem IO_ADDRESS(BCM21553_KEYPAD_BASE),
 };
-#elif defined CONFIG_INPUT_GPIO
-	 
-#define REG_KEYPAD_KPCR     0x00
-#define REG_KEYPAD_KPIOR    0x04
 
-/* REG_KEYPAD_KPCR bits */
-#define REG_KEYPAD_KPCR_ENABLE              0x00000001	/* Enable key pad control */
-static void bcm_keypad_config_iocr(int row, int col)
-{
-	void __iomem *bcm_keypad_base;
-
-	row = (1 << row) - 1;
-	col = (1 << col) - 1;
-	/* Set lower "row" & "col" number of bits to 1 to indicate configuration of keypad */
-	writel((SYSCFG_IOCR1_KEY_ROW(row) | SYSCFG_IOCR1_KEY_COL(col)),
-				ADDR_SYSCFG_IOCR1);
-
-	/*Configure for a 7x7 keypad since GPIO7 & GPIO15 are used for I2C3*/	
-	writel(0x00008080, ADDR_SYSCFG_IOCR1);
-
-	bcm_keypad_base = (void *)__iomem IO_ADDRESS(BCM21553_KEYPAD_BASE);
-	
-	/* First enable the Keypad Control and then configure the remaining values */
-	writel(REG_KEYPAD_KPCR_ENABLE, bcm_keypad_base + REG_KEYPAD_KPCR);
-
-	/*set IOMODE(bit 3 ) to enable GPIO mode for Keypad
-	  Set SwapRowColumn bit in KPCR to enable swap of row/column
-	  Enable Status Filtering and configure row-width & column width(as row -1 & col -1)*/
-	writel(0x19800C, bcm_keypad_base + REG_KEYPAD_KPCR);
-
-	/* Configure RowOContrl & ColumnOContrl bits in KPIOR
-	   configure rows as inputs & columns as outputs*/
-	writel(0x88770000, bcm_keypad_base + REG_KEYPAD_KPIOR );
- }
-
-static unsigned int bcm215xx_row_gpios[] = {0,1,2,3,4,5,6};
-static unsigned int bcm215xx_col_gpios[] = {8,9,10,11,12,13,14};
-#define KEYMAP_INDEX(row, col)	(((col) * ARRAY_SIZE(bcm215xx_col_gpios)) + (row))
-
-static const unsigned short newKeymap[ARRAY_SIZE(bcm215xx_row_gpios) * ARRAY_SIZE(bcm215xx_col_gpios)] = {
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_0)] =  KEY_Y,
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_1)] =  KEY_T,
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_2 )]=  KEY_R,
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_3 )]= KEY_E,
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_4)] =  KEY_W,
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_5)] =  KEY_Q,
-	[KEYMAP_INDEX(BCM_KEY_ROW_0, BCM_KEY_COL_6)] =  KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_0)] =KEY_H,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_1)] =KEY_G,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_2)] =KEY_F,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_3)] =KEY_D,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_4)] =KEY_S,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_5)] =KEY_A,
-	[KEYMAP_INDEX(BCM_KEY_ROW_1, BCM_KEY_COL_6)] = KEY_CAMERA,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_0)] =KEY_B,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_1)] =KEY_V,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_2)] =KEY_C,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_3)] =KEY_X,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_4)] =KEY_Z,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_5)] = KEY_LEFTSHIFT,
-	[KEYMAP_INDEX(BCM_KEY_ROW_2, BCM_KEY_COL_6)] = KEY_VOLUMEUP,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_0)] = KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_1)] = KEY_SPACE,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_2)] = KEY_SPACE,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_3)] = KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_4)] = KEY_MENU,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_5)] = KEY_HOME,
-	[KEYMAP_INDEX(BCM_KEY_ROW_3, BCM_KEY_COL_6 )] =  KEY_VOLUMEDOWN,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_0)] = KEY_BACK,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_1)] = KEY_DOT,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_2)] =KEY_P,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_3)] =KEY_O,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_4)] =KEY_I,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_5)] =KEY_U,
-	[KEYMAP_INDEX(BCM_KEY_ROW_4, BCM_KEY_COL_6)] =  KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_0)] =KEY_SEND,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_1)] = KEY_SEMICOLON,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_2)] = KEY_BACKSPACE,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_3)] = KEY_L,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_4 )] =  KEY_K,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_5)] =KEY_J,
-	[KEYMAP_INDEX(BCM_KEY_ROW_5, BCM_KEY_COL_6)] =  KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_0)] = KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_1)] = KEY_RESERVED,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_2)] = KEY_ENTER,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_3)] = KEY_COMMA,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_4)] =KEY_M,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_5)] =KEY_N,
-	[KEYMAP_INDEX(BCM_KEY_ROW_6, BCM_KEY_COL_6)] = KEY_RESERVED,
-};
-
-static struct gpio_event_matrix_info bcm215xx_keypad_matrix_info = {
-	.info.func = gpio_event_matrix_func,
-	.keymap = newKeymap,
-	.output_gpios = bcm215xx_col_gpios,
-	.input_gpios = bcm215xx_row_gpios,
-	.noutputs = ARRAY_SIZE(bcm215xx_col_gpios),
-	.ninputs = ARRAY_SIZE(bcm215xx_row_gpios),
-	.settle_time.tv.nsec = 40 * NSEC_PER_USEC,
-	.poll_time.tv.nsec = 20 * NSEC_PER_MSEC,
-	.debounce_delay.tv.nsec = 5 * NSEC_PER_MSEC,
-	.flags =  GPIOKPF_REMOVE_PHANTOM_KEYS | GPIOKPF_PRINT_MAPPED_KEYS
-
-};
-static struct gpio_event_info *bcm215xx_keypad_info[] = {
-	&bcm215xx_keypad_matrix_info.info,
-};
-
-static struct gpio_event_platform_data bcm215xx_keypad_data = {
-	.name = "bcm_keypad",
-	.info = bcm215xx_keypad_info,
-	.info_count = ARRAY_SIZE(bcm215xx_keypad_info),
-};
-
-static struct platform_device bcm215xx_keypad_device = {
-	.name = GPIO_EVENT_DEV_NAME,
-	.id = 0,
-	.dev		= {
-		.platform_data	= &bcm215xx_keypad_data,
-	},
-};
 #endif
 
 #ifdef CONFIG_BACKLIGHT_PWM
@@ -795,7 +674,7 @@ static struct bma150_accl_platform_data bma_pdata = {
 	.orientation = BMA_ROT_90,
 	.invert = true,
 	.init = bma_gpio_init,
-	.i2c_pdata = {.i2c_spd = I2C_SPD_400K,},
+	.i2c_pdata = {.i2c_spd = I2C_SPD_100K,},
 };
 #endif
 
@@ -963,25 +842,6 @@ static struct regulator_init_data sim_init_data = {
 	.consumer_supplies = sim_consumers,
 };
 
-static struct regulator_consumer_supply sim1_consumers[] = {
-	{
-		.dev	= NULL,
-		.supply	= "sim1_vcc",
-	},
-};
-
-static struct regulator_init_data sim1_init_data = {
-	.constraints = {
-		.min_uV = 1200000,
-		.max_uV = 3400000,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE|REGULATOR_CHANGE_STATUS,
-		.always_on = 0,
-		.boot_on = 0,
-	},
-	.num_consumer_supplies = ARRAY_SIZE(sim1_consumers),
-	.consumer_supplies = sim1_consumers,
-};
-
 static struct regulator_consumer_supply csr_nm1_consumers[] = {
 	{
 		.dev	= NULL,
@@ -1090,11 +950,6 @@ static struct max8986_regl_init_data bcm21553_regulators[] = {
 		.regl_id = MAX8986_REGL_SIMLDO,
 		.dsm_opmode = MAX8986_REGL_LPM_IN_DSM,
 		.init_data = &sim_init_data,
-	},
-	{
-		.regl_id = MAX8986_REGL_DLDO4,
-		.dsm_opmode = MAX8986_REGL_LPM_IN_DSM,
-		.init_data = &sim1_init_data,
 	},
 	{
 		.regl_id = MAX8986_REGL_DLDO1,
@@ -1367,7 +1222,7 @@ static void max8986_load_sysparm(int sysparm_index, int regl_addr,
 
 	ret = SYSPARM_GetPMURegSettings(sysparm_index, &parm);
 	if (ret == 0)
-		max8986->write_dev(max8986, regl_addr, parm);
+		max8986->write_dev(max8986, MAX8986_PM_REG_ADISCHARGE2, parm);
 }
 
 static void max8986_sysparms(struct max8986 *max8986)
@@ -1678,8 +1533,6 @@ static struct platform_device *devices[] __initdata = {
 
 #ifdef CONFIG_KEYBOARD_BCM
 	&bcm215xx_kp_device,
-#elif defined (CONFIG_INPUT_GPIO)
-	&bcm215xx_keypad_device,
 #endif
 #ifdef CONFIG_BCM_AUXADC
 	&auxadc_device,
@@ -2244,8 +2097,7 @@ int board_sysconfig(uint32_t module, uint32_t op)
 				SYSCFG_IOCR0_GPIO55_GPEN10_MUX(0x3) |
 				SYSCFG_IOCR0_PCM_SPI2_GPIO4043_MUX(0x02) |
 				SYSCFG_IOCR0_DIGMIC_GPIO6362_MUX |
-				SYSCFG_IOCR0_GPEN9_SPI_GPIO54_H_MUX |
-				SYSCFG_IOCR0_I2S_MUX(0x3)
+				SYSCFG_IOCR0_GPEN9_SPI_GPIO54_H_MUX
 				, ADDR_SYSCFG_IOCR0);
 			/* SD1/SD2/SD3 DAT[0:3]/CMD lines pulled down
 			 * UARTA enable internal pullup */
@@ -2260,27 +2112,10 @@ int board_sysconfig(uint32_t module, uint32_t op)
 				SYSCFG_IOCR2_SD2CMD_PULL_CTRL(SD_PULL_DOWN) |
 				SYSCFG_IOCR2_SD2DATL_PULL_CTRL(SD_PULL_DOWN)
 				, ADDR_SYSCFG_IOCR2);
-
-
-#define GPIO_I2S_MUX_1 (57)
-#define GPIO_I2S_MUX_2 (60)
-
-				gpio_request(GPIO_I2S_MUX_1, "GPIO_I2S_MUX_1");
-				gpio_request(GPIO_I2S_MUX_2, "GPIO_I2S_MUX_2");
-				gpio_direction_input(GPIO_I2S_MUX_1);
-				gpio_direction_input(GPIO_I2S_MUX_2);
-				bcm_gpio_pull_up_down_enable(GPIO_I2S_MUX_1, true);
-				bcm_gpio_pull_up(GPIO_I2S_MUX_1, true);
-				bcm_gpio_pull_up_down_enable(GPIO_I2S_MUX_2, true);
-				bcm_gpio_pull_up(GPIO_I2S_MUX_2, true);
-				gpio_free(GPIO_I2S_MUX_1);
-				gpio_free(GPIO_I2S_MUX_2);
-
 			/* BIT21 | BIT27 | BIT31 */
 			writel(readl(ADDR_SYSCFG_IOCR3) |
 				SYSCFG_IOCR3_TWIF_ENB |
-				SYSCFG_IOCR3_SIMDAT_PU | SYSCFG_IOCR3_I2C3_EN |
-				SYSCFG_IOCR3_PCMDI_PD
+				SYSCFG_IOCR3_SIMDAT_PU | SYSCFG_IOCR3_I2C3_EN
 				, ADDR_SYSCFG_IOCR3);
 			/* UARTB enable internal pullup */
 			/* BIT9 | BIT11 | BIT14 */
@@ -2372,9 +2207,6 @@ static void __init bcm21553_athenaray_init(void)
 {
 	/* Configure the SYSCFG Registers */
 	board_sysconfig(SYSCFG_SYSTEMINIT, SYSCFG_INIT);
-#ifdef CONFIG_INPUT_GPIO
-	bcm_keypad_config_iocr(7,7);
-#endif
 }
 
 static void athenaray_add_platform_data(void)
@@ -2427,7 +2259,6 @@ static int __init arch_late_init(void)
 {
 	static dma_addr_t dma_address;
         static void *alloc_mem;
-	int ret=0;
 	pr_info("arch_late_init\n");
 #ifdef CONFIG_BACKLIGHT_PWM
 #define GPIO_LCD_BACKLIGHT	(17)
@@ -2482,9 +2313,7 @@ static int __init arch_late_init(void)
 		if (alloc_mem != NULL) {
                          android_pmem_pdata.start = dma_address;
                          android_pmem_pdata.size = PMEM_ADSP_SIZE;
-                         if((ret = platform_device_register(&android_pmem_device))) {
-                              printk("registration failed for device: %s\n", android_pmem_device.name);
-                         }
+                         platform_device_register(&android_pmem_device);
                         printk(" ****** %s:Success PMEM alloc 0x%x ****** \n", __func__,
                                  dma_address);
                  } else {

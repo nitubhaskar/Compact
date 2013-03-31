@@ -7497,7 +7497,7 @@ void __init sched_init(void)
 {
 	int i, j;
 	unsigned long alloc_size = 0, ptr;
-	
+
 	//{{ Add GAForensicINFO - 2/2
 	/*
 	*  Add GAForensic init for preventing symbol removal for optimization.

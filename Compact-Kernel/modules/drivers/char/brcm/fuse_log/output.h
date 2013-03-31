@@ -25,6 +25,13 @@
 #define BCMLOG_OUTPUT_XFER_MAXBYTES		8192
 #define BCMLOG_OUTPUT_XFER_MINBYTES		  64
 
+
+// Enable this option incase you want to get latest logs and dont
+//care for early/boot-up logs.
+// With this option enabled, you wouldn't able to capture early logs
+//to debug issue related to camp-on or boot-up.
+#define BCMLOG_LATEST_LOGS 1
+
 /**
  *	Output bytes to host
  *	@param  pUserBuf			(in)	pointer to user buffer

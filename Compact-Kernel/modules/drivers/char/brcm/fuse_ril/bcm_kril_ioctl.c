@@ -27,7 +27,7 @@ extern KRIL_ResultQueue_t gKrilResultQueue;
 // **FIXME** temporary until sysrpc is "modularized"
 extern void PMU_BattADCReq( void );
 
-bcm_kril_dev_result_t bcm_dev_results[TOTAL_BCMDEVICE_NUM] = {{0, NULL, NULL, NULL, 0}, {0, NULL, NULL, NULL, 0}, {0, NULL, NULL, NULL, 0}, {0, NULL, NULL, NULL, 0}};
+bcm_kril_dev_result_t bcm_dev_results[TOTAL_BCMDEVICE_NUM] = {0};
 int g_kril_initialised  = 0;
 
 /**
@@ -65,32 +65,25 @@ Int32 KRIL_GetRsp(struct file *filp, UInt32 cmd, UInt32 arg)
         spin_unlock_irqrestore(&(priv->recv_lock), flags);
         rv = -EAGAIN;
         KRIL_DEBUG(DBG_ERROR, "ERROR: KRIL Result List is empty %p\n", &(gKrilResultQueue.list));
-        goto err;
+        goto recv_err;
     }
     entry = gKrilResultQueue.list.next;
     buf_handle = list_entry(entry, KRIL_ResultQueue_t, list);
     list_del(entry);
     spin_unlock_irqrestore(&(priv->recv_lock), flags);
-    if(buf_handle == NULL)
-    {
-        KRIL_DEBUG(DBG_ERROR, "ERROR: buf_handle is NULL\n");
-        KRIL_ASSERT(1);
-        goto err;   
-    }
+
     if ((NULL == buf_handle->result_info.data) || (0 == buf_handle->result_info.datalen))
     {
         if ((NULL == buf_handle->result_info.data) != (0 == buf_handle->result_info.datalen))
         {
-            rv = -EPERM;
             KRIL_DEBUG(DBG_ERROR, "ERROR: KRIL Result data is Wrong %p, len %d\n", buf_handle->result_info.data, buf_handle->result_info.datalen);
-            KRIL_ASSERT(1);
-            goto recv_err;
+            //Must enter data abort here
+            goto recv_putback_on_err;
         }
     }
 
     rsp.client = buf_handle->result_info.client;
     rsp.t = buf_handle->result_info.t;
-    rsp.SimId= buf_handle->result_info.SimId;
     rsp.result = buf_handle->result_info.result;
     rsp.CmdID = buf_handle->result_info.CmdID;
     rsp.datalen = buf_handle->result_info.datalen;
@@ -100,52 +93,43 @@ Int32 KRIL_GetRsp(struct file *filp, UInt32 cmd, UInt32 arg)
         if (copy_to_user(rsp.data, buf_handle->result_info.data, buf_handle->result_info.datalen))
         {
             rv = -EFAULT;
-            KRIL_DEBUG(DBG_ERROR, "ERROR: KRIL copy response dara to user Fail datalen:%d\n", buf_handle->result_info.datalen);
-            KRIL_ASSERT(1);
-            goto recv_err;
+            KRIL_DEBUG(DBG_ERROR, "ERROR: KRIL copy response dara to user Fail\n");
+            goto recv_putback_on_err;
         }
     }
 
-    if (copy_to_user((KRIL_Response_t*)arg, &rsp, sizeof(KRIL_Response_t)))
+    if (copy_to_user(arg, &rsp, sizeof(KRIL_Response_t)))
     {
         rv = -EFAULT;
         KRIL_DEBUG(DBG_ERROR, "ERROR: KRIL copy response infor to user Fail\n");
-        goto recv_err;
+        goto recv_putback_on_err;
     }
     if (0 != buf_handle->result_info.datalen && buf_handle->result_info.data )
     {
         kfree( buf_handle->result_info.data );
     }
-    if(buf_handle)
-    {
-        kfree(buf_handle);
-        buf_handle = NULL;
-    }
+    kfree(buf_handle);
+    buf_handle = NULL;
 
     if (false == list_empty(&(gKrilResultQueue.list))) //not empty
     {
-        KRIL_DEBUG(DBG_TRACE, "rsp continue read list:%p, next:%p\n", &(gKrilResultQueue.list), gKrilResultQueue.list.next);
+        KRIL_DEBUG(DBG_INFO, "rsp continue read list:%p, next:%p\n", &(gKrilResultQueue.list), gKrilResultQueue.list.next);
         rv = RESULT_NOT_EMPTY;
     }
     mutex_unlock(&priv->recv_mutex);
     return rv;
 
+recv_putback_on_err:
+    /* If we got an error, put the message back onto
+       the head of the queue. */
+    //KRIL_DEBUG(DBG_INFO, "recv_putback_on_err handle s_addr:%p, d_addr:%p\n", entry, &(gKrilResultQueue.list));
+    spin_lock_irqsave(&(priv->recv_lock), flags);
+    list_add(entry, &(gKrilResultQueue.list));
+    spin_unlock_irqrestore(&(priv->recv_lock), flags);
+    mutex_unlock(&priv->recv_mutex);
+    return rv;
+ 
 recv_err:
-    KRIL_DEBUG(DBG_ERROR, "ERROR: KRIL Result data[client(%d) Simid(%d) result[%d] [CmdID]] is Wrong %p, len %d\n", 
-               buf_handle->result_info.client, buf_handle->result_info.SimId,
-               buf_handle->result_info.result, buf_handle->result_info.CmdID,
-               buf_handle->result_info.data, buf_handle->result_info.datalen);
-
-    if (0 != buf_handle->result_info.datalen && buf_handle->result_info.data )
-    {
-        kfree( buf_handle->result_info.data );
-    }
-    if(buf_handle)
-    {
-        kfree(buf_handle);
-        buf_handle = NULL;
-    }
-err:	
     mutex_unlock(&priv->recv_mutex);
     return rv;
 }
@@ -174,21 +158,9 @@ Int32 KRIL_SendCmd(UInt32 cmd, UInt32 arg)
     {
         kril_cmd->cmd = cmd;
         kril_cmd->ril_cmd = kmalloc(sizeof(KRIL_Command_t), GFP_KERNEL);
-        if(!kril_cmd->ril_cmd) {
-            KRIL_DEBUG(DBG_ERROR, "unable to allocate kril_cmd->ril_cmd buf\n");
-            kfree(kril_cmd);
-            return 0;
-        }
-        if(copy_from_user(kril_cmd->ril_cmd, (KRIL_Command_t *)arg, sizeof(KRIL_Command_t))!=0)
-        {
-            KRIL_DEBUG(DBG_ERROR, "Copy cmd form user space is fail\n");
-            kfree(kril_cmd->ril_cmd);
-            kfree(kril_cmd);
-            KRIL_ASSERT(1);
-            return 0;
-        }
+        copy_from_user(kril_cmd->ril_cmd, (KRIL_Command_t *)arg, sizeof(KRIL_Command_t));
 
-        KRIL_DEBUG(DBG_TRACE, "client:%d RIL_Token:%p CmdID:%ld datalen:%d\n", kril_cmd->ril_cmd->client, kril_cmd->ril_cmd->t, kril_cmd->ril_cmd->CmdID, kril_cmd->ril_cmd->datalen);
+        KRIL_DEBUG(DBG_INFO, "client:%d RIL_Token:%p CmdID:%d datalen:%d\n", kril_cmd->ril_cmd->client, kril_cmd->ril_cmd->t, kril_cmd->ril_cmd->CmdID, kril_cmd->ril_cmd->datalen);
 
         if (0 != kril_cmd->ril_cmd->datalen)
         {
@@ -199,20 +171,9 @@ Int32 KRIL_SendCmd(UInt32 cmd, UInt32 arg)
             }
             else
             {
-                if(copy_from_user(tdata, kril_cmd->ril_cmd->data, kril_cmd->ril_cmd->datalen)!=0)
-                {
-                    KRIL_DEBUG(DBG_ERROR, "copy data from user space is fail\n");
-                    kfree(tdata);
-                    kfree(kril_cmd->ril_cmd);
-                    kfree(kril_cmd);
-                    KRIL_ASSERT(1);
-                    return 0;
-                }
-                else
-                {
-                    KRIL_DEBUG(DBG_TRACE, "tdata memory allocate success tdata:%p\n", kril_cmd->ril_cmd->data);
-                    kril_cmd->ril_cmd->data = tdata;
-                }
+                copy_from_user(tdata, kril_cmd->ril_cmd->data, kril_cmd->ril_cmd->datalen);
+                KRIL_DEBUG(DBG_INFO, "tdata memory allocate success tdata:%p\n", kril_cmd->ril_cmd->data);
+                kril_cmd->ril_cmd->data = tdata;
             }
         }
         else
@@ -225,7 +186,7 @@ Int32 KRIL_SendCmd(UInt32 cmd, UInt32 arg)
         list_add_tail(&kril_cmd->list, &gKrilCmdQueue.list); 
         mutex_unlock(&gKrilCmdQueue.mutex);
         queue_work(gKrilCmdQueue.cmd_wq, &gKrilCmdQueue.commandq);
-        KRIL_DEBUG(DBG_TRACE, "head cmd:%ld list:%p next:%p prev:%p\n", kril_cmd->cmd, &kril_cmd->list, kril_cmd->list.next, kril_cmd->list.prev);
+        KRIL_DEBUG(DBG_INFO, "head cmd:%ld list:%p next:%p prev:%p\n", kril_cmd->cmd, &kril_cmd->list, kril_cmd->list.next, kril_cmd->list.prev);
     }
     return 0;
 }
@@ -305,7 +266,7 @@ int KRIL_Register(UInt32                  clientID,
 // Notes:
 //
 //******************************************************************************
-int KRIL_DevSpecific_Cmd(unsigned short client, SimNumber_t SimId, UInt32 CmdID, void *data, size_t datalen)
+int KRIL_DevSpecific_Cmd(unsigned short client , UInt32 CmdID, void *data, size_t datalen)
 {
     KRIL_CmdQueue_t *kril_cmd = NULL;
 
@@ -350,7 +311,6 @@ int KRIL_DevSpecific_Cmd(unsigned short client, SimNumber_t SimId, UInt32 CmdID,
     kril_cmd->ril_cmd->client = client;
     kril_cmd->ril_cmd->CmdID = CmdID;
     kril_cmd->ril_cmd->datalen = datalen;
-    kril_cmd->ril_cmd->SimId = SimId;
 
     if(data != NULL && datalen != 0)
     {

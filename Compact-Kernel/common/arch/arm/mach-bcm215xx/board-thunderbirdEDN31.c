@@ -518,10 +518,11 @@ static struct bma150_accl_platform_data bma_pdata = {
 #define HAPTIC_PWM 16
 static struct timed_gpio timed_gpios[] = {
 	{
-	   .name = "vibrator",
-	   .gpio = HAPTIC_ENABLE,
-	   .max_timeout = 15000,
-	   .active_low = 0,
+		.name = "vibrator",
+		.gpio = HAPTIC_ENABLE,
+		.max_timeout = 15000,
+		.active_low = 0,
+		.regl_id = "haptic_pwm",
 	},
 };
 

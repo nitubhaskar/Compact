@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   hal_em_battmgr.h
@@ -23,62 +24,6 @@ the GPL, without Broadcom's express prior written consent.
 *   @brief      HAL BATTMGR header file
 *
 *   Hardware Abstraction Layer of battery manager.   
-
-
-\section setup Setup
-Initialize the battery manager driver.
-\code
-
-HAL_EM_BATTMGR_Config_st_t config;
-HAL_EM_BATTMGR_ErrorCode_en_t ret;
-
-	config.device_ACTIVE = TRUE;
-	config.performance_required = 0;
-
-	ret = HAL_EM_BATTMGR_Init( &config )
-	
-	if(BATTMGR_SUCCESS != ret)
-			printf("HAL_EM_BATTMGR_Init failed");
-
-\endcode
-
-\section actions Actions
-
-The HAL_EM_BATTMGR_Ctrl() is used to interface into the battery manager. The action
-field is specified by HAL_EM_BATTMGR_Action_en_t. The data feild is dependent on which action is performed. 
-The callback is NULL. The following example shows how to get the battery percentage reading from the battery 
-manager.
-
-\code
-HAL_EM_BATTMGR_ErrorCode_en_t ret;
-HAL_EM_BATTMGR_Action_BattLevelPercent_st_t battPrcnt;
-
-	ret = HAL_EM_BATTMGR_Ctrl( (HAL_EM_BATTMGR_Action_en_t) EM_BATTMGR_ACTION_GET_BATTLEVEL,	&battPrcnt, NULL);	
-	if(BATTMGR_SUCCESS==ret)
-		printf("Battery Level is %d", battPrcnt);
-\endcode
-
-
-\section register Register
-
-The HAL_EM_BATTMGR_RegisterEventCB is use to register callbacks to the client for battery Manager EVENTs.
-
-\code
-HAL_EM_BATTMGR_ErrorCode_en_t ret;
-
-	ret = HAL_EM_BATTMGR_RegisterEventCB(	BATTMGR_CHARGER_PLUG_IN_EVENT, (void*)TestBattmgrChargingCB );
-\endcode	
-
-The callback example assinged to the PLUG IN EVENT.
-
-\code
-void TestBattmgrChargingCB( void )
-{
-	printf(buf,"TestBattmgrChargingCB: SUCCESS.  Charger is plugged in (charging)\r\n");
-}	
-\endcode	
-
-
 *
 ****************************************************************************/
 /**
@@ -94,7 +39,7 @@ void TestBattmgrChargingCB( void )
 /**  BATTMGR EVENT types
 *
 *	Upper layer can register a function to get notification on event below
-*	Historically, only one client registered for callback (MMI), therefore
+*	Historically, only one client registered for callback (MMMI), therefore
 *	this event management is designed to take one client only.
 **/
 typedef enum
@@ -144,15 +89,15 @@ typedef struct
 //! HAL EM BATTMGR charger type
 typedef enum
 {
-	EM_BATTMGR_WALL_CHARGER = 0, ///< Wall Charger type
-	EM_BATTMGR_USB_CHARGER		///< USB Charger type	
+	EM_BATTMGR_WALL_CHARGER = 0,
+	EM_BATTMGR_USB_CHARGER
 } HAL_EM_BATTMGR_Charger_t;
 
 //! HAL EM BATTMGR charger in/out
 typedef enum
 {
-	EM_BATTMGR_CHARGER_UNPLUGGED = 0, 	///< Charger plugged out
-	EM_BATTMGR_CHARGER_PLUGGED			///< Charger plugged in
+	EM_BATTMGR_CHARGER_UNPLUGGED = 0,
+	EM_BATTMGR_CHARGER_PLUGGED
 } HAL_EM_BATTMGR_Charger_InOut_t;
 
 /** 
@@ -163,6 +108,7 @@ typedef enum
 typedef struct
 {
 	Boolean device_ACTIVE;			///< BATTMGR device active means it is initialized.
+									///< BATTMGR active does not mean much for sleep mode. set to auto
 	UInt32	performance_required;	///< performance required does not have much meaning on BATTMGR.  Set to default.
 } HAL_EM_BATTMGR_Config_st_t;
 
@@ -193,12 +139,12 @@ typedef enum
 //! Action data type: EM_BATTMGR_ACTION_CONFIG_BATTMGR  
 typedef struct 
 {
-	UInt16	bmr;				///< ADC used to read the battery voltage.
-	UInt16 	num_of_levels;		///<  total number of battery levels.
-	UInt16	*level_table;		///<  pointer to table of battery level values.	
-	UInt16	hysteresis;			///<  battery voltage hysterisis.
-	UInt16	low_thresh;			///<  LOW Battery threshold.
-	UInt16	empty_thresh;		///<  EMPTY battyer threshold.
+	UInt16	bmr;				///< (in) parameter
+	UInt16 	num_of_levels;			
+	UInt16	*level_table;				
+	UInt16	hysteresis;					
+	UInt16	low_thresh;					
+	UInt16	empty_thresh;	
 } HAL_EM_BATTMGR_Action_ConfigBattmgr_st_t;		
 
 //! **  Action data type:  EM_BATTMGR_ACTION_GET_BATTLEVEL	**
@@ -261,13 +207,13 @@ typedef enum
 //! (*data) type for EM_PMU_ACTION_GET_CHARGING_STATUS
 typedef struct
 {
-	EM_BATTMGR_ChargingStatus_en_t	chargerStatus; ///< (out) charger type status
+	EM_BATTMGR_ChargingStatus_en_t	chargerStatus;
 } HAL_EM_BATTMGR_Action_GetChargingStatus_st_t;	
 
 //! **  Action data type:  EM_BATTMGR_ACTION_SET_COMPENSATION	**
 typedef struct 
 {
-	Int16 compValue;						   		///< (out) compensation value
+	Int16 compValue;						   		///< (out) battery level
 } HAL_EM_BATTMGR_Action_SetCompensation_st_t;	   
 
 //! **  Action data type:  EM_BATTMGR_ACTION_RUN_BATTMGR	**
@@ -300,20 +246,21 @@ typedef void (*HAL_EM_BATTMGR_ExtTempCB_t)(	///< Extreme Temperature callback ty
 //! HAL EM BATTMGR function call result
 typedef enum
 {
-	BATTMGR_SUCCESS = 0,					///< Successful
+	BATTMGR_SUCCESS = 0,						///< Successful
 	BATTMGR_ERROR_ACTION_NOT_SUPPORTED,		///< Not supported by platform HW
 	BATTMGR_ERROR_INTERNAL_ERROR,			///< Internal error: i2c, comm failure, etc.
-	BATTMGR_ERROR_EVENT_HAS_A_CLIENT,		///< Error if trying to register more than 1 client to an event with one client only requirement 
-	BATTMGR_ERROR_OTHERS					///< Undefined error
+	BATTMGR_ERROR_EVENT_HAS_A_CLIENT,		///< Error if trying to register more than  
+												///< 1 client to an event with one client only requirement 
+	BATTMGR_ERROR_OTHERS						///< Undefined error
 } HAL_EM_BATTMGR_ErrorCode_en_t;
 
 //!   Battmgr HAL Action Union  
 typedef union
 {
-	HAL_EM_BATTMGR_Action_BattLevel_st_t				HAL_EM_BATTMGR_Action_BattLevel;			    ///< contains the Battery Level
-	HAL_EM_BATTMGR_Action_BattLevelPercent_st_t 		HAL_EM_BATTMGR_Action_BattLevelPercent;			///< contains the Battery Level Percentage
-	HAL_EM_BATTMGR_Action_IsUSBChargerPresent_st_t 		HAL_EM_BATTMGR_Action_IsUSBChargerPresent;		///< contains TRUE if the USB charger is plugged in		 
-	HAL_EM_BATTMGR_Action_IsWallChargerPresent_st_t	   	HAL_EM_BATTMGR_Action_IsWallChargerPresent;		///< contains TRUE if the wall charger is plugged in			
+	HAL_EM_BATTMGR_Action_BattLevel_st_t				HAL_EM_BATTMGR_Action_BattLevel;					    
+	HAL_EM_BATTMGR_Action_BattLevelPercent_st_t 		HAL_EM_BATTMGR_Action_BattLevelPercent;				   
+	HAL_EM_BATTMGR_Action_IsUSBChargerPresent_st_t 		HAL_EM_BATTMGR_Action_IsUSBChargerPresent;				 
+	HAL_EM_BATTMGR_Action_IsWallChargerPresent_st_t	   	HAL_EM_BATTMGR_Action_IsWallChargerPresent;						
 } HAL_EM_BATTMGR_Control_un_t;
 
 //---------------------------------------------------------------------------
@@ -329,7 +276,7 @@ typedef union
 *
 *****************************************************************************/
 HAL_EM_BATTMGR_ErrorCode_en_t HAL_EM_BATTMGR_Init(
-	   HAL_EM_BATTMGR_Config_st_t *data			
+	   HAL_EM_BATTMGR_Config_st_t *data				///< (in/out) device configuration structure
 	);					
 
 /**
@@ -343,9 +290,9 @@ HAL_EM_BATTMGR_ErrorCode_en_t HAL_EM_BATTMGR_Init(
 *
 *****************************************************************************/
 HAL_EM_BATTMGR_ErrorCode_en_t HAL_EM_BATTMGR_Ctrl(
-	HAL_EM_BATTMGR_Action_en_t action,			
-	void *data,									
-	void *callback								
+	HAL_EM_BATTMGR_Action_en_t action,			///< (in) Action request
+	void *data,									///< (io) Input/Output parameters associated with the action
+	void *callback								///< (in) Callback function associated with the action
 	);	
 
 /**
@@ -359,8 +306,8 @@ HAL_EM_BATTMGR_ErrorCode_en_t HAL_EM_BATTMGR_Ctrl(
 *
 *****************************************************************************/
 HAL_EM_BATTMGR_ErrorCode_en_t HAL_EM_BATTMGR_RegisterEventCB(
-	HAL_EM_BATTMGR_Events_en_t event,				
-	void *callback								
+	HAL_EM_BATTMGR_Events_en_t event,				///< (in) Event type
+	void *callback								///< (in) Callback routine
 	);
 
 /**
@@ -376,7 +323,7 @@ HAL_EM_BATTMGR_ErrorCode_en_t HAL_EM_BATTMGR_RegisterEventCB(
 void HAL_EM_BATTMGR_BattADCReq(void);
 
 /** @} */
-
+			
 #endif	// _HAL_L_HAL_EM_BATTMGR_H__
 
 

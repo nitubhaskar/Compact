@@ -27,8 +27,6 @@
 #include <linux/rtc.h>
 #include <linux/kbd_kern.h>
 #include <linux/vt_kern.h>
-#include <linux/statfs.h>
-#include <linux/namei.h>
 
 #include "bcmlog.h"
 #include "fifo.h"
@@ -38,7 +36,6 @@
 unsigned char *fifobuf ;
 unsigned char *fifoend;
 #define MTT_HEAD_LEN 15
-#define MTT_SD_RESERVED (20 * 1024 * 1024) // 20MB reserved area for AP/CP crash dump.
 
 /*
  *	extern declarations
@@ -70,13 +67,13 @@ static unsigned int totalbyte = 0;
 static char g_netconsole_on = 0 ;				//	flow control state for RNDIS, set/reset by flow control callbacks
 static char g_acm_on = 0 ;					//	flow control state for ACM, set/reset by flow control callbacks
 
-
-// Enable this option incase you want to get latest logs and dont
-//care for early/boot-up logs.
-// With this option enabled, you wouldn't able to capture early logs
-//to debug issue related to camp-on or boot-up.
-#define BCMLOG_LATEST_LOGS 1
-
+/*		MTT log buffer setted to be 2MB in Samsung model 
+#if defined(CONFIG_BOARD_TOTORO)
+#define BCMLOG_OUTPUT_FIFO_MAX_BYTES (2*1024*1024)
+#else
+#define BCMLOG_OUTPUT_FIFO_MAX_BYTES  65536		
+#endif
+*/
 #define BCMLOG_OUTPUT_FIFO_MAX_BYTES (2*1024*1024)
 
 static BCMLOG_Fifo_t g_fifo ;					//	output fifo
@@ -109,7 +106,6 @@ static struct acm_callbacks _acm_cb =	//	ACM flow control callbacks
 
 typedef struct 
 {
-	struct workqueue_struct *wqs;
 	struct work_struct	wq ;	
 	int					outdev; 
 	int					prev_outdev; 
@@ -121,7 +117,6 @@ typedef struct
 static WriteToLogDevParms_t g_devWrParms =		//	worker thread vars
 {
 	.file			= 0,
-	.acm_file		= 0,
 	.busy			= 0,
 	.prev_outdev	= BCMLOG_OUTDEV_NONE,
 	.outdev			= BCMLOG_OUTDEV_NONE,
@@ -198,35 +193,6 @@ static void GetLogFileName( char *buf, char *rootdev, int size )
 #define MAX_LOG_PATHNAME     64
 
 /*
- *	Return available SD card size (bytes)
- *	If over 2G, return 2G
- */
-static int Get_SDCARD_Available( void )
-{
-	struct kstatfs sbuf;
-	struct path path;
-	int ret;
-
-	ret = kern_path("/sdcard/", LOOKUP_DIRECTORY, &path);
-	if (ret < 0)
-		goto out;
-
-	ret = vfs_statfs(path.dentry, &sbuf);
-	if (ret < 0)
-		goto out;
-
-	if ((sbuf.f_bavail * sbuf.f_bsize) > 0x7FFFFFFF) {
-		ret = 0x7FFFFFFF;
-	} else {
-		ret = (sbuf.f_bavail * sbuf.f_bsize);
-	}
-
-out:
-	return ret;
-}
-
-
-/*
  *	Write log to NAND file system
  */
 int WriteToLogDev_NAND( void )
@@ -290,12 +256,8 @@ int WriteToLogDev_NAND( void )
 			}
 		} while( nFifo > 0 );
 	}
-
-    if( pfile )
-    {
 	filp_close( pfile ,NULL ); /* file close for next logging */
 	pfile =0;
-    }
 	set_fs( oldfs ) ;
 	return 0;
 }
@@ -313,20 +275,14 @@ static void WriteToLogDev_SDCARD( void )
 	/*
 	 *	Attempt to open log file, if not already open
 	 */
-	if( !g_devWrParms.file ) {
-		if ((Get_SDCARD_Available()) > MTT_SD_RESERVED) {
+	if( !g_devWrParms.file )
+	{
 		GetLogFileName( fname, "/sdcard/", sizeof( fname ) ) ;
+
 		g_devWrParms.file = filp_open( fname, O_WRONLY|O_TRUNC|O_CREAT, 0666); 
+
 		if( IS_ERR( g_devWrParms.file ) )
 			g_devWrParms.file = 0 ;
-		} else if ((Get_SDCARD_Available()) > 0){
-			g_devWrParms.outdev = BCMLOG_OUTDEV_NONE ;
-			BCMLOG_SetRunlogDevice(BCMLOG_OUTDEV_NONE);
-		} else {
-			/*
-			 * SD card not exist or not mounted yet.
-			 */
-		}
 	}
 
 	/*
@@ -353,7 +309,8 @@ static void WriteToLogDev_SDCARD( void )
 				if( nWrite > 0 )
 					BCMLOG_FifoRemove( &g_fifo, nWrite ) ;
 
-				if(( nWrite < nFifo ) || ((Get_SDCARD_Available()) < MTT_SD_RESERVED)) {
+				if( nWrite < nFifo )
+				{
 					nFifo = 0 ;
 					filp_close( g_devWrParms.file ,NULL );
 					g_devWrParms.file = 0 ;
@@ -363,15 +320,6 @@ static void WriteToLogDev_SDCARD( void )
 					 * this point
 					 */
 					 g_devWrParms.outdev = BCMLOG_OUTDEV_NONE ;
-					BCMLOG_SetRunlogDevice(BCMLOG_OUTDEV_NONE);
-				} else if (g_devWrParms.file->f_pos >= (BCMLOG_GetSdFileMax())) {
-					/*
-					 * file size reached maximum.
-					 * close and open new file.
-					 */
-					nFifo = 0 ;
-					filp_close( g_devWrParms.file ,NULL );
-					g_devWrParms.file = 0 ;
 				}
 			}
 		} while( nFifo > 0 );
@@ -389,9 +337,9 @@ static void verifyRefCount(unsigned char *pBytes, unsigned long nBytes)
 	static unsigned char frame_counter =0;
 	static unsigned char old_frame_counter =0 ;
 	static unsigned char firstsync  = 1;
+
 	unsigned char expect_counter;
 
-	
 	while (i < nBytes)
 	{
 		if (pBytes[i] == MTTLOG_FrameSync0)
@@ -571,30 +519,31 @@ static void WriteToLogDev_ACM( void )
 	/*
 	 *	Attempt to open log file, if not already open
 	 */
-	if (!g_devWrParms.acm_file)
+	if( !g_devWrParms.file )
 	{
 		struct tty_struct *tty = NULL;
 		
-		g_devWrParms.acm_file = filp_open( "/dev/ttyGS1", O_WRONLY|O_TRUNC|O_CREAT, 0666);
+		g_devWrParms.file = filp_open( "/dev/ttyGS1", O_WRONLY|O_TRUNC|O_CREAT, 0666); 
 
-		tty = g_devWrParms.acm_file->private_data;		
+		tty = g_devWrParms.file->private_data;
 		tty->termios->c_iflag |= IGNBRK | ISTRIP | IGNPAR;
 		tty->termios->c_oflag = 0;
 		tty->termios->c_lflag = 0;
-		tty->termios->c_cc[VERASE] =0;
+		tty->termios->c_cc[VERASE] =
 		tty->termios->c_cc[VKILL]  = 0;
 		tty->termios->c_cc[VMIN]   = 1;
 		tty->termios->c_cc[VTIME]  = 0;
 		
-		if( IS_ERR( g_devWrParms.acm_file ) )
-			g_devWrParms.acm_file = 0 ;
+		if( IS_ERR( g_devWrParms.file ) )
+			g_devWrParms.file = 0 ;
 
+		g_devWrParms.acm_file = g_devWrParms.file;
 	}
 
 	/*
 	 *	If log file open start logging to it
 	 */
-	if( g_devWrParms.acm_file )
+	if( g_devWrParms.file )
 	{
 		if (g_acm_on) {
 			u32 nFifo ;
@@ -612,15 +561,18 @@ static void WriteToLogDev_ACM( void )
 
 				if( nFifo > 0 )
 				{
-					nWrite = g_devWrParms.acm_file->f_op->write( g_devWrParms.acm_file,
-						pData, nFifo, &g_devWrParms.acm_file->f_pos ) ;
+					nWrite = g_devWrParms.file->f_op->write( g_devWrParms.file, 
+						pData, nFifo, &g_devWrParms.file->f_pos ) ;
 					
 					if( nWrite > 0 )
 						BCMLOG_FifoRemove( &g_fifo, nWrite ) ;
 
 					if( nWrite < nFifo )
+					{
 						nFifo = 0 ;
-
+						filp_close( g_devWrParms.file ,NULL );
+						g_devWrParms.file = 0 ;
+					}
 				}
 			} while( nFifo > 0 );	
 		}
@@ -704,7 +656,7 @@ static void WriteToLogDev( struct work_struct *work )
 
 	if( g_devWrParms.prev_outdev != g_devWrParms.outdev )
 	{
-		if( g_devWrParms.file)
+		if( g_devWrParms.file && g_devWrParms.file!=g_devWrParms.acm_file )
 		{
 			filp_close( g_devWrParms.file ,NULL );
 			g_devWrParms.file = 0 ;
@@ -764,7 +716,6 @@ void BCMLOG_Output( unsigned char *pBytes, unsigned long nBytes , unsigned int m
 	unsigned int i = 0;
 
 	unsigned int wrotebyte;
-
 #if BCMLOG_LATEST_LOGS
        /*
         *      Before adding to FIFO , check if FIFO is full, remove logs from fifo ( early logs)
@@ -835,8 +786,7 @@ void BCMLOG_Output( unsigned char *pBytes, unsigned long nBytes , unsigned int m
 		g_devWrParms.busy   = 1; 
 		g_devWrParms.prev_outdev = g_devWrParms.outdev ;
 		g_devWrParms.outdev = BCMLOG_GetRunlogDevice( ) ;
-		//schedule_work( &g_devWrParms.wq ) ;
-		queue_work(g_devWrParms.wqs, &g_devWrParms.wq);
+		schedule_work( &g_devWrParms.wq ) ;
 	}
 }
 
@@ -869,7 +819,6 @@ int BCMLOG_OutputInit( void )
 
 
 	INIT_WORK( &g_devWrParms.wq, WriteToLogDev ) ;
-	g_devWrParms.wqs = create_workqueue("DevOutput_wq");
 
 	/*
 	 *	register flow control callback functions

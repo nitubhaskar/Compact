@@ -28,7 +28,6 @@
 //#include "bcm_kril_sysrpc_handler.h"
 //#include "bcm_kril_adcrpc_handler.h"
 
-
 static int __init bcm_fuse_kpdp_init_module(void);
 static void __exit bcm_fuse_kpdp_exit_module(void);
 static struct class *kpdp_class; 

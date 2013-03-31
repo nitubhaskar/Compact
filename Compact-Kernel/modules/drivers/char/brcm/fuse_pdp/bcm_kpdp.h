@@ -58,18 +58,6 @@ extern "C" {
 
 // for Notification
 
-#ifndef _TASKMSGS_H_
-/**
-Structure : Sim Identifier Type
-**/
-typedef enum
-{
-    SIM_SINGLE,      ///< single SIM case
-    SIM_DUAL_FIRST,  ///< the first SIM
-    SIM_DUAL_SECOND, ///< the second SIM
-    SIM_ALL = 0xFF   ///< for all the SIMs
-} SimNumber_t;
-#endif
 
 /**
      @struct  KPDP_Command_t
@@ -78,8 +66,7 @@ typedef enum
  */
 typedef struct
 {
-    unsigned long CmdID;    //PDP Command ID    
-    SimNumber_t SimId;      //SIM ID (SIM_SINGLE, SIM_DUAL_FIRST, SIM_DUAL_SECOND, SIM_ALL)                                // 
+    unsigned long CmdID;    //PDP Command ID
     void *data;             // pointer to user buffer
     size_t datalen;         // length of user buffer
 } KPDP_Command_t;
@@ -88,7 +75,6 @@ typedef struct
 typedef struct 
 {
     unsigned long CmdID;   //pdp Command ID
-    SimNumber_t SimId;      //SIM ID (SIM_SINGLE, SIM_DUAL_FIRST, SIM_DUAL_SECOND, SIM_ALL)    
     Result_t result;      //Response result
     void *data;            //pointer to user buffer
     size_t datalen;        //length of user buffer

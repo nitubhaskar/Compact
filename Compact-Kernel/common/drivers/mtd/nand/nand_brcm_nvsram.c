@@ -46,35 +46,15 @@
 
 #include <mach/reg_nvsram.h>
 
-#include <plat/nand_otp.h>
-
 #include <plat/dma.h>
 
 #define NAND_ECC_NUM_BYTES	3
 #define NAND_ECC_PAGE_SIZE 512
 
-static struct mtd_info *board_mtd;
+static struct mtd_info *board_mtd; 
 static void __iomem *bcm_nand_io_base;
 static nvsram_cmd addr;
 static uint8_t chip_sel;
-
-/* Define global flag for controller ecc; Set it to enabled by default */
-static int host_controller_ecc = enabled;
-
-static struct nand_special_dev brcm_nand_ids[] = {
-	{NAND_MFR_MICRON, MICRON_ON_DIE_ECC_ENABLED, 4},
-	{0x0, -1, -1}
-};
-
-/* Define global flag for OTP config; set it to NAND_OTP_NONE by default */
-int config_nand_otp = NAND_OTP_NONE;
-uint32_t otp_start_addr;
-uint32_t otp_end_addr;
-
-static struct nand_otp brcm_nand_otp[] = {
-	{NAND_MFR_MICRON, 0x1000, 0xf000, NAND_MICRON_OTP},
-	{0x0, -1, -1, NAND_OTP_NONE}
-};
 
 #ifdef CONFIG_MTD_PARTITIONS
 const char *part_probes[] = { "cmdlinepart", NULL };
@@ -156,6 +136,7 @@ static struct nand_ecclayout nand_hw_eccoob_2048 = {
 		    }
 };
 
+#if defined (CONFIG_MTD_USE_NAND_FLASH_ON_DIE_ECC)
 /*
  * OOB layout for Micron on-die ECC
  */
@@ -176,6 +157,7 @@ static struct nand_ecclayout micron_nand_on_die_eccoob_2048 = {
 		    {.offset = 52, .length = 4},
 	   }
 };
+#endif
 
 /* We treat the OOB for a 4K page as if it were 8 512 byte oobs,
  * except the BI is at byte 0. */
@@ -199,6 +181,11 @@ static struct nand_ecclayout nand_hw_eccoob_4096 = {
 
 static uint8_t brcm_nand_read_byte(struct mtd_info *mtd)
 {
+	return readb(addr.data_phase_addr);
+}
+
+static uint8_t brcm_nand_read_byte16(struct mtd_info *mtd)
+{
 	return (uint8_t) cpu_to_le16(readw(addr.data_phase_addr));
 }
 
@@ -207,80 +194,92 @@ static uint16_t brcm_nand_read_word(struct mtd_info *mtd)
 	return readw(addr.data_phase_addr);
 }
 
-static void brcm_nand_write_byte(const unsigned char byte)
+static void brcm_nand_write_buf16(struct mtd_info *mtd,
+				const u_char *buf, int len)
 {
-	writew((unsigned short)byte, addr.data_phase_addr);
-}
+	int i;
+	u16 *p = (u16 *) buf;
+	len >>= 1;
 
-#define NVSRAM_READ_FIFO_SIZE	32	/* 32-bytes */
-#define NVSRAM_WRITE_FIFO_SIZE	32	/* 32-bytes */
+	for (i = 0; i < len; i++)
+		writew(p[i], addr.data_phase_addr);
+}
 
 static void brcm_nand_write_buf(struct mtd_info *mtd,
 				const u_char *buf, int len)
 {
-	unsigned int i;
+	int i;
 
-	/* memcpy-ing to WRITE FIFO */
-	for (i = 0; i < len; i += NVSRAM_WRITE_FIFO_SIZE) {
-		memcpy((void *)addr.data_phase_addr, buf, NVSRAM_WRITE_FIFO_SIZE);
-		buf += NVSRAM_WRITE_FIFO_SIZE;
+	for (i = 0; i < len; i++)
+		writeb(buf[i], addr.data_phase_addr);
+}
+
+extern void	FastNANDAXIReadData(uint32_t *, int, uint32_t);
+
+static void brcm_nand_read_buf16(struct mtd_info *mtd,
+				u_char *buf, int len)
+{
+#if 0
+	int words;
+	int i;
+	u16 *p = (u16 *) buf;
+
+	words = (len + 1) / 2;	/* e.g len may be odd. 1 byte must do 1 word read */
+
+	for (i = 0; i < words; i++) {
+		p[i] = readw(addr.data_phase_addr);
 	}
+#endif
+
+	uint32_t *p = (uint32_t *) buf;
+	FastNANDAXIReadData(p, len, addr.data_phase_addr);
 }
 
 static void brcm_nand_read_buf(struct mtd_info *mtd,
 				u_char *buf, int len)
 {
-	unsigned int i;
+#if 0
+	int i;
 
-	/* memcpy-ing from READ FIFO */
-	for (i = 0; i < len; i += NVSRAM_READ_FIFO_SIZE) {
-		memcpy(buf, (void *)addr.data_phase_addr, NVSRAM_READ_FIFO_SIZE);
-		buf += NVSRAM_READ_FIFO_SIZE;
-	}
+	for (i = 0; i < len; i++)
+		buf[i] = readb(addr.data_phase_addr);
+#endif
+
+	uint32_t *p = (uint32_t *) buf;
+	FastNANDAXIReadData(p, len, addr.data_phase_addr);
+}
+
+static int brcm_nand_verify_buf16(struct mtd_info *mtd,
+				const u_char *buf, int len)
+{
+	int i;
+	u16 *p = (u16 *) buf;
+	len >>= 1;
+
+	for (i = 0; i < len; i++)
+		if (p[i] != readw(addr.data_phase_addr))
+			return -EFAULT;
+	return 0;
 }
 
 static int brcm_nand_verify_buf(struct mtd_info *mtd,
 				const u_char *buf, int len)
 {
-	struct nand_chip *chip = mtd->priv;
-
-	/* Allocate buffer for Read data */
-	u_char *ver_buf = kmalloc(len, GFP_KERNEL);
-	u_char *ver_oob_buf = kmalloc(mtd->oobsize, GFP_KERNEL);
-
-	/* Read data from FIFO to buffer */
-	chip->read_buf(mtd, ver_buf, len);
-
-	/* Read oob data from FIFO to buffer */
-	chip->read_buf(mtd, ver_oob_buf, mtd->oobsize);
-
-	/* Compare main data with read data */
-	if (memcmp(buf, ver_buf, len)) {
-		kfree(ver_buf);
-		kfree(ver_oob_buf);
-		return -EFAULT;
+	int i;
+	for (i = 0; i < len; i++) {
+		if (buf[i] != readb(addr.data_phase_addr)) {
+			return -EFAULT;
+		}
 	}
-
-	/* Compare oob data with read data */
-	if (memcmp(chip->oob_poi, ver_oob_buf, mtd->oobsize)) {
-		kfree(ver_buf);
-		kfree(ver_oob_buf);
-		return -EFAULT;
-	}
-
-	/* Return happy */
-	kfree(ver_buf);
-	kfree(ver_oob_buf);
 	return 0;
 }
 
-static void brcm_nand_wait_until_ready(void)
+static void brcm_nand_wait_until_ready(uint32_t busy_wait_us)
 {
 	uint32_t status = 0;
 	unsigned long timeo = jiffies;
-	uint32_t timeout;
 
-	timeo += 1;	/* 1 jiffies */
+	timeo += (HZ * busy_wait_us) / 1000;
 
 	/*
 	 * First wait for the NAND device to go busy because R/#B
@@ -294,28 +293,15 @@ static void brcm_nand_wait_until_ready(void)
 		cond_resched();
 	}
 
-	timeout = 200;	/* 1msec max timeout */
 	/* Then wait for the NAND device to go ready */
-	status = readl(NVSRAM_REG_BASE + NVSRAM_MEMC_STATUS_OFFSET);
-	while (!(status & NVSRAM_MEMC_STATUS_RAW_INT_STATUS_MASK) && timeout--) {
+	do {
 		status = readl(NVSRAM_REG_BASE + NVSRAM_MEMC_STATUS_OFFSET);
-		udelay(5);
-	}
-
-	if (!timeout) {
-		pr_err("%s: RY/#BY interrupt NOT received even after 50msec\n",
-			__FUNCTION__);
-		return;
-	}
+	} while (!(status & NVSRAM_MEMC_STATUS_RAW_INT_STATUS_MASK));
 
 	/* Clear raw interrupt */
 	writel(NVSRAM_MEMC_CFG_CLR_NAND_INT_CLR_MASK,
 			NVSRAM_REG_BASE + NVSRAM_MEMC_CFG_CLR_OFFSET);
 }
-
-/* Special NAND commands */
-#define NAND_CMD_GET_FEATURES	0xEE
-#define NAND_CMD_SET_FEATURES	0xEF
 
 /*
  * brcm_nand_cmdfunc:
@@ -328,7 +314,6 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 				int column, int page_addr)
 {
 	struct nand_chip *chip = mtd->priv;
-	int state = chip->state;
 	int status, count;
 
 	/* Initialize cmd and data phase addresses */
@@ -338,11 +323,15 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 	pr_debug("brcm_nvsram_cmdfunc (cmd = 0x%x, col = 0x%x, page = 0x%x)\n",
 	      command, column, page_addr);
 
+	udelay(200);
+
 	/* Command pre-processing step */
 	switch (command) {
 	case NAND_CMD_RESET:
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= NAND_CMD_RESET << NVSRAM_SMC_NAND_START_CMD;
+		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
+								NAND_CMD_RESET << NVSRAM_SMC_NAND_START_CMD;
 
 		writel(0x0, addr.cmd_phase_addr);
 
@@ -350,7 +339,9 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 
 	case NAND_CMD_STATUS:
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= NAND_CMD_STATUS << NVSRAM_SMC_NAND_START_CMD;
+		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
+								NAND_CMD_STATUS << NVSRAM_SMC_NAND_START_CMD;
 
 		writel(0x0, addr.cmd_phase_addr);
 
@@ -368,9 +359,9 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 		/* Fall through */
 	case NAND_CMD_READ0:
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= 5 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE			|
-								NVSRAM_SMC_NAND_END_CMD_REQ					|
-								NAND_CMD_READSTART << NVSRAM_SMC_NAND_END_CMD|
+		addr.cmd_phase_addr |= 5 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE				|
+								NVSRAM_SMC_NAND_END_CMD_REQ						|
+								NAND_CMD_READSTART << NVSRAM_SMC_NAND_END_CMD	|
 								NAND_CMD_READ0 << NVSRAM_SMC_NAND_START_CMD;
 
 		/*
@@ -395,45 +386,36 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 				writel(page_addr >> 16, addr.cmd_phase_addr);
 		}
 
-		if (host_controller_ecc == enabled) {
-			/* Using controller ECC */
+#if defined (CONFIG_MTD_USE_HW_NAND_CONTROLLER_ECC)
+		/* Poll memc_status register for R/#B interrupt */
+		brcm_nand_wait_until_ready(100);
+#elif defined (CONFIG_MTD_USE_NAND_FLASH_ON_DIE_ECC)
+		/* Micron NAND: Wait for STATUS_READY; tR_ECC max */
+		for (count = 0; count < 70; count++) {
+			ndelay(1000);	/* 1 micro sec delay */
 
-			/* Poll memc_status register for R/#B interrupt */
-			brcm_nand_wait_until_ready();
-		} else if (host_controller_ecc == disabled) {
-			/* NOT using controller ECC; Micron NAND with on-die ECC */
-
-			/* Check ECC in non-OTP cases ONLY */
-			if (state != FL_OTPING) {
-				/* Micron NAND: Wait for STATUS_READY; tR_ECC max */
-				for (count = 0; count < 70; count++) {
-					ndelay(1000);	/* 1 micro sec delay */
-
-					chip->cmdfunc(mtd, NAND_CMD_STATUS, -1, -1);
-					status = chip->read_byte(mtd);
-					if (status & NAND_STATUS_READY)
-						break;
-				}
-
-				/* Check for ECC errors */
-				if (status & NAND_STATUS_FAIL) {
-					pr_warn("ECC error on READ operation: 0x%02x\n", status);
-					/* Increment error stats */
-					mtd->ecc_stats.failed++;
-				}
-
-				/* Return the device to READ mode following a STATUS command */
-				addr.cmd_phase_addr = (uint32_t)bcm_nand_io_base 					|
-										NAND_CMD_READ0 << NVSRAM_SMC_NAND_START_CMD;
-
-				writel(0x0, addr.cmd_phase_addr);
-			}
-			else{
-				/* read OTP area*/
-				/* Poll memc_status register for R/#B interrupt */
-				brcm_nand_wait_until_ready();
-			}
+			chip->cmdfunc(mtd, NAND_CMD_STATUS, -1, -1);
+			status = chip->read_byte(mtd);
+			if (status & NAND_STATUS_READY)
+				break;
 		}
+
+		/* Check for ECC errors */
+		if (status & NAND_STATUS_FAIL) {
+			pr_warn("ECC error on READ operation: 0x%02x\n", status);
+			/* Increment error stats */
+			mtd->ecc_stats.failed++;
+		}
+
+		/* Return the device to READ mode following a STATUS command */
+		addr.cmd_phase_addr = (uint32_t)bcm_nand_io_base 						|
+								1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE				|
+								NVSRAM_SMC_CLEAR_CS								|
+								0x00 << NVSRAM_SMC_NAND_END_CMD					|
+								NAND_CMD_READ0 << NVSRAM_SMC_NAND_START_CMD;
+
+		writel(0x0, addr.cmd_phase_addr);
+#endif
 
 		/* Construct data_phase_addr */
 		addr.data_phase_addr |= NVSRAM_SMC_CLEAR_CS	| NVSRAM_SMC_RESERVED;
@@ -442,7 +424,8 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 
 	case NAND_CMD_SEQIN:
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= 5 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE			|
+		addr.cmd_phase_addr |= 5 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE				|
+								0x0 << NVSRAM_SMC_NAND_END_CMD	|
 								NAND_CMD_SEQIN << NVSRAM_SMC_NAND_START_CMD;
 
 		/* Read comment above (READ0 command) */
@@ -465,22 +448,22 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_PAGEPROG:
 		/* Send NAND_CMD_PAGEPROG to end write transaction */
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= NVSRAM_SMC_CLEAR_CS							|
+		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								NVSRAM_SMC_CLEAR_CS					|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
 								NAND_CMD_PAGEPROG << NVSRAM_SMC_NAND_START_CMD;
 
 		writel(0x0, addr.cmd_phase_addr);
 
 		/* Poll memc_status register for R/#B interrupt */
-		brcm_nand_wait_until_ready();
+		brcm_nand_wait_until_ready(100);
 		break;
 
 	case NAND_CMD_READID:
-		/* Give small delay of 200us before issuing READID */
-		udelay(200);
-
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE			|
-								NVSRAM_SMC_CLEAR_CS							|
+		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								NVSRAM_SMC_CLEAR_CS					|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
 								NAND_CMD_READID << NVSRAM_SMC_NAND_START_CMD;
 
 		writel(0x0, addr.cmd_phase_addr);
@@ -492,17 +475,23 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 
 	case NAND_CMD_ERASE1:
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= 3 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE			|
+		addr.cmd_phase_addr |= 3 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
 								NAND_CMD_ERASE1 << NVSRAM_SMC_NAND_START_CMD;
 
 		/* Send page_addr(PA0 - PA17) of the block to be erased to SMC */
 		writel(page_addr & 0x3ffff, addr.cmd_phase_addr);
 
+		/* Poll memc_status register for interrupt */
+		//brcm_nand_wait_until_ready(1000);
+
 		break;
 
 	case NAND_CMD_ERASE2:
 		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= NAND_CMD_ERASE2 << NVSRAM_SMC_NAND_START_CMD;
+		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
+								NAND_CMD_ERASE2 << NVSRAM_SMC_NAND_START_CMD;
 
 		writel(0x0, addr.cmd_phase_addr);
 		break;
@@ -510,9 +499,9 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_RNDOUT:
 		/* Construct cmd_phase_addr */
 		/* RNDOUT is sub-page read; so column addr (2 cycles) is sufficient */
-		addr.cmd_phase_addr |= 2 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE			|
-								NVSRAM_SMC_NAND_END_CMD_REQ					|
-								NAND_CMD_RNDOUTSTART << NVSRAM_SMC_NAND_END_CMD|
+		addr.cmd_phase_addr |= 2 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE				|
+								NVSRAM_SMC_NAND_END_CMD_REQ						|
+								NAND_CMD_RNDOUTSTART << NVSRAM_SMC_NAND_END_CMD	|
 								NAND_CMD_RNDOUT << NVSRAM_SMC_NAND_START_CMD;
 
 		/* Sending only column address cycle */
@@ -532,7 +521,8 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_RNDIN:
 		/* Construct cmd_phase_addr */
 		/* RNDIN is sub-page write; so column addr (2 cycles) is sufficient */
-		addr.cmd_phase_addr |= 2 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE			|
+		addr.cmd_phase_addr |= 2 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE	|
+								0x00 << NVSRAM_SMC_NAND_END_CMD		|
 								NAND_CMD_RNDIN << NVSRAM_SMC_NAND_START_CMD;
 
 		/* Sending only column address cycle */
@@ -543,32 +533,6 @@ static void brcm_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 
 			writel(column && 0xffff, addr.cmd_phase_addr);
 		}
-
-		/* Construct data_phase_addr */
-		addr.data_phase_addr |= NVSRAM_SMC_RESERVED;
-
-		break;
-
-	case NAND_CMD_GET_FEATURES:
-		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE				|
-								NAND_CMD_GET_FEATURES << NVSRAM_SMC_NAND_START_CMD;
-
-		/* Sending only column address cycle */
-		writel(column, addr.cmd_phase_addr);
-
-		/* Construct data_phase_addr */
-		addr.data_phase_addr |= NVSRAM_SMC_RESERVED;
-
-		break;
-
-	case NAND_CMD_SET_FEATURES:
-		/* Construct cmd_phase_addr */
-		addr.cmd_phase_addr |= 1 << NVSRAM_SMC_CMD_NUM_ADDR_CYCLE				|
-								NAND_CMD_SET_FEATURES << NVSRAM_SMC_NAND_START_CMD;
-
-		/* Sending only column address cycle */
-		writel(column, addr.cmd_phase_addr);
 
 		/* Construct data_phase_addr */
 		addr.data_phase_addr |= NVSRAM_SMC_RESERVED;
@@ -601,83 +565,6 @@ static void brcm_nand_select_chip(struct mtd_info *mtd, int chipnr)
 	}
 }
 
-/**
- * brcm_nand_block_markbad - mark a block bad
- * @mtd:	MTD device structure
- * @ofs:	offset from device start
- *
- * This is BRCM implementation of mark bad block implementation.
- * In addition to updating the flash based BBT, we also write the
- * Bad Block markers to the OOB area of the first page in the bad
- * block.
-*/
-static int brcm_nand_block_markbad(struct mtd_info *mtd, loff_t ofs)
-{
-	struct nand_chip *chip = mtd->priv;
-	struct mtd_oob_ops ops;
-	uint8_t buf[2] = { 0xaa, 0x55 };
-	int block, ret;
-
-	if (chip->options & NAND_BB_LAST_PAGE)
-		ofs += mtd->erasesize - mtd->writesize;
-
-	/* Get block number */
-	block = (int)(ofs >> chip->bbt_erase_shift);
-	if (chip->bbt)
-		chip->bbt[block >> 2] |= 0x01 << ((block & 0x03) << 1);
-
-	/* Update flash BBT */
-	if (chip->options & NAND_USE_FLASH_BBT) {
-		ret = nand_update_bbt(mtd, ofs);
-	}
-
-	/*
-	 * Also write BAD BLOCK marker in OOB of 1st page in block for
-	 * compatibility with RTOS BBM
-	 */
-	ofs += mtd->oobsize;
-	ops.mode = MTD_OOB_PLACE;
-	ops.len = ops.ooblen = 2;
-	ops.datbuf = NULL;
-	ops.oobbuf = buf;
-	ops.ooboffs = chip->badblockpos & ~0x01;
-
-	ret = mtd->write_oob(mtd, ofs, &ops);
-
-	if (!ret) {
-		/* Increase badblocks stat count on finding bad block */
-		mtd->ecc_stats.badblocks++;
-	}
-
-	return ret;
-}
-
-static uint32_t read_hw_ecc(uint32_t offset, uint32_t mask)
-{
-	uint32_t dwEcc = 0;
-	uint32_t timeout = 10; /* 10usec max timeout */
-
-	dwEcc = readl(NVSRAM_REG_BASE + offset);
-	/* Wait for ecc_valid bit */
-	while (!(dwEcc & mask) && timeout--) {
-		dwEcc = readl(NVSRAM_REG_BASE + offset);
-		udelay(1);
-	}
-
-	if (!timeout) {
-		pr_err("%s:  ECC generation timed out!", __FUNCTION__);
-		/*
-		 * Returning 0 here even though 0x000000 is a valid ECC
-		 * for a 512Byte sub-page with all 0xff's. This is because,
-		 * on time out, the ECC_VALUE register will also be 0x0.
-		 */
-		return 0;
-	}
-
-	/* Return happy */
-	return dwEcc;
-}
-
 static uint32_t brcm_nand_get_hw_ecc(int page)
 {
 	uint32_t dwEcc = 0;
@@ -685,33 +572,24 @@ static uint32_t brcm_nand_get_hw_ecc(int page)
 	switch (page)
 	{
 		case 0:
-			dwEcc = read_hw_ecc(NVSRAM_ECC_VALUE0_OFFSET,
-							NVSRAM_ECC_VALUE0_ECC_VALID_MASK);
+			dwEcc = readl(NVSRAM_REG_BASE + NVSRAM_ECC_VALUE0_OFFSET);
 			break;
 
 		case 1:
-			dwEcc = read_hw_ecc(NVSRAM_ECC_VALUE1_OFFSET,
-							NVSRAM_ECC_VALUE1_ECC_VALID_MASK);
+			dwEcc = readl(NVSRAM_REG_BASE + NVSRAM_ECC_VALUE1_OFFSET);
 			break;
 
 		case 2:
-			dwEcc = read_hw_ecc(NVSRAM_ECC_VALUE2_OFFSET,
-							NVSRAM_ECC_VALUE2_ECC_VALID_MASK);
+			dwEcc = readl(NVSRAM_REG_BASE + NVSRAM_ECC_VALUE2_OFFSET);
 			break;
 
 		case 3:
-			dwEcc = read_hw_ecc(NVSRAM_ECC_VALUE3_OFFSET,
-							NVSRAM_ECC_VALUE3_ECC_VALID_MASK);
+			dwEcc = readl(NVSRAM_REG_BASE + NVSRAM_ECC_VALUE3_OFFSET);
 			break;
 
 		default:
-			pr_err("%s: Invalid page number for ECC read\n", __FUNCTION__);
+			pr_err("brcm_nand_get_hw_ecc: Invalid page number for ECC read\n");
 			break;
-	}
-
-	if (!dwEcc) {
-		pr_err("%s: ECC generation error!\n", __FUNCTION__);
-		return 0;
 	}
 
 	/* Return the 3-byte ECC */
@@ -806,60 +684,13 @@ static void brcm_nand_write_page_hwecc(struct mtd_info *mtd, struct nand_chip *c
 	chip->write_buf(mtd, chip->oob_poi, mtd->oobsize);
 }
 
-void enter_otp_mode(struct mtd_info *mtd)
-{
-	struct nand_chip *chip = mtd->priv;
-	int addr;
-	unsigned char p1_data;
-
-	if (config_nand_otp == NAND_MICRON_OTP) {
-		addr = 0x90;
-		p1_data = 0x01;
-
-		/* Micron send CMD #EFh ADDR P1 P2 P3 P4 */
-		chip->cmdfunc(mtd, NAND_CMD_SET_FEATURES, addr, -1);
-		udelay(5);
-		brcm_nand_write_byte(p1_data);
-		brcm_nand_write_byte(0x0);
-		brcm_nand_write_byte(0x0);
-		brcm_nand_write_byte(0x0);
-		udelay(5);
-	} else {
-		/* Stubs for other flash chips */
-	}
-}
-
-void exit_otp_mode(struct mtd_info *mtd)
-{
-	struct nand_chip *chip = mtd->priv;
-	int addr;
-	unsigned char p1_data;
-
-	if (config_nand_otp == NAND_MICRON_OTP) {
-		addr = 0x90;
-		p1_data = 0x00;
-
-		/* Micron send CMD #EFh ADDR P1 P2 P3 P4 */
-		chip->cmdfunc(mtd, NAND_CMD_SET_FEATURES, addr, -1);
-		udelay(5);
-		brcm_nand_write_byte(p1_data);
-		brcm_nand_write_byte(0x0);
-		brcm_nand_write_byte(0x0);
-		brcm_nand_write_byte(0x0);
-		udelay(5);
-	} else {
-		/* Stubs for other flash chips */
-	}
-}
-
 static int __devinit bcm_nand_probe(struct platform_device *pdev)
 {
 	struct nand_chip *chip;
 	struct resource *r;
 	uint32_t base_addr;
 	int err = 0;
-	int i, maf_idx;
-	u8 id_data[8];
+	int busw;
 
 	/* Allocate memory for MTD device structure and private data */
 	board_mtd = kmalloc(sizeof(struct mtd_info)
@@ -928,19 +759,59 @@ static int __devinit bcm_nand_probe(struct platform_device *pdev)
 			return -EINVAL;
 	}
 
+	busw = chip->options & NAND_BUSWIDTH_16;
+
+#if 0
+	/*
+	 * Do NVSRAM controller initializations. Will be moved to boot1/2.
+	 *
+	 * NOTE: Since it will be removed once boot1/2 is in place 
+	 * i'm leaving it "very very" hard-coded!
+	 */
+	uint32_t val;
+
+	/* Set NVSRAM MEMIF configurations */
+    writel(0x00001E1F, NVSRAM_REG_BASE + NVSRAM_MEMIF_CFG_OFFSET);
+    writel(0x10FF440D, NVSRAM_REG_BASE + NVSRAM_CONF_OFFSET);
+
+	/* Set NVSRAM NAND configurations */
+	if (busw & NAND_BUSWIDTH_16) {
+		writel(1, NVSRAM_REG_BASE + NVSRAM_SET_OPMODE_OFFSET);
+	} else {
+		writel(0, NVSRAM_REG_BASE + NVSRAM_SET_OPMODE_OFFSET);
+	}
+    writel(0x00092Aff, NVSRAM_REG_BASE + NVSRAM_SET_CYCLES_OFFSET);
+    val = ((chip_sel << NVSRAM_DIRECT_CMD_CHIP_SELECT_SHIFT) &
+			NVSRAM_DIRECT_CMD_CHIP_SELECT_MASK) | NVSRAM_SMC_CS_BASE_ADDR;
+    writel((0x2c00000 & ~(NVSRAM_DIRECT_CMD_CHIP_SELECT_MASK)) | val,
+			NVSRAM_REG_BASE + NVSRAM_DIRECT_CMD_OFFSET);
+#endif
+
+	/* Set command delay time, see datasheet for correct value */
+	chip->chip_delay = 0;
+
 	/* Fill nand_chip structure */
-	chip->read_byte = brcm_nand_read_byte;
+	chip->read_byte = busw ? brcm_nand_read_byte16 : brcm_nand_read_byte;
 	chip->read_word = brcm_nand_read_word;
-	chip->write_buf = brcm_nand_write_buf;
-	chip->read_buf = brcm_nand_read_buf;
-	chip->verify_buf = brcm_nand_verify_buf;
+	chip->write_buf = busw ? brcm_nand_write_buf16 : brcm_nand_write_buf;
+	chip->read_buf = busw ? brcm_nand_read_buf16 : brcm_nand_read_buf;
+	chip->verify_buf = busw ? brcm_nand_verify_buf16 : brcm_nand_verify_buf;
 	chip->cmdfunc = brcm_nand_cmdfunc;
 	chip->select_chip = brcm_nand_select_chip;
-	chip->block_markbad = brcm_nand_block_markbad;
 
 	/* Clear Raw interrupts */
 	writel((unsigned long)(1 << NVSRAM_MEMC_CFG_CLR_NAND_INT_CLR_SHIFT),
 			NVSRAM_REG_BASE + NVSRAM_MEMC_CFG_CLR_OFFSET);
+
+#if defined (CONFIG_MTD_USE_HW_NAND_CONTROLLER_ECC)
+	chip->ecc.mode = NAND_ECC_HW;
+	chip->ecc.size = NAND_ECC_PAGE_SIZE;
+	chip->ecc.bytes = NAND_ECC_NUM_BYTES;
+	chip->ecc.read_page = brcm_nand_read_page_hwecc;
+	chip->ecc.write_page = brcm_nand_write_page_hwecc;
+#elif defined (CONFIG_MTD_USE_NAND_FLASH_ON_DIE_ECC)
+	chip->ecc.mode = NAND_ECC_NONE;
+#endif
 
 	err = nand_scan_ident(board_mtd, 1, NULL);
 	if (err) {
@@ -950,56 +821,7 @@ static int __devinit bcm_nand_probe(struct platform_device *pdev)
 		return err;
 	}
 
-	/*
-	 * Re-issue NAND_CMD_READID.
-	 *
-	 * This is done to check for special features like on-die ecc
-	 */
-	chip->cmdfunc(board_mtd, NAND_CMD_READID, 0x00, -1);
-
-	/* Read entire ID string */
-	for (i = 0; i < 8; i++) {
-		id_data[i] = chip->read_byte(board_mtd);
-	}
-
-	/* Loop through all manufacture ids defined in brcm_nand_ids[] */
-	for (maf_idx = 0; brcm_nand_ids[maf_idx].maf_id != 0x0; maf_idx++) {
-		/* Check NAND manuf ID against ones defined with special features */
-		if (id_data[0] == brcm_nand_ids[maf_idx].maf_id) {
-			/*
-			 * Check if the feature bits for the above MAF ID is set in the
-			 * defined id string byte
-			 */
-			if (id_data[brcm_nand_ids[maf_idx].id_byte] &&
-					brcm_nand_ids[maf_idx].features) {
-				/* Set the appropriate flag */
-				host_controller_ecc = disabled;
-			}
-		}
-	}
-
-	/* Check for OTP */
-	for (maf_idx = 0; brcm_nand_otp[maf_idx].maf_id != 0x0; maf_idx++) {
-		/* Check NAND manuf ID against ones defined with OTP */
-		if (id_data[0] == brcm_nand_otp[maf_idx].maf_id) {
-			otp_start_addr = brcm_nand_otp[maf_idx].otp_start;
-			otp_end_addr = brcm_nand_otp[maf_idx].otp_end;
-			config_nand_otp = brcm_nand_otp[maf_idx].flags;
-		}
-	}
-
-	/* Now that we know the nand size, we can setup the ECC layout */
-	if (host_controller_ecc == enabled) {
-		/* Using controller ECC */
-		chip->ecc.mode = NAND_ECC_HW;
-		chip->ecc.size = NAND_ECC_PAGE_SIZE;
-		chip->ecc.bytes = NAND_ECC_NUM_BYTES;
-		chip->ecc.read_page = brcm_nand_read_page_hwecc;
-		chip->ecc.write_page = brcm_nand_write_page_hwecc;
-	} else if (host_controller_ecc == disabled) {
-		/* NOT using controller ECC */
-		chip->ecc.mode = NAND_ECC_NONE;
-	}
+	/* Now that we know the nand size, we can and setup the ECC layout */
 
 	switch (board_mtd->writesize)
 	{
@@ -1007,13 +829,11 @@ static int __devinit bcm_nand_probe(struct platform_device *pdev)
 			chip->ecc.layout = &nand_hw_eccoob_4096;
 			break;
 		case 2048:
-			if (host_controller_ecc == enabled) {
-				/* Using controller ECC */
-				chip->ecc.layout = &nand_hw_eccoob_2048;
-			} else if (host_controller_ecc == disabled) {
-				/* NOT using controller ECC */
-				chip->ecc.layout = &micron_nand_on_die_eccoob_2048;
-			}
+#if defined (CONFIG_MTD_USE_HW_NAND_CONTROLLER_ECC)
+			chip->ecc.layout = &nand_hw_eccoob_2048;
+#elif defined (CONFIG_MTD_USE_NAND_FLASH_ON_DIE_ECC)
+			chip->ecc.layout = &micron_nand_on_die_eccoob_2048;
+#endif
 			break;
 		case 512:
 			chip->ecc.layout = &nand_hw_eccoob_512;

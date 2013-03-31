@@ -169,8 +169,8 @@ idle_l1_prefetch_loop:
 idle_save_preload_start:
 #ifdef CONFIG_BCM21553_L2_EVCT
     @ Dummy reads
-    ldr     r0,[r10]          @ dummy read from L2 eviction address
-    ldr     r0,[r6]           @ dummy read of l2 cache sync WO reg
+    ldr     r0,[r10]                         @ dummy read from L2 eviction address
+    ldr     r0,[r6]                          @ dummy read of l2 cache sync WO reg
 #endif
 
 .if ENABLE_L2X0_CODE==1
@@ -178,8 +178,7 @@ idle_save_preload_start:
     mcr     p15,0,r0,c7,c10,4                @ DSB
     str     r0,[r6]                          @ L2 Cache Sync
     mcr     p15,0,r0,c7,c10,4                @ DSB
-    @ Dummy read to assure data ejected by L2 sync arrive at DRAM
-    ldr     r0,[r10]
+    ldr     r0,[r10]                         @ Dummy read to assure data ejected by L2 sync arrive at DRAM
     mov	    r0,#0
     mcr     p15,0,r0,c7,c10,4                @ DSB
 .endif
@@ -188,8 +187,7 @@ idle_save_preload_start:
     mov     r0,#0
     str     r0,[r10]                         @ Clean L2 buffer eviction buffer
     mcr     p15,0,r0,c7,c10,4                @ DSB
-    @ Dummy read to assure data ejected by L2 eviction arrive at DRAM
-    ldr     r0,[r10]
+    ldr     r0,[r10]                         @ Dummy read to assure data ejected by L2 eviction arrive at DRAM
     mov     r0, #0
     mcr     p15,0,r0,c7,c10,4                @ DSB
 #endif
@@ -755,6 +753,7 @@ dormant_save_preload_start:
     mcr     p15,0,r0,c7,c10,0          @ Clean L1 D
     mcr     p15,0,r0,c7,c10,4          @ DSB
     @ From here to the point disabling D-cache, L1 D-cache cannot be made dirty
+
 .if ENABLE_L2X0_CODE==1
     ldr     r2,[r3,#L2X0_CTRL]
     ands    r2,r2,#1
@@ -767,15 +766,13 @@ dormant_save_preload_start:
     mcr     p15,0,r2,c7,c10,4          @ DSB
     str     r2,[r4,#L2X0_CACHE_SYNC]   @ L2 Cache sync
     mcr     p15,0,r2,c7,c10,4          @ DSB
-    @ Dummy read to assure data ejected by L2 sync arrive at DRAM
-    ldr     r7,[r6]
+    ldr     r7,[r6]                    @ Dummy read to assure data ejected by L2 sync arrive at DRAM
     mcr     p15,0,r2,c7,c10,4          @ DSB
 #ifdef CONFIG_BCM21553_L2_EVCT
     mov     r7,#0
     str     r7,[r6]                    @ Clean L2 buffer eviction buffer
     mcr     p15,0,r2,c7,c10,4          @ DSB
-    @ Dummy read to assure data ejected by L2 eviction arrive at DRAM
-    ldr     r7,[r6]
+    ldr     r7,[r6]                    @ Dummy read to assure data ejected by L2 eviction arrive at DRAM
     mcr     p15,0,r2,c7,c10,4          @ DSB
 #endif
 
@@ -1454,10 +1451,10 @@ l210_base_ro_v:
     .word    (HW_L210_BASE + 0x1000)
 l210_base_wo_v:
     .word    (HW_L210_BASE)
-l210_base_ro_p:
-    .word    (BCM21553_L210_BASE + 0x1000)
-l210_base_wo_p:
-    .word    BCM21553_L210_BASE
+l210_base_ro_phy:
+    .word    (0x84a1000 + 0x1000)
+l210_base_wo_phy:
+    .word    0x84a1000
 
 .endif /* ENABLE_L2X0_CODE */
 
@@ -1824,30 +1821,29 @@ rev0_skip4:
     @ BRCM customization: restore L2 cache and re-enable branch prediction
     @ Re-programming L2 cache is needed because it is reset
     @ Hui Luo, 1/4/11
-    ldr     r0,=bcm_pm_sleep_buf_phys     @ Virt addr
+    ldr     r0,=bcm_pm_sleep_buf_phys     @ Virt addr of bcm_pm_sleep_buf_phys variable
     ldr     r3,page_offset                @ Convert it to phys
     sub     r0,r0,r3
     ldr     r3,phys_offset
-    add     r0,r0,r3                      @ Phys addr
+    add     r0,r0,r3                      @ Phys addr of bcm_pm_sleep_buf_phys variable
     ldr     r0,[r0]                       @ Get the dorm buffer phys addr
     ldr     r0,[r0,#PM_L2CACHE_INIT_FLAG]
     cmp     r0,#0
     beq     l2_invalidate_skipped
-    ldr     r0,l210_base_wo_p
+    ldr     r0,l210_base_wo_phy
     ldr     r3,l210_config
-    @ Config L2; load MMU descriptor for L2 control register in TLB cache
-    str     r3,[r0,#L2X0_AUX_CTRL]
+    str     r3,[r0,#L2X0_AUX_CTRL]        @ Config L2; load MMU descriptor for L2 control register in TLB cache
     mov     r3,#1
     str     r3,[r0,#L2X0_CTRL]            @ Enable L2
 l2_invalidate_skipped:
 .endif /* ENABLE_L2X0_CODE */
 
     @ Load the virt address of ret_from_func in r3
-    adr     r3,bcm215xx_mmu_on            @ Physical address in r3
+    adr     r3,ret_from_dormant           @ Physical address of ret_from_dormant in r3
     ldr     r0,phys_offset
     sub     r3,r3,r0
     ldr     r0,page_offset
-    add     r3,r3,r0                      @ Virtual address in r3
+    add     r3,r3,r0                      @ Virtual address of ret_from-dormant in r3
 
     @ Turn on mmu
     @ Sequence from arch/arm/kernel/head.S
@@ -1862,11 +1858,11 @@ bcm215xx_turn_on_mmu:
     mrc     p15,0,r2,c0,c0,0              @ Read id reg
     mov     r2,r2
     mov     r2,r2
-    mov     pc,r3                         @ jump to virtual address
+    mov     pc,r3                         @ jump to virtual address of ret_from_dormant
     mov     r2,r2
     mov     r2,r2
 
-bcm215xx_mmu_on:
+ret_from_dormant:
     mov     r2,r2
     mov     r2,r2
     mov     r2,r2
@@ -2212,30 +2208,29 @@ rev0_skip6:
     @ BRCM customization: restore L2 cache and re-enable branch prediction
     @ Re-programming L2 cache is needed because it is reset
     @ Hui Luo, 1/4/11
-    ldr     r0,=bcm_pm_sleep_buf_phys     @ Virt addr
+    ldr     r0,=bcm_pm_sleep_buf_phys     @ Virt addr of bcm_pm_sleep_buf_phys variable
     ldr     r3,page_offset                @ Convert it to phys
     sub     r0,r0,r3
     ldr     r3,phys_offset
-    add     r0,r0,r3                      @ Phys addr
+    add     r0,r0,r3                      @ Phys addr of bcm_pm_sleep_buf_phys variable
     ldr     r0,[r0]                       @ Get the dorm buffer phys addr
     ldr     r0,[r0,#PM_L2CACHE_INIT_FLAG]
     cmp     r0,#0
     beq     l2_invalidate_skipped
-    ldr     r0,l210_base_wo_p
+    ldr     r0,l210_base_wo_phy
     ldr     r3,l210_config
-    @ Config L2; load MMU descriptor for L2 control register in TLB cache
-    str     r3,[r0,#L2X0_AUX_CTRL]
+    str     r3,[r0,#L2X0_AUX_CTRL]        @ Config L2; load MMU descriptor for L2 control register in TLB cache
     mov     r3,#1
     str     r3,[r0,#L2X0_CTRL]            @ Enable L2
 l2_invalidate_skipped:
 .endif /* ENABLE_L2X0_CODE */
 
     @ Load the virt address of ret_from_func in r3
-    adr     r3,bcm215xx_mmu_on            @ Physical address in r3
+    adr     r3,ret_from_dormant           @ Physical address of ret_from_dormant in r3
     ldr     r0,phys_offset
     sub     r3,r3,r0
     ldr     r0,page_offset
-    add     r3,r3,r0                      @ Virtual address in r3
+    add     r3,r3,r0                      @ Virtual address of ret_from-dormant in r3
 
     @ Turn on mmu
     @ Sequence from arch/arm/kernel/head.S
@@ -2250,11 +2245,11 @@ bcm215xx_turn_on_mmu:
     mrc     p15,0,r2,c0,c0,0              @ Read id reg
     mov     r2,r2
     mov     r2,r2
-    mov     pc,r3                         @ jump to virtual address
+    mov     pc,r3                         @ jump to virtual address of ret_from_dormant
     mov     r2,r2
     mov     r2,r2
 
-bcm215xx_mmu_on:
+ret_from_dormant:
     mov     r2,r2
     mov     r2,r2
     mov     r2,r2
@@ -2275,12 +2270,12 @@ bcm215xx_mmu_on:
     ldr     r0,[r0]
     @ Get the current offset of the current location pointed by
     @ R1 in dormant buffer.
-    add     r0,r0,#PM_DORMANT_STORE       @ Start of dormant store area phys
-    sub     r0,r1,r0                      @ Offset = Current - Start
+    add     r0,r0,#PM_DORMANT_STORE    @ Start of dormant store area phys
+    sub     r0,r1,r0                   @ Offset = Current - Start
     ldr     r1,=bcm_pm_sleep_buf
     ldr     r1,[r1]
-    add     r1,r1,#PM_DORMANT_STORE       @ Start of dormant store area virt
-    add     r1,r1,r0                      @ Current dormant buf address virt
+    add     r1,r1,#PM_DORMANT_STORE    @ Start of dormant store area virt
+    add     r1,r1,r0                   @ Current dormant buf address virt
 
     mrc     p15,0,r0,c1,c0,0              @ Read ctrl reg
     orr     r2,r0,#CP15_CTRL_BPRED_BIT    @ Enable branch prediction
@@ -2964,10 +2959,10 @@ sys_mode_regs: .asciz  "\r\nSYS Mode Registers:"
  * Description: Print the dormant buffer contents onto UARTA console.
  *
  * Inputs:
- *   None.
+ *   None
  *
  * Expects:
- *   None.
+ *   r1 - dorm buffer address.
  *
  * Modifies:
  *   None.
@@ -2983,7 +2978,7 @@ ENTRY(bcm215xx_print_dormant_buffer)
     sub     r0,r0,r3
     add     r0,r0,r2                      @ Phys addr of bcm_pm_sleep_buf_phys
                                           @ variable
-    ldr     r1,[r0]                       @ Get the dorm buffer phys addr
+    ldr     r0,[r0]                       @ Get the dorm buffer phys addr
 
     adr     r0,dormant_buffer_str
     bl      bcm215xx_print_string

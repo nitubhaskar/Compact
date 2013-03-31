@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_sms_api.h
@@ -137,8 +139,7 @@ void CAPI2_SmsApi_SendSMSSrvCenterNumberUpdateReq(ClientInfo_t* inClientInfoPtr,
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETSMSSRVCENTERNUMBER_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetSMSrvCenterNumber_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetSMSrvCenterNumber_Rsp_t
 **/
 void CAPI2_SmsApi_GetSMSrvCenterNumber(ClientInfo_t* inClientInfoPtr, UInt8 rec_no);
 
@@ -149,8 +150,7 @@ void CAPI2_SmsApi_GetSMSrvCenterNumber(ClientInfo_t* inClientInfoPtr, UInt8 rec_
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETSIMSMSCAPACITYEXCEEDEDFLAG_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetSIMSMSCapacityExceededFlag_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetSIMSMSCapacityExceededFlag_Rsp_t
 **/
 void CAPI2_SmsApi_GetSIMSMSCapacityExceededFlag(ClientInfo_t* inClientInfoPtr);
 
@@ -175,8 +175,7 @@ void CAPI2_SmsApi_IsSmsServiceAvail(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETSMSSTOREDSTATE_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetSmsStoredState_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetSmsStoredState_Rsp_t
 **/
 void CAPI2_SmsApi_GetSmsStoredState(ClientInfo_t* inClientInfoPtr, SmsStorage_t storageType, UInt16 index);
 
@@ -292,8 +291,7 @@ void CAPI2_SmsApi_GetLastTpMr(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETSMSTXPARAMS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetSmsTxParams_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetSmsTxParams_Rsp_t
 **/
 void CAPI2_SmsApi_GetSmsTxParams(ClientInfo_t* inClientInfoPtr);
 
@@ -304,8 +302,7 @@ void CAPI2_SmsApi_GetSmsTxParams(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETTXPARAMINTEXTMODE_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetTxParamInTextMode_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetTxParamInTextMode_Rsp_t
 **/
 void CAPI2_SmsApi_GetTxParamInTextMode(ClientInfo_t* inClientInfoPtr);
 
@@ -515,8 +512,7 @@ void CAPI2_SmsApi_GetSMSPrefStorage(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETSMSSTORAGESTATUS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetSMSStorageStatus_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetSMSStorageStatus_Rsp_t
 **/
 void CAPI2_SmsApi_GetSMSStorageStatus(ClientInfo_t* inClientInfoPtr, SmsStorage_t storageType);
 
@@ -620,8 +616,7 @@ void CAPI2_SmsApi_RemoveAllCBChnlFromSearchList(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETCBMI_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetCBMI_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetCBMI_Rsp_t
 **/
 void CAPI2_SmsApi_GetCBMI(ClientInfo_t* inClientInfoPtr);
 
@@ -632,8 +627,7 @@ void CAPI2_SmsApi_GetCBMI(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETCBLANGUAGE_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetCbLanguage_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetCbLanguage_Rsp_t
 **/
 void CAPI2_SmsApi_GetCbLanguage(ClientInfo_t* inClientInfoPtr);
 
@@ -744,8 +738,7 @@ void CAPI2_SmsApi_IsVMIndEnabled(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETVMWAITINGSTATUS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetVMWaitingStatus_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetVMWaitingStatus_Rsp_t
 **/
 void CAPI2_SmsApi_GetVMWaitingStatus(ClientInfo_t* inClientInfoPtr);
 
@@ -756,8 +749,7 @@ void CAPI2_SmsApi_GetVMWaitingStatus(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETNUMOFVMSCNUMBER_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_GetNumOfVmscNumber_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_GetNumOfVmscNumber_Rsp_t
 **/
 void CAPI2_SmsApi_GetNumOfVmscNumber(ClientInfo_t* inClientInfoPtr);
 
@@ -769,8 +761,7 @@ void CAPI2_SmsApi_GetNumOfVmscNumber(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_GETVMSCNUMBER_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData:  CAPI2_SmsApi_GetVmscNumber_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData:  CAPI2_SmsApi_GetVmscNumber_Rsp_t
 **/
 void CAPI2_SmsApi_GetVmscNumber(ClientInfo_t* inClientInfoPtr, SIM_MWI_TYPE_t vmsc_type);
 
@@ -1027,8 +1018,7 @@ void CAPI2_SmsApi_GetSmsMaxCapacity(ClientInfo_t* inClientInfoPtr, SmsStorage_t 
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SMS_RETRIEVEMAXCBCHNLLENGTH_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SmsApi_RetrieveMaxCBChnlLength_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SmsApi_RetrieveMaxCBChnlLength_Rsp_t
 **/
 void CAPI2_SmsApi_RetrieveMaxCBChnlLength(ClientInfo_t* inClientInfoPtr);
 

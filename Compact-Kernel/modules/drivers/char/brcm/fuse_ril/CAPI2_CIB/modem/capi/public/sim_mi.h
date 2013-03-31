@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-   
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   sim_mi.h
@@ -473,6 +475,7 @@ const SIM_LANGUAGE_INFO_t *SIM_GetLangInfo(void);
 
 
 
+
 //***************************************************************************************
 /**
     This function updates internal settings about the CHV access based on the CHV status 
@@ -507,18 +510,6 @@ SIMAccess_t SimApi_GetAtrData(ClientInfo_t* inClientInfoPtr, APDU_t *atr_data);
 **/
 Result_t SIM_GetCphsInfo(UInt8 *info_buf);
 
-//***************************************************************************************
-/**
-    This function returns SIMLOCK status for a SIMLOCK type.
-
-	@param inClientInfo (in).
-
-	@param lockType (in) SIMLOCK type. 
-
-	@return SIMLOCK status
-**/
-SIM_LOCK_STATUS_t SimApi_GetLockInfo(ClientInfo_t* inclientInfoPtr, SIM_LOCK_TYPE_t lockType);
-
 
 //***************************************************************************************
 /**
@@ -529,6 +520,7 @@ SIM_LOCK_STATUS_t SimApi_GetLockInfo(ClientInfo_t* inclientInfoPtr, SIM_LOCK_TYP
 	@return SIMLOCK status
 **/
 SIM_LOCK_STATUS_t SIM_GetLockInfo(SIM_LOCK_TYPE_t lockType);
+
 
 //***************************************************************************************
 /**
@@ -900,22 +892,6 @@ void SIM_CheckImsiEstUst(void);
 **/
 void simmi_UpdateSmsCapExceededFlag( const SIMSMSMesgStatus_t *sms_status_list, 
 			UInt16 num_of_sms_rec, SIMSMSMesgStatus_t new_sms_status, Boolean sms_update_ok );
-
-
-//***************************************************************************************
-/**
-	This function returns the first byte in EF-EHPLMNPI cached in USIM. It is to be called 
-	by NetReg module to determine whether to display only one or all equivalent PLMN's 
-	when the PLMN list is returned for a PLMN search. It is NOT to be called by client. 
-**/
-UInt8 SIM_GetEhplmnPi(void);
-
-
-//***************************************************************************************
-/**
-	This function returns the pointer to the raw EF-IMSI data.
-**/
-UInt8* SIM_GetIMSIraw(void);
 
 #endif  // _SIM_MI_H_
 

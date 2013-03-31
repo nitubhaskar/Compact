@@ -360,7 +360,6 @@ bool_t xdr ## _ ## en(XDR *x, en *v) \
 {								\
 	bool_t r;					\
 	int i = *v; \
-	XDR_LOG(x, #en );	\
 	r = xdr_int(x,&i); \
 	*v = (en)i; \
 	return r;					\

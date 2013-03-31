@@ -29,11 +29,7 @@
 #define TAOS_PROX_CLOSE   _IO(TAOS_PROX_IOC_MAGIC,2)      
 
 /* input device for proximity sensor */
-#if defined ( CONFIG_BOARD_COOPERVE )
-#define USE_INPUT_DEVICE 	1  /* 0 : No Use  ,  1: Use  */
-#else
 #define USE_INPUT_DEVICE 	0  /* 0 : No Use  ,  1: Use  */
-#endif
 
 #define USE_INTERRUPT		1
 #define INT_CLEAR    1 /* 0 = by polling operation, 1 = by interrupt operation */
@@ -61,7 +57,6 @@ struct taos_data {
 	int             irq;
 	struct hrtimer timer;
 	struct timer_list light_init_timer;
-	struct mutex power_lock;        
 };
 struct taos_data *taos_global;
 

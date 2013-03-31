@@ -23,69 +23,42 @@
 #include "capi2_gen_msg.h"
 #include "capi2_reqrep.h"
 
-/// The DTMF tone duration should be 3 sec.
-#define DTMF_TONE_DURATION  300 // 3000 CWYoon 111122::3000 -> 300 ms
-
 static char DTMFString;
 extern Boolean StkCall; //yihwa
 
-static int g_totalMPTYCall = 0;
-static UInt8 sLastJoinCallIndex = INVALID_CALL;
-
+static BRIL_LastCallFailCause ResultToRilFailCause(Result_t inResult);
 extern UInt16 KRIL_USSDSeptet2Octet(UInt8 *p_src, UInt8 *p_dest, UInt16 num_of_Septets);
-
-extern Boolean gFdnSkip[DUAL_SIM_SIZE];
-
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
 extern void lcd_enter_during_call(void);
 extern void lcd_restore_during_call(void);
 #endif
+static int g_totalMPTYCall = 0;
+
+static UInt8 sLastJoinCallIndex = INVALID_CALL;
 
 //******************************************************************************
 //
-// Function Name: ResultToRilFailCause
+// Function Name: KRIL_VoiceCallReleased
 //
-// Description:   Converts the CAPI error code to a RIL last call failure cause.
-//
-// Notes:
+// Description: Called from notification handler when MSG_VOICECALL_RELEASE_IND 
+//              notification received from CP.
 //
 //******************************************************************************
-BRIL_LastCallFailCause ResultToRilFailCause(Result_t inResult)
+void KRIL_HandleVoiceCallReleased( UInt8 inReleasedCallIndex )
 {
-    BRIL_LastCallFailCause failCause;
-    switch (inResult)
+    KRIL_DEBUG(DBG_INFO, "KRIL_HandleVoiceCallReleased call index %d\n", inReleasedCallIndex);
+    // check if the release call index matches the cached join call index
+    if ( sLastJoinCallIndex == inReleasedCallIndex )
     {
-        case CC_MAKE_CALL_SUCCESS:
-        case RESULT_OK:
-            failCause = BCM_CALL_FAIL_NORMAL;
-            break;
-
-         case CC_FDN_BLOCK_MAKE_CALL:
-            failCause = BCM_CALL_FAIL_FDN_BLOCKED;
-            break;
-
-	case RESULT_DIALSTR_INVALID:
-            failCause = CALL_FAIL_UNOBTAINABLE_NUMBER;
-		     break;
-
-        // Don't distinguish between these failures;
-        // the UI only requires RIL_LastCallFailCause
-        // failure codes.
-        case STK_DATASVRC_BUSY:
-//        case RESULT_DIALSTR_INVALID:
-        case RESULT_SIM_NOT_READY:
-        case CC_FAIL_MAKE_CALL:
-        case CC_FAIL_CALL_SESSION:
-        case CC_WRONG_CALL_TYPE:
-        default:
-            failCause = BCM_CALL_FAIL_ERROR_UNSPECIFIED;
-            break;
+        // yes, so reset the cached join call index value
+        KRIL_DEBUG(DBG_INFO, "KRIL_HandleVoiceCallReleased sLastJoinCallIndex match, resetting\n");
+        sLastJoinCallIndex = INVALID_CALL;
     }
-
-    KRIL_DEBUG(DBG_INFO, "CAPI2 result:%d failCause:%d\n", inResult, failCause);
-    return failCause;
+    else
+    {
+        KRIL_DEBUG(DBG_INFO, "KRIL_HandleVoiceCallReleased sLastJoinCallIndex %d no match, ignoring\n", sLastJoinCallIndex);
+    }
 }
-
 
 //******************************************************************************
 //
@@ -135,13 +108,6 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
         KRIL_DEBUG(DBG_INFO, "handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
 
@@ -150,17 +116,10 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         case BCM_SendCAPI2Cmd:
         {
             pdata->bcm_ril_rsp = kmalloc(sizeof(KrilCallListState_t), GFP_KERNEL);
-            if(!pdata->bcm_ril_rsp) {
-                KRIL_DEBUG(DBG_ERROR, "Unable to allocate bcm_ril_rsp buf\n");
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            else
-            {
-                pdata->rsp_len = sizeof(KrilCallListState_t);
-                memset(pdata->bcm_ril_rsp, 0, sizeof(KrilCallListState_t));
-                CAPI2_CcApi_GetAllCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
-                pdata->handler_state = BCM_CC_AllCallIndex;
-            }
+            pdata->rsp_len = sizeof(KrilCallListState_t);
+            memset(pdata->bcm_ril_rsp, 0, sizeof(KrilCallListState_t));
+            CAPI2_CC_GetAllCallIndex(GetNewTID(), GetClientID());
+            pdata->handler_state = BCM_CC_AllCallIndex;
             break;
         }
 
@@ -174,11 +133,13 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             KRIL_DEBUG(DBG_INFO, "MSG_CC_GETALLCALLINDEX_RSP::total_call:%d listSz:%d\n", rdata->total_call, rsp->listSz);
             if(0 == rsp->listSz)
             {
-                KRIL_ClearCallNumPresent(pdata->ril_cmd->SimId); // Clear to default presentation allowed
+                KRIL_ClearCallNumPresent(); // Clear to default presentation allowed
+                for (i = 0 ; i < BCM_MAX_CALLS_NO ; i++) // Clear all call type to UNKNOWN_TY
+                    KRIL_SetCallType(i, UNKNOWN_TY);
+                
                 // reset cached value of join call index
                 sLastJoinCallIndex = INVALID_CALL;
-                for (i = 0 ; i < BCM_MAX_CALLS_NO ; i++) // Clear all call type to UNKNOWN_TY
-                    KRIL_SetCallType(pdata->ril_cmd->SimId, i, UNKNOWN_TY);
+                
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
                 break;
             }
@@ -187,11 +148,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             {
                 if (VALID_CALL == rsp->indexList[i])
                 {
-                    //ClientInfo_t clientInfo;
-                    //CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                    //CAPI2_CcApi_GetAllCallIndex ( &clientInfo);
-                    CAPI2_CcApi_GetAllCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
-
+                    CAPI2_CC_GetAllCallIndex(GetNewTID(), GetClientID());
                     pdata->handler_state = BCM_CC_AllCallIndex;
                     return;
                 }
@@ -205,7 +162,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 KRIL_DEBUG(DBG_INFO, "MSG_CC_GETALLCALLINDEX_RSP::JoinCallIndex does not exist\n");
                 sLastJoinCallIndex = INVALID_CALL;
             }
-            CAPI2_CcApi_GetCallType(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+            CAPI2_CC_GetCallType(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
             pdata->handler_state = BCM_CC_GetCallType;
             break;
         }
@@ -268,7 +225,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     rdata->KRILCallState[rdata->index].isVoice = 0;
                     rdata->KRILCallState[rdata->index].isMT = 0;
 
-                    CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+                    CAPI2_CC_EndCall(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
                     pdata->handler_state = BCM_CC_GetVTCallEndResult;
                     return;
                 }
@@ -280,25 +237,26 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     rdata->KRILCallState[rdata->index].isMT = 0;
                 break;
             }
-            KRIL_SetCallType(pdata->ril_cmd->SimId, rdata->index, *rsp);
-            KRIL_DEBUG(DBG_INFO, "GetCallNumPresent:%d rdata->index:%d rdata->KRILCallState[rdata->index].index:%d\n",KRIL_GetCallNumPresent(pdata->ril_cmd->SimId, rdata->KRILCallState[rdata->index].index), rdata->index, rdata->KRILCallState[rdata->index].index);
-            if (CC_PRESENTATION_ALLOWED == KRIL_GetCallNumPresent(pdata->ril_cmd->SimId, rdata->KRILCallState[rdata->index].index) || 0 == rdata->KRILCallState[rdata->index].isMT) //The number is always present for MO call and MT call with presentation allowed
+            
+            KRIL_SetCallType(rdata->index, *rsp);
+            KRIL_DEBUG(DBG_INFO, "GetCallNumPresent:%d rdata->index:%d rdata->KRILCallState[rdata->index].index:%d\n",KRIL_GetCallNumPresent(rdata->KRILCallState[rdata->index].index), rdata->index, rdata->KRILCallState[rdata->index].index);
+            if (CC_PRESENTATION_ALLOWED == KRIL_GetCallNumPresent(rdata->KRILCallState[rdata->index].index) || 0 == rdata->KRILCallState[rdata->index].isMT) //The number is always present for MO call and MT call with presentation allowed
             {
-                CAPI2_CcApi_GetCallNumber(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
-                rdata->KRILCallState[rdata->index].numberPresentation = 0; //Allowed
+                CAPI2_CC_GetCallNumber(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
+                rdata->KRILCallState[rdata->KRILCallState[rdata->index].index].numberPresentation = 0; //Allowed
                 pdata->handler_state = BCM_CC_GetCallNumber;
             }
             else
             {
-                if (CC_PRESENTATION_RESTRICTED == KRIL_GetCallNumPresent(pdata->ril_cmd->SimId, rdata->KRILCallState[rdata->index].index))
+                if (CC_PRESENTATION_RESTRICTED == KRIL_GetCallNumPresent(rdata->KRILCallState[rdata->index].index))
                 {
-                    rdata->KRILCallState[rdata->index].numberPresentation = 1; //Restricted
+                    rdata->KRILCallState[rdata->KRILCallState[rdata->index].index].numberPresentation = 1; //Restricted
                 }
                 else
                 {
-                    rdata->KRILCallState[rdata->index].numberPresentation = 2; //Not Specified/Unknown
+                    rdata->KRILCallState[rdata->KRILCallState[rdata->index].index].numberPresentation = 2; //Not Specified/Unknown
                 }
-                CAPI2_CcApi_IsMultiPartyCall(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+                CAPI2_CC_IsMultiPartyCall(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
                 pdata->handler_state = BCM_CC_IsMultiPartyCall;
             }
         }
@@ -322,16 +280,9 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             {
                 rdata->KRILCallState[rdata->index].toa = TOA_Unknown;
             }
-            if(strlen(rsp->phone_number) > (BCM_MAX_DIGITS))
-            {
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                KRIL_DEBUG(DBG_ERROR,"Phone number length %d is over buffer length %d!!!\n",strlen(rsp->phone_number),(BCM_MAX_DIGITS) );
-                return;
-            }              
-            strncpy(rdata->KRILCallState[rdata->index].number, rsp->phone_number, BCM_MAX_DIGITS);
-
+            strncpy(rdata->KRILCallState[rdata->index].number, rsp->phone_number, PHONE_NUMBER_LENGTH_MAX);
             KRIL_DEBUG(DBG_INFO, "MSG_CC_GETCALLNUMBER_RSP::rdata->index:%d\n", rdata->index);
-            CAPI2_CcApi_IsMultiPartyCall(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+            CAPI2_CC_IsMultiPartyCall(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
             pdata->handler_state = BCM_CC_IsMultiPartyCall;
         }
         break;
@@ -345,7 +296,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             else
                 rdata->KRILCallState[rdata->index].isMpty = 0;
             KRIL_DEBUG(DBG_INFO, "MSG_CC_ISMULTIPARTYCALL_RSP::Ismultipartcall:%d isMpty:%d\n", *rsp, rdata->KRILCallState[rdata->index].isMpty);
-            CAPI2_CcApi_GetCNAPName(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+            CAPI2_CC_GetCNAPName(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
             pdata->handler_state = BCM_CC_GetCNAPName;
         }
         break;
@@ -380,13 +331,13 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             }
             if((rdata->index + 1) >= rdata->total_call)
             {
-                CAPI2_CcApi_GetAllCallStates(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetAllCallStates(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_CC_GetAllCallStates;
             }
             else
             {
                 rdata->index++;
-                CAPI2_CcApi_GetCallType(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+                CAPI2_CC_GetCallType(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
                 pdata->handler_state = BCM_CC_GetCallType;
             }
         }
@@ -404,7 +355,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             for(i = 0 ; i < rdata->total_call ; i++)
             {
                 CCallState_t state = GetCallStateForIndex( i, &(rsp->stateList), rsp->listSz );
-                KRIL_DEBUG(DBG_INFO, "BCM_CC_GetAllCallStates::listSz:%d call_state:%d index:%d\n", rsp->listSz, state, i);
+                KRIL_DEBUG(DBG_INFO, "BCM_CC_GetAllCallStates::call listSz:%d state:%d index:%d callIndex:%d\n", rsp->listSz, state, rdata->KRILCallState[i].state);
                 switch( state )
                 {
                     case CC_CALL_ACTIVE:
@@ -450,7 +401,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                         rdata->KRILCallState[i].state = 0; //Unknow state
                     break;
                 }
-                KRIL_SetCallState(pdata->ril_cmd->SimId, i, rdata->KRILCallState[i].state);
+                KRIL_SetCallState(i, rdata->KRILCallState[i].state);
                 KRIL_DEBUG(DBG_INFO, "MSG_CC_GETALLCALLSTATES_RSP::[%d] state:%d rstate:%d\n", i, rsp->stateList[i], rdata->KRILCallState[i].state);
             }
             pdata->handler_state = BCM_FinishCAPI2Cmd;
@@ -460,7 +411,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         case BCM_CC_SetVTCallEndCause:
         {
             KrilCallListState_t *rdata = (KrilCallListState_t *)pdata->bcm_ril_rsp;
-            CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+            CAPI2_CC_EndCall(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
             pdata->handler_state = BCM_CC_GetVTCallEndResult;
             break;
         }
@@ -485,7 +436,7 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             else
             {
                 rdata->index++;
-                CAPI2_CcApi_GetCallType(InitClientInfo(pdata->ril_cmd->SimId), rdata->KRILCallState[rdata->index].index);
+                CAPI2_CC_GetCallType(GetNewTID(), GetClientID(), rdata->KRILCallState[rdata->index].index);
                 pdata->handler_state = BCM_CC_GetCallType;
             }
             
@@ -506,17 +457,10 @@ void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 #define MAX_NORMAL_CALL_RETRY_DURATION_SECOND 30
 #define MAX_EMERGENCY_CALL_RETRY_TIMES 10
 #define MAX_EMERGENCY_CALL_RETRY_DURATION_SECOND 60
-
+ 
 void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
-
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
 
     if (capi2_rsp != NULL)
         KRIL_DEBUG(DBG_INFO, "handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
@@ -526,23 +470,34 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         case BCM_SendCAPI2Cmd:
         {
             KrilDial_t *tdata = (KrilDial_t *)pdata->ril_cmd->data;
+            
             if (tdata->isVTcall)
             {
 #ifdef VIDEO_TELEPHONY_ENABLE
-                if (0 != tdata->address[0])
+                //Owen VT test
+                //CAPI2_CallConfig_t    CallCongif;
+
+                // Set "AT+CBST:134,1,0" for Video Telephony.
+                //CallCongif.configType = CALL_CFG_CBST_PARAMS;
+                //CallCongif.param_u.cbst_params.speed = 134;    // RIL_SPEED_64000_MULTIMEDIA
+                //CallCongif.param_u.cbst_params.name = 1;       // RIL_BSVCNAME_DATACIRCUIT_SYNC_UDI_MODEM
+                //CallCongif.param_u.cbst_params.ce = 0;         // RIL_BSVCCE_TRANSPARENT
+                
+                //CAPI2_CC_SetCallCfg(GetNewTID(), GetClientID(), &CallCongif);
+                //pdata->handler_state = BCM_CC_SetCBSTFinished;
+
+                if (NULL != tdata->address)
                 {
-                    KRIL_DEBUG(DBG_INFO, "VT clir: %d\n", tdata->clir);
-                    VideoCallParam_t callparam;
-                    callparam.speed = 134; //VIDEO_CALL_64000
-                    callparam.clir = tdata->clir;
-                    CAPI2_CcApi_SetVideoCallParam(InitClientInfo(pdata->ril_cmd->SimId), callparam);
-                    pdata->handler_state = BCM_CC_MakeVideoCall;
+                    KRIL_DEBUG(DBG_ERROR, "Phone number: %s\n", tdata->address);
+                    CAPI2_CC_MakeVideoCall(GetNewTID(), GetClientID(), (UInt8*)tdata->address);
+                    pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
                 else
                 {
                     KRIL_DEBUG(DBG_ERROR, "Phone number is Null. Error!!!");
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                 }
+                
 #else
                 KRIL_DEBUG(DBG_ERROR, "VT call not supported. Error!!!\n");
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
@@ -550,26 +505,14 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             }
             else
             {
-                CAPI2_SimApi_GetAlsDefaultLine(InitClientInfo(pdata->ril_cmd->SimId));
-                KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, BCM_CALL_FAIL_NORMAL);
+                CAPI2_SIM_GetAlsDefaultLine(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_SIM_GetAlsDefaultLine;
+                KRIL_SetLastCallFailCause(BCM_CALL_FAIL_NORMAL);
             }
+
             break;
         }
-#ifdef VIDEO_TELEPHONY_ENABLE
-        case BCM_CC_MakeVideoCall:
-        {
-            KrilDial_t *tdata = (KrilDial_t *)pdata->ril_cmd->data;
-            if ( capi2_rsp->result == RESULT_ERROR )
-            {
-                KRIL_DEBUG(DBG_INFO, "VT set call param Failed \n");
-            }
-            //KRIL_DEBUG(DBG_INFO, "Phone number: %s\n", tdata->address);
-            CAPI2_CcApi_MakeVideoCall(InitClientInfo(pdata->ril_cmd->SimId), (UInt8*)tdata->address);
-            pdata->handler_state = BCM_RESPCAPI2Cmd;
-            break;
-        }
-#endif //VIDEO_TELEPHONY_ENABLE
+
         case BCM_SIM_GetAlsDefaultLine:
         {
             UInt32* rsp = (UInt32*) capi2_rsp->dataBuf;
@@ -593,19 +536,14 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 m_VoiceCallParam.clir = tdata->clir;
 				
 				// CWYoon 110827::CSP447453 Emergency call in FDN mode.					
-				if ( tdata->isEmergency )
+				if ( (tdata->isEmergency)||(StkCall == TRUE) ) // gearn  FDN enable setup call 
 					m_VoiceCallParam.isFdnChkSkipped = TRUE;
 				else
 					m_VoiceCallParam.isFdnChkSkipped = FALSE;
-                m_VoiceCallParam.auxiliarySpeech = *rsp == 1 ? TRUE : FALSE;
+					
+                m_VoiceCallParam.auxiliarySpeech = rsp == 1 ? TRUE : FALSE;
+
                 m_VoiceCallParam.isEmergency = tdata->isEmergency;
-                
-                if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
-                {
-                    gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
-                    m_VoiceCallParam.isFdnChkSkipped = TRUE;
-                }
-                
                 m_VoiceCallParam.emergencySvcCat = tdata->emergencySvcCat;
 				// save dial information for retry
 				memcpy(&context->call_param, &m_VoiceCallParam, sizeof(VoiceCallParam_t));
@@ -622,7 +560,7 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 				} 
                 KRIL_DEBUG(DBG_INFO, "auxiliarySpeech:%d isEmergency:%d\n", m_VoiceCallParam.auxiliarySpeech, m_VoiceCallParam.isEmergency);
                 KRIL_DEBUG(DBG_INFO, "retry_duration:%ld total retry count%d, jiffies: %ld \n", context->retry_duration, context->total_retry_count, jiffies);
-                CAPI2_CcApi_MakeVoiceCall(InitClientInfo(pdata->ril_cmd->SimId), (UInt8*)tdata->address, m_VoiceCallParam);
+                CAPI2_CC_MakeVoiceCall(GetNewTID(), GetClientID(), (UInt8*)tdata->address, m_VoiceCallParam);
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)	
                 KRIL_DEBUG(DBG_INFO, "KRIL_DialHandler:BCM_SIM_GetAlsDefaultLine::enter lcd frame inversion\n");
 								lcd_enter_during_call();
@@ -637,15 +575,43 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             break;
         }
 
+#ifdef VIDEO_TELEPHONY_ENABLE        
+        case BCM_CC_SetCBSTFinished:
+        {
+            //Owen VT test
+            //CAPI2_ECHO_SetDigitalTxGain(GetNewTID(), GetClientID(), -100);
+            pdata->handler_state = BCM_CC_MakeVideoCall;           
+            break;
+        }
+
+        case BCM_CC_MakeVideoCall:
+        {
+            KrilDial_t *tdata = (KrilDial_t *)pdata->ril_cmd->data;
+            
+            if (NULL != tdata->address)
+            {
+                KRIL_DEBUG(DBG_ERROR, "Phone number: %s\n", tdata->address);
+                CAPI2_CC_MakeVideoCall(GetNewTID(), GetClientID(), (UInt8*)tdata->address);
+                pdata->handler_state = BCM_RESPCAPI2Cmd;
+            }
+            else
+            {
+                KRIL_DEBUG(DBG_ERROR, "Phone number is Null. Error!!!");
+                pdata->handler_state = BCM_ErrorCAPI2Cmd;
+            }
+            break;
+        }
+#endif //VIDEO_TELEPHONY_ENABLE
+        
         case BCM_RESPCAPI2Cmd:
         {
             pdata->handler_state = BCM_FinishCAPI2Cmd;
+            
             if (capi2_rsp->msgType == MSG_VOICECALL_CONNECTED_IND)
             {
                 VoiceCallConnectMsg_t *rsp = (VoiceCallConnectMsg_t *) capi2_rsp->dataBuf;
                 KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_CONNECTED_IND::callIndex:%d progress_desc:%d\n", rsp->callIndex,rsp->progress_desc);
-                KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
-                KRIL_BroadcastCallStatus(pdata->ril_cmd->SimId, capi2_rsp->msgType, NULL);
+                KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
             }
             else if (capi2_rsp->msgType == MSG_VOICECALL_RELEASE_IND || 
                        capi2_rsp->msgType == MSG_VOICECALL_RELEASE_CNF)
@@ -667,18 +633,17 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 							pdata->handler_state = BCM_CC_SilentCallRetry;
 							context->current_retry_count ++;
                 			KRIL_DEBUG(DBG_INFO, "BCM_CC_SilentCallRetry: MSG_VOICECALL_RELEASE_IND-0::current_retry_count:%d, retry_duration: %ld\n", context->current_retry_count, context->retry_duration);
-                            CAPI2_CcApi_MakeVoiceCall(InitClientInfo(pdata->ril_cmd->SimId), (UInt8*)context->address, context->call_param);
+                			CAPI2_CC_MakeVoiceCall(GetNewTID(), GetClientID(), (UInt8*)context->address, context->call_param);
 							return;
 						}
 					}
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, KRIL_MNCauseToRilError(rsp->exitCause));
+                    KRIL_SetLastCallFailCause( KRIL_MNCauseToRilError(rsp->exitCause) );
                 }
                 else
                 {
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, ResultToRilFailCause(capi2_rsp->result));
+                    KRIL_SetLastCallFailCause( ResultToRilFailCause(capi2_rsp->result) );
                 }
-                KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
-                KRIL_BroadcastCallStatus(pdata->ril_cmd->SimId, capi2_rsp->msgType, NULL);                
+                KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
             }
 #ifdef VIDEO_TELEPHONY_ENABLE
             else if (capi2_rsp->msgType == MSG_DATACALL_CONNECTED_IND)
@@ -689,44 +654,31 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     int callIndex = rsp->callIndex;
                     
                     KRIL_DEBUG(DBG_INFO, "MSG_DATACALL_CONNECTED_IND::callIndex: %d\n",rsp->callIndex);
-                    KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_CONNECT, &callIndex, sizeof(int));
+                    KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_CONNECT, &callIndex, sizeof(int));
                 }
                 else
                 {
                     KRIL_DEBUG(DBG_ERROR, "MSG_DATACALL_CONNECTED_IND\n");
-                    KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_CONNECT, NULL, 0);
+                    KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_CONNECT, NULL, 0);
                 }
             }
             else if (capi2_rsp->msgType == MSG_DATACALL_RELEASE_IND)
             {
-                int vtCallRsp[2] = {0};
                 if (NULL != capi2_rsp->dataBuf)
                 {
                     DataCallReleaseMsg_t *rsp = (DataCallReleaseMsg_t *) capi2_rsp->dataBuf;
-                    vtCallRsp[0] = rsp->callIndex;
-                    vtCallRsp[1] = rsp->exitCause;
-
+                    int callIndex = rsp->callIndex;
+                    
                     KRIL_DEBUG(DBG_INFO, "MSG_DATACALL_RELEASE_IND:: callIndex: %d exitCause: 0x%X\n", rsp->callIndex, rsp->exitCause);
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, KRIL_MNCauseToRilError(rsp->exitCause));
-                    KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_END, &vtCallRsp, sizeof(vtCallRsp));
+                    KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_END, &callIndex, sizeof(int));
                 }
                 else
                 {
-                    vtCallRsp[0] = 0;
-                    vtCallRsp[1] = MNCAUSE_NORMAL_CALL_CLEARING;
-
                     KRIL_DEBUG(DBG_ERROR, "MSG_DATACALL_RELEASE_IND\n");
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, BCM_CALL_FAIL_ERROR_UNSPECIFIED);
-                    KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_END, &vtCallRsp, sizeof(vtCallRsp));
+                    KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_END, NULL, 0);
                 }
             }
 #endif //VIDEO_TELEPHONY_ENABLE
-            else if (capi2_rsp->msgType == MSG_STK_CC_SETUPFAIL_IND)
-            {
-                StkCallSetupFail_t *rsp = (StkCallSetupFail_t *) capi2_rsp->dataBuf;
-                KRIL_DEBUG(DBG_ERROR, "STK block the request::failRes:%d\n", rsp->failRes);
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
             else
             {
                 KRIL_DEBUG(DBG_ERROR, "Receive Unkenow Message :: msgType:0x%x\n", capi2_rsp->msgType);
@@ -744,8 +696,7 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             {
                 VoiceCallConnectMsg_t *rsp = (VoiceCallConnectMsg_t *) capi2_rsp->dataBuf;
                 KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_CONNECTED_IND::callIndex:%d progress_desc:%d\n", rsp->callIndex,rsp->progress_desc);
-                KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
-                KRIL_BroadcastCallStatus(pdata->ril_cmd->SimId, capi2_rsp->msgType, NULL);                            
+                KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
             }
             else if (capi2_rsp->msgType == MSG_VOICECALL_RELEASE_IND || 
                        capi2_rsp->msgType == MSG_VOICECALL_RELEASE_CNF)
@@ -767,20 +718,19 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 							pdata->handler_state = BCM_CC_SilentCallRetry;
 
                 			KRIL_DEBUG(DBG_INFO, "BCM_CC_SilentCallRetry: MSG_VOICECALL_RELEASE_IND-3::retry_count:%d\n", context->current_retry_count);
-                			CAPI2_CcApi_MakeVoiceCall(InitClientInfo(pdata->ril_cmd->SimId), (UInt8*)context->address, context->call_param);
+                			CAPI2_CC_MakeVoiceCall(GetNewTID(), GetClientID(), (UInt8*)context->address, context->call_param);
 							return;
 						}
 					}
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, KRIL_MNCauseToRilError(rsp->exitCause) );
+                    KRIL_SetLastCallFailCause( KRIL_MNCauseToRilError(rsp->exitCause) );
                 }
                 else
                 {
             		KRIL_DEBUG(DBG_INFO, "RETRY: BCM_CC_SilentCallRetry-2\n" );
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, ResultToRilFailCause(capi2_rsp->result) );
+                    KRIL_SetLastCallFailCause( ResultToRilFailCause(capi2_rsp->result) );
                 }
 				
-                KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
-                KRIL_BroadcastCallStatus(pdata->ril_cmd->SimId, capi2_rsp->msgType, NULL);                            
+                KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED, NULL, 0);
             }
             else
             {
@@ -788,8 +738,7 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
             break;
-        }
-
+		}
         default:
         {
             KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
@@ -800,30 +749,23 @@ void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 }
 
 
-void KRIL_HangupHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
+void KRIL_HungupHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
+        KRIL_DEBUG(DBG_INFO, "KRIL_HungupHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
             int *Index = (int *)(pdata->ril_cmd->data);
-            KRIL_DEBUG(DBG_INFO,"Current call Index:%d\n", *Index);
+            KRIL_DEBUG(DBG_TRACE,"Current call Index:%d\n", *Index);
             if(*Index == 11)
-               CAPI2_CcApi_EndAllCalls(InitClientInfo(pdata->ril_cmd->SimId));
+               CAPI2_CC_EndAllCalls(GetNewTID(), GetClientID());
             else
-               CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), (*Index-1));
+               CAPI2_CC_EndCall(GetNewTID(), GetClientID(), (*Index-1));
             pdata->handler_state = BCM_RESPCAPI2Cmd;
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
 						KRIL_DEBUG(DBG_INFO, "KRIL_HungupHandler:BCM_SendCAPI2Cmd::restore lcd frame inversion\n");
@@ -834,10 +776,12 @@ void KRIL_HangupHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
         case BCM_RESPCAPI2Cmd:
         {
-            if(capi2_rsp->result == RESULT_OK)
-            {
+
+	        if(capi2_rsp->result == RESULT_OK)
+ 	        {
+				
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
-            }
+ 	         }
             else
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
@@ -855,26 +799,19 @@ void KRIL_HangupHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 }
 
 
-void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
+void KRIL_HungupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_HungupWaitingOrBackgroundHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
             // check for waiting call first...
-            CAPI2_CcApi_GetNextWaitCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_CC_GetNextWaitCallIndex (GetNewTID(), GetClientID());
             pdata->handler_state = BCM_CC_GetNextWaitCallIndex;
             break;
         }
@@ -887,7 +824,7 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
             if(*rsp != INVALID_CALL)
             {
                 // there was a waiting call, so end it and we're outta here
-                CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), *rsp);
+                CAPI2_CC_EndCall(GetNewTID(), GetClientID(), *rsp);
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
 								KRIL_DEBUG(DBG_INFO, "KRIL_HungupWaitingOrBackgroundHandler:BCM_CC_GetNextWaitCallIndex::restore lcd frame inversion\n");
@@ -897,7 +834,7 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
             else
             {
                 // no waiting call, so check for held calls
-                CAPI2_CcApi_GetAllHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetAllHeldCallIndex(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_CC_EndNextHeldCall;
             }
             break;
@@ -912,12 +849,12 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
                 if (1 == rsp->listSz)
                 {
                     // single held call
-                    CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), rsp->indexList[0]);
+                    CAPI2_CC_EndCall(GetNewTID(), GetClientID(), rsp->indexList[0]);
                 }
                 else
-                {
+            {
                     // multiparty held call
-                    CAPI2_CcApi_EndMPTYCalls(InitClientInfo(pdata->ril_cmd->SimId));
+                    CAPI2_CC_EndMPTYCalls(GetNewTID(), GetClientID());
                 }
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
@@ -928,10 +865,10 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
             else
             {
                 // no held calls, so check if there is incoming call to end
-                if(KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId) != INVALID_CALL)
+                if(KRIL_GetIncomingCallIndex() != INVALID_CALL)
                 {
-                    CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
-                    KRIL_SetIncomingCallIndex(pdata->ril_cmd->SimId, INVALID_CALL);
+                    CAPI2_CC_EndCall(GetNewTID(), GetClientID(), KRIL_GetIncomingCallIndex());
+                    KRIL_SetIncomingCallIndex(INVALID_CALL);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
 										KRIL_DEBUG(DBG_INFO, "KRIL_HungupWaitingOrBackgroundHandler:BCM_CC_EndNextHeldCall_else::restore lcd frame inversion\n");
@@ -940,8 +877,8 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
                 }
                 else
                 {
-                    // we don't end wait call and end any held call case, so return error.
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                    // we're done...   
+                    pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
             }
             break;
@@ -949,8 +886,8 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
 
         case BCM_RESPCAPI2Cmd:
         {
-            if (capi2_rsp->result == RESULT_OK ||
-                capi2_rsp->result == CC_END_CALL_SUCCESS)
+            if(capi2_rsp->result == RESULT_OK ||
+               capi2_rsp->result == CC_END_CALL_SUCCESS)
             {
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
             }
@@ -971,26 +908,19 @@ void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
 }
 
 
-void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
+void KRIL_HungupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_HungupForegroundResumeBackgroundHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
             KRIL_DEBUG(DBG_TRACE,"handler state:%lu\n", pdata->handler_state);
-            CAPI2_CcApi_GetAllActiveCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_CC_GetAllActiveCallIndex(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_CC_GetNextActiveCallIndex;
             break;
         }
@@ -998,29 +928,30 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
         case BCM_CC_GetNextActiveCallIndex:
         {
             ALL_CALL_INDEX_t *rsp = (ALL_CALL_INDEX_t *)capi2_rsp->dataBuf;
-            KRIL_DEBUG(DBG_INFO, "rsp->listSz:%d\n", rsp->listSz);
+            KRIL_DEBUG(DBG_ERROR, "rsp->listSz:%d\n", rsp->listSz);
             if (rsp->listSz != 0)
             {
                 if (1 == rsp->listSz)
                 {
-                    CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), rsp->indexList[0]);
+                    CAPI2_CC_EndCall(GetNewTID(), GetClientID(), rsp->indexList[0]);
                     pdata->handler_state = BCM_SendCAPI2Cmd;
                 }
                 else
                 {
                     g_totalMPTYCall = rsp->listSz;
-                    CAPI2_CcApi_EndMPTYCalls(InitClientInfo(pdata->ril_cmd->SimId));
+                    CAPI2_CC_EndMPTYCalls(GetNewTID(), GetClientID());
                     KRIL_SetHungupForegroundResumeBackgroundEndMPTY(GetTID());
                     pdata->handler_state = BCM_CC_EndMPTYCalls;
-                }
+
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
-		KRIL_DEBUG(DBG_INFO, "KRIL_HungupForegroundResumeBackgroundHandler:BCM_CC_GetNextActiveCallIndex::restore lcd frame inversion\n");
-		lcd_restore_during_call();
+								KRIL_DEBUG(DBG_INFO, "KRIL_HungupForegroundResumeBackgroundHandler:BCM_CC_GetNextActiveCallIndex::restore lcd frame inversion\n");
+								lcd_restore_during_call();
 #endif				
-            }
+               }
+			}
             else
             {
-                CAPI2_CcApi_GetNextWaitCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetNextWaitCallIndex(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_CC_GetNextWaitCallIndex;
             }
             break;
@@ -1035,8 +966,16 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
                 if (0 == g_totalMPTYCall)
                 {
                     KRIL_SetHungupForegroundResumeBackgroundEndMPTY(0);
-                    CAPI2_CcApi_GetNextWaitCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                    // ***YY*** Revert the change
+                    CAPI2_CC_GetNextWaitCallIndex(GetNewTID(), GetClientID());
+                    // **MAG** use GetAllHeldCallIndex so we can check for MPTY call
+                    //CAPI2_CC_GetAllHeldCallIndex(GetNewTID(), GetClientID());
                     pdata->handler_state = BCM_CC_GetNextWaitCallIndex;
+                }
+                else
+                {
+                     // tid for handler will be updated in KRIL_ResponseHandler() on returning from here, so update here to new tid
+                     KRIL_SetHungupForegroundResumeBackgroundEndMPTY(GetNewTID());
                 }
             }
             else // MSG_CC_ENDMPTYCALLS_REQ fail
@@ -1044,9 +983,11 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
                 g_totalMPTYCall = 0;
                 KRIL_DEBUG(DBG_INFO,"result:%d\n", capi2_rsp->result);
                 KRIL_SetHungupForegroundResumeBackgroundEndMPTY(0);
-                CAPI2_CcApi_GetNextWaitCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetNextWaitCallIndex(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_CC_GetNextWaitCallIndex;
             }
+
+               
             break;
         }
 
@@ -1056,13 +997,14 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
             KRIL_DEBUG(DBG_INFO, "WaitCallIndex:%d\n", *rsp);
             if(*rsp != INVALID_CALL)
             {
-                CAPI2_CcApi_AcceptVoiceCall(InitClientInfo(pdata->ril_cmd->SimId), *rsp);
+                CAPI2_CC_AcceptVoiceCall(GetNewTID(), GetClientID(), *rsp);
                 pdata->handler_state = BCM_CC_AcceptVoiceCall;
             }
             else
             {
                 // **MAG** use GetAllHeldCallIndex so we can check for MPTY call
-                CAPI2_CcApi_GetAllHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetAllHeldCallIndex(GetNewTID(), GetClientID());
+                //CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
             }
             break;
@@ -1070,50 +1012,53 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
 
         case BCM_CC_AcceptVoiceCall:
         {
-            if (capi2_rsp->result == RESULT_OK)
+			
+            if(capi2_rsp->result == RESULT_OK)
             {
-                if (MSG_VOICECALL_ACTION_RSP == capi2_rsp->msgType)
+                if ( MSG_VOICECALL_ACTION_RSP == capi2_rsp->msgType )
                 {
-                    VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
-                    KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd result:%d\n", rsp->callResult);
-                    if (rsp->callResult == RESULT_OK ||
-                        rsp->callResult == CC_ACCEPT_CALL_SUCCESS)
-                    {
-                        pdata->handler_state = BCM_FinishCAPI2Cmd;
-                    }
-                    else
-                    {
+    				VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
+    				KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_ACTION_RSP result:%d\n", rsp->callResult);
+    				if(rsp->callResult == CC_ACCEPT_CALL_FAIL )
+    				{
                         // **MAG** use GetAllHeldCallIndex so we can check for MPTY call
-                        CAPI2_CcApi_GetAllHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
-                        pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
-                    }
-                }
-                else if (MSG_VOICECALL_RELEASE_IND == capi2_rsp->msgType)
-                {
+                        CAPI2_CC_GetAllHeldCallIndex(GetNewTID(), GetClientID());
+    					//CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
+    					pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
+    				}
+    				else
+    				{
+    					pdata->handler_state = BCM_FinishCAPI2Cmd;
+    				}
+				}
+				else if ( MSG_VOICECALL_RELEASE_IND == capi2_rsp->msgType )
+				{
                     VoiceCallReleaseMsg_t *rsp = (VoiceCallReleaseMsg_t *) capi2_rsp->dataBuf;
-                    KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_RELEASE_IND exitCause:%d\n", rsp->exitCause);
-                    KRIL_SetLastCallFailCause(pdata->ril_cmd->SimId, KRIL_MNCauseToRilError(rsp->exitCause));
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                }
-                else if (MSG_VOICECALL_CONNECTED_IND == capi2_rsp->msgType)
-                {
-                    VoiceCallConnectMsg_t* rsp = (VoiceCallConnectMsg_t *) capi2_rsp->dataBuf;
-                    KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_CONNECTED_IND call index:%d\n", rsp->callIndex);
-                    pdata->handler_state = BCM_FinishCAPI2Cmd;
-                }
-                else
-                {
-                    KRIL_DEBUG(DBG_ERROR, "Unexpected response to  CAPI2_CC_AcceptVoiceCall msg 0x%x\n",capi2_rsp->msgType);
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                }
+    				KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_RELEASE_IND exitCause:%d\n", rsp->exitCause);
+                    KRIL_SetLastCallFailCause( KRIL_MNCauseToRilError(rsp->exitCause) );
+				    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+ 				}
+ 				else if ( MSG_VOICECALL_CONNECTED_IND == capi2_rsp->msgType )
+ 				{
+ 				    VoiceCallConnectMsg_t* rsp = (VoiceCallReleaseMsg_t *) capi2_rsp->dataBuf;
+    				KRIL_DEBUG(DBG_INFO, "MSG_VOICECALL_CONNECTED_IND call index:%d\n", rsp->callIndex);
+    				pdata->handler_state = BCM_FinishCAPI2Cmd;
+ 				}
+				else
+				{
+    				KRIL_DEBUG(DBG_ERROR, "Unexpected response to  CAPI2_CC_AcceptVoiceCall msg 0x%x\n",capi2_rsp->msgType);
+				    pdata->handler_state = BCM_ErrorCAPI2Cmd;
+				}
             }
             else
             {
                 // **MAG** use GetAllHeldCallIndex so we can check for MPTY call
-                CAPI2_CcApi_GetAllHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
-                pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
+                CAPI2_CC_GetAllHeldCallIndex(GetNewTID(), GetClientID());
+				//CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
+				pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
             }
             break;
+
         }
 
         case BCM_CC_GetNextHeldCallIndex:
@@ -1122,12 +1067,13 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
             KRIL_DEBUG(DBG_INFO, "BCM_CC_GetNextHeldCallIndex: rsp->listSz:%d\n", rsp->listSz);
             if (rsp->listSz != 0)
             {
-                UInt8 callIndex = INVALID_CALL;
+            	/* ***YY*** FIX compile error */
+            	UInt8 callIndex = INVALID_CALL;
                 if ( rsp->listSz > 1 )
                 {
                     // check if we cached the call index we used for the join...
-                    if (INVALID_CALL != sLastJoinCallIndex)
-            {
+                    if ( INVALID_CALL != sLastJoinCallIndex )
+                    {
                         // yes, so use it to retrieve the call
                         KRIL_DEBUG(DBG_INFO, "using call index cached from last join req:%d\n", sLastJoinCallIndex);
                         callIndex = sLastJoinCallIndex;
@@ -1145,46 +1091,44 @@ void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_
                     KRIL_DEBUG(DBG_INFO, "not mpty call, using first from held call list:%d\n", (int)rsp->indexList[0]);
                     callIndex = (int)rsp->indexList[0];
                 }
-                CAPI2_CcApi_RetrieveCall(InitClientInfo(pdata->ril_cmd->SimId), callIndex);
+                
+                CAPI2_CC_RetrieveCall(GetNewTID(), GetClientID(), callIndex);
+                pdata->handler_state = BCM_RESPCAPI2Cmd;
+           }
+            else
+            {
+                pdata->handler_state = BCM_FinishCAPI2Cmd;
+            }
+        /*
+            UInt8 *rsp = (UInt8 *)capi2_rsp->dataBuf;
+            KRIL_DEBUG(DBG_INFO, "HeldCallIndex:%d\n", *rsp);
+            if(*rsp != INVALID_CALL)
+            {
+                CAPI2_CC_RetrieveCall(GetNewTID(), GetClientID(), *rsp);
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
             }
             else
             {
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
             }
-            break;
-        }
-
-        case BCM_CC_AllCallIndex:
-        {
-            ALL_CALL_INDEX_t *rsp = (ALL_CALL_INDEX_t*) capi2_rsp->dataBuf;
-            if(1 == rsp->listSz)
-            {
-               CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), rsp->indexList[0]);
-               pdata->handler_state = BCM_RESPCAPI2Cmd;
-            }
-            else
-            {
-               /* rsp->listSz should be 0 */
-               pdata->handler_state = BCM_FinishCAPI2Cmd;
-            }
+        */
             break;
         }
 
         case BCM_RESPCAPI2Cmd:
         {
+		
+            KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd result:%d\n", capi2_rsp->result);
             if(capi2_rsp->result == RESULT_OK)
             {
-                VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
-                KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd result:%d\n", rsp->callResult);
-                if(rsp->callResult == RESULT_OK || rsp->callResult == CC_RESUME_CALL_SUCCESS)
-                {
-                    pdata->handler_state = BCM_FinishCAPI2Cmd;
-                }
-                else
-                {
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                }
+				VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
+				KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd result:%d\n", rsp->callResult);
+				if(rsp->callResult == CC_RESUME_CALL_SUCCESS || rsp->callResult == RESULT_OK){
+				   pdata->handler_state = BCM_FinishCAPI2Cmd;
+				}
+				else{
+				   pdata->handler_state = BCM_ErrorCAPI2Cmd;
+				}
             }
             else
             {
@@ -1207,31 +1151,28 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_SwitchWaitingOrHoldingAndActiveHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
-            KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
-            // Initialize the misc index in the call context (MPTY_FIX_V4_diff)
-            context->ActiveIndex = INVALID_CALL;
-            context->WaitIndex   = INVALID_CALL;
-            context->MptyIndex   = INVALID_CALL;
-            context->HeldIndex   = INVALID_CALL;
-            context->activeMPTY = FALSE;
-            context->heldMPTY = FALSE;
-
-            KRIL_SetInHoldCallHandler(pdata->ril_cmd->SimId, TRUE);
-            CAPI2_CcApi_GetAllActiveCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+        	  KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
+        	  
+        	  // Initialize the misc index in the call context (MPTY_FIX_V4_diff)
+        	  context->ActiveIndex = INVALID_CALL;
+        	  context->WaitIndex   = INVALID_CALL;
+        	  context->MptyIndex   = INVALID_CALL;       	  
+        	  context->HeldIndex   = INVALID_CALL;
+        	  context->activeMPTY = FALSE;
+        	  context->heldMPTY = FALSE;
+        	  // End of (MPTY_FIX_V4_diff)
+        	  
+            KRIL_SetInHoldCallHandler(TRUE);
+            //CAPI2_CC_GetNextActiveCallIndex(GetNewTID(), GetClientID());
+            // get all active and we can check for MPTY by list size
+            CAPI2_CC_GetAllActiveCallIndex(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_CC_GetNextActiveCallIndex;
             break;
         }
@@ -1240,7 +1181,7 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
         {
             KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
             ALL_CALL_INDEX_t *rsp = (ALL_CALL_INDEX_t *)capi2_rsp->dataBuf;
-            KRIL_DEBUG(DBG_INFO, "rsp->listSz:%d\n", rsp->listSz);
+            KRIL_DEBUG(DBG_ERROR, "rsp->listSz:%d\n", rsp->listSz);
             if (rsp->listSz != 0)
             {
                 context->ActiveIndex = rsp->indexList[0];
@@ -1253,9 +1194,15 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
                     context->activeMPTY = TRUE;
                 }
             }
-            KRIL_DEBUG(DBG_INFO, "ActiveIndex:%d MPTY:%s\n", context->ActiveIndex, (context->activeMPTY?"TRUE":"FALSE"));
-            CAPI2_CcApi_GetNextWaitCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+/*
+            UInt8 *rsp = (UInt8 *)capi2_rsp->dataBuf;
+            KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
+            context->ActiveIndex= *rsp;
+*/
+            KRIL_DEBUG(DBG_INFO, "ActiveIndex:%d MPTY:%s\n", context->ActiveIndex, (context->activeMPTY?"TRUE":"FALSE") );
+            CAPI2_CC_GetNextWaitCallIndex(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_CC_GetNextWaitCallIndex;
+
             break;
         }
 
@@ -1265,17 +1212,58 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
             KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
             context->WaitIndex = *rsp;
             KRIL_DEBUG(DBG_INFO, "WaitIndex:%d\n", context->WaitIndex);
-            // **MAG** use GetAllHeldCallIndex so we can check for MPTY call
-            CAPI2_CcApi_GetAllHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
-            pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
+/*
+            if(context->ActiveIndex != INVALID_CALL && context->WaitIndex == INVALID_CALL)
+            {
+                CAPI2_CC_GetMPTYCallIndex(GetNewTID(), GetClientID());
+                pdata->handler_state = BCM_CC_GetMPTYCallIndex;
+            }
+            else
+*/
+            {
+                // **MAG** use GetAllHeldCallIndex so we can check for MPTY call
+                CAPI2_CC_GetAllHeldCallIndex(GetNewTID(), GetClientID());
+                //CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
+                pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
+            }
             break;
         }
-
+/*
+        // **FIXME** MAG - state no longer needed?
+        case BCM_CC_GetMPTYCallIndex:
+        {
+            UInt8 *rsp = (UInt8*) capi2_rsp->dataBuf;
+            KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
+            context->MptyIndex = *rsp;
+            KRIL_DEBUG(DBG_INFO, "MptyIndex:%d\n", context->MptyIndex);
+            if(context->MptyIndex != INVALID_CALL)
+            {
+                if(INVALID_CALL != context->ActiveIndex)
+                {
+                    CAPI2_CC_SwapCall(GetNewTID(), GetClientID(), context->MptyIndex);
+                    pdata->handler_state = BCM_CC_SwapCall;
+                }
+                else
+                {
+                    CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
+                    pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
+                }
+            }
+            else
+            {
+                CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
+                pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
+            }
+            break;
+        }
+*/
         case BCM_CC_GetNextHeldCallIndex:
         {
             ALL_CALL_INDEX_t *rsp = (ALL_CALL_INDEX_t *)capi2_rsp->dataBuf;
-            KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
             KRIL_DEBUG(DBG_INFO, "BCM_CC_GetNextHeldCallIndex: rsp->listSz:%d\n", rsp->listSz);
+            //UInt8 *rsp = (UInt8*) capi2_rsp->dataBuf;
+            KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
+            //context->HeldIndex = *rsp;
             if (rsp->listSz != 0)
             {
                 context->HeldIndex = (int)rsp->indexList[0];
@@ -1283,15 +1271,16 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
                 {
                     // MPTY held call
                     context->heldMPTY = TRUE;
-            }
-            else
-            {
+                }
+                else
+                {
                     // single held call
                     context->heldMPTY = FALSE;
+                }
+                
             }
-        }
             KRIL_DEBUG(DBG_INFO, "HeldIndex:%d MPTY:%s\n", context->HeldIndex, (context->heldMPTY?"TRUE":"FALSE"));
-
+            
             if(context->HeldIndex != INVALID_CALL)
             {
                 UInt8 heldIndexToUse = INVALID_CALL;
@@ -1313,60 +1302,68 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
                     }
                 }
                 else
-            {
+                {
                     KRIL_DEBUG(DBG_INFO, "cached join index not valid, using held index from context %d\n", context->HeldIndex);
                     heldIndexToUse = context->HeldIndex;
                 }
-
+                
                 if(context->ActiveIndex != INVALID_CALL)
                 {
                     // one held, one active
-                    CAPI2_CcApi_SwapCall(InitClientInfo(pdata->ril_cmd->SimId), heldIndexToUse);
+                    CAPI2_CC_SwapCall(GetNewTID(), GetClientID(), heldIndexToUse);
                     pdata->handler_state = BCM_CC_SwapCall;
                 }
                 else if(context->WaitIndex != INVALID_CALL)
                 {
                     // one held, one waiting
-                    CAPI2_CcApi_AcceptWaitingCall(InitClientInfo(pdata->ril_cmd->SimId));
+                    CAPI2_CC_AcceptWaitingCall(GetNewTID(), GetClientID());
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
                 else
                 {
                     // just one held
-                    CAPI2_CcApi_RetrieveCall(InitClientInfo(pdata->ril_cmd->SimId), heldIndexToUse);
+                    //CAPI2_CC_RetrieveNextHeldCall(GetNewTID(), GetClientID());
+                    CAPI2_CC_RetrieveCall(GetNewTID(), GetClientID(), heldIndexToUse);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
             }
             else
             {
                 UInt8 activeIndexToUse = INVALID_CALL;
-                if (context->activeMPTY && (INVALID_CALL != sLastJoinCallIndex))
+                
+                if ( context->activeMPTY && (INVALID_CALL != sLastJoinCallIndex) )
                 {
                     KRIL_DEBUG(DBG_INFO, "cached join index valid, using as active index %d\n", sLastJoinCallIndex);
                     activeIndexToUse = sLastJoinCallIndex;
-            }
+                }
                 else
                 {
                     KRIL_DEBUG(DBG_INFO, "cached join index not valid, using active index from context %d\n", context->HeldIndex);
                     activeIndexToUse = context->ActiveIndex;
-        }
-
+                }
                 if(context->WaitIndex != INVALID_CALL)
-            {
-                if(context->ActiveIndex != INVALID_CALL)
                 {
-                        CAPI2_CcApi_HoldCall(InitClientInfo(pdata->ril_cmd->SimId), activeIndexToUse);
+/*                    if(context->MptyIndex != INVALID_CALL)
+                    {
+                        CAPI2_CC_HoldCall(GetNewTID(), GetClientID(), context->MptyIndex);
                         pdata->handler_state = BCM_CC_HoldAnswerWaitCall;
+                    }
+                    else if(context->ActiveIndex != INVALID_CALL)
+*/
+                    if(context->ActiveIndex != INVALID_CALL)
+                    {
+                        CAPI2_CC_HoldCall(GetNewTID(), GetClientID(), activeIndexToUse);
+                        pdata->handler_state = BCM_CC_HoldAnswerWaitCall;
+                    }
+                    else
+                    {
+                        CAPI2_CC_AcceptWaitingCall(GetNewTID(), GetClientID());
+                        pdata->handler_state = BCM_RESPCAPI2Cmd;
+                    }
                 }
                 else
                 {
-                        CAPI2_CcApi_AcceptWaitingCall(InitClientInfo(pdata->ril_cmd->SimId));
-                    pdata->handler_state = BCM_RESPCAPI2Cmd;
-                }
-            }
-            else
-            {
-                    CAPI2_CcApi_HoldCall(InitClientInfo(pdata->ril_cmd->SimId), activeIndexToUse);
+                    CAPI2_CC_HoldCall(GetNewTID(), GetClientID(), activeIndexToUse);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
             }
@@ -1378,18 +1375,18 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
             if(capi2_rsp->result == RESULT_OK )
             {
                 VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t*) capi2_rsp->dataBuf;
-                if(rsp->callResult == CC_HOLD_CALL_SUCCESS ||
+                if(rsp->callResult == CC_HOLD_CALL_SUCCESS || 
                    rsp->callResult == RESULT_OK )
                 {
                     // current call was held successfully, so now answer waiting
-                    CAPI2_CcApi_AcceptWaitingCall(InitClientInfo(pdata->ril_cmd->SimId));
+                    CAPI2_CC_AcceptWaitingCall(GetNewTID(), GetClientID());
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
                 }
                 else
                 {
                     // end waitingcall and return error if active call can't held
                     KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
-                    CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), context->WaitIndex);
+                    CAPI2_CC_EndCall(GetNewTID(), GetClientID(), context->WaitIndex);
                     pdata->handler_state = BCM_CC_HoldCallFailEndWaitCall;
                 }
             }
@@ -1397,7 +1394,7 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
             {
                 // end waitingcall and return error if active call can't held
                 KrilCallIndex_t *context = (KrilCallIndex_t *)pdata->cmdContext;
-                CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), context->WaitIndex);
+                CAPI2_CC_EndCall(GetNewTID(), GetClientID(), context->WaitIndex);
                 pdata->handler_state = BCM_CC_HoldCallFailEndWaitCall;
             }
             break;
@@ -1406,19 +1403,20 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
         case BCM_CC_HoldCallFailEndWaitCall:
         {
             KRIL_DEBUG(DBG_INFO, "BCM_CC_HoldCallFailEndWaitCall::result:%d\n", capi2_rsp->result);
-            KRIL_SetInHoldCallHandler(pdata->ril_cmd->SimId, FALSE);
+            KRIL_SetInHoldCallHandler(FALSE);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }
-
+        
         case BCM_CC_SwapCall:
         {
-            if(capi2_rsp->result == RESULT_OK)
+            if(capi2_rsp->result == RESULT_OK )
             {
                 VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t*) capi2_rsp->dataBuf;
-                if (rsp->callResult == RESULT_OK||
-                    rsp->callResult == CC_RESUME_CALL_SUCCESS ||
-                    rsp->callResult == CC_SWAP_CALL_SUCCESS)
+                KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd::rsp->callResult:%d\n", rsp->callResult);
+                if(rsp->callResult == CC_RESUME_CALL_SUCCESS || 
+                   rsp->callResult == CC_SWAP_CALL_SUCCESS || 
+                   rsp->callResult == RESULT_OK )
                 {
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
@@ -1433,7 +1431,7 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
                 KRIL_DEBUG(DBG_INFO, "BCM_CC_SwapCall::result:%d\n", capi2_rsp->result);
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
-            KRIL_SetInHoldCallHandler(pdata->ril_cmd->SimId, FALSE);
+            KRIL_SetInHoldCallHandler(FALSE);
             break;
         }
 
@@ -1454,8 +1452,8 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
                 {
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
-                else if((rsp->callResult == CC_HOLD_CALL_FAIL)&&(StkCall == TRUE))//yihwa
-                {
+		  else if((rsp->callResult == CC_HOLD_CALL_FAIL)&&(StkCall == TRUE))//yihwa
+		  {
                     b_send_release_complete = TRUE;
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                 }
@@ -1469,11 +1467,11 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
-            KRIL_SetInHoldCallHandler(pdata->ril_cmd->SimId, FALSE);
-
+            KRIL_SetInHoldCallHandler(FALSE);
+			
 //yihwa
-            if(b_send_release_complete)
-            {
+	  if(b_send_release_complete)
+	  {
                 KRIL_DEBUG(DBG_ERROR, "b_send_release_complete:%d\n", b_send_release_complete);
 				
                 b_send_release_complete = false;
@@ -1481,19 +1479,19 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
                 rilSSReleaseCompMsg.status=	RIL_PARAM_SSDI_DATA| RIL_PARAM_SSDI_STATUS;
                 rilSSReleaseCompMsg.dataLen=0;
                 rilSSReleaseCompMsg.params=0;
-                rilSSReleaseCompMsg.data=NULL;
                 rilSSReleaseCompMsg.size= sizeof(rilSSReleaseCompMsg);
                 KRIL_DEBUG(DBG_ERROR, "b_send_release_complete:%d\n", b_send_release_complete);
 				
-                KRIL_SendNotify(pdata->ril_cmd->SimId, RIL_UNSOL_RELEASE_COMPLETE_MESSAGE, &rilSSReleaseCompMsg,sizeof(rilSSReleaseCompMsg ));
+                KRIL_SendNotify(RIL_UNSOL_RELEASE_COMPLETE_MESSAGE, &rilSSReleaseCompMsg,sizeof(rilSSReleaseCompMsg ));
             }
+			
             break;
         }
 
         default:
         {
             KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
-            KRIL_SetInHoldCallHandler(pdata->ril_cmd->SimId, FALSE);            
+            KRIL_SetInHoldCallHandler(FALSE);            
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }
@@ -1505,21 +1503,14 @@ void KRIL_ConferenceHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_ConferenceHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
-            CAPI2_CcApi_GetNextActiveCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_CC_GetNextActiveCallIndex(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_CC_GetNextActiveCallIndex;
             break;
         }
@@ -1530,7 +1521,7 @@ void KRIL_ConferenceHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             // save join call index for "future" use...
             sLastJoinCallIndex = *rsp;
             KRIL_DEBUG(DBG_INFO, "ActiveCallIndex:%d\n", *rsp);
-            CAPI2_CcApi_JoinCall(InitClientInfo(pdata->ril_cmd->SimId), *rsp);
+            CAPI2_CC_JoinCall(GetNewTID(), GetClientID(), *rsp);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
@@ -1540,8 +1531,9 @@ void KRIL_ConferenceHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             if(capi2_rsp->result == RESULT_OK)
             {
                 VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
+				
                 KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd::rsp->callResult:%d\n", rsp->callResult);
-                if (rsp->callResult == RESULT_OK || rsp->callResult == CC_JOIN_CALL_SUCCESS)
+                if(rsp->callResult == CC_JOIN_CALL_SUCCESS || rsp->callResult == RESULT_OK)
                 {
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
@@ -1573,28 +1565,21 @@ void KRIL_UDUBHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_UDUBHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
-            KRIL_DEBUG(DBG_INFO, "SimId:%d KRIL_GetIncomingCallIndex:%d KRIL_GetWaitingCallIndex:%d\n", pdata->ril_cmd->SimId, KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId), KRIL_GetWaitingCallIndex(pdata->ril_cmd->SimId));
-            if(KRIL_GetWaitingCallIndex(pdata->ril_cmd->SimId) != INVALID_CALL)
+            KRIL_DEBUG(DBG_INFO, "KRIL_GetIncomingCallIndex:%d KRIL_GetWaitingCallIndex:%d\n", KRIL_GetIncomingCallIndex(), KRIL_GetWaitingCallIndex());
+            if(KRIL_GetWaitingCallIndex() != INVALID_CALL)
             {
-                CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetWaitingCallIndex(pdata->ril_cmd->SimId));
+                CAPI2_CC_EndCall(GetNewTID(), GetClientID(), KRIL_GetWaitingCallIndex());
             }
             else
             {
-                CAPI2_CcApi_EndCall(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
+                CAPI2_CC_EndCall(GetNewTID(), GetClientID(), KRIL_GetIncomingCallIndex());
             }
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
@@ -1602,10 +1587,13 @@ void KRIL_UDUBHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
         case BCM_RESPCAPI2Cmd:
         {
-            if(capi2_rsp->result == RESULT_OK)
-            {
-                KRIL_SetIncomingCallIndex(pdata->ril_cmd->SimId, INVALID_CALL);
-                KRIL_SetWaitingCallIndex(pdata->ril_cmd->SimId, INVALID_CALL);
+    	   KRIL_DEBUG(DBG_TRACE, "BCM_RESPCAPI2Cmd\n");
+           pdata->bcm_ril_rsp = NULL;
+           pdata->rsp_len = 0;
+                KRIL_SetIncomingCallIndex(INVALID_CALL);
+                KRIL_SetWaitingCallIndex(INVALID_CALL);
+           if(capi2_rsp->result == RESULT_OK)
+           {
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
             }
             else
@@ -1628,76 +1616,87 @@ void KRIL_UDUBHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 void KRIL_LastCallFailCauseHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
+    KrilLastCallFailCause_t *rdata;
 
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_LastCallFailCauseHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
-    switch(pdata->handler_state)
-    {
-        case BCM_SendCAPI2Cmd:
-        {
-            KrilLastCallFailCause_t *rdata;
             pdata->bcm_ril_rsp = kmalloc(sizeof(KrilLastCallFailCause_t), GFP_KERNEL);
-            if(!pdata->bcm_ril_rsp) {
-                KRIL_DEBUG(DBG_ERROR, "unable to allocate bcm_ril_rsp buf\n");
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            else
-            {
-                pdata->rsp_len = sizeof(KrilLastCallFailCause_t);
-                memset(pdata->bcm_ril_rsp, 0, sizeof(KrilLastCallFailCause_t));
-    
-                // Return the cached failure cause.
-                rdata = (KrilLastCallFailCause_t *)pdata->bcm_ril_rsp;
-                rdata->failCause = KRIL_GetLastCallFailCause(pdata->ril_cmd->SimId);
-                pdata->handler_state = BCM_FinishCAPI2Cmd;
-            }
-            break;
+            pdata->rsp_len = sizeof(KrilLastCallFailCause_t);
+            memset(pdata->bcm_ril_rsp, 0, sizeof(KrilLastCallFailCause_t));
+
+    // Return the cached failure cause.
+    rdata = (KrilLastCallFailCause_t *)pdata->bcm_ril_rsp;
+    rdata->failCause = KRIL_GetLastCallFailCause();
+    pdata->handler_state = BCM_FinishCAPI2Cmd;
         }
 
-        default:
+//******************************************************************************
+//
+// Function Name: ResultToRilFailCause
+//
+// Description:   Converts the CAPI error code to a RIL last call failure cause.
+//
+// Notes:
+//
+//******************************************************************************
+BRIL_LastCallFailCause ResultToRilFailCause(Result_t inResult)
         {
-            KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
-            pdata->handler_state = BCM_ErrorCAPI2Cmd;
+    BRIL_LastCallFailCause failCause;
+    switch (inResult)
+            {
+        case CC_MAKE_CALL_SUCCESS:
+        case RESULT_OK:
+            failCause = BCM_CALL_FAIL_NORMAL;
+                    break;
+
+         case CC_FDN_BLOCK_MAKE_CALL:
+            failCause = BCM_CALL_FAIL_FDN_BLOCKED;
+                    break;
+
+	case RESULT_DIALSTR_INVALID:
+            failCause = BCM_CALL_FAIL_UNOBTAINABLE_NUMBER;
+		     break;
+
+        // Don't distinguish between these failures;
+        // the UI only requires RIL_LastCallFailCause
+        // failure codes.
+        case STK_DATASVRC_BUSY:
+//        case RESULT_DIALSTR_INVALID:
+        case RESULT_SIM_NOT_READY:
+        case CC_FAIL_MAKE_CALL:
+        case CC_FAIL_CALL_SESSION:
+        case CC_WRONG_CALL_TYPE:
+                default:
+            failCause = BCM_CALL_FAIL_ERROR_UNSPECIFIED;
             break;
         }
-    }
-}
 
+    KRIL_DEBUG(DBG_INFO, "CAPI2 result:%d failCause:%d\n", inResult, failCause);
+    return failCause;
+    }
 
 void KRIL_AnswerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-    {
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
-        if(capi2_rsp->result != RESULT_OK)
-        {
-            pdata->result = RILErrorResult(capi2_rsp->result);
-            pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            return;
-        }
-    }
+		KRIL_DEBUG(DBG_INFO, "KRIL_AnswerHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
-            if(INVALID_CALL == KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId))
+            if(INVALID_CALL == KRIL_GetIncomingCallIndex())
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
             else
             {
-                CAPI2_CcApi_GetCallType(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
+                // save incoming call index for "future" calls...
+                *(UInt8*)pdata->cmdContext = KRIL_GetIncomingCallIndex();
+                KRIL_SetIncomingCallIndex(INVALID_CALL);
+                CAPI2_CC_GetCallType (GetNewTID(), GetClientID(), *(UInt8*)(pdata->cmdContext));
                 pdata->handler_state = BCM_CC_GetCallType;
             }
             break;
@@ -1706,46 +1705,22 @@ void KRIL_AnswerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         case BCM_CC_GetCallType:
         {
             CCallType_t *callTy = (CCallType_t *)capi2_rsp->dataBuf;
+            // call index cached in context field
+            UInt8* pCallIndex = (UInt8*)(pdata->cmdContext);
 
-            KrilAnswerInfo_t *context = (KrilAnswerInfo_t *)pdata->cmdContext;
-            context->CallType = *callTy;
-            if (MTDATA_CALL == context->CallType ||
-                MTFAX_CALL == context->CallType ||
-                MTVIDEO_CALL == context->CallType ||
-                MTVOICE_CALL == context->CallType)
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
+            if((*callTy == MTDATA_CALL) || (*callTy == MTFAX_CALL)) 
             {
-                CAPI2_CcApi_GetCallState(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
-                pdata->handler_state = BCM_CC_GetCallState;
-            }
-            else
-            {
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            break;
-        }
-
-        case BCM_CC_GetCallState:
-        {
-            CCallState_t *callState = (CCallState_t *)capi2_rsp->dataBuf;
-            KrilAnswerInfo_t *context = (KrilAnswerInfo_t *)pdata->cmdContext;
-            if(*callState == CC_CALL_CALLING ||
-               *callState == CC_CALL_ALERTING ||
-               *callState == CC_CALL_BEGINNING ||
-               *callState == CC_CALL_SYNC_IND ||
-               *callState == CC_CALL_PROCEEDING)
-            {
-                pdata->handler_state = BCM_RESPCAPI2Cmd;
-                if((context->CallType == MTDATA_CALL) || (context->CallType == MTFAX_CALL))
-            {
-                CAPI2_CcApi_AcceptDataCall(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
+                CAPI2_CC_AcceptDataCall(GetNewTID(), GetClientID(), *pCallIndex);
             } 
-                else if(context->CallType == MTVIDEO_CALL)
+            else if(*callTy == MTVIDEO_CALL)
             { 
-                CAPI2_CcApi_AcceptVideoCall(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
+                CAPI2_CC_AcceptVideoCall(GetNewTID(), GetClientID(), *pCallIndex);
             }
-                else if(context->CallType == MTVOICE_CALL)
+            else if(*callTy == MTVOICE_CALL) 
             {
-                CAPI2_CcApi_AcceptVoiceCall(InitClientInfo(pdata->ril_cmd->SimId), KRIL_GetIncomingCallIndex(pdata->ril_cmd->SimId));
+                CAPI2_CC_AcceptVoiceCall(GetNewTID(), GetClientID(), *pCallIndex);
+          
 #if defined(CONFIG_LCD_FRAME_INVERSION_DURING_CALL)
                 KRIL_DEBUG(DBG_INFO, "AcceptVoiceCall::Lcd frame inversion\n");
 	        			lcd_enter_during_call();
@@ -1753,17 +1728,11 @@ void KRIL_AnswerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             }
             else
             {
-                    KRIL_DEBUG(DBG_ERROR, "Unknow call type:%d...!\n", context->CallType);
+                KRIL_DEBUG(DBG_ERROR, "Unknown call type:%d...!\n", *callTy);
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
-            }
-            else
-            {
-                KRIL_DEBUG(DBG_ERROR, "Call State:%d...ERROR!\n", *callState);
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
+            break;
         }
-        break;
 
         case BCM_RESPCAPI2Cmd:
         {
@@ -1774,28 +1743,21 @@ void KRIL_AnswerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 int callIndex = rsp->callIndex;
                 
                 KRIL_DEBUG(DBG_INFO, "MSG_DATACALL_CONNECTED_IND::callIndex: %d\n",rsp->callIndex);
-                KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_CONNECT, &callIndex, sizeof(int));
-                
+                KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_CONNECT, &callIndex, sizeof(int));
             }
             else if (capi2_rsp->msgType == MSG_DATACALL_RELEASE_IND)
             {
                 DataCallReleaseMsg_t *rsp = (DataCallReleaseMsg_t *) capi2_rsp->dataBuf;
-                int vtCallRsp[2] = {0};
-                vtCallRsp[0] = rsp->callIndex;
-                vtCallRsp[1] = rsp->exitCause;
+                int callIndex = rsp->callIndex;
                 
                 KRIL_DEBUG(DBG_INFO, "MSG_DATACALL_RELEASE_IND:: callIndex: %d exitCause: 0x%X\n", rsp->callIndex, rsp->exitCause);
-                KRIL_SendNotify(pdata->ril_cmd->SimId, BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_END, &vtCallRsp, sizeof(vtCallRsp));
+                KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_END, &callIndex, sizeof(int));
             }
 #endif //VIDEO_TELEPHONY_ENABLE
-
-            if(capi2_rsp->msgType == MSG_VOICECALL_CONNECTED_IND)
-                KRIL_BroadcastCallStatus(pdata->ril_cmd->SimId, capi2_rsp->msgType, NULL);   
 			pdata->bcm_ril_rsp = NULL;
             pdata->rsp_len = 0;
             if(capi2_rsp->result == RESULT_OK)
             {
-                KRIL_SetIncomingCallIndex(pdata->ril_cmd->SimId, INVALID_CALL);
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
             }
             else
@@ -1819,15 +1781,8 @@ void KRIL_SeparateConnectionHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_SeparateConnectionHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
@@ -1836,7 +1791,7 @@ void KRIL_SeparateConnectionHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             KrilSeparate_t *tdata = (KrilSeparate_t *)pdata->ril_cmd->data;
             tdata->index--;
             KRIL_DEBUG(DBG_INFO, "call index:%d\n", tdata->index);
-            CAPI2_CcApi_SplitCall(InitClientInfo(pdata->ril_cmd->SimId), (UInt8) tdata->index);
+            CAPI2_CC_SplitCall(GetNewTID(), GetClientID(), (UInt8) tdata->index);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
@@ -1846,7 +1801,7 @@ void KRIL_SeparateConnectionHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             if(capi2_rsp->result == RESULT_OK)
             {
                 VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
-                if(rsp->callResult == RESULT_OK || rsp->callResult == CC_SPLIT_CALL_SUCCESS)
+                if(rsp->callResult == CC_SPLIT_CALL_SUCCESS)
                 {
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
@@ -1876,21 +1831,14 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_ExplicitCallTransferHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
-            CAPI2_CcApi_GetNextActiveCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_CC_GetNextActiveCallIndex(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_CC_GetNextActiveCallIndex;
             break;
         }
@@ -1901,12 +1849,12 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
             KRIL_DEBUG(DBG_INFO, "ActiveCallIndex:%d\n", *rsp);
             if (*rsp != INVALID_CALL)
             {
-                CAPI2_CcApi_TransferCall(InitClientInfo(pdata->ril_cmd->SimId), *rsp);
+                CAPI2_CC_TransferCall(GetNewTID(), GetClientID(), *rsp);
                 pdata->handler_state = BCM_CC_TransferCall;
             }
             else
             {
-                CAPI2_CcApi_GetNextHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_CC_GetNextHeldCallIndex;
             }
             break;
@@ -1917,8 +1865,9 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
             if(capi2_rsp->result == RESULT_OK)
             {
                 VoiceCallActionMsg_t *rsp = (VoiceCallActionMsg_t *)capi2_rsp->dataBuf;
+				
                 KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd::rsp->callResult:%d\n", rsp->callResult);
-                if(rsp->callResult == RESULT_OK || rsp->callResult == CC_TRANS_CALL_SUCCESS)
+                if(rsp->callResult == CC_TRANS_CALL_SUCCESS || rsp->callResult == RESULT_OK)
                 {
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }
@@ -1929,7 +1878,7 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
             }
             else
             {
-                CAPI2_CcApi_GetNextHeldCallIndex(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_CC_GetNextHeldCallIndex(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
             }
             break;
@@ -1939,7 +1888,7 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
         {
             UInt8 *rsp = (UInt8 *)capi2_rsp->dataBuf;
             KRIL_DEBUG(DBG_INFO, "HeldCallIndex:%d\n", *rsp);
-            CAPI2_CcApi_TransferCall(InitClientInfo(pdata->ril_cmd->SimId), *rsp);
+            CAPI2_CC_TransferCall(GetNewTID(), GetClientID(), *rsp);
             pdata->handler_state = BCM_CC_TransferCall;
             break;
         }
@@ -1950,8 +1899,8 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
             KRIL_DEBUG(DBG_INFO, "HeldCallIndex:%d\n", *rsp);
             if (*rsp != INVALID_CALL)
             {
-               CAPI2_CcApi_TransferCall(InitClientInfo(pdata->ril_cmd->SimId), *rsp);
-               pdata->handler_state = BCM_CC_TransferCall;
+                CAPI2_CC_TransferCall(GetNewTID(), GetClientID(), *rsp);
+                pdata->handler_state = BCM_CC_TransferCall;
             }
             else
             {
@@ -1971,26 +1920,21 @@ void KRIL_ExplicitCallTransferHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp
 
 
 void KRIL_SendDTMFRequestHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
-{
+ {
      KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-     if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-     {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-     }
-
      if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		 KRIL_DEBUG(DBG_INFO, "KRIL_SendDTMFRequestHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
+            ClientInfo_t clientInfo;
             KrilDTMFInfo_t *context = (KrilDTMFInfo_t *)pdata->cmdContext;
             context->inCcCallState = CC_CALL_ACTIVE;
-            CAPI2_CcApi_GetCallIndexInThisState(InitClientInfo(pdata->ril_cmd->SimId), context->inCcCallState);
+            CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+            CAPI2_CcApi_GetCallIndexInThisState(&clientInfo, context->inCcCallState);
             pdata->handler_state = BCM_CcApi_SetDtmfTimer;
             break;
         }
@@ -2003,13 +1947,15 @@ void KRIL_SendDTMFRequestHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
             if (context->DTMFCallIndex != INVALID_CALL)
             {
-                CAPI2_CcApi_SetDtmfToneTimer(InitClientInfo(pdata->ril_cmd->SimId), context->DTMFCallIndex, DTMF_TONE_DURATION_TYPE, DTMF_TONE_DURATION);
+                CAPI2_CcApi_SetDtmfTimer(GetNewTID(), GetClientID(), context->DTMFCallIndex, DTMF_TONE_DURATION_TYPE, 100);
                 pdata->handler_state = BCM_CcApi_SendDtmf;
             }
             else if (CC_CALL_ACTIVE == context->inCcCallState)
             {
+                ClientInfo_t clientInfo;
                 context->inCcCallState = CC_CALL_CONNECTED;
-                CAPI2_CcApi_GetCallIndexInThisState(InitClientInfo(pdata->ril_cmd->SimId), context->inCcCallState);
+                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                CAPI2_CcApi_GetCallIndexInThisState(&clientInfo, context->inCcCallState);
                 pdata->handler_state = BCM_CcApi_SetDtmfTimer;
             }
             else
@@ -2032,7 +1978,7 @@ void KRIL_SendDTMFRequestHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             DtmfObjPtr.toneValume = 0;
             DtmfObjPtr.isSilent = FALSE;
             KRIL_DEBUG(DBG_INFO, "DTMFCallIndex:%d DTMFString:%c\n", context->DTMFCallIndex, DTMFString);
-            CAPI2_CcApi_SendDtmfTone(InitClientInfo(pdata->ril_cmd->SimId), &DtmfObjPtr);
+            CAPI2_CcApi_SendDtmf(GetNewTID(), GetClientID(), &DtmfObjPtr);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
@@ -2066,23 +2012,18 @@ void KRIL_SendDTMFStartHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
-        KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
+		KRIL_DEBUG(DBG_INFO, "KRIL_SendDTMFStartHandler handler_state:0x%lX::result:%d::msgType:0x%1X\n", pdata->handler_state, capi2_rsp->result,capi2_rsp->msgType);
 
     switch(pdata->handler_state)
     {
         case BCM_SendCAPI2Cmd:
         {
+            ClientInfo_t clientInfo;
             KrilDTMFInfo_t *context = (KrilDTMFInfo_t *)pdata->cmdContext;
             context->inCcCallState = CC_CALL_ACTIVE;
-            CAPI2_CcApi_GetCallIndexInThisState(InitClientInfo(pdata->ril_cmd->SimId), context->inCcCallState);
+            CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+            CAPI2_CcApi_GetCallIndexInThisState(&clientInfo, context->inCcCallState);
             pdata->handler_state = BCM_CcApi_ResetDtmfTimer;
             break;
         }
@@ -2095,13 +2036,15 @@ void KRIL_SendDTMFStartHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
  
             if (context->DTMFCallIndex != INVALID_CALL)
             {
-                CAPI2_CcApi_ResetDtmfToneTimer(InitClientInfo(pdata->ril_cmd->SimId), context->DTMFCallIndex, DTMF_TONE_DURATION_TYPE);
+                CAPI2_CcApi_ResetDtmfTimer(GetNewTID(), GetClientID(), context->DTMFCallIndex, DTMF_TONE_DURATION_TYPE);
                 pdata->handler_state = BCM_CcApi_SendDtmf;
             }
             else if (CC_CALL_ACTIVE == context->inCcCallState)
             {
+                ClientInfo_t clientInfo;
                 context->inCcCallState = CC_CALL_CONNECTED;
-                CAPI2_CcApi_GetCallIndexInThisState(InitClientInfo(pdata->ril_cmd->SimId), CC_CALL_CONNECTED);
+                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                CAPI2_CcApi_GetCallIndexInThisState(&clientInfo, context->inCcCallState);
                 pdata->handler_state = BCM_CcApi_ResetDtmfTimer;
             }
             else
@@ -2125,7 +2068,7 @@ void KRIL_SendDTMFStartHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             DtmfObjPtr.toneValume = 0;
             DtmfObjPtr.isSilent = FALSE;
             KRIL_DEBUG(DBG_INFO, "DTMFCallIndex:%d DTMFString:%c\n", context->DTMFCallIndex, DTMFString);
-            CAPI2_CcApi_SendDtmfTone(InitClientInfo(pdata->ril_cmd->SimId), &DtmfObjPtr);
+            CAPI2_CcApi_SendDtmf(GetNewTID(), GetClientID(), &DtmfObjPtr);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
@@ -2159,13 +2102,6 @@ void KRIL_SendDTMFStopHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
     if (capi2_rsp != NULL)
         KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx::result:%d\n", pdata->handler_state, capi2_rsp->result);
 
@@ -2173,9 +2109,11 @@ void KRIL_SendDTMFStopHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
     {
         case BCM_SendCAPI2Cmd:
         {
+            ClientInfo_t clientInfo;
             KrilDTMFInfo_t *context = (KrilDTMFInfo_t *)pdata->cmdContext;
             context->inCcCallState = CC_CALL_ACTIVE;
-            CAPI2_CcApi_GetCallIndexInThisState(InitClientInfo(pdata->ril_cmd->SimId), context->inCcCallState);
+            CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+            CAPI2_CcApi_GetCallIndexInThisState(&clientInfo, context->inCcCallState);
             pdata->handler_state = BCM_CcApi_SendDtmf;
             break;
         }
@@ -2196,13 +2134,15 @@ void KRIL_SendDTMFStopHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 DtmfObjPtr.toneValume = 0;
                 DtmfObjPtr.isSilent = FALSE;
                 KRIL_DEBUG(DBG_INFO, "DTMFCallIndex:%d DTMFString:%c\n", DTMFCallIndex, DTMFString);
-                CAPI2_CcApi_StopDtmfTone(InitClientInfo(pdata->ril_cmd->SimId), &DtmfObjPtr);
+                CAPI2_CcApi_StopDtmf(GetNewTID(), GetClientID(), &DtmfObjPtr);
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
             }
             else if (CC_CALL_ACTIVE == context->inCcCallState)
             {
+                ClientInfo_t clientInfo;
                 context->inCcCallState = CC_CALL_CONNECTED;
-                CAPI2_CcApi_GetCallIndexInThisState(InitClientInfo(pdata->ril_cmd->SimId), context->inCcCallState);
+                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                CAPI2_CcApi_GetCallIndexInThisState(&clientInfo, context->inCcCallState);
                 pdata->handler_state = BCM_CcApi_SendDtmf;
             }
             else

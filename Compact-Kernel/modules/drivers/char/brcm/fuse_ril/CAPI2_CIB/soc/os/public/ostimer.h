@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   ostimer.h
@@ -243,25 +244,6 @@ void OSTIMER_RetrieveClock64 ( UInt32*, UInt32* ) ;
 **/
 
 UInt32 OSTIMER_GetRemainingTime(
-	Timer_t timer						// timer object
-	);
-
-/**
-	Returns the number of ticks remaining before the
-	system timer expires
-	@param none
-	@return UInt32  Remaining ticks of the system timer.
-**/
-
-UInt32 OSTIMER_GetNextExpirationTime(void);
-
-/**
-	Tell if a timer is running.
-	@param timer		(in) Timer object
-	@return UInt32	1 = active, 0 = inactive
-**/
-
-UInt32 OSTIMER_IsRunning(
 	Timer_t timer						// timer object
 	);
 

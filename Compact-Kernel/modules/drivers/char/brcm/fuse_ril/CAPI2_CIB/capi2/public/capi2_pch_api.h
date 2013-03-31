@@ -1,29 +1,25 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_pch_api.h
 *
-*   @brief  This file defines the capi2 PDP Context Handler (PCH) api's.
+*   @brief  This file defines the capi2 api's related to PCH
 *
 *	This file defines the interface for PCH API.This file provides
 *	the function prototypes necessary to handle data services.
-****************************************************************************/
-/**
-*   @defgroup   CAPI2_PDP_APIGroup   PDP Context Handler
-*   @ingroup	CPS2Group
-*
-*   @brief      This group defines the interfaces for PDP API.
 ****************************************************************************/
 
 #ifndef CAPI2_PCH_API_H
@@ -34,6 +30,7 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup   CAPI2_PDP_APIGroup   PDP Context Handler
  * @addtogroup CAPI2_PDP_APIGroup
  * @{
  */
@@ -82,8 +79,7 @@ void CAPI2_PdpApi_SetSecPDPContext(ClientInfo_t* inClientInfoPtr, UInt8 cid, UIn
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETGPRSQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetGPRSQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetGPRSQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetGPRSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -114,8 +110,7 @@ void CAPI2_PdpApi_SetGPRSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid, UInt8 Num
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETGPRSMINQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetGPRSMinQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetGPRSMinQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetGPRSMinQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -146,8 +141,7 @@ void CAPI2_PdpApi_SetGPRSMinQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid, UInt8 
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETUMTSTFT_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetUMTSTft_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetUMTSTft_Rsp_t
 **/
 void CAPI2_PdpApi_GetUMTSTft(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -199,8 +193,7 @@ void CAPI2_PdpApi_DeactivateSNDCPConnection(ClientInfo_t* inClientInfoPtr, UInt8
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETR99UMTSMINQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetR99UMTSMinQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetR99UMTSMinQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetR99UMTSMinQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -212,8 +205,7 @@ void CAPI2_PdpApi_GetR99UMTSMinQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETR99UMTSQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetR99UMTSQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetR99UMTSQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetR99UMTSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -225,8 +217,7 @@ void CAPI2_PdpApi_GetR99UMTSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETUMTSMINQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetUMTSMinQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetUMTSMinQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetUMTSMinQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -238,8 +229,7 @@ void CAPI2_PdpApi_GetUMTSMinQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETUMTSQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetUMTSQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetUMTSQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetUMTSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -251,8 +241,7 @@ void CAPI2_PdpApi_GetUMTSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETNEGQOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetNegQoS_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetNegQoS_Rsp_t
 **/
 void CAPI2_PdpApi_GetNegQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -320,8 +309,7 @@ void CAPI2_PdpApi_SetUMTSQoS(ClientInfo_t* inClientInfoPtr, UInt8 cid, PCHUMTSQo
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETNEGOTIATEDPARMS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetNegotiatedParms_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetNegotiatedParms_Rsp_t
 **/
 void CAPI2_PdpApi_GetNegotiatedParms(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -333,8 +321,7 @@ void CAPI2_PdpApi_GetNegotiatedParms(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETPDPADDRESS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetPDPAddress_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetPDPAddress_Rsp_t
 **/
 void CAPI2_PdpApi_GetPDPAddress(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -401,8 +388,7 @@ void CAPI2_PdpApi_SetDefaultPDPContext(ClientInfo_t* inClientInfoPtr, UInt8 cid,
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GET_DEFAULT_QOS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : CAPI2_PdpApi_GetDefaultQos_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : CAPI2_PdpApi_GetDefaultQos_Rsp_t
 **/
 void CAPI2_PdpApi_GetDefaultQos(ClientInfo_t* inClientInfoPtr);
 
@@ -453,8 +439,7 @@ void CAPI2_PdpApi_GetPDPContext(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETPDPCONTEXT_CID_LIST_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetDefinedPDPContextCidList_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetDefinedPDPContextCidList_Rsp_t
 **/
 void CAPI2_PdpApi_GetDefinedPDPContextCidList(ClientInfo_t* inClientInfoPtr);
 
@@ -479,8 +464,7 @@ void CAPI2_PdpApi_GetPCHContextState(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETPCHCONTEXT_EX_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetPDPContextEx_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetPDPContextEx_Rsp_t
 **/
 void CAPI2_PdpApi_GetPDPContextEx(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -648,8 +632,7 @@ void CAPI2_PdpApi_IsAnyPDPContextActivePending(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETPROTCONFIGOPTIONS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetProtConfigOptions_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetProtConfigOptions_Rsp_t
 **/
 void CAPI2_PdpApi_GetProtConfigOptions(ClientInfo_t* inClientInfoPtr, UInt8 inCid);
 
@@ -687,8 +670,7 @@ void CAPI2_PdpApi_IsSecondaryPdpDefined(ClientInfo_t* inClientInfoPtr, UInt8 cid
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PDP_GETGPRSACTIVATESTATUS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PdpApi_GetGPRSActivateStatus_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PdpApi_GetGPRSActivateStatus_Rsp_t
 **/
 void CAPI2_PdpApi_GetGPRSActivateStatus(ClientInfo_t* inClientInfoPtr);
 
@@ -766,8 +748,7 @@ void CAPI2_PchExApi_SendPDPActivateSecReq(ClientInfo_t* inClientInfoPtr, UInt8 c
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PCHEX_READDECODEDPROTCONFIG_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : ::CAPI2_PchExApi_GetDecodedProtConfig_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : ::CAPI2_PchExApi_GetDecodedProtConfig_Rsp_t
 **/
 void CAPI2_PchExApi_GetDecodedProtConfig(ClientInfo_t* inClientInfoPtr, UInt8 cid);
 
@@ -781,8 +762,7 @@ void CAPI2_PchExApi_GetDecodedProtConfig(ClientInfo_t* inClientInfoPtr, UInt8 ci
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PCHEX_BUILDPROTCONFIGOPTIONS_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : CAPI2_PchExApi_BuildIpConfigOptions_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : CAPI2_PchExApi_BuildIpConfigOptions_Rsp_t
 **/
 void CAPI2_PchExApi_BuildIpConfigOptions(ClientInfo_t* inClientInfoPtr, char* username, char* password, IPConfigAuthType_t authType);
 
@@ -797,8 +777,7 @@ void CAPI2_PchExApi_BuildIpConfigOptions(ClientInfo_t* inClientInfoPtr, char* us
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PCHEX_BUILDPROTCONFIGOPTIONS2_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : CAPI2_PchExApi_BuildIpConfigOptions2_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : CAPI2_PchExApi_BuildIpConfigOptions2_Rsp_t
 **/
 void CAPI2_PchExApi_BuildIpConfigOptions2(ClientInfo_t* inClientInfoPtr, IPConfigAuthType_t authType, CHAP_ChallengeOptions_t *cc, CHAP_ResponseOptions_t *cr, PAP_CnfgOptions_t *po);
 
@@ -810,8 +789,7 @@ void CAPI2_PchExApi_BuildIpConfigOptions2(ClientInfo_t* inClientInfoPtr, IPConfi
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_PCHEX_BUILDPROTCONFIGOPTION_CHAP_TYPE_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : CAPI2_PchExApi_BuildIpConfigOptionsWithChapAuthType_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : CAPI2_PchExApi_BuildIpConfigOptionsWithChapAuthType_Rsp_t
 **/
 void CAPI2_PchExApi_BuildIpConfigOptionsWithChapAuthType(ClientInfo_t* inClientInfoPtr, PCHEx_ChapAuthType_t *params);
 

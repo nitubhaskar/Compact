@@ -316,7 +316,7 @@ static int check_parameters(dwc_otg_core_if_t *core_if)
 	}
     }
 
-  DWC_OTG_PARAM_ERR(thr_ctl, 0, 7, "thr_ctl");
+	DWC_OTG_PARAM_ERR(thr_ctl, 0, 7, "thr_ctl");
   DWC_OTG_PARAM_ERR(tx_thr_length, 8, 128, "tx_thr_length");
   DWC_OTG_PARAM_ERR(rx_thr_length, 8, 128, "rx_thr_length");
 	
@@ -854,7 +854,7 @@ static int dwc_otg_driver_probe(struct lm_device *_lmdev)
   printk("USB call dwc_otg_driver_remove\n");
   dwc_otg_driver_remove(_lmdev);
   if (dwc_otg_device != NULL) /*Coverity check*/
-  	kfree(dwc_otg_device);
+  	  kfree(dwc_otg_device);
   return retval;
 }
 

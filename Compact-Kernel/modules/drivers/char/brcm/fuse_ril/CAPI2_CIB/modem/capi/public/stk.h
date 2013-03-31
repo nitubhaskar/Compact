@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   stk.h
@@ -80,7 +82,6 @@ typedef struct {
 	Boolean			isDiscOrHoldForStkCall;	///< is disconnectable or holdable for STK call setup
     Subaddress_t    subAddr;                ///< Called Party Sub-Address: First byte contains Type of Sub-Address
     CC_BearerCap_t  bc;                     ///< Capability Configuration
-	UInt8           dtmfString[DTMF_TONE_ARRAY_SIZE+1]; ///< DTMF string following setup call
 } SetupCallData_t;
 
 /// STK Send CC Setup Request info type
@@ -453,10 +454,17 @@ void STK_CleanCurrentCallSetup(void);
 /**
     Processes Alpha ID data for Call Control By SIM response and notifies the
     client of response information using MSG_STK_CC_DISPLAY_IND event
-    @param      inMsgPtr (in) Intertask message
+    @param      clientID (in) ID of the STK module (currently not used, set to 0)
+    @param      res (in) CC result code
+    @param      oldTy (in) Old CC type
     @param      newTy (in) New CC type
+    @param      validId (in) TRUE if Alpha ID valid
+    @param      len (in) Length of Alpha ID
+    @param      alphaId (in) Alpha ID data
 **/
-void STK_HandleAlphaID(InterTaskMsg_t* inMsgPtr, StkCallControl_t newTy);
+void STK_HandleAlphaID(UInt8 clientID, StkCallControlResult_t res,
+						StkCallControl_t oldTy,StkCallControl_t newTy,
+						Boolean validId,UInt8 len,UInt8* alphaId);
 
 /**
     This function converts the passed Supplementary Service data in BCD format 

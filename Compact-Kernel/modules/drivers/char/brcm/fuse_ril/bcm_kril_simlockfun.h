@@ -149,17 +149,17 @@ typedef enum
 Boolean  SIMLockIsLockOn(SIMLockType_t lockType, Boolean *ps_full_lock_on);
 
 // SIM lock verification
-Boolean  SIMLockCheckAllLocks(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8* gid2);
+Boolean  SIMLockCheckAllLocks(UInt8* imsi, UInt8* gid1, UInt8* gid2);
 
 // SIM lock unlock
-SIMLock_Status_t  SIMLockUnlockSIM(SimNumber_t SimId, SIMLockType_t lockType, UInt8* key);
+SIMLock_Status_t  SIMLockUnlockSIM(SIMLockType_t lockType, UInt8* key);
 
 // SIM lock set lock/unlock (indicator on/off)
-SIMLock_Status_t  SIMLockSetLock(SimNumber_t SimId, UInt8 action, Boolean ph_sim_full_lock_on, SIMLockType_t lockType,  
+SIMLock_Status_t  SIMLockSetLock(UInt8 action, Boolean ph_sim_full_lock_on, SIMLockType_t lockType,  
                  UInt8* key, UInt8* imsi, UInt8* gid1, UInt8* gid2);  
 
 // Get the current closed lock type
-SIMLockType_t SIMLockGetCurrentClosedLock(SimNumber_t SimId, Boolean *lock_blocked);
+SIMLockType_t SIMLockGetCurrentClosedLock(Boolean *lock_blocked);
 
 // Change the password of the PH-SIM simlock.
 SIMLock_Status_t SIMLockChangePasswordPHSIM(UInt8 *old_pwd, UInt8 *new_pwd);
@@ -174,13 +174,13 @@ void SIMLockGetSignature(UInt8* simLockSign, UInt8 simLockSignSize);
 const UInt8* SIMLockGetImeiSecboot(void);
 
 // Update the current SIM lock state
-void SIMLockUpdateSIMLockState(SimNumber_t SimId);
+void SIMLockUpdateSIMLockState(void);
 
 // Get the current SIM lock state
-void SIMLockGetSIMLockState(SimNumber_t SimId, SIMLOCK_STATE_t* simlock_state);
+void SIMLockGetSIMLockState(SIMLOCK_STATE_t* simlock_state);
 
 // Get the remain attempt
-UInt8 SIMLockGetRemainAttempt(SimNumber_t SimId);
+UInt8 SIMLockGetRemainAttempt(void);
 
 #endif  // _BCM_KRIL_SIMLOCK_H
 

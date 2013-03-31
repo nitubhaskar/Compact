@@ -31,7 +31,6 @@
 #include <linux/broadcom/gpt.h>
 #include <linux/module.h>
 #include <plat/timer.h>
-#include <linux/delay.h>
 
 #define SLPTMR_SMTDCLR  0x00    /**< Sleep Mode Timer Down Counter Load Register */
 #define SLPTMR_SMTDCR   0x04    /**< Sleep Mode Timer Down Counter Register */
@@ -83,30 +82,12 @@ static void bcm_gpt_clkevt_mode(enum clock_event_mode mode,
 	}
 }
 
-static int reload;
-
 static int bcm_gpt_set_nextevt(unsigned long evt,
 			       struct clock_event_device *unused)
 {
 	gpt_config(config.ce_index, &gc_ce,bcm_gpt_interrupt, NULL);
 	gpt_start(config.ce_index, evt);
-
-	reload = evt;
 	return 0;
-}
-
-void bcm_gpt_evt_wait_wfi_sync(void)
-{
-	int i, j = 10000;
-
-	udelay(32);
-	while ((gpt_reload_read(config.ce_index) != reload)) {
-		for (i=0; i < 500; ++i);
-		if (!j--) {
-			pr_err("Reload value not synchronized before WFI\n");
-			break;
-		}
-	}
 }
 
 static uint32_t setup_slptmr(uint32_t reload, uint32_t control)

@@ -46,10 +46,7 @@ the GPL, without Broadcom's express prior written consent.
 	Audio MICGAIN Index (3 dB/step)
 */
 #define	AUDIO_MICGAIN_MIN		0 						///< lowest = 0dB
-#define	AUDIO_MICGAIN_SCALE_MAX 		14				///< loudest = 42dB
-#define	AUDIO_MICGAIN_SCALEFACTOR 		3				///< MIC PGA is to be scaled by 3. 
-#define	AUDIO_MICGAIN_DIRECT_MIN 		21				///< loudest = 21 ~ 42dB in which range MIC PGA is configured with 1dB resolution. 
-#define	AUDIO_MICGAIN_MAX 				42	 
+#define	AUDIO_MICGAIN_MAX 		14						///< loudest = 42dB
 #define	AUDIO_MICGAIN_DEFAULT	((AUDIO_MICGAIN_MIN+AUDIO_MICGAIN_MAX)>>1)	///< default
 
 typedef enum AUDIO_GAIN_FORMAT_t 
@@ -103,7 +100,7 @@ typedef enum  AUDIO_INPUT_CHANNEL_t
 #define AUDIO_MODE_NUMBER_VOICE	(AUDIO_MODE_NUMBER*2)
 
 
-#define	AUDIO_APP_NUMBER		12	///< 3 profiles (applications), can be extended
+#define	AUDIO_APP_NUMBER		8	///< 3 profiles (applications), can be extended
 #define NUM_OF_ENTRY_IN_DSP_VOICE_VOLUME_TABLE		15 
 #define NUM_OF_ENTRY_IN_FM_RADIO_DIGITAL_VOLUME		15 
 
@@ -112,18 +109,14 @@ typedef enum  AUDIO_INPUT_CHANNEL_t
 **/
 typedef enum {
 	AUDIO_APP_VOICE_CALL = 0,
-	AUDIO_APP_VOICE_CALL_WB = 1,
-	AUDIO_APP_MUSIC = 2,
-	AUDIO_APP_RECORDING = 3,
-	AUDIO_APP_FM = 4,
-	AUDIO_APP_RECORDING_GVS = 5,
-	AUDIO_APP_VOIP = 6,
-	AUDIO_APP_VOIP_INCOMM = 7,
-	AUDIO_APP_VT_CALL = 8,
-	AUDIO_APP_VT_CALL_WB = 9,
-	AUDIO_APP_RECORDING_NB = 10,
-	AUDIO_APP_TOTAL
-} AudioApp_t; // audio profiles (Audio applications)
+	AUDIO_APP_VOICE_CALL_WB,
+	AUDIO_APP_MUSIC,
+	AUDIO_APP_RECORDING,
+    AUDIO_APP_FM,
+	AUDIO_APP_RECORDING_GVS,
+    AUDIO_APP_VOIP,
+    AUDIO_APP_VOIP_INCOMM
+} AudioApp_t; // Audio applications
 
 /**
 	audio modes (audio parameters profile)

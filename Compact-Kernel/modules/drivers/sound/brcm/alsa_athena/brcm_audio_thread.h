@@ -39,12 +39,8 @@ typedef enum
     ACTON_VOICECALL_STOP,
     ACTON_VOICECALL_UPDATE,
     ACTON_FM_START,
-
     ACTON_FM_STOP,
     ACTON_ROUTE,
-    ACTON_BT_WB_MODE,
-    ACTON_VT_CALL_MODE,
-	ACTON_HAC_MODE,
 	ACTION_AUD_TOTAL,			
 } BRCM_AUDIO_ACTION_en_t;
 
@@ -123,7 +119,6 @@ typedef struct
     void*   drv_handle;
     UInt32 substream_number;
 
-
 }BRCM_FM_Param_Stop_t;
 
 typedef struct
@@ -132,23 +127,6 @@ typedef struct
     UInt32 speaker;
 
 }BRCM_AUDIO_Param_Route_t;
-
-typedef struct
-{
-    UInt32 enable;
-
-}BRCM_AUDIO_Param_Bt_Wbmode_t;
-
-typedef struct
-{
-    UInt32 enable;
-
-}BRCM_AUDIO_Param_Vt_Callmode_t;
-typedef struct
-{
-    UInt32 enable;
-
-}BRCM_AUDIO_Param_Hac_Mode_t;
 
 
 typedef union{	
@@ -160,12 +138,8 @@ typedef union{
     BRCM_AUDIO_Param_Close_t    param_close;
     BRCM_VOICE_Param_Start_t    param_voice_start;
     BRCM_VOICE_Param_Stop_t     param_voice_stop;
-
     BRCM_VOICE_Param_Update_t   param_voice_update;
     BRCM_AUDIO_Param_Route_t    param_route;
-    BRCM_AUDIO_Param_Bt_Wbmode_t param_mode;
-    BRCM_AUDIO_Param_Vt_Callmode_t vt_mode;
-	BRCM_AUDIO_Param_Hac_Mode_t		hac_mode;
 } BRCM_AUDIO_Control_Params_un_t; 
 
 
@@ -181,7 +155,6 @@ Result_t AUDIO_Ctrl_Trigger(
     int  block
 	);
 
-int AUDIO_BRCMAudioParamSize(BRCM_AUDIO_ACTION_en_t action_code);
 
 
 #endif	//_BRCM_AUDIO_THREAD_H__

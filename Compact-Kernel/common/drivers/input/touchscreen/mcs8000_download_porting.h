@@ -89,7 +89,7 @@ typedef unsigned char		BOOLEAN;
 
 
 
-extern void touch_ctrl_regulator_mms128(int on_off);
+extern void touch_ctrl_regulator(int on_off);
 #define GPIO_TSP_LDO   //GPIO NUM
 #define GPIO_TOUCH_INT 30 //GPIO NUM
 #define GPIO_TSP_SCL   26 //GPIO NUM
@@ -98,8 +98,8 @@ extern void touch_ctrl_regulator_mms128(int on_off);
 //----------------
 // VDD
 //----------------
-#define mcsdl_vdd_on()                  touch_ctrl_regulator_mms128(1)
-#define mcsdl_vdd_off()                 touch_ctrl_regulator_mms128(0)
+#define mcsdl_vdd_on()                  touch_ctrl_regulator(1)
+#define mcsdl_vdd_off()                 touch_ctrl_regulator(0)
 
 #define MCSDL_VDD_SET_HIGH()            mcsdl_vdd_on()
 #define MCSDL_VDD_SET_LOW()             mcsdl_vdd_off()

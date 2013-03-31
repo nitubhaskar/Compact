@@ -44,74 +44,6 @@ the GPL, without Broadcom's express prior written consent.
 #define MAX_I2C_DATA_COUNT	1500
 
 //#define LITTLE_ENDIAN_SWITCH
-// [[ mhoon.chae@LTN_MM support anti-banding
-#if defined(CONFIG_LTN_COMMON)
-typedef enum {
-    CAM_ANTIBANDING_50HZ = 50,
-    CAM_ANTIBANDING_60HZ = 60
-} cam_antibanding_setting;
-#endif //ltn_cam : support anti-banding hmin84.park 2011.12.08
-
-#define HALCAM_LOG_ERR 0x01
-#define HALCAM_LOG_DBG 0x02
-#define HALCAM_LOG_MUX (HALCAM_LOG_ERR | HALCAM_LOG_DBG)
-#define HALCAM_LOG_LVL HALCAM_LOG_ERR
-
-#if defined(WIN32)
-
-#define halcam_trace_err(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_ERR)\
-        printf( "%s"fmt"\n", __FUNCTION__, ##args)
-#define halcam_trace_dbg(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printf( "%s"fmt"\n", __FUNCTION__, ##args)
-#define halcam_trace_dbg_in(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printf( "%s IN"fmt"\n", __FUNCTION__, ##args)
-#define halcam_trace_dbg_out(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printf( "%s OUT"fmt"\n", __FUNCTION__, ##args)
-        
-#elif defined(_LINUX_)
-
-#if 0
-#define HalcamTraceErr(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_ERR)\
-        printk( "%s"fmt"\n", __FUNCTION__, ##args)
-#define HalcamTraceDbg(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printk( "%s"fmt"\n", __FUNCTION__, ##args)
-#define HalcamTraceIN(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printk( "%s IN"fmt"\n", __FUNCTION__, ##args)
-#define HalcamTraceOUT(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printk( "%s OUT"fmt"\n", __FUNCTION__, ##args)
-#define HalcamTraceDbg_v(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG)\
-        printk( "%s OUT"fmt"\n", __FUNCTION__, ##args)
-#else
-static struct timeval g_stDbgTimeval;
-#define HALCAM_DBG_MSEC ( ((g_stDbgTimeval.tv_sec)*1000000 + g_stDbgTimeval.tv_usec) ) 
-
-#define HalcamTraceErr(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_ERR) {\
-        do_gettimeofday( &g_stDbgTimeval); printk(" %lus %s "fmt"\n", HALCAM_DBG_MSEC, __FUNCTION__, ##args); }
-#define HalcamTraceDbg(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG) {\
-         do_gettimeofday( &g_stDbgTimeval); printk(" %luus %s "fmt"\n", HALCAM_DBG_MSEC, __FUNCTION__, ##args); }
-#define HalcamTraceIN(fmt, args...) \
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG) {\
-        do_gettimeofday( &g_stDbgTimeval); printk(" %luus %s IN "fmt"\n", HALCAM_DBG_MSEC, __FUNCTION__, ##args); }
-#define HalcamTraceOUT(fmt, args...)\
-    if(HALCAM_LOG_LVL & HALCAM_LOG_DBG) {\
-        do_gettimeofday( &g_stDbgTimeval); printk(" %luus %s OUT "fmt"\n", HALCAM_DBG_MSEC, __FUNCTION__, ##args); }
-#define HalcamTraceDbg_v(fmt, args...)\
-     if(HALCAM_LOG_LVL & HALCAM_LOG_DBG) {\
-     do_gettimeofday( &g_stDbgTimeval); printk(" %luus %s"fmt"\n", HALCAM_DBG_MSEC, __FUNCTION__, ##args); }
-#endif 
-#endif /* WIN32 */ 
-
 
 /** Sensor Clock Selection Settings*/
 typedef enum
@@ -199,17 +131,8 @@ typedef enum
     PAUSE,
     I2C_CNTRL,
     SENSOR_FUNC,
-    I2C_CNTRL2,
-    REGULATOR_CNTRL //CYK_TEST
+    I2C_CNTRL2
 }CamSensorCntrlSel_t;
-
-/** Camera Power Regulrator Interface Control Select */
-typedef enum 
-{
-    PORT_A,
-    PORT_I,
-    PORT_C,
-}CamRagulratorCntrlSel_t;
 
 /** Camera Sensor Interface Control Commands */
 typedef enum 
@@ -218,9 +141,7 @@ typedef enum
     GPIO_SetHigh,
     GPIO_SetLow,
     CLK_TurnOn,
-    CLK_TurnOff,
-    REGUL_TurnOn,
-    REGUL_TurnOff
+    CLK_TurnOff
 }CamSensorCntrlCmd_t;
 
 /// Sensor GPIO/Clock Interface Control 
@@ -228,7 +149,6 @@ typedef struct {
     CamSensorCntrlSel_t   cntrl_sel;                ///< Interface control select:  GPIO, Clock                       
     UInt32                value;                    ///< GPIO #, Pause time       
     CamSensorCntrlCmd_t   cmd;                      ///< Interface control command            
-    CamRagulratorCntrlSel_t port_id;                ///< Ragulrator Port ID>
 } CamSensorIntfCntrl_st_t;              
 
 /**  Camera Sync Interface  
@@ -1172,9 +1092,6 @@ HAL_CAM_Result_en_t CAM_ReadI2c_Test(
     #endif
 
 struct sens_methods {
-	int (*DRV_GetRegulator)();
-	int (*DRV_TurnOnRegulator)();
-	int (*DRV_TurnOffRegulator)();
     CamIntfConfig_st_t* (*DRV_GetIntfConfig)(CamSensorSelect_t nSensor);
     CamSensorIntfCntrl_st_t* (*DRV_GetIntfSeqSel)(CamSensorSelect_t nSensor,CamSensorSeqSel_t nSeqSel, UInt32 *pLength);
     HAL_CAM_Result_en_t (*DRV_Wakeup)(CamSensorSelect_t sensor);
@@ -1193,7 +1110,6 @@ struct sens_methods {
     void (*DRV_StoreBaseAddress)(void *virt_ptr);
     HAL_CAM_Result_en_t (*DRV_TurnOnAF)(CamSensorSelect_t sensor);
     HAL_CAM_Result_en_t (*DRV_TurnOffAF)(CamSensorSelect_t sensor);
-    HAL_CAM_Result_en_t (*DRV_CancelAF)(CamSensorSelect_t sensor);
     HAL_CAM_Result_en_t (*DRV_SetSensorParams)( CAM_Parm_t parm,CamSensorSelect_t sensor);//BYKIM_UNIFY
 	HAL_CAM_Result_en_t (*DRV_GetSensorValuesForEXIF)( CAM_Sensor_Values_For_Exif_t *exif_parm,CamSensorSelect_t sensor);//BYKIM_UNIFY
 	HAL_CAM_Result_en_t (*DRV_GetESDValue)( bool *esd_value,CamSensorSelect_t sensor); //BYKIM_ESD

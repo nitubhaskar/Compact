@@ -37,8 +37,6 @@ struct gp2a_prox_data {
 	struct i2c_client* gp2a_prox_i2c_client;
 	struct work_struct work_prox;  /* for proximity sensor */ 
 	struct input_dev *prox_input_dev;
-
-	struct mutex power_lock;    
 	u8 reg[7];
 };
 static struct i2c_driver  gp2a_prox_i2c_driver;

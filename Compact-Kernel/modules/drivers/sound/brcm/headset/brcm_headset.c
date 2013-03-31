@@ -16,519 +16,444 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
 #include <linux/errno.h>
 #include <linux/input.h>
+#include <linux/moduleparam.h>
 #include <linux/interrupt.h>
 #include <asm/io.h>
+#include <linux/pci.h>
+#include <asm/uaccess.h>
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
 #include <mach/irqs.h>
 #include <linux/irq.h>
+#include <linux/version.h>
+#include <linux/broadcom/bcm_major.h>
 #include <plat/brcm_headset_pd.h>
 #include <plat/syscfg.h>
+#include <cfg_global.h>
 #include "brcm_headset_hw.h"
 #include <mach/gpio.h>
+#include <linux/string.h>
+#ifdef CONFIG_SWITCH
 #include <linux/switch.h>
-#include <linux/wakelock.h>
-
-//#undef USE_SERVICEMODE
-#define USE_SERVICEMODE
-
-#ifdef USE_SERVICEMODE
-#include <asm/uaccess.h>
-#include <linux/stat.h>
 #endif
+#if defined(CONFIG_HAS_WAKELOCK)
+#include <linux/wakelock.h>
+#endif /*CONFIG_HAS_WAKELOCK*/
 
-#define VALID_RELEASE_REF_TIME 90000000 /* VALID_RELEASE_REF_TIME(90ms) + Chip Debounce >= 250ms */
-#define KEY_INTERRUPT_REF_TIME 350000000 /* 350ms */
+#define REF_TIME 300000000
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+#define KEY_BEFORE_PRESS_REF_TIME msecs_to_jiffies(80)
+#else
 #define KEY_BEFORE_PRESS_REF_TIME msecs_to_jiffies(50)
+#endif
 #define KEY_PRESS_REF_TIME msecs_to_jiffies(5)
 #define TYPE_DETECT_REF_TIME msecs_to_jiffies(100)
-#define HEADSET_DETECT_REF_COUNT  10
-#define GET_IMSI_REF_TIME	(HZ * 8)  /* 8 sec */
-#define WAKE_LOCK_TIME		(HZ * 5)	/* 5 sec */
-#define WAKE_LOCK_TIME_IN_SENDKEY (HZ * 2) /* 2 sec */
-#define TEST_SIM_IMSI	"999999999999999"
+#define GET_IMSI_REF_TIME msecs_to_jiffies(8000)
+#define MIC_PLUGIN_MASK	0x7f00
+#define REG_ANACR12 0x088800b0
 
-#define REG_ANACR12 0x088800B0
-#define REG_INTC_ICR0 0x8810008
-#define REG_INTC_IMR0 0x08810000
-#define INTC_IRQ12_BIT (1<<12)
-#define CLEAR_IRQ_MICON writel((readl(io_p2v(REG_INTC_ICR0)) | INTC_IRQ12_BIT) , io_p2v(REG_INTC_ICR0))
-#define ENABLE_IRQ_MICON CLEAR_IRQ_MICON; \
-						    writel((readl(io_p2v(REG_INTC_IMR0)) | INTC_IRQ12_BIT) , io_p2v(REG_INTC_IMR0))
-#define DISABLE_IRQ_MICON writel((readl(io_p2v(REG_INTC_IMR0)) & ~INTC_IRQ12_BIT) , io_p2v(REG_INTC_IMR0))
+#undef REG_DEBUG
+//#define REG_DEBUG
+#ifdef REG_DEBUG
+#define REG_ANACR2      	0x08880088
+#define REG_AUXMIC_CMC  	0x0891100c
+#define REG_AUXMIC_AUXEN	0x08911014
+#endif
+
+#define MAX_DEBOUNCE_NUM 5
+#define MAX_KEYS 3
+#define KEYCOUNT_THRESHOLD	2
 
 #define HEADSET_4_POLE	1
 #define HEADSET_3_POLE 	2
-#define INIT 3
-#define NONE 2
 #define PRESS 1
 #define RELEASE 0
 #define ENABLE 1
 #define DISABLE 0
+#define WAKE_LOCK_TIME		(HZ * 5)	/* 5 sec */
 
-static short KEY_PRESS_THRESHOLD;
-static short KEY_3POLE_THRESHOLD;
-static short KEY1_THRESHOLD_L;
-static short KEY1_THRESHOLD_U;
-static short KEY2_THRESHOLD_L;
-static short KEY2_THRESHOLD_U;
-static short KEY3_THRESHOLD_L;
-static short KEY3_THRESHOLD_U;
+static const int hs_keycodes[] = {
+	KEY_BCM_HEADSET_BUTTON,
+	KEY_VOLUMEUP,
+	KEY_VOLUMEDOWN,
+	//KEY_SEARCH,
+};
 
-static unsigned char FactoryMode = DISABLE;
+static int KEY_PRESS_THRESHOLD;
+static int KEY_3POLE_THRESHOLD;
+static int KEY1_THRESHOLD_L;
+static int KEY1_THRESHOLD_U;
+static int KEY2_THRESHOLD_L;
+static int KEY2_THRESHOLD_U;
+static int KEY3_THRESHOLD_L;
+static int KEY3_THRESHOLD_U;
 
-extern unsigned char sync_use_mic; /* Synchronization between audio and headset for MIC bias */
+static int key_count[3];
+static int key_resolved = 0;
+static int key_type = 0;
+static int FactoryMode = DISABLE;
+
+extern int sync_use_mic;
 extern void set_button(int value);
 extern int auxadc_access(int);
 extern int bcm_gpio_set_db_val(unsigned int gpio, unsigned int db_val);
-extern SIMLOCK_SIM_DATA_t* GetSIMData(SimNumber_t SimId);
+extern SIMLOCK_SIM_DATA_t* GetSIMData(void);
 
-static void determine_state_func(void);
+#ifdef CONFIG_SWITCH
+static void switch_work(struct work_struct *);
 static void type_work_func(struct work_struct *work);
+#endif
 static void input_work_func(struct work_struct *work);
+
+struct h2w_switch_data {
+#ifdef CONFIG_SWITCH
+	struct switch_dev sdev;
+#endif
+	struct work_struct work;
+};
 
 struct mic_t
 {
-	unsigned char pluging;
-	unsigned char keypressing;
-	unsigned char key_count[3];
+	int hsirq;
+	int hsbirq;
+	int hsbst;
+	struct auxmic *pauxmic; 
 	int headset_state;
+	ktime_t hstime;
 	ktime_t hsbtime;
-	struct switch_dev sdev;
-	struct input_dev* headset_button_idev;
-	struct workqueue_struct* headset_workqueue;
+	int hsmajor;
+	int check_count;
+	int hsirq_triggerred;
+	struct h2w_switch_data switch_data;
+	struct input_dev *headset_button_idev;
 	struct delayed_work input_work;
+#ifdef CONFIG_SWITCH
 	struct delayed_work type_work;
-	struct delayed_work imsi_work;	
+#endif
+	struct brcm_headset_pd	*headset_pd;
+	struct timer_list timer;
+	struct delayed_work imsi_work;
 	struct wake_lock det_wake_lock;
-	struct brcm_headset_pd* headset_pd;
 };
 
 static struct mic_t mic;
 
-
-#ifdef USE_SERVICEMODE
-
-#define ATTR_ADC 0
-#define ATTR_THRESHOLD 1
-#define ATTR_TESTON 2
-#define PATH "/mnt/.lfs/threshold"
-
-static int TestMode = DISABLE;
-static short Min_threshold = 0;
-static short Max_threshold =478;
-static ssize_t hs_Show(struct device *dev, struct device_attribute *attr, char *buf);
-static ssize_t hs_Store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
-
-struct work_struct Read_work;	
-struct work_struct Write_work;	
-
-static void ReadADCfromFile(struct work_struct *work)
+static inline int check_delta(ktime_t a, ktime_t b)
 {
-	struct file *filp;
-	mm_segment_t oldfs;
-	int size=0;
-	char buf[512];
-
-	filp = filp_open(PATH, (O_RDONLY), 0);
-
-	if (IS_ERR(filp)) {
-	        pr_err("%s: filp_open failed. (%ld)\n", __FUNCTION__, PTR_ERR(filp));
-	        return ;
-	}
-
-	filp->f_op->llseek(filp, 0, SEEK_SET);
-	oldfs = get_fs();
-	set_fs( get_ds() );
-
-	size = filp->f_op->read(filp,  buf, sizeof(buf), &filp->f_pos);
-	sscanf(buf, "%d\n%d\n%d\n%d\n%d\n%d\n%d\n", \
-		(int*)(&KEY_3POLE_THRESHOLD), (int*)(&KEY1_THRESHOLD_L), (int*)(&KEY1_THRESHOLD_U),\
-		(int*)(&KEY2_THRESHOLD_L), (int*)(&KEY2_THRESHOLD_U), (int*)(&KEY3_THRESHOLD_L),\
-		(int*)(&KEY3_THRESHOLD_U));
-
-	set_fs(oldfs);
-	filp_close(filp, NULL);
-
-
-	if ( KEY1_THRESHOLD_U >= KEY2_THRESHOLD_U && KEY1_THRESHOLD_U >= KEY3_THRESHOLD_U)
-		Max_threshold = KEY1_THRESHOLD_U;
-	else if (KEY2_THRESHOLD_U >= KEY1_THRESHOLD_U && KEY2_THRESHOLD_U >= KEY3_THRESHOLD_U )
-		Max_threshold = KEY2_THRESHOLD_U;
-	else
-		Max_threshold = KEY3_THRESHOLD_U;
-
-	if ( KEY1_THRESHOLD_L <= KEY2_THRESHOLD_L && KEY1_THRESHOLD_L <= KEY3_THRESHOLD_L)
-		Min_threshold = KEY1_THRESHOLD_L;
-	else if (KEY2_THRESHOLD_L <= KEY1_THRESHOLD_L && KEY2_THRESHOLD_L <= KEY3_THRESHOLD_L )
-		Min_threshold = KEY2_THRESHOLD_L;
-	else
-		Min_threshold = KEY3_THRESHOLD_L;	
-
-	printk("%s: min-%d, max-%d\n", __func__, Min_threshold, Max_threshold);
-}
-
-static void WriteADCtoFile(struct work_struct *work)
-{
-	struct file *filp;
-	mm_segment_t oldfs;
-	int ret = 0;
-	char buf[512];
-
-	filp = filp_open(PATH, (O_CREAT | O_WRONLY | O_TRUNC ), (S_IRUGO | S_IWUGO));
-
-	if (IS_ERR(filp))
-	{
-	        pr_err("%s: filp_open failed. (%ld)\n", __FUNCTION__, PTR_ERR(filp));
-
-		if(PTR_ERR(filp) == -17)
-		{
-			filp = filp_open(PATH, (O_WRONLY | O_TRUNC ), 0);
+	int ret = -1;
+	ktime_t res = ktime_sub(a,b);
+	if(res.tv.sec >= 0){
+		/* HSB after HS event -- normal case*/
+		if((res.tv.sec >= 1) || (res.tv.nsec > REF_TIME)){
+			/* The delay is greater than 800 msec .. so fine*/
+			ret = 0;
+		} else {
+			/* Delay is < 800 msec so HSB must be spurious*/
+			ret = -1;
 		}
-		else
-		        return ;
+	} else {
+		/* HSB event before HS event
+		* 1) Could be HSB happened and then HS was removed
+		*  2) Could be a spurious event on HS removal or insertion
+		* In any case let us reject it*/
+		ret = -1;
 	}
-
-	filp->f_op->llseek(filp, 0, SEEK_SET);
-	oldfs = get_fs();
-	set_fs( get_ds() );
-
-	sprintf(buf, "%d\n%d\n%d\n%d\n%d\n%d\n%d\n", \
-			(int)KEY_3POLE_THRESHOLD, (int)KEY1_THRESHOLD_L, (int)KEY1_THRESHOLD_U,\
-			(int)KEY2_THRESHOLD_L, (int)KEY2_THRESHOLD_U, (int)KEY3_THRESHOLD_L,\
-			(int)KEY3_THRESHOLD_U);
-
-	ret = filp->f_op->write(filp,  buf, strlen(buf), &filp->f_pos);
-
-	set_fs(oldfs);
-	filp_close(filp, NULL);
-
-	queue_work(mic.headset_workqueue, &Read_work);
-}
-
-static struct device_attribute hs_Attrs[] = {
-	{
-        .attr = { .name = "adc", .mode = S_IRUGO, .owner = THIS_MODULE },
-        .show = hs_Show,
-        .store = hs_Store,
-	},
-       {
-	 .attr = { .name = "threshold", .mode = S_IRUGO | S_IWUG, .owner = THIS_MODULE },
-        .show = hs_Show,
-        .store = hs_Store,
-	},
-	{
-	 .attr = { .name = "teston", .mode = S_IWUG, .owner = THIS_MODULE },
-        .show = hs_Show,
-        .store = hs_Store,
-	}
-};
-
-static ssize_t hs_Show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	ssize_t ret = 0;
-	const ptrdiff_t off = attr - hs_Attrs;
-	volatile int adc = 0;
-
-	switch (off)
-	{
-		case ATTR_ADC:
-			ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%d\n", adc = auxadc_access(2));
-			break;
-		case ATTR_THRESHOLD:
-			ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%d\n%d\n%d\n%d\n%d\n%d\n%d\n", \
-					(int)KEY_3POLE_THRESHOLD, (int)KEY1_THRESHOLD_L, (int)KEY1_THRESHOLD_U,\
-					(int)KEY2_THRESHOLD_L, (int)KEY2_THRESHOLD_U, (int)KEY3_THRESHOLD_L,\
-					(int)KEY3_THRESHOLD_U);
-			break;
-		default :
-			break;
-	}
-	
 	return ret;
-}
-
-static ssize_t hs_Store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-	ssize_t ret = 0;
-	const ptrdiff_t off = attr - hs_Attrs;
-
-	switch (off)
-	{
-		case ATTR_THRESHOLD:
-			ret += sscanf(buf, "%d\n%d\n%d\n%d\n%d\n%d\n%d\n", \
-				(int*)(&KEY_3POLE_THRESHOLD), (int*)(&KEY1_THRESHOLD_L), (int*)(&KEY1_THRESHOLD_U),\
-				(int*)(&KEY2_THRESHOLD_L), (int*)(&KEY2_THRESHOLD_U), (int*)(&KEY3_THRESHOLD_L),\
-				(int*)(&KEY3_THRESHOLD_U));
-
-			queue_work(mic.headset_workqueue, &Write_work);
-			break;
-		case ATTR_TESTON:
-			{
-			int teston = 0;
-			ret += sscanf(buf, "%d\n", &teston);
-			printk("%s: teston %d\n", __func__, teston);
-			TestMode = (teston == 1)? ENABLE : DISABLE;
-
-			if(TestMode == ENABLE)
-			{
-				if(mic.headset_state == HEADSET_4_POLE)
-					board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
-			}
-			else
-			{
-				if(mic.headset_state == HEADSET_4_POLE)
-					board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE | SYSCFG_DISABLE);
-			}
-			
-			}
-			break;			
-		default :			
-			break;
-	}
-
-	return ret;
-}
-
-#endif
-
-static inline int Return_valid_key(unsigned char keyarr[3])
-{
-	if ( keyarr[0] >= keyarr[1] && keyarr[0] >= keyarr[2] )
-		return KEY_BCM_HEADSET_BUTTON;
-	else if ( keyarr[1] >= keyarr[0] && keyarr[1] >= keyarr[2] )
-		return KEY_VOLUMEUP;
-	else
-		return KEY_VOLUMEDOWN;
 }
 
 static void input_work_func(struct work_struct *work)
 {
-	int adc_value = -1;
-	int val = 0;
-	ktime_t temptime;
-
-	adc_value = auxadc_access(2);
-	val = readl(io_p2v(REG_ANACR12));
-//	printk("%s: REG_ANACR2=%d, REG_ANACR12=%d\n", __func__,adc_value , val);
-
-#ifdef USE_SERVICEMODE
-	if(val >= KEY_PRESS_THRESHOLD && adc_value >= Min_threshold && adc_value < Max_threshold)
-	{
-#else
-	if(val >= KEY_PRESS_THRESHOLD && adc_value >= KEY1_THRESHOLD_L && adc_value < KEY3_THRESHOLD_U)
-	{
+	int delta = 0;
+	unsigned long val = 0;
+#ifdef REG_DEBUG
+	unsigned long val_anacr2, val_cmc, val_auxen;
 #endif
-		temptime = ktime_get();
-		temptime = ktime_sub(temptime, mic.hsbtime);
+	static int key_status = RELEASE;
+	int adc_value = auxadc_access(2);	
+	printk("%s: input_work adc_value=%d\n", __func__, adc_value);
 
-		if(temptime.tv.nsec < VALID_RELEASE_REF_TIME && mic.keypressing == PRESS)
+	/* If the key_status is 0, send the event for a key press */
+	if(key_status == RELEASE)
+	{
+		delta = check_delta(mic.hsbtime,mic.hstime);
+		if((mic.headset_state == HEADSET_4_POLE) && (delta == 0))
+		{
+			if (!key_resolved)
+			{
+				if ( adc_value >= KEY1_THRESHOLD_L && adc_value < KEY1_THRESHOLD_U )
+				{
+					key_count[0]++;
+					if (key_count[0] >= KEYCOUNT_THRESHOLD)
+						key_resolved = 1;
+					key_type = KEY_BCM_HEADSET_BUTTON;
+					printk ("KEY_BCM_HEADSET_BUTTON \n");
+				}
+				if ( adc_value >= KEY2_THRESHOLD_L && adc_value < KEY2_THRESHOLD_U ) 
+				{	
+					key_count[1]++;
+					if (key_count[1] >= KEYCOUNT_THRESHOLD)
+						key_resolved = 1;
+					key_type = KEY_VOLUMEUP;
+					printk ("KEY_VOLUMEUP \n");
+				}
+				if ( adc_value >= KEY3_THRESHOLD_L && adc_value < KEY3_THRESHOLD_U ) 
+				{
+					key_count[2]++;
+					if (key_count[2] >= KEYCOUNT_THRESHOLD)
+						key_resolved = 1;
+					key_type = KEY_VOLUMEDOWN;
+					printk ("KEY_VOLUMEDOWN \n");
+				}
+			}
+			else
+				input_report_key(mic.headset_button_idev, key_type, PRESS);
+
+			input_sync(mic.headset_button_idev);
+			printk("%s: set_button => PRESS\n", __func__);
+			set_button(PRESS);
+			printk("%s: button pressed : ear_adc=%d\n", __func__, adc_value);
+		}
+	}
+
+	/* Check if the value read from ANACR12 is greater than the
+	* threshold. If so, the key is still pressed and schedule the work
+	* queue till the value is less than the threshold */
+	val = readl(io_p2v(REG_ANACR12));
+	printk("%s: REG_ANACR12=%x\n", __func__,val);
+
+	if (val >= KEY_PRESS_THRESHOLD && (adc_value >= KEY1_THRESHOLD_L && adc_value < KEY3_THRESHOLD_U))
+	{
+		key_status = PRESS;
+
+		if (!key_resolved)
 		{
 			if ( adc_value >= KEY1_THRESHOLD_L && adc_value < KEY1_THRESHOLD_U )
 			{
-				mic.key_count[0]++;
-				printk ("KEY_BCM_HEADSET_BUTTON \n");
+				key_count[0]++;
+				if (key_count[0] >= KEYCOUNT_THRESHOLD)
+					key_resolved = 1;
+				key_type = KEY_BCM_HEADSET_BUTTON;
+				printk ("KEY_BCM_HEADSET_BUTTON\n");
 			}
-			else if ( adc_value >= KEY2_THRESHOLD_L && adc_value < KEY2_THRESHOLD_U ) 
-			{
-				mic.key_count[1]++;
-				printk ("KEY_VOLUMEUP \n");
+			if ( adc_value >= KEY2_THRESHOLD_L && adc_value < KEY2_THRESHOLD_U ) 
+			{	
+				key_count[1]++;
+				if (key_count[1] >= KEYCOUNT_THRESHOLD)
+					key_resolved = 1;
+				key_type = KEY_VOLUMEUP;
+				printk ("KEY_VOLUMEUP\n");
 			}
-			else if ( adc_value >= KEY3_THRESHOLD_L && adc_value < KEY3_THRESHOLD_U ) 
+			if ( adc_value >= KEY3_THRESHOLD_L && adc_value < KEY3_THRESHOLD_U ) 
 			{
-				mic.key_count[2]++;
-				printk ("KEY_VOLUMEDOWN \n");
+				key_count[2]++;
+				if (key_count[2] >= KEYCOUNT_THRESHOLD)
+					key_resolved = 1;
+				key_type = KEY_VOLUMEDOWN;
+				printk ("KEY_VOLUMEDOWN\n");
 			}
 		}
 		else
-		{
-			if(mic.keypressing == PRESS && (mic.key_count[0] + mic.key_count[1] + mic.key_count[2]))
-			{
-				input_report_key(mic.headset_button_idev, Return_valid_key(mic.key_count), PRESS);
-				input_sync(mic.headset_button_idev);
+			input_report_key(mic.headset_button_idev, key_type, PRESS);
 
-				set_button(1); 
-				mic.keypressing = RELEASE;
-			}
-		}
-
-		cancel_delayed_work(&(mic.input_work));
-		queue_delayed_work(mic.headset_workqueue, &(mic.input_work), KEY_PRESS_REF_TIME);
+		schedule_delayed_work(&(mic.input_work), KEY_PRESS_REF_TIME);
+		printk("%s: set_button => PRESS\n", __func__);
+		set_button(PRESS);
 	}
+	/* Once the value read from ANACR12 is less than the threshold, send
+	* the event for a button release */
 	else
 	{
-		if(mic.keypressing == RELEASE && (mic.key_count[0] + mic.key_count[1] + mic.key_count[2]))
-		{			
-			printk ("%s: RELEASE key_count [%d, %d, %d] \n", __func__,  mic.key_count[0], mic.key_count[1], mic.key_count[2]);
-			input_report_key(mic.headset_button_idev, Return_valid_key(mic.key_count), RELEASE);
+		key_status = RELEASE;
+		printk ("%s: key_count [%d, %d, %d] \n", __func__, key_count[0], key_count[1], key_count[2]);
+
+		if ( key_count[0] >= KEYCOUNT_THRESHOLD )
+		{
+			printk("SEND/END RELEASE\n");
+			input_report_key(mic.headset_button_idev, KEY_BCM_HEADSET_BUTTON, RELEASE);
 			input_sync(mic.headset_button_idev);
 		}
-		else
-		{
-			printk("%s: NO PRESS\n",  __func__);
+		else if ( key_count[1] >= KEYCOUNT_THRESHOLD )
+		{	
+			printk("VOLUP RELEASE\n");
+			input_report_key(mic.headset_button_idev, KEY_VOLUMEUP, RELEASE);
+			input_sync(mic.headset_button_idev);
 		}
+		else if ( key_count[2] >= KEYCOUNT_THRESHOLD )
+		{
+			printk("VOLDOWN RELEASE\n");
+			input_report_key(mic.headset_button_idev, KEY_VOLUMEDOWN, RELEASE);
+			input_sync(mic.headset_button_idev);
+		}
+
+		printk("%s: set_button => RELEASE\n", __func__);
+		set_button(RELEASE);	 
+		key_resolved = 0;
+		key_count[0] = key_count[1] = key_count[2] = 0;
 
 		if(FactoryMode == DISABLE)
 		{
 			board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE | SYSCFG_DISABLE);
-			sync_use_mic = DISABLE;		
+		sync_use_mic = DISABLE;
 		}
-		
-		set_button(0); 
-		mic.keypressing = NONE;
-	}
-}
 
-/*------------------------------------------------------------------------------
-Function name   : hs_buttonisr
-Description     : interrupt handler
-
-Return type     : irqreturn_t
-------------------------------------------------------------------------------*/
-irqreturn_t hs_buttonisr(int irq, void *dev_id)
-{
-	struct mic_t *p = &mic;
-	int val = 0;
-	ktime_t temptime;
-	
-#ifdef USE_SERVICEMODE
-	if(TestMode == ENABLE)
-	{
-		if(p->headset_state == HEADSET_4_POLE)
-			board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
-		
-		return IRQ_NONE;
-	}
+#ifdef REG_DEBUG
+		val_anacr2 = readl(io_p2v(REG_ANACR2));
+		val_cmc = readl(io_p2v(REG_AUXMIC_CMC));
+		val_auxen = readl(io_p2v(REG_AUXMIC_AUXEN));
+		printk("%s: REG_ANACR2=%x, REG_AUXMIC_CMC=%x, REG_AUXMIC_AUXEN=%x\n", __func__, val_anacr2, val_cmc, val_auxen);
 #endif
-	
-	if(mic.keypressing == INIT)
-	{
-		temptime = ktime_get();
-		temptime = ktime_sub(temptime, mic.hsbtime);
-		if(temptime.tv.sec >= 1 || temptime.tv.nsec >= KEY_INTERRUPT_REF_TIME)
-			mic.keypressing = NONE;
-		else
-		{
-		 	printk("%s: Initializing HSB ISR\n", __func__ );
-			return IRQ_NONE;
-		}
-	}	
-
-   wake_lock_timeout(&p->det_wake_lock, WAKE_LOCK_TIME_IN_SENDKEY);
-
-	if(p->pluging ==  ENABLE || p->keypressing != NONE)
-	{
-		printk("%s: Headset pluging OR keypressing\n", __func__ );
-		return IRQ_NONE;
-	}
-
-	val = readl(io_p2v(REG_ANACR12));
-	if(val < KEY_PRESS_THRESHOLD)
-	{
-		printk("%s: False button interrupt\n", __func__ );
-		return IRQ_NONE;	
-	}
-	
-	if (p->headset_state == HEADSET_4_POLE)
-	{	
-		p->hsbtime = ktime_get();
-		
-		board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
-		
-		memset(mic.key_count, 0, sizeof(mic.key_count));
-		p->keypressing = PRESS;
-		sync_use_mic = ENABLE;
-
-		cancel_delayed_work(&(mic.input_work));
-		queue_delayed_work(mic.headset_workqueue, &(p->input_work), KEY_BEFORE_PRESS_REF_TIME);
-	}
-
-	 return IRQ_HANDLED;
-}
-
-/* 	1 : SIM_DUAL_FIRST,
-	2 : SIM_DUAL_SECOND */
-static void getIMSI_work_func(struct work_struct *work)
-{
-	SIMLOCK_SIM_DATA_t* simdata = NULL; 
-	int first = DISABLE;
-	int second = DISABLE;
-
-	simdata = GetSIMData(SIM_DUAL_FIRST);
-	first = ((simdata == NULL) || (strncmp(simdata->imsi_string, TEST_SIM_IMSI, IMSI_DIGITS) != 0)) ?  DISABLE : ENABLE;
-	simdata = GetSIMData(SIM_DUAL_SECOND);
-	second = ((simdata == NULL) || (strncmp(simdata->imsi_string, TEST_SIM_IMSI, IMSI_DIGITS) != 0)) ?  DISABLE : ENABLE;
-
-	FactoryMode = (first == ENABLE || second == ENABLE) ? ENABLE : DISABLE;
-	
-	if(FactoryMode == ENABLE)
-	{
-		if(mic.headset_state == HEADSET_4_POLE)
-			board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
 	}
 }
 
-static void determine_state_func(void)
+
+#ifdef CONFIG_SWITCH
+// Switch class work to update state of headset
+static void switch_work(struct work_struct *work)
 {
+#ifdef REG_DEBUG
+	unsigned long val_anacr2, val_cmc, val_auxen;
+	val_anacr2 = readl(io_p2v(REG_ANACR2));
+	val_cmc = readl(io_p2v(REG_AUXMIC_CMC));
+	val_auxen = readl(io_p2v(REG_AUXMIC_AUXEN));
+	printk("%s: REG_ANACR2=%x, REG_AUXMIC_CMC=%x, REG_AUXMIC_AUXEN=%x\n", __func__, val_anacr2, val_cmc, val_auxen);
+#endif
+
 	if(mic.headset_state)
 	{
-		board_sysconfig(SYSCFG_HEADSET, SYSCFG_ENABLE);
-		board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
-
-		cancel_delayed_work(&(mic.type_work));
-		queue_delayed_work(mic.headset_workqueue, &(mic.type_work), TYPE_DETECT_REF_TIME);
+		if(mic.hsbst == DISABLE)
+		{
+			mic.hsbst = ENABLE;
+			board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);			
+			schedule_delayed_work(&(mic.type_work), TYPE_DETECT_REF_TIME);
+	}
 	}
 	else
 	{
-		board_sysconfig(SYSCFG_HEADSET, SYSCFG_DISABLE);
-		board_sysconfig(SYSCFG_AUXMIC, SYSCFG_DISABLE);
-		
-		DISABLE_IRQ_MICON;
+		if(mic.hsbst == ENABLE)
+		{
+			board_sysconfig(SYSCFG_AUXMIC, SYSCFG_DISABLE);
 
-		mic.pluging = DISABLE;
-		mic.keypressing = INIT;
-		sync_use_mic = DISABLE;		
-		switch_set_state(&mic.sdev, mic.headset_state);
-		printk("%s: plugged out\n", __func__);
+			if (mic.headset_pd->check_hs_state)
+				board_sysconfig(SYSCFG_HEADSET, SYSCFG_DISABLE);
+
+			mic.hsbst = DISABLE;
+			sync_use_mic = DISABLE;
+			switch_set_state(&(mic.switch_data.sdev), mic.headset_state);
+
+			printk("%s: plugged out\n", __func__);
 	}
+}
 }
 
 static void type_work_func(struct work_struct *work)
 {
-	int adc = 0;
+#ifdef REG_DEBUG
+	unsigned long val_anacr2, val_cmc, val_auxen;
+#endif
 
-	if(mic.headset_state)
+	int adc = auxadc_access(2);
+
+	if(adc>=KEY_3POLE_THRESHOLD)
 	{
-		adc = auxadc_access(2);
-		if(adc >= KEY_3POLE_THRESHOLD)
-		{
-			if(FactoryMode == DISABLE)
-				board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE | SYSCFG_DISABLE);
+		if(FactoryMode == DISABLE)
+			board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE | SYSCFG_DISABLE);
 
+		if (mic.headset_pd->check_hs_state)
 			board_sysconfig(SYSCFG_HEADSET, SYSCFG_ENABLE);
-			
-			mic.headset_state = HEADSET_4_POLE;
-			mic.hsbtime = ktime_get();
-			ENABLE_IRQ_MICON;
-			printk("%s: 4-pole inserted : ear_adc=%d\n", __func__, adc);
+
+		mic.headset_state = HEADSET_4_POLE;
+		printk("%s: 4-pole inserted : ear_adc=%d\n", __func__, adc);
+	}
+	else
+	{
+		board_sysconfig(SYSCFG_AUXMIC, SYSCFG_DISABLE);
+
+		mic.headset_state = HEADSET_3_POLE;
+		printk("%s: 3-pole inserted : ear_adc=%d\n", __func__, adc);
+	}
+
+	switch_set_state(&(mic.switch_data.sdev), mic.headset_state);
+
+	if(FactoryMode == DISABLE)
+	sync_use_mic = DISABLE;
+
+#ifdef REG_DEBUG
+	val_anacr2 = readl(io_p2v(REG_ANACR2));
+	val_cmc = readl(io_p2v(REG_AUXMIC_CMC));
+	val_auxen = readl(io_p2v(REG_AUXMIC_AUXEN));
+	printk("%s: REG_ANACR2=%x, REG_AUXMIC_CMC=%x, REG_AUXMIC_AUXEN=%x\n", __func__, val_anacr2, val_cmc, val_auxen);
+#endif
+
+}
+#endif
+
+static void gpio_jack_timer(unsigned long _data)
+{
+	struct mic_t *p_mic = (struct mic_t *)_data;
+	unsigned long flags = 0;
+	int last_state = 0;
+	int int_triggerred = 0; 
+	int attached = 0;
+
+	local_irq_save(flags);
+	int_triggerred = p_mic->hsirq_triggerred;
+	
+	if(p_mic->hsirq_triggerred)
+	       p_mic->hsirq_triggerred = 0; 
+	local_irq_restore(flags);
+
+	if(int_triggerred)
+	       p_mic->check_count = 0;
+
+	last_state = p_mic->headset_state;
+
+	if(p_mic->headset_pd->check_hs_state)
+		p_mic->headset_pd->check_hs_state(&attached); // get gpio state.
+
+	if(attached != last_state)
+	{
+		if(p_mic->check_count >= MAX_DEBOUNCE_NUM)
+		{
+			p_mic->headset_state = attached;
+			printk("%s: schedule_work: %d, last_state:%d, will change to %d \n", \
+				__func__, p_mic->check_count,last_state, p_mic->headset_state); 
+			schedule_work(&(p_mic->switch_data.work));
 		}
 		else
 		{
-			if(FactoryMode == DISABLE)
-				board_sysconfig(SYSCFG_AUXMIC, SYSCFG_DISABLE);
-			
-			mic.headset_state = HEADSET_3_POLE;
-			printk("%s: 3-pole inserted : ear_adc=%d\n", __func__, adc);
+			mod_timer(&p_mic->timer,jiffies + msecs_to_jiffies(p_mic->headset_pd->debounce_ms));
+			p_mic->check_count++;
 		}
+	}
+}
 
-		mic.pluging = DISABLE;
-
-		if(FactoryMode == DISABLE)
-		sync_use_mic = DISABLE;
-
-		switch_set_state(&mic.sdev, mic.headset_state);
+static void getIMSI_work_func(struct work_struct *work)
+{
+	SIMLOCK_SIM_DATA_t* simdata = GetSIMData();
+	
+	if(simdata == NULL)
+	{		
+		FactoryMode = DISABLE;
+	}
+	else
+	{	
+		FactoryMode = strncmp(simdata->imsi_string, "999999999999999", IMSI_DIGITS) == 0 ?  ENABLE : DISABLE;
+	}
+	
+	if(FactoryMode == ENABLE)
+	{
+		if(mic.headset_state)
+		{
+			if(mic.hsbst == ENABLE && mic.headset_state == HEADSET_4_POLE)
+				board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
+		}
 	}
 }
 
@@ -540,37 +465,103 @@ Return type     : irqreturn_t
 ------------------------------------------------------------------------------*/
 irqreturn_t hs_isr(int irq, void *dev_id)
 {
-	struct mic_t *p = &mic;
-	int pre_data = -1;
-	int loopcnt = 0;
+	struct mic_t *p = (struct mic_t *)dev_id;
+	int attached_state = 0; 
 
-	wake_lock_timeout(&p->det_wake_lock, WAKE_LOCK_TIME);
-	p->pluging = ENABLE;
-	sync_use_mic = ENABLE;
+	p->hstime = ktime_get();	
+        wake_lock_timeout(&p->det_wake_lock, WAKE_LOCK_TIME);
 
-	printk("%s: Before state : %d \n", __func__, p->headset_state);
-
-	/* debounce headset jack.  don't try to determine the type of
-	 * headset until the detect state is true for a while.
-	 */
-	while (1)
+	if (p->headset_pd->check_hs_state)
 	{
-		p->headset_pd->check_hs_state(&(p->headset_state));
-		if (pre_data == p->headset_state)
-			loopcnt++;
-		else
-			loopcnt = 0;
+		sync_use_mic = ENABLE;
+		p->hsirq_triggerred = 1 ;
+		p->headset_pd->check_hs_state(&attached_state);
+		set_irq_type(mic.hsirq, (attached_state) ? IRQF_TRIGGER_RISING : IRQF_TRIGGER_FALLING);
+		mod_timer(&p->timer,jiffies + msecs_to_jiffies(p->headset_pd->debounce_ms));
+	}
+	else
+	{
+		unsigned long int val = readl(io_p2v(REG_ANACR12));
 
-		pre_data = p->headset_state;
+		val = val & MIC_PLUGIN_MASK;
+		/*If the value read from anacr12 is zero and still the ISR is invoked, then the interrupt is
+		* deemed illegal*/
+		if(!val)
+		      return IRQ_NONE;
 
-		if (loopcnt >= HEADSET_DETECT_REF_COUNT)
-			break;
-		
-		msleep(30);
+		p->headset_state = (p->headset_state) ? 0 : 1;
+		set_irq_type(mic.hsirq, (p->headset_state) ? IRQF_TRIGGER_FALLING : IRQF_TRIGGER_RISING);
+		sync_use_mic = ENABLE;
+		schedule_work(&(p->switch_data.work));
 	}
 
-	set_irq_type(p->headset_pd->hsirq, (p->headset_state) ? IRQF_TRIGGER_RISING : IRQF_TRIGGER_FALLING);
-	determine_state_func();
+	return IRQ_HANDLED; 
+}
+
+/*------------------------------------------------------------------------------
+Function name   : hs_buttonisr
+Description     : interrupt handler
+
+Return type     : irqreturn_t
+------------------------------------------------------------------------------*/
+irqreturn_t hs_buttonisr(int irq, void *dev_id)
+{
+	ktime_t r, temp;
+	unsigned int val = 0;
+#ifdef REG_DEBUG
+	unsigned long val_anacr2, val_cmc, val_auxen;
+#endif
+
+	printk ("%s: HS_BUTTONISR (<<<) : status=%d \n", __func__, mic.hsbst);
+
+	if (mic.hsbst == DISABLE || mic.headset_state != HEADSET_4_POLE)
+		return IRQ_HANDLED;
+
+	/* Read the ANACR12 register value to check if the interrupt being
+	* serviced by the ISR is spurious */
+	val = readl(io_p2v(REG_ANACR12));
+	temp = ktime_get();
+	r = ktime_sub(temp,mic.hsbtime);
+	if((r.tv.sec > 0) || (r.tv.nsec > REF_TIME))
+	{
+		mic.hsbtime = temp;
+	}
+	else
+	{
+		printk ("%s: HS_BUTTONISR appeared frequently (r.tv.sec=%d, r.tv.nsec=%d) status=%d \n", __func__, r.tv.sec, r.tv.nsec, mic.hsbst);
+		// return IRQ_HANDLED;
+	}
+	/* If the value read from the ANACR12 register is greater than the
+	* threshold, schedule the workqueue */
+	printk("%s: REG_ANACR12=%x\n", __func__,val);
+
+#ifdef REG_DEBUG
+	val_anacr2 = readl(io_p2v(REG_ANACR2));
+	val_cmc = readl(io_p2v(REG_AUXMIC_CMC));
+	val_auxen = readl(io_p2v(REG_AUXMIC_AUXEN));
+	printk("%s: REG_ANACR2=%x, REG_AUXMIC_CMC=%x, REG_AUXMIC_AUXEN=%x\n", __func__, val_anacr2, val_cmc, val_auxen);
+#endif
+
+	if (val >= KEY_PRESS_THRESHOLD)
+	{
+		board_sysconfig(SYSCFG_AUXMIC, SYSCFG_ENABLE);
+
+		key_resolved = 0;
+		key_count[0] = key_count[1] = key_count[2] = 0;
+
+		sync_use_mic = ENABLE;
+		schedule_delayed_work(&(mic.input_work), KEY_BEFORE_PRESS_REF_TIME);
+		printk("%s: set_button => PRESS\n", __func__);
+		set_button(PRESS); 
+	}
+	else
+	{
+		pr_info("Headset Button press detected for a illegal interrupt\n");
+		printk("%s: set_button => RELEASE\n", __func__);
+		set_button(RELEASE);
+	}
+
+	printk ("%s: HS_BUTTONISR (>>>) : status=%d \n", __func__, mic.hsbst);
 
 	return IRQ_HANDLED;
 }
@@ -581,22 +572,22 @@ Description     : Register sysfs device for headset
 It uses class switch from kernel/common/driver/switch
 Return type     : int
 ------------------------------------------------------------------------------*/
+#ifdef CONFIG_SWITCH
 int hs_switchinit(struct mic_t *p)
 {
 	int result = 0;
-	p->sdev.name = "h2w";
+	p->switch_data.sdev.name = "h2w";
 
-	result = switch_dev_register(&p->sdev);
+	result = switch_dev_register(&p->switch_data.sdev);
 	if (result < 0)
 	{
-		printk("%s: Failed to register device\n", __func__);
 		return result;
 	}
-	
-	INIT_DELAYED_WORK(&(p->type_work), type_work_func);
-	
+	INIT_WORK(&(p->switch_data.work), switch_work);
+	INIT_DELAYED_WORK(&(mic.type_work), type_work_func);
 	return 0;
-} 
+}
+#endif
 
 /*------------------------------------------------------------------------------
 Function name   : hs_inputdev
@@ -605,6 +596,7 @@ Return type     : int
 ------------------------------------------------------------------------------*/
 int  hs_inputdev(struct mic_t *p)
 {
+	int key = 0;
 	int result = 0;
 
 	// Allocate struct for input device
@@ -619,9 +611,9 @@ int  hs_inputdev(struct mic_t *p)
 	// we have only one button on headset so only one possible
 	// value KEY_SEND used here.
 	set_bit(EV_KEY, p->headset_button_idev->evbit);
-	input_set_capability(p->headset_button_idev, EV_KEY, KEY_BCM_HEADSET_BUTTON);
-	input_set_capability(p->headset_button_idev, EV_KEY, KEY_VOLUMEUP);
-	input_set_capability(p->headset_button_idev, EV_KEY, KEY_VOLUMEDOWN);
+
+	for(key = 0; key < MAX_KEYS ; key++)
+		input_set_capability(p->headset_button_idev, EV_KEY, hs_keycodes[key]);
 
 	p->headset_button_idev->name = "bcm_headset";
 	p->headset_button_idev->phys = "headset/input0";
@@ -642,81 +634,87 @@ int  hs_inputdev(struct mic_t *p)
 	return 0;
 }
 
-static int hs_remove(struct platform_device *pdev)
+/*------------------------------------------------------------------------------
+Function name   : hs_unregsysfs
+Description     : Unregister sysfs and input device for headset
+Return type     : int
+------------------------------------------------------------------------------*/
+int hs_unregsysfs(struct mic_t *p)
 {
-	if (mic.headset_pd)
-	{
-		free_irq(mic.headset_pd->hsirq, NULL);
-		free_irq(mic.headset_pd->hsbirq, NULL);
-	}
-		
-	destroy_workqueue(mic.headset_workqueue);	
-	
-#ifdef USE_SERVICEMODE
-{
-	int i; 
+	int result = 0;
 
-	for (i = 0; i < ARRAY_SIZE(hs_Attrs); i++)
-	{
-		device_remove_file(&pdev->dev, hs_Attrs+i);
-	}
-}
+#ifdef CONFIG_SWITCH
+	result = cancel_work_sync(&(p->switch_data.work));
+	if (result)
+		return result;
+
+	switch_dev_unregister(&p->switch_data.sdev);
 #endif
 
-	input_unregister_device(mic.headset_button_idev);
-	switch_dev_unregister(&mic.sdev);	
 	return 0;
 }
 
-static int hs_suspend(struct platform_device *pdev, pm_message_t state)
+int hs_unreginputdev(struct mic_t *p)
 {
-	//Clear IRQ12
-	CLEAR_IRQ_MICON;
-	printk("%s: Clear HSB irq12 \n", __func__);	
+	input_unregister_device(p->headset_button_idev);
+	return 0;
+}
+
+/*------------------------------------------------------------------------------
+Function name   : BrcmHeadsetIoctl
+Description     : communication method to/from the user space
+
+Return type     : int
+------------------------------------------------------------------------------*/
+static int hs_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	switch (cmd)
+	{
+	case BCM_HEADSET_IOCTL_STATUS:
+		return mic.headset_state;
+	}
+
+	return 0;
+}
+
+/* File operations on HEADSET device */
+static struct file_operations hs_fops = {
+	ioctl:hs_ioctl,
+};
+
+static int hs_remove(struct platform_device *pdev)
+{
 	return 0;
 }
 
 static int __init hs_probe(struct platform_device *pdev)
 {
 	int result = 0;
-	mic.pluging = DISABLE;
-	mic.keypressing = INIT;
+	mic.hsmajor = 0;
+	mic.headset_state = 0;
+	mic.hsbtime.tv.sec = 0;
+	mic.hsbtime.tv.nsec = 0;
+	mic.headset_pd = NULL;
+	mic.check_count = 0;
 
+#ifdef CONFIG_SWITCH
 	result = hs_switchinit(&mic);
 	if (result < 0)
 		return result;
+#endif
 
 	result = hs_inputdev(&mic);
 	if (result < 0)
 		goto err;
 
-#ifdef USE_SERVICEMODE
-{
-	int i; 
-	int rc = EINVAL;
-
-	for (i = 0; i < ARRAY_SIZE(hs_Attrs); i++)
-	{
-		rc = device_create_file(&pdev->dev, hs_Attrs+i);
-		if (rc)
-		{
-			device_remove_file(&pdev->dev, hs_Attrs+i);
-		}
-	}
-
-	INIT_WORK(&Read_work, ReadADCfromFile);	
-	INIT_WORK(&Write_work, WriteADCtoFile);
-	
-}
-#endif
-
-	INIT_DELAYED_WORK(&(mic.imsi_work), getIMSI_work_func);
-	wake_lock_init(&mic.det_wake_lock, WAKE_LOCK_SUSPEND, "brcm_headset_det");
-	mic.headset_workqueue = create_singlethread_workqueue("brcm_headset_wq");
-	if (mic.headset_workqueue == NULL) {
-		printk("%s: Failed to create workqueue\n", __func__);
+	result = register_chrdev(mic.hsmajor, "BrcmHeadset", &hs_fops);
+	if(result < 0)
 		goto err1;
-	}
+	else if(result > 0 && (mic.hsmajor == 0))    /* this is for dynamic major */
+		mic.hsmajor = result;
+
+	wake_lock_init(&mic.det_wake_lock, WAKE_LOCK_SUSPEND, "sec_jack_det");
+	INIT_DELAYED_WORK(&(mic.imsi_work), getIMSI_work_func);
 
 	/* check if platform data is defined for a particular board variant */
 	if (pdev->dev.platform_data)
@@ -731,78 +729,79 @@ static int __init hs_probe(struct platform_device *pdev)
 		KEY2_THRESHOLD_U = mic.headset_pd->key2_threshold_u;
 		KEY3_THRESHOLD_L = mic.headset_pd->key3_threshold_l;
 		KEY3_THRESHOLD_U = mic.headset_pd->key3_threshold_u;
-		
-#ifdef USE_SERVICEMODE
-		queue_work(mic.headset_workqueue, &Read_work);
-#endif
-		
-		if (gpio_request(mic.headset_pd->hsgpio, "headset detect") < 0)
+
+		if (mic.headset_pd->hsgpio == 0)
+			mic.hsirq = mic.headset_pd->hsirq;
+		else
 		{
-			printk("%s: Could not reserve headset signal GPIO!\n", __func__);
-			goto err2;
+			setup_timer(&mic.timer, gpio_jack_timer, (unsigned long)&mic); // timer register. 
+
+			if (gpio_request(mic.headset_pd->hsgpio, "headset detect") < 0)
+			{
+				printk("%s: Could not reserve headset signal GPIO!\n", __func__);
+				goto err2;
+			}
+			gpio_direction_input(mic.headset_pd->hsgpio);
+			bcm_gpio_set_db_val(mic.headset_pd->hsgpio, 0x7);
+			mic.hsirq = gpio_to_irq(mic.headset_pd->hsgpio);
 		}
-		
-		gpio_direction_input(mic.headset_pd->hsgpio);
-		bcm_gpio_set_db_val(mic.headset_pd->hsgpio, 0x7);
-		mic.headset_pd->hsirq = gpio_to_irq(mic.headset_pd->hsgpio);		
+		mic.hsbirq = mic.headset_pd->hsbirq;
 	}
-    	else
+	else
 	{
+		mic.hsirq = platform_get_irq(pdev, 0);
+		mic.hsbirq = platform_get_irq(pdev, 1);
+	}
+
+	printk("%s: HS irq %d\n", __func__, mic.hsirq);
+	printk("%s: HSB irq %d\n", __func__, mic.hsbirq);
+	result = request_irq(mic.hsbirq, hs_buttonisr,  IRQF_NO_SUSPEND, "BrcmHeadsetButton",  (void *) NULL);
+	mic.hsbst = DISABLE;
+
+	if(result < 0)
+		goto err2;
+
+	result = request_irq(mic.hsirq, hs_isr,(IRQF_DISABLED | IRQF_TRIGGER_RISING|IRQF_TRIGGER_FALLING | IRQF_NO_SUSPEND), "BrcmHeadset",  &mic);
+	if(result < 0)
+	{
+		free_irq(mic.hsbirq, &mic);
 		goto err2;
 	}
+
+	printk("%s: BrcmHeadset: module inserted >>>> . Major number is = %d\n", __func__, mic.hsmajor);
 
 	/* Set the ANACR2 bit for mic power down */
 	board_sysconfig(SYSCFG_AUXMIC, SYSCFG_INIT);
 	board_sysconfig(SYSCFG_HEADSET, SYSCFG_INIT);
 
 	/*Fix the audio path is wrong when headset already plugged in the device  then boot device case.*/
-	mic.headset_pd->check_hs_state(&mic.headset_state);
-	set_irq_type(mic.headset_pd->hsirq, (mic.headset_state) ? IRQF_TRIGGER_RISING : IRQF_TRIGGER_FALLING);
-	determine_state_func();	
-	queue_delayed_work(mic.headset_workqueue, &(mic.imsi_work), GET_IMSI_REF_TIME);
-
-	result = request_threaded_irq(mic.headset_pd->hsbirq, NULL, hs_buttonisr,  (IRQF_ONESHOT |IRQF_NO_SUSPEND), "BrcmHeadsetButton",  NULL);
-	if(result < 0)
-		goto err2;
-
-	DISABLE_IRQ_MICON;
-
-	result = request_threaded_irq(mic.headset_pd->hsirq, NULL, hs_isr, (IRQF_ONESHOT|IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING | IRQF_NO_SUSPEND), "BrcmHeadset",  NULL);
-	if(result < 0)
+	if (mic.headset_pd->hsgpio != 0)
 	{
-		free_irq(mic.headset_pd->hsbirq, &mic);
-		goto err2;
+		mic.headset_pd->check_hs_state(&mic.headset_state);
+		printk("%s: headset_state:%d\n", __func__, mic.headset_state); 
+		set_irq_type(mic.hsirq, (mic.headset_state) ? IRQF_TRIGGER_RISING : IRQF_TRIGGER_FALLING);
+		schedule_work(&(mic.switch_data.work));
+		schedule_delayed_work(&(mic.imsi_work), GET_IMSI_REF_TIME);
 	}
-	enable_irq_wake(mic.headset_pd->hsirq);
-	set_irq_type(mic.headset_pd->hsirq, (mic.headset_state) ? IRQF_TRIGGER_RISING : IRQF_TRIGGER_FALLING);
 
 	return 0;
 
-err2:  destroy_workqueue(mic.headset_workqueue);	
-err1:  input_unregister_device(mic.headset_button_idev);
-err: switch_dev_unregister(&mic.sdev);
+err2:   unregister_chrdev(mic.hsmajor,"BrcmHeadset");
+	if(mic.headset_pd->hsgpio)
+		del_timer_sync(&mic.timer);
+err1:   hs_unreginputdev(&mic);
+err:    hs_unregsysfs(&mic);
 	return result;
 }
 
 static struct platform_driver headset_driver = {
 	.probe = hs_probe,
 	.remove = hs_remove,
-	.suspend = hs_suspend,
 	.driver = {
 		.name = "bcmheadset",
 		.owner = THIS_MODULE,
 	},
 };
-
-int get_headset_state(void)
-{
-    if (mic.headset_state) 
-        return 1;
-    else
-        return 0;
-}
-
-EXPORT_SYMBOL(get_headset_state);
 
 /*------------------------------------------------------------------------------
 Function name   : BrcmHeadsetModuleInit
@@ -823,6 +822,18 @@ Return type     : int
 ------------------------------------------------------------------------------*/
 void __exit BrcmHeadsetModuleExit(void)
 {
+	// Cancel work of event notification to UI and unregister switch dev.
+#ifdef CONFIG_SWITCH	
+	cancel_work_sync(&mic.switch_data.work);
+	switch_dev_unregister(&mic.switch_data.sdev);
+#endif
+	cancel_delayed_work_sync(&mic.imsi_work);
+	if(mic.headset_pd->hsgpio)
+		del_timer_sync(&mic.timer);
+	free_irq(mic.hsirq, &mic.switch_data);
+	free_irq(mic.hsbirq, NULL);
+	input_unregister_device(mic.headset_button_idev);	
+	unregister_chrdev(mic.hsmajor,"BrcmHeadset");
 	return platform_driver_unregister(&headset_driver);
 }
 

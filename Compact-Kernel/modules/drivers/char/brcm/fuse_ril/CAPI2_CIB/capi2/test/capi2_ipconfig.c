@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_ipconfig.c
@@ -19,50 +21,87 @@ the GPL, without Broadcom's express prior written consent.
 ****************************************************************************/
 
 
-#ifdef UNDER_LINUX
+#ifndef UNDER_LINUX
+#include <string.h>
+#include <stdlib.h>
+#else
 #include <linux/random.h>
 #define rand get_random_int
 #endif
 
 // orig headers
+#if 0
 #include "mobcom_types.h"
 #include "resultcode.h"
-#ifndef UNDER_LINUX
 #include "common_defs.h"
+#ifndef UNDER_LINUX
 #include "crypto_def.h"
 #include "crypto_api.h"
+#endif
 #include "uelbs_api.h"
 #include "taskmsgs.h"
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+//#include "pch_def.h"
+//#include "capi2_stk_ds.h"
+//#include "capi2_pch_msg.h"
+//#include "capi2_gen_msg.h"
 #include "capi2_reqrep.h"
 #include "capi2_ss_api.h"
 #include "capi2_phonectrl_api.h"
 #include "capi2_reqrep.h"
 #include "capi2_pch_api.h"
-#else
-#include "common_defs.h"
-#include "md5.h"
-#include "uelbs_api.h"
+#endif 
+
+#if 1
+#include "mobcom_types.h"
+#include "resultcode.h"
 #include "taskmsgs.h"
+#include "consts.h"
+
+#include "xdr_porting_layer.h"
+#include "xdr.h"
+
+#include "common_defs.h"
+#include "uelbs_api.h"
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
 #include "assert.h"
+#include "sysparm.h"
+
+#include "engmode_api.h"
+
+///
+#include "i2c_drv.h"
 #include "ecdc.h"
+#include "uelbs_api.h"
 #include "common_sim.h"
+#include "sim_def.h"
+#include "stk_def.h"
 #include "mti_trace.h"
+#include "logapi.h"
+#include "log.h"
+#include "tones_def.h"
 #include "phonebk_def.h"
 #include "phonectrl_def.h"
+#include "phonectrl_api.h"
 #include "rtc.h"
 #include "netreg_def.h"
 #include "ms_database_old.h"
 #include "ms_database_api.h"
+#include "netreg_util.h"
+#include "netreg_api_old.h"
+#include "netreg_api.h"
 #include "common_sim.h"
+#include "sim_def.h"
 #include "stk_def.h"
 #include "ostypes.h"
 #include "ss_def.h"
+#include "sim_api.h"
+#include "phonectrl_def.h"
+#include "isim_def.h"
 #include "pch_def.h"
 #include "pchex_def.h"
 #include "hal_em_battmgr.h"
@@ -79,9 +118,23 @@ the GPL, without Broadcom's express prior written consent.
 #include "engmode_api.h"
 #include "ms_database_old.h"
 #include "ms_database_api.h"
+#include "ss_api.h"
+#include "sms_api_atc.h"
+#include "sms_api_old.h"
+#include "sms_api.h"
+#include "cc_api_old.h"
+#include "sim_api_old.h"
+#include "sim_api.h"
+#include "phonebk_api_old.h"
+#include "phonebk_api.h"
+#include "phonectrl_api.h"
+#include "isim_api_old.h"
+#include "isim_api.h"
 
 #include "util_api.h"
 #include "dialstr_api.h"
+#include "stk_api_old.h"
+#include "stk_api.h"
 
 #include "pch_api_old.h"
 #include "pch_api.h"
@@ -89,18 +142,66 @@ the GPL, without Broadcom's express prior written consent.
 #include "ss_api_old.h"
 #include "lcs_cplane_rrlp_api.h"
 #include "cc_api.h"
+#include "netreg_util.h"
+#include "netreg_api.h"
+#include "lcs_ftt_api.h"
+#include "lcs_cplane_rrc_api.h"
+#include "lcs_cplane_shared_def.h"
 
 #include "capi2_mstruct.h"
+#include "capi2_sim_api.h"
+#include "capi2_phonectrl_api.h"
+#include "capi2_sms_api.h"
+#include "capi2_cc_api.h"
+#include "capi2_lcs_cplane_api.h"
+#include "capi2_ss_api.h"
+#include "capi2_phonebk_api.h"
+#include "capi2_cmd_resp.h"
+#include "capi2_phonectrl_api.h"
+//#include "capi2_gen_api.h"	
+
 #include "ipcproperties.h"
+#include "rpc_global.h"
+#include "rpc_ipc.h"
+#include "xdr_porting_layer.h"
 #include "xdr.h"
+#include "rpc_api.h"
 
 #include "capi2_global.h"
-#include "capi2_ss_api.h"
-#include "capi2_phonectrl_api.h"
+#include "capi2_mstruct.h"
+#include "capi2_cc_ds.h"
+#include "capi2_cc_msg.h"
+#include "capi2_msnu.h"
+#include "ss_api_old.h"
+#include "ss_lcs_def.h"
+#include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
+#include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
+#include "capi2_sms_msg.h"
+#include "capi2_phonectrl_api.h"
+#include "capi2_phonectrl_msg.h"
+#include "capi2_isim_msg.h"
+#include "capi2_sim_msg.h"
+#include "capi2_ss_msg.h"
+#include "capi2_stk_ds.h"
+#include "capi2_stk_msg.h"
+#include "lcs_cplane_api.h"
+#include "capi2_lcs_msg.h"
+#include "lcs_cplane_rrc_api.h"
+#include "lcs_cplane_shared_def.h"
+#include "lcs_ftt_api.h"
+#include "capi2_phonebk_msg.h"
+#include "capi2_lcs_cplane_msg.h"
+#define MAX_CC_GET_ELEM_SIZE  64
+#include "capi2_gen_msg.h"
+
+#include "capi2_reqrep.h"
 #endif
+
 #include "capi2_ipconfig.h"
 
+#include "md5.h"
 
 
 //******************************************************************************
@@ -452,9 +553,6 @@ Boolean Capi2ReadDnsSrv( PCHProtConfig_t *ipcnfg,
 	*primaryDns2 = 0;
 	*secDns2 = 0;
 
-	id = id;
-	len_pid = len_pid;
-	
 	IPCPDEBUG(("ReadDnsSrv, read dns_servers"));
 	/* if option length == 2, no option data */
 	if (ipcnfg->length ==  0)                                 
@@ -475,11 +573,11 @@ Boolean Capi2ReadDnsSrv( PCHProtConfig_t *ipcnfg,
 	while ( t_len < (ipcnfg->length) )                      
     {                                                                     
 		input = (u_char *) &ipcnfg->options[t_len];  	                  
-   		GETSHORT(protocol, input);                                        
-   		GETCHAR(len_pid, input);
-   		GETCHAR(code, input);
-   		GETCHAR(id, input);
-   		GETSHORT(len, input);			
+        GETSHORT(protocol, input);
+        GETCHAR(len_pid, input);
+        GETCHAR(code, input);
+        GETCHAR(id, input);
+        GETSHORT(len, input);
 		switch (protocol)				                                  
     	{									                              
 			/* Check LCP option from the Network */

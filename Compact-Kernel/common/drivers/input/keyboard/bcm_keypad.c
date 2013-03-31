@@ -122,13 +122,7 @@ EXPORT_SYMBOL(key_class);
 struct device *key_dev;
 EXPORT_SYMBOL(key_dev);
  
-/* DLG start */
-#if defined(CONFIG_MFD_MAX8986)
 extern int max8986_ponkey_check(void);
-#elif defined(CONFIG_MFD_D2041)
-extern int d2041_onkey_check(void);
-#endif
-/* DLG end */ 
  
 static ssize_t key_show(struct device *dev, struct device_attribute *attr, char *buf);
 static DEVICE_ATTR(key , S_IRUGO, key_show, NULL);
@@ -151,13 +145,7 @@ static ssize_t key_show(struct device *dev, struct device_attribute *attr, char 
 
     KEYDBG("[KEY] Keyshort state KPSSR0: %d, KPSSR1:%d \n", kb_matrix[0], kb_matrix[1]);
 
-/* DLG start */
-#if defined(CONFIG_MFD_MAX8986)
     ponkey_pressed = max8986_ponkey_check();
-#elif defined(CONFIG_MFD_D2041)
-	ponkey_pressed = d2041_onkey_check();
-#endif
-/* DLG end */
 
     if ( kb_matrix[0] || kb_matrix[1] || ponkey_pressed) 
     {

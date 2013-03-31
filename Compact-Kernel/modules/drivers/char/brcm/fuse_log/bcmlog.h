@@ -206,10 +206,10 @@ int CpCrashDumpInProgress( void );
  **/
 #define BCMLOG_OUTDEV_NONE		0		///<	undefined or disabled
 #define BCMLOG_OUTDEV_PANIC		1		///<	panic partition / MTD
-#define BCMLOG_OUTDEV_SDCARD		2		///<	sdcard
+#define BCMLOG_OUTDEV_SDCARD	2		///<	sdcard
 #define BCMLOG_OUTDEV_RNDIS		3		///<	MTT/RNDIS
 #define BCMLOG_OUTDEV_UART		4		///<	UART
-#define BCMLOG_OUTDEV_ACM			5		///<	ACM/OBEX
+#define BCMLOG_OUTDEV_ACM		5		///<	ACM/OBEX
 #define BCMLOG_OUTDEV_FFS			6		///<	FFS / MTD
 /**
  *	CP crash dump target device
@@ -223,16 +223,6 @@ int CpCrashDumpInProgress( void );
  *	Get runtime log device
  **/
 int BCMLOG_GetRunlogDevice( void ) ;
-
-/**
- *	Set runtime log device
- **/
-void BCMLOG_SetRunlogDevice( int run_log_dev) ;
-
-/**
- *	Get runtime SD log file size in bytes
- **/
-int BCMLOG_GetSdFileMax ( void ) ;
 
 /**
  *	Get CP crash dump device

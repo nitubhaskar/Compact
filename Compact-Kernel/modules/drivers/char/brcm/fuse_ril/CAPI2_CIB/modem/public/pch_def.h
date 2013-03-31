@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   pch_def.h
@@ -518,13 +520,12 @@ typedef struct
     UInt8     packet_filter_id;             ///< See above notes for R7 Support of network bearer control.
 	UInt8	  evaluation_precedence_idx;
 	UInt8	  protocol_number;              ///< IPv4 protocol ID or IPv6 next header
-	                                        ///< COMPONENT_TYPE_PROT_ID_NEXT_HDR
 	Boolean   present_SrcAddrMask;          ///< IPv4 remote addr and mask
 	                                        ///< COMPONENT_TYPE_IPV4_REMOTE_ADDR
 	Boolean   present_IPv6SrcAddrMask;      ///< IPv6 remote  addr and mask
 	                                        ///< COMPONENT_TYPE_IPV6_REMOTE_ADDR
 	Boolean   present_prot_num;             ///< IPv4 protocol ID or IPv6 next header
-	                                        ///< COMPONENT_TYPE_LOCAL_PORT or COMPONENT_TYPE_REMOTE_PORT
+	                                        ///< COMPONENT_TYPE_PROT_ID_NEXT_HDR
 	Boolean   present_dst_port_range;       ///< local port range
 	                                        ///< COMPONENT_TYPE_LOCAL_PORT_RANGE	
 	Boolean   present_src_port_range;       ///< remote port range
@@ -1471,11 +1472,6 @@ typedef struct
 	UInt8	detach;
 }PCH_ClientID_t;
 
-typedef struct
-{
-	Boolean         valid;
-	ClientInfo_t    clientInfo;
-} PCHClientInfo_t;
 
 typedef struct
 {
@@ -1507,11 +1503,6 @@ typedef struct
 	PCHGPRS_DeactivateCb_t	pchDeactivateCb;
 	PCHGPRS_DataStateCb_t	pchDataStateCb;
 	PDPDefaultContext_t		*pDefaultContext;
-	PCHClientInfo_t         pchActivateClientInfo;
-	PCHClientInfo_t         pchActivateSecClientInfo;
-	PCHClientInfo_t         pchModifyClientInfo;
-	PCHClientInfo_t         pchDeactivateClientInfo;
-	PCHClientInfo_t         pchDataStateClientInfo;
 } PCHContextTbl_t;
 
 #define PDP_MAX_FILTERS_PER_DC		24

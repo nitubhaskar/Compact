@@ -88,15 +88,6 @@ config MFD_MAX8986
          If you say yes here you will get support for Maxim Max8986 PMU chip.
          This includes voltage regulators, RTC, DVS,GPIO,battery charging etc
 
-config MFD_MAX8999_REV0
-        bool "Support for Maxim MAX8999 Rev 0 variant"
-        depends on MFD_MAX8986
-        select MFD_CORE
-        ---help---
-         Say yes to support Maxim 8999 rev0 variant. Max8999 rev 0 adds more
-	 current capability on CSR, provides programmability on IOSR and adds
-	 manual reset button.
-
 config MAX8986_WORKAROUND
 	bool "Support for i2c algo workaround"
 	depends on MFD_MAX8986
@@ -520,12 +511,6 @@ config MFD_JANZ_CMODIO
 	  carrier board. This device is a PCI to MODULbus bridge which may
 	  host many different types of MODULbus daughterboards, including
 	  CAN and GPIO controllers.
-
-config MFD_D2041
-	tristate "Support for D2041 PMIC"
-	select MFD_CORE
-	help
-	  This is the core driver for the Dialog D2041 chip.
 
 endif # MFD_SUPPORT
 

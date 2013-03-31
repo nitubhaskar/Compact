@@ -40,14 +40,8 @@ void KRIL_SRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 /*+ Band Selection sh0515.lee +*/
 void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSrilSetBand_t *tdata);
 /*- Band Selection sh0515.lee -*/
-
-/*+20110824 HKPARK SLAVE BAND SELECTION*/
-void KRIL_SRIL_SetBandHandler2(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSrilSetBand2_t *tdata);
-/*-20110824 HKPARK SLAVE BAND SELECTION*/
-
 /*+ Ciphering Mode sh0515.lee /  Integrity Mode sh0515.lee +*/
-void KRIL_SRIL_SetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata);
-CAPI2_MS_Element_t KRIL_SRIL_GetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata);
+void KRIL_SRIL_SetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata);CAPI2_MS_Element_t KRIL_SRIL_GetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata);
 /*- Ciphering Mode sh0515.lee /  Integrity Mode sh0515.lee -*/
 
 int KRIL_SRIL_requestOemSvcGetHsdpaPhyCategoryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
@@ -59,3 +53,4 @@ int KRIL_SRIL_requestOemSvcGetHsupaPhyCategoryHandler(void *ril_cmd, Kril_CAPI2I
 void KRIL_SRIL_requestOemSvcSetHsupaPhyCategoryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp,  int hsupa_phy_cat );
 #endif  // _K_SRIL_HANDLER_H
 
+

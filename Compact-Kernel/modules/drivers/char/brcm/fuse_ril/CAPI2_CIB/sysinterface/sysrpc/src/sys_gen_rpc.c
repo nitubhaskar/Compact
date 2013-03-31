@@ -25,6 +25,9 @@
 #define UNDEF_SYS_GEN_MIDS
 #define DEFINE_SYS_GEN_MIDS_NEW
 
+#ifndef UNDER_LINUX
+#include "string.h"
+#endif
 #include "mobcom_types.h"
 #include "resultcode.h"
 #include "taskmsgs.h"

@@ -21,8 +21,8 @@
 /* **FIXME** MAG - Athena sysparm addrs/sizes; may be different for other */
 /* CIB platforms */
 #define PARM_IND_BASE               0x80050000
-#define PARM_IND_SIZE               0x80000
-#define PARM_DEP_BASE               0x800D0000
+#define PARM_IND_SIZE               0x40000
+#define PARM_DEP_BASE               0x80090000
 #define PARM_DEP_SIZE		        0x10000
 
 #define SYSPARM_INDEX_READY_INDICATOR   0x5059504D	/* SYSP */
@@ -50,7 +50,7 @@
 /* from audio_consts.h */
 #define AUDIO_MODE_NUMBER   9	/* /< Up to 10 Audio Profiles (modes) after 213x1 */
 #define AUDIO_MODE_NUMBER_VOICE	(AUDIO_MODE_NUMBER*2)
-#define	AUDIO_APP_NUMBER		12	/*  /< number of profiles (applications), can be extended */
+#define	AUDIO_APP_NUMBER		8	/*  /< 6 applications, can be extended */
 #define NUM_OF_ENTRY_IN_DSP_VOICE_VOLUME_TABLE		15 
 #define NUM_OF_ENTRY_IN_FM_RADIO_DIGITAL_VOLUME		15
 
@@ -139,9 +139,8 @@ typedef struct {
 	unsigned int flag;
 } SysparmIndex_t;
 
-// Echo Canceller Comfort noise and NLP sysparms RON 4/28/2005
-typedef struct
-{
+/* Echo Canceller Comfort noise and NLP sysparms RON 4/28/2005 */
+typedef struct {
 	Int16			echo_cng_bias;
 	UInt16			echo_cng_enable;
 	UInt16			echo_nlp_max_supp;
@@ -247,10 +246,6 @@ typedef struct {
 	UInt16 speaker_pga;	/* level, index */
 	Int16 ext_speaker_pga;	/* dB */
 	Int16 ext_speaker_preamp_pga;	/* dB */
-	UInt16 ext_speaker_param1;  //customer pmu param1
-	UInt16 ext_speaker_param2;  //customer pmu param2
-	UInt16 ext_speaker_param3;  //customer pmu param3
-	UInt16 ext_speaker_param4;  //customer pmu param4	
 	UInt16 mic_pga;		/* level, index */
 	UInt16 max_mic_gain;
 	//UInt32 audvoc_anacr0;
@@ -285,7 +280,7 @@ typedef struct {
 	UInt16 MPMbiquad_cfg;
 #endif
 	UInt16 sidetone;
-	UInt16 audio_dsp_sidetone;  //means dsp_sidetone_enable.
+	UInt16 audio_dsp_sidetone;	/* means dsp_sidetone_enable. */
 	UInt16 audio_dl_idle_pga_adj;
 	UInt16 audio_ns_ul_idle_adj;
 	//UInt16 dac_filter_scale_factor;
@@ -323,9 +318,9 @@ typedef struct {
 	UInt16 noise_suppression_enable;
 	UInt16 noise_supp_input_gain;
 	UInt16 noise_supp_output_gain;
-	UInt16 voice_dac[ NUM_OF_VOICE_COEFF ];  //should be NUM_OF_DAC_VOICE_COEFF
-	UInt16 voice_adc[ NUM_OF_VOICE_COEFF ];		//should be NUM_OF_ADC_VOICE_COEFF
-	// UInt16 voice_adc_16khz[ NUM_OF_VOICE_COEFF ];  //should be NUM_OF_ADC_VOICE_COEFF
+	UInt16 voice_dac[NUM_OF_VOICE_COEFF];	/* should be NUM_OF_DAC_VOICE_COEFF */
+	UInt16 voice_adc[NUM_OF_VOICE_COEFF];	/* should be NUM_OF_ADC_VOICE_COEFF */
+	//UInt16 voice_adc_16khz[NUM_OF_VOICE_COEFF];	/* should be NUM_OF_ADC_VOICE_COEFF */
 	UInt16 voice_dac_hpf_enable;
 	UInt16 voice_dac_hpf_cutoff_freq;
 	UInt16 ecLen;
@@ -371,9 +366,9 @@ typedef struct {
 	UInt16 volume_step_size;
 	UInt16 num_supported_volume_levels;
 
-	UInt16 voice_volume_max;  //in dB.
-	UInt16 voice_volume_init; //in dB.
-	UInt16 dsp_voice_vol_tbl[NUM_OF_ENTRY_IN_DSP_VOICE_VOLUME_TABLE]; //in dB.
+	UInt16 voice_volume_max;	/* in dB. */
+	UInt16 voice_volume_init;	/* in dB. */
+    UInt16 dsp_voice_vol_tbl[NUM_OF_ENTRY_IN_DSP_VOICE_VOLUME_TABLE]; /* in dB. */
 	
 	UInt16 sidetone_output_gain;
 	UInt16 sidetone_biquad_scale_factor;
@@ -399,19 +394,20 @@ typedef struct {
 
 #ifdef DSP_FEATURE_SUBBAND_INF_COMP
 	UInt16 dl_subband_compander_flag;
-	Subband_Compander_Band_t fir1;    //midband
-	Subband_Compander_Band_t fir2;    //lowband
-	Subband_Compander_Band_t stream3; //highband
-	Subband_Compander_Band_t fullband; //fullband
+	Subband_Compander_Band_t fir1;	/* midband */
+	Subband_Compander_Band_t fir2;	/* lowband */
+	Subband_Compander_Band_t stream3;	/* highband */
+	Subband_Compander_Band_t fullband;	/* fullband */
 	Int16 compress_coef_fir1[DSP_SUBBAND_COMPANDER_FIR_TAP];
 	Int16 compress_coef_fir2[DSP_SUBBAND_COMPANDER_FIR_TAP];
 #endif
 
-	UInt32 AUDVOC_MIXER_IIR[60];  //Mixer output IIR
+	UInt32 AUDVOC_MIXER_IIR[60];	/* Mixer output IIR */
 
 	UInt16 omega_voice_enable;
 	UInt16 omega_voice_max_allowed_gain_spread_dB;
-	OmegaVoice_Sysparm_t omega_voice_parms[NUM_OMEGA_VOICE_MAX_VOLUME_LEVELS];
+	OmegaVoice_Sysparm_t
+	    omega_voice_parms[NUM_OMEGA_VOICE_MAX_VOLUME_LEVELS];
 	AlphaVoice_Sysparm_t alpha_voice_parms;
 	KappaVoice_Sysparm_t kappa_voice_parms;
 
@@ -425,7 +421,6 @@ typedef struct {
 	UInt16 echo_cancel_mic2_input_gain; 
 	UInt16 echo_cancel_mic2_output_gain;
 	UInt16 echo_mic2_feed_forward_gain;
-
 
 	UInt16 echo_path_change_detection_threshold;				//Used in echo path change detection
 	Smart_Compressor_t smart_compressor;    				//smart compressor
@@ -461,6 +456,6 @@ UInt8 *SYSPARM_GetGPIO_Default_Value(UInt8 gpio_index);
 
 /* retrieves IMEI string from sysparms only (doesn't check MS database */
 /* value, as is done in CP sysparm.c) */
-Boolean SYSPARM_GetImeiStr(UInt8 sim_id, UInt8 * inImeiStrPtr);
+Boolean SYSPARM_GetImeiStr(UInt8 * inImeiStrPtr);
 
 #endif /* _BCM_FUSE_SYSPARM_CIB_H_ */

@@ -31,7 +31,6 @@
 #include "taskmsgs.h"
 #include "ipcinterface.h"
 #include "ipcproperties.h"
-#include "hal_em_battmgr.h"
 
 #include "rpc_ipc.h"
 #include "xdr_porting_layer.h"
@@ -65,28 +64,6 @@ static struct class *rpc_class;
 void BcmRpc_SetApSleep( bool inSleep )
 {
     RPC_SetProperty( RPC_PROP_AP_IN_DEEPSLEEP, (inSleep?1:0) );
-}
-
-/***************************************************************************/
-/**
- *  Called by Linux power management system when battery charger is inserted/
- *  removed. Api will notify CP of current charger insertion state (this is
- *  required to enable battery temp notifications from CP).
- *
- *  @param  inChargerIn (in)   TRUE if charger is inserted, FALSE if removed
- */
-void BcmRpc_SetChargerInserted( bool inChargerIn )
-{
-    UInt32 battFlags = 0;
-
-    RPC_GetProperty( RPC_PROP_CHARGER_PRESENT, &battFlags);
-
-	if( inChargerIn )
-		battFlags |= BRCM_BATTMGR_CHARGER_PLUGGED;
-	else
-		battFlags &= ~(UInt32)BRCM_BATTMGR_CHARGER_PLUGGED;
-
-    RPC_SetProperty( RPC_PROP_CHARGER_PRESENT, battFlags );
 }
 
 static int rpc_open(struct inode *inode, struct file *filp)
@@ -173,18 +150,18 @@ int RPC_Init(void)
     else
     {
         // not AP only mode, so check for CP RPC being ready before continuing...
-        sleepCount = 0;
-        do
-        {
-    	    RPC_GetProperty(RPC_PROP_CP_TASKMSGS_READY, &cpReady);
-    	    if ( !cpReady )
-    	    {
-                msleep(CP_READY_CHECK_SLEEP_MS);
-                sleepCount++;
-    	    }
-    	} while ( !cpReady && (sleepCount < MAX_ITERATIONS_CP_READY_CHECK));
+    sleepCount = 0;
+    do
+    {
+	    RPC_GetProperty(RPC_PROP_CP_TASKMSGS_READY, &cpReady);
+	    if ( !cpReady )
+	    {
+            msleep(CP_READY_CHECK_SLEEP_MS);
+            sleepCount++;
+	}
+	} while ( !cpReady && (sleepCount < MAX_ITERATIONS_CP_READY_CHECK));
 
-        RPC_DEBUG(DBG_INFO, "RPC_Init: cpReady:%d sleepcount:%d sleeptime:%dms\n", (int)cpReady, (int)sleepCount, (int)(sleepCount*CP_READY_CHECK_SLEEP_MS) );
+    RPC_DEBUG(DBG_INFO, "RPC_Init: cpReady:%d sleepcount:%d sleeptime:%dms\n", (int)cpReady, (int)sleepCount, (int)(sleepCount*CP_READY_CHECK_SLEEP_MS) );
     }
 
     return (cpReady?0:-1);
@@ -268,11 +245,6 @@ void *rpc_mem_alloc(size_t size)
 
     if(size <= MEM_SIZE_THRESHOLD)
         return(kmalloc(size, GFP_KERNEL));
-
-    if(size > MAX_PERM_MEM){
-        RPC_DEBUG(DBG_ERROR, "rpc_mem_alloc: Try to allocate a huge memory block, size: %d\n",size);
-        return(kmalloc(size, GFP_KERNEL));
-    }
 
     for(i=0;i<PERM_KMEM_NUM;i++){
         if(atomic_cmpxchg(&perm_pkmem_flag[i],1,0)){

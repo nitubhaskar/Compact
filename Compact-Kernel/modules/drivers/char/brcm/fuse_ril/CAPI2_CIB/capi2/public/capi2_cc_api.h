@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_cc_api.h
@@ -149,8 +151,7 @@ void CAPI2_CcApi_GetLastCallExitCause(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETCALLNUMBER_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: CAPI2_CcApi_GetCallNumber_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: CAPI2_CcApi_GetCallNumber_Rsp_t
 **/
 void CAPI2_CcApi_GetCallNumber(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 
@@ -162,8 +163,7 @@ void CAPI2_CcApi_GetCallNumber(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETCALLINGINFO_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: CAPI2_CcApi_GetCallingInfo_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: CAPI2_CcApi_GetCallingInfo_Rsp_t
 **/
 void CAPI2_CcApi_GetCallingInfo(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 
@@ -174,8 +174,7 @@ void CAPI2_CcApi_GetCallingInfo(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETALLCALLSTATES_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetAllCallStates_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetAllCallStates_Rsp_t
 **/
 void CAPI2_CcApi_GetAllCallStates(ClientInfo_t* inClientInfoPtr);
 
@@ -186,8 +185,7 @@ void CAPI2_CcApi_GetAllCallStates(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETALLCALLINDEX_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetAllCallIndex_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetAllCallIndex_Rsp_t
 **/
 void CAPI2_CcApi_GetAllCallIndex(ClientInfo_t* inClientInfoPtr);
 
@@ -198,8 +196,7 @@ void CAPI2_CcApi_GetAllCallIndex(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETALLHELDCALLINDEX_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetAllHeldCallIndex_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetAllHeldCallIndex_Rsp_t
 **/
 void CAPI2_CcApi_GetAllHeldCallIndex(ClientInfo_t* inClientInfoPtr);
 
@@ -210,8 +207,7 @@ void CAPI2_CcApi_GetAllHeldCallIndex(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETALLACTIVECALLINDEX_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetAllActiveCallIndex_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetAllActiveCallIndex_Rsp_t
 **/
 void CAPI2_CcApi_GetAllActiveCallIndex(ClientInfo_t* inClientInfoPtr);
 
@@ -222,8 +218,7 @@ void CAPI2_CcApi_GetAllActiveCallIndex(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETALLMPTYCALLINDEX_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetAllMPTYCallIndex_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetAllMPTYCallIndex_Rsp_t
 **/
 void CAPI2_CcApi_GetAllMPTYCallIndex(ClientInfo_t* inClientInfoPtr);
 
@@ -308,8 +303,7 @@ void CAPI2_CcApi_GetConnectedLineID(ClientInfo_t* inClientInfoPtr, UInt8 callInd
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GET_CALL_PRESENT_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: CAPI2_CcApi_GetCallPresent_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: CAPI2_CcApi_GetCallPresent_Rsp_t
 **/
 void CAPI2_CcApi_GetCallPresent(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 
@@ -321,8 +315,7 @@ void CAPI2_CcApi_GetCallPresent(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GET_INDEX_STATE_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: CAPI2_CcApi_GetCallIndexInThisState_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: CAPI2_CcApi_GetCallIndexInThisState_Rsp_t
 **/
 void CAPI2_CcApi_GetCallIndexInThisState(ClientInfo_t* inClientInfoPtr, CCallState_t inCcCallState);
 
@@ -446,8 +439,7 @@ void CAPI2_CcApi_GetDataCallIndex(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETCALLCLIENT_INFO_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: CAPI2_CcApi_GetCallClientInfo_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: CAPI2_CcApi_GetCallClientInfo_Rsp_t
 **/
 void CAPI2_CcApi_GetCallClientInfo(UInt32 tid, UInt8 clientID, UInt8 callIndex);
 
@@ -573,8 +565,7 @@ void CAPI2_CcApi_GetVideoCallParam(ClientInfo_t* inClientInfoPtr);
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CC_GETCCM_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetCCM_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetCCM_Rsp_t
 **/
 void CAPI2_CcApi_GetCCM(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 
@@ -669,8 +660,7 @@ void CAPI2_CcApi_GetDtmfToneTimer(ClientInfo_t* inClientInfoPtr, UInt8 inCallInd
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CCAPI_GETTIFROMCALLINDEX_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetTiFromCallIndex_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetTiFromCallIndex_Rsp_t
 **/
 void CAPI2_CcApi_GetTiFromCallIndex(ClientInfo_t* inClientInfoPtr, CallIndex_t inCallIndex);
 
@@ -695,8 +685,7 @@ void CAPI2_CcApi_IsSupportedBC(ClientInfo_t* inClientInfoPtr, BearerCapability_t
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CCAPI_IS_BEARER_CAPABILITY_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetBearerCapability_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetBearerCapability_Rsp_t
 **/
 void CAPI2_CcApi_GetBearerCapability(ClientInfo_t* inClientInfoPtr, CallIndex_t inCallIndex);
 
@@ -1095,8 +1084,7 @@ void CAPI2_CcApi_SetElement(ClientInfo_t* inClientInfoPtr, CcApi_Element_t inEle
 	
 	 @n@b Responses 
 	 @n@b MsgType_t: ::MSG_CCAPI_GET_ELEMENT_RSP
-	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_CcApi_GetElement_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or ::RESULT_ERROR	 @n@b ResultData: ::CAPI2_CcApi_GetElement_Rsp_t
 **/
 void CAPI2_CcApi_GetElement(ClientInfo_t* inClientInfoPtr, CcApi_Element_t inElement, void *inCompareObjPtr);
 

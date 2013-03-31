@@ -35,8 +35,7 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_SRIL_CHECK_PIN_STATUS  	0x500
-#define BCM_SRIL_CHECK_PIN2_FDN		0x501
+#define BCM_SRIL_CHECK_PIN_STATUS  	0x500#define BCM_SRIL_CHECK_PIN2_FDN		0x501
 
 #define SI_CHV_NOT_AVAILABLE 0
 #define SI_CHV_NEEDED 1
@@ -64,13 +63,9 @@ typedef enum
 	CHVSTATUS_CHV_MEMORY_PROBLEM = SI_CHV_MEMORY_PROBLEM	///< Memory problem status word returned by SIM 
 } KrilCHVStatus_t;
 
-extern Boolean gFdnSkip[DUAL_SIM_SIZE];
+extern CallIndex_t  gUssdID;
+extern CallIndex_t  gPreviousUssdID;
 
-extern UInt16 KRIL_USSDSeptet2Octet(
-		UInt8 *p_src,
-		UInt8 *p_dest,
-		UInt16 num_of_Septets
-		);
 PBK_Id_t fileid_to_pbk_id(int fileid)
 {
     PBK_Id_t pbk_id;
@@ -168,7 +163,7 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
     if (capi2_rsp != NULL)    	
-        KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler_state:0x%04X::result:%d\n", pdata->ril_cmd->SimId, pdata->handler_state, capi2_rsp->result);
+        KRIL_DEBUG(DBG_INFO, "KRIL_SRIL_SetCellBroadcastHandler_state:0x%04X::result:%d\n", pdata->handler_state, capi2_rsp->result);
 
     switch(pdata->handler_state)
     {
@@ -193,30 +188,30 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
                 pchnlIDs = NULL;
             }
 
-            KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]BCM_SendCAPI2Cmd: bCBEnabled[%d], mode[%d]\n", pdata->ril_cmd->SimId, tdata->bCBEnabled, mode);
-            KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]BCM_SendCAPI2Cmd: selectedId[%d], msgIdMaxCount[%d], msgIdCount[%d]\n", 
-				pdata->ril_cmd->SimId, tdata->selectedId, tdata->msgIdMaxCount, tdata->msgIdCount);
+            KRIL_DEBUG(DBG_INFO, "[SET_CB]BCM_SendCAPI2Cmd: bCBEnabled[%d], mode[%d]\n", tdata->bCBEnabled, mode);
+            KRIL_DEBUG(DBG_INFO, "[SET_CB]BCM_SendCAPI2Cmd: selectedId[%d], msgIdMaxCount[%d], msgIdCount[%d]\n", 
+				tdata->selectedId, tdata->msgIdMaxCount, tdata->msgIdCount);
 
             if (NULL != pchnlIDs)
             {
-                KRIL_DEBUG(DBG_ERROR/*DBG_INFO*/, "[SET_CB][%d]BCM_SendCAPI2Cmd: pchnlIDs[%s]\n", pdata->ril_cmd->SimId, pchnlIDs);
+                KRIL_DEBUG(DBG_ERROR/*DBG_INFO*/, "[SET_CB]BCM_SendCAPI2Cmd: pchnlIDs[%s]\n", pchnlIDs);
             }
 
             if ( 0 == mode ) //Active (My channels)
             {
                 // Always remove all existing CBMI IDs from the search list and from SIM EF_CBMI first.
                 // The actual CBMI activation will be done in the next state 'BCM_RemoveCBMI'.
-                CAPI2_SmsApi_RemoveAllCBChnlFromSearchList(InitClientInfo(pdata->ril_cmd->SimId));
+                CAPI2_SMS_RemoveAllCBChnlFromSearchList(GetNewTID(), GetClientID());
                 pdata->handler_state = BCM_RemoveCBMI;
             }
             else if ( 2 == mode ) //Active (All channels)
             {
-                CAPI2_SmsApi_SetCellBroadcastMsgTypeReq(InitClientInfo(pdata->ril_cmd->SimId), 2, NULL, NULL);
+                CAPI2_SMS_SetCellBroadcastMsgTypeReq(GetNewTID(), GetClientID(), 2, NULL, NULL);
                 pdata->handler_state = BCM_RESPCAPI2Cmd;
             }			
             else //turn-off
             {
-                CAPI2_SmsApi_SetCellBroadcastMsgTypeReq(InitClientInfo(pdata->ril_cmd->SimId), 1, NULL, NULL);
+                CAPI2_SMS_SetCellBroadcastMsgTypeReq(GetNewTID(), GetClientID(), 1, NULL, NULL);
                 pdata->handler_state = BCM_SMS_SetCBOff;
             }
             break;
@@ -227,7 +222,7 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             if(capi2_rsp->result != RESULT_OK )
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler BCM_RemoveCBMI Error state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+                KRIL_DEBUG(DBG_INFO, "[SET_CB]KRIL_SRIL_SetCellBroadcastHandler BCM_RemoveCBMI Error state[0x%04X]\n", pdata->handler_state);
                 return;
             }
 			
@@ -238,13 +233,13 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             if( tdata->bCBEnabled!=1 )
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler BCM_RemoveCBMI Error tdata->bCBEnabled[0x%04X]\n", pdata->ril_cmd->SimId, tdata->bCBEnabled);
+                KRIL_DEBUG(DBG_INFO, "[SET_CB]KRIL_SRIL_SetCellBroadcastHandler BCM_RemoveCBMI Error tdata->bCBEnabled[0x%04X]\n", tdata->bCBEnabled);
                 return;
             }
 		    
             //call CAPI2 API to activate the CBMI channel list.  <coding> is always NULL because SRIL RIL_REQUEST_SET_CELL_BROADCAST_CONFIG 
             // doesn't provide it. <mode> must =='0' at this state since we are to activate pchnIDs. 
-            CAPI2_SmsApi_SetCellBroadcastMsgTypeReq(InitClientInfo(pdata->ril_cmd->SimId), 0, pchnlIDs, NULL);
+            CAPI2_SMS_SetCellBroadcastMsgTypeReq(GetNewTID(), GetClientID(), 0, pchnlIDs, NULL);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
@@ -254,10 +249,11 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             if(capi2_rsp->result != RESULT_OK )
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-	   			KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+	   			KRIL_DEBUG(DBG_INFO, "[SET_CB]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
                 return;
             }
-            pdata->handler_state = BCM_FinishCAPI2Cmd;
+            CAPI2_SMS_StopReceivingCellBroadcastReq(GetNewTID(), GetClientID());
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
 
@@ -266,7 +262,7 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             if(capi2_rsp->result != RESULT_OK )
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-	   			KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+	   			KRIL_DEBUG(DBG_INFO, "[SET_CB]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
                 return;
             }
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
@@ -275,13 +271,13 @@ void KRIL_SRIL_SetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
 
         default:
         {
-            KRIL_DEBUG(DBG_ERROR, "[SET_CB][%d]handler_state:%lu error...!\n", pdata->ril_cmd->SimId, pdata->handler_state);
+            KRIL_DEBUG(DBG_ERROR, "handler_state:%lu error...!\n", pdata->handler_state);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }
     }
 
-    KRIL_DEBUG(DBG_INFO, "[SET_CB][%d]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+    KRIL_DEBUG(DBG_INFO, "[SET_CB]KRIL_SRIL_SetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
 
 }
 
@@ -291,7 +287,7 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
     if (capi2_rsp != NULL)    	
-        KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]KRIL_SRIL_GetCellBroadcastHandler_state:0x%04X::result:%d\n", pdata->ril_cmd->SimId, pdata->handler_state, capi2_rsp->result);
+        KRIL_DEBUG(DBG_INFO, "KRIL_SRIL_GetCellBroadcastHandler_state:0x%04X::result:%d\n", pdata->handler_state, capi2_rsp->result);
 
     switch(pdata->handler_state)
     {
@@ -299,10 +295,10 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
         {
             pdata->bcm_ril_rsp = kmalloc(sizeof(Kril_Cell_Broadcast_config), GFP_KERNEL);
             pdata->rsp_len = sizeof(Kril_Cell_Broadcast_config);
-            CAPI2_SmsApi_GetCBMI(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_SMS_GetCBMI(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_SMS_GetCBMI;
 
-                KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]BCM_SendCAPI2Cmd: pdata->rsp_len[%d]\n", pdata->ril_cmd->SimId, pdata->rsp_len);
+                KRIL_DEBUG(DBG_INFO, "[GET_CB]BCM_SendCAPI2Cmd: pdata->rsp_len[%d]\n", pdata->rsp_len);
             break;
         }
 
@@ -316,12 +312,12 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
 
             if(capi2_rsp->result == 147 /*SMS_CB_MIDS_DOES_NOT_EXIST*/ )
             {
-                KRIL_DEBUG(DBG_ERROR, "[GET_CB][%d]BCM_SMS_GetCBMI: SMS_CB_MIDS_DOES_NOT_EXIST(%d)\n", pdata->ril_cmd->SimId, capi2_rsp->result);
+                KRIL_DEBUG(DBG_ERROR, "[GET_CB]BCM_SMS_GetCBMI: SMS_CB_MIDS_DOES_NOT_EXIST(%d)\n", capi2_rsp->result);
 				
                 rdata->msgIdMaxCount = 50;	//for Phone memory
 				
-                KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]BCM_RESPCAPI2Cmd: bCBEnabled[%d], msgIdCount[%d], msgIdMaxCount[%d], selectedId[%d]\n", 
-				                pdata->ril_cmd->SimId, rdata->bCBEnabled, rdata->msgIdCount, rdata->msgIdMaxCount, rdata->selectedId);
+                KRIL_DEBUG(DBG_INFO, "[GET_CB]BCM_RESPCAPI2Cmd: bCBEnabled[%d], msgIdCount[%d], msgIdMaxCount[%d], selectedId[%d]\n", 
+				                rdata->bCBEnabled, rdata->msgIdCount, rdata->msgIdMaxCount, rdata->selectedId);
 
                 pdata->handler_state = BCM_FinishCAPI2Cmd;
                 break;
@@ -329,7 +325,7 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             else if(capi2_rsp->result != RESULT_OK )
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+                KRIL_DEBUG(DBG_INFO, "[GET_CB]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
                 return;
             }
 
@@ -339,17 +335,17 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             // CAPI2's return list SMS_CB_MSG_IDS_t *rsp can be copied directly to rdata->msgIDs. 
             int * midList = (int *)(rdata->msgIDs);
 
-            KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]BCM_SendCAPI2Cmd: rsp->nbr_of_msg_id_ranges[%d]\n", pdata->ril_cmd->SimId, rsp->nbr_of_msg_id_ranges);
+            KRIL_DEBUG(DBG_INFO, "[GET_CB]BCM_SendCAPI2Cmd: rsp->nbr_of_msg_id_ranges[%d]\n", rsp->nbr_of_msg_id_ranges);
 
             for(i = 0 ; i < rsp->nbr_of_msg_id_ranges && rdata->msgIdCount < (CHNL_IDS_SIZE/sizeof(int)); i++)
             {
-                KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]BCM_SendCAPI2Cmd: A[%d].start_pos= %d, A[%d].stop_pos= %d\n", 
-                            pdata->ril_cmd->SimId, i, rsp->msg_id_range_list.A[i].start_pos, i, rsp->msg_id_range_list.A[i].stop_pos);
+                KRIL_DEBUG(DBG_INFO, "[GET_CB]BCM_SendCAPI2Cmd: A[%d].start_pos= %d, A[%d].stop_pos= %d\n", 
+                            i, rsp->msg_id_range_list.A[i].start_pos, i, rsp->msg_id_range_list.A[i].stop_pos);
 
                 if(rsp->msg_id_range_list.A[i].start_pos == rsp->msg_id_range_list.A[i].stop_pos){
                     if( rsp->msg_id_range_list.A[i].start_pos >= 0 && rsp->msg_id_range_list.A[i].start_pos < 1000 ){
                         midList[rdata->msgIdCount] = rsp->msg_id_range_list.A[i].start_pos;
-                        KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]BCM_SendCAPI2Cmd: midList[%d]= %d\n", pdata->ril_cmd->SimId, rdata->msgIdCount, midList[rdata->msgIdCount]);
+                        //KRIL_DEBUG(DBG_INFO, "[GET_CB]BCM_SendCAPI2Cmd: midList[%d]= %d\n", rdata->msgIdCount, midList[rdata->msgIdCount]);
                         rdata->msgIdCount ++;
                     }
 
@@ -358,7 +354,7 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
                     {
                         if( j >= 0 && j < 1000 ){
                             midList[rdata->msgIdCount] = j;
-                            KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]BCM_SendCAPI2Cmd: midList[%d]= %d\n", pdata->ril_cmd->SimId, rdata->msgIdCount, midList[rdata->msgIdCount]);
+                            //KRIL_DEBUG(DBG_INFO, "[GET_CB]BCM_SendCAPI2Cmd: midList[%d]= %d\n", rdata->msgIdCount, midList[rdata->msgIdCount]);
                             rdata->msgIdCount ++;
                         }
                     }
@@ -367,11 +363,11 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
 			
             if(rdata->msgIdCount >= (CHNL_IDS_SIZE/sizeof(int)) ){
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]RIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+                KRIL_DEBUG(DBG_INFO, "[GET_CB]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
                 return;
             }
 
-            CAPI2_SmsApi_RetrieveMaxCBChnlLength(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_SMS_RetrieveMaxCBChnlLength(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
@@ -381,7 +377,7 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
             if(capi2_rsp->result != RESULT_OK )
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+                KRIL_DEBUG(DBG_INFO, "[GET_CB]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
                 return;
             }
 
@@ -403,13 +399,13 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
         }
         default:
         {
-            KRIL_DEBUG(DBG_ERROR, "[GET_CB][%d]handler_state:%lu error...!\n", pdata->ril_cmd->SimId, pdata->handler_state);
+            KRIL_DEBUG(DBG_ERROR, "handler_state:%lu error...!\n", pdata->handler_state);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }
     }
 	
-    KRIL_DEBUG(DBG_INFO, "[GET_CB][%d]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->ril_cmd->SimId, pdata->handler_state);
+    KRIL_DEBUG(DBG_INFO, "[GET_CB]KRIL_SRIL_GetCellBroadcastHandler_return: state[0x%04X]\n", pdata->handler_state);
 
 }
 
@@ -429,7 +425,6 @@ void KRIL_SRIL_GetCellBroadcastHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
 //
 //******************************************************************************
 
-/* fixed build error : multiple definition of 'KRIL_USSDSeptet2Octet'
 UInt16 KRIL_USSDSeptet2Octet(
 	UInt8 *p_src,
 	UInt8 *p_dest,
@@ -505,7 +500,7 @@ UInt16 KRIL_USSDSeptet2Octet(
 	*p_temp = 0x00;
 	return( avail_cha_cnt );
 }
-*/
+
 
 /// Enum : Coding group : "Data Coding Scheme GSM 3.38, section 5"
 typedef enum
@@ -597,24 +592,11 @@ CharacterSet_t Util_GetCharacterSet(UInt8 inDcs)
 	return(charSet);
 }
 
-extern CallIndex_t gUssdID[DUAL_SIM_SIZE];
-extern CallIndex_t gPreviousUssdID[DUAL_SIM_SIZE];
-extern UInt32      gDialogID; // To use the same dialogID in the same USSD session
-
 void KRIL_SRIL_SendEncodeUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
-	UInt8 *p_temp;
-	UInt8 num_of_Octets;
 
-    if((BCM_SendCAPI2Cmd != pdata->handler_state)&&(NULL == capi2_rsp))
-    {
-        KRIL_DEBUG(DBG_ERROR,"capi2_rsp is NULL\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        return;
-    }
-
-    if (capi2_rsp != NULL)
+    if (capi2_rsp != NULL)    	
         KRIL_DEBUG(DBG_INFO, "handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
 
     switch(pdata->handler_state)
@@ -622,101 +604,49 @@ void KRIL_SRIL_SendEncodeUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         case BCM_SendCAPI2Cmd:
         {
             KrilSendUSSDInfo_t *tdata = (KrilSendUSSDInfo_t *)pdata->ril_cmd->data;
-
+			USSDString_t *ussd = kmalloc(sizeof(USSDString_t), GFP_KERNEL);
+			memset (ussd, 0x00, sizeof(USSDString_t));
             if(tdata->StringSize <= 0)
             {
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
+				kfree(ussd);
                 return;
             }
-
-            KRIL_DEBUG(DBG_INFO, "gUssdID[%d]:%d m_USSDString:%s used_size:%d\n", pdata->ril_cmd->SimId, gUssdID[pdata->ril_cmd->SimId], tdata->USSDString, tdata->StringSize);
-
-            if(gUssdID[pdata->ril_cmd->SimId] == CALLINDEX_INVALID) //new USSD request
+			
+            KRIL_DEBUG(DBG_INFO, "pdata->ril_cmd->CmdID:%d pdata->cmd 0x%0x dcs 0x%0x\n",pdata->ril_cmd->CmdID, pdata->cmd, tdata->dcs);
+            KRIL_DEBUG(DBG_INFO, "gUssdID:%d m_USSDString:%s used_size:%d\n", gUssdID, tdata->USSDString, tdata->StringSize);
+            if(gUssdID == CALLINDEX_INVALID) //new USSD request
             {
-                SsApi_UssdSrvReq_t* ussdSrvReq;
-                ClientInfo_t clientInfo;
+                pdata->bcm_ril_rsp = kmalloc(sizeof(KrilReceiveUSSDInfo_t), GFP_KERNEL);
+                pdata->rsp_len = sizeof(KrilReceiveUSSDInfo_t);
+                memset(pdata->bcm_ril_rsp, 0, pdata->rsp_len);
+                ussd->used_size = tdata->StringSize;
+				ussd->dcs = tdata->dcs;
 
-                gUssdID[pdata->ril_cmd->SimId] = 1;
-
-                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                clientInfo.simId = pdata->ril_cmd->SimId;
-                ussdSrvReq = kmalloc(sizeof(SsApi_UssdSrvReq_t), GFP_KERNEL);
-                if(!ussdSrvReq) {
-                    KRIL_DEBUG(DBG_ERROR, "unable to allocate pdata->bcm_ril_rsp buf\n");
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;                
-                }
-                else
-                {
-                    memset(ussdSrvReq, 0, sizeof(SsApi_UssdSrvReq_t));    
-                    pdata->cmdContext = ussdSrvReq;
-                    ussdSrvReq->fdnCheck = CONFIG_MODE_INVOKE;
-                    ussdSrvReq->stkCheck = CONFIG_MODE_INVOKE; // Refer to CP: SsApi_UssdSrvReq(.) of ss_api.c and ATCmd_CUSD_Handler(.) of at_ss.c
-                    ussdSrvReq->operation = SS_OPERATION_CODE_PROCESS_UNSTRUCTURED_SS_REQ;
-
-			if(Util_GetCharacterSet(tdata->dcs) == CHARACTER_SET_GSM_7_BIT_DEFAULT){
-				ussdSrvReq->ussdInfo.length = KRIL_USSDSeptet2Octet(tdata->USSDString,ussdSrvReq->ussdInfo.data,tdata->StringSize);
-				ussdSrvReq->ussdInfo.dcs = tdata->dcs;// 0xF;
-				num_of_Octets = ussdSrvReq->ussdInfo.length;
-				for(p_temp = ussdSrvReq->ussdInfo.data; num_of_Octets > 0; num_of_Octets--, p_temp++ )
-				{
-					if( *p_temp == 0x00 ) // #define	DEF_GSM_AT_SIGN			0x00		///< Used to mark '@' sign for Default GSM	
-					{
-						*p_temp = 0x80; //#define	CODE_PAGE_MTI_AT_SIGN	0x80		///< Used to mark '@' sign for CodePageMTI
-					}
+				if(Util_GetCharacterSet(tdata->dcs) == CHARACTER_SET_GSM_7_BIT_DEFAULT){
+					ussd->used_size = KRIL_USSDSeptet2Octet(tdata->USSDString,ussd->string,tdata->StringSize);
+					KRIL_DEBUG(DBG_INFO, "KRIL_SendUSSDHandler USSDSeptet2Octet : %d m_USSDString:%s used_size:%d\n", gUssdID, ussd->string, ussd->used_size);
+				}else{
+               		memcpy((void*)ussd->string, (void*)tdata->USSDString, ussd->used_size);
 				}
-
-			}else{
-				ussdSrvReq->ussdInfo.dcs = tdata->dcs;   
-				ussdSrvReq->ussdInfo.length = tdata->StringSize;
-				memcpy( ussdSrvReq->ussdInfo.data,tdata->USSDString, tdata->StringSize);
-			}
-					
-			if (TRUE == gFdnSkip[pdata->ril_cmd->SimId])
-			{
-				gFdnSkip[pdata->ril_cmd->SimId] = FALSE;
-				ussdSrvReq->fdnCheck = CONFIG_MODE_SUPPRESS;
-			}
-	
-                    CAPI2_SsApi_UssdSrvReq(&clientInfo, ussdSrvReq);
-                    gDialogID = clientInfo.dialogId;
-                    KRIL_DEBUG(DBG_INFO, "New USSD request: gDialogID=%x\n", (int)gDialogID);
-                    pdata->handler_state = BCM_RESPCAPI2Cmd;
-                }
+				
+				CAPI2_SS_SendUSSDConnectReq(GetNewTID(), GetClientID(), ussd);
             }
             else
             {
-                SsApi_DataReq_t apiDataReq={0};
-                ClientInfo_t clientInfo;
-
-                KRIL_DEBUG(DBG_INFO, "Existing USSD session: gDialogID: %ld\n", gDialogID);
-                apiDataReq.operation = SS_OPERATION_CODE_UNSTRUCTURED_SS_REQEST;
+	            pdata->bcm_ril_rsp = kmalloc(sizeof(KrilReceiveUSSDInfo_t), GFP_KERNEL);
+                pdata->rsp_len = sizeof(KrilReceiveUSSDInfo_t);
+                memset(pdata->bcm_ril_rsp, 0, pdata->rsp_len);
 				if(Util_GetCharacterSet(tdata->dcs) == CHARACTER_SET_GSM_7_BIT_DEFAULT){
-					apiDataReq.param.ussdInfo.length = KRIL_USSDSeptet2Octet(tdata->USSDString,apiDataReq.param.ussdInfo.data,tdata->StringSize);
-					apiDataReq.param.ussdInfo.dcs =  tdata->dcs;// 0xF;
-					num_of_Octets = apiDataReq.param.ussdInfo.length;
-					for(p_temp = apiDataReq.param.ussdInfo.data; num_of_Octets > 0; num_of_Octets--, p_temp++ )
-					{
-						if( *p_temp == 0x00 ) // #define	DEF_GSM_AT_SIGN 		0x00		///< Used to mark '@' sign for Default GSM	
-						{
-							*p_temp = 0x80; //#define	CODE_PAGE_MTI_AT_SIGN	0x80		///< Used to mark '@' sign for CodePageMTI
-						}
-					}
-				
-				}else{
-					apiDataReq.param.ussdInfo.dcs = tdata->dcs;	 
-					apiDataReq.param.ussdInfo.length = tdata->StringSize;
-					memcpy(apiDataReq.param.ussdInfo.data,
-							tdata->USSDString,
-							tdata->StringSize);
-				
-				}
-
-                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                clientInfo.simId = pdata->ril_cmd->SimId;
-                clientInfo.dialogId = gDialogID;
-                CAPI2_SsApi_DataReq(&clientInfo, &apiDataReq);
-                pdata->handler_state = BCM_RESPCAPI2Cmd;
+					ussd->used_size = KRIL_USSDSeptet2Octet(tdata->USSDString,ussd->string,tdata->StringSize);
+					CAPI2_SS_SendUSSDData(GetNewTID(), GetClientID(), gUssdID, tdata->dcs, ussd->used_size, (UInt8 *) ussd->string);
+					KRIL_DEBUG(DBG_INFO, "KRIL_SendUSSDHandler USSDSeptet2Octet : %d m_USSDString:%s used_size:%d\n", gUssdID, ussd->string, ussd->used_size);
+											
+				}else
+                	CAPI2_SS_SendUSSDData(GetNewTID(), GetClientID(), gUssdID, tdata->dcs, tdata->StringSize, (UInt8 *) tdata->USSDString);
             }
+			kfree(ussd);
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
         }
         break;
 
@@ -724,36 +654,91 @@ void KRIL_SRIL_SendEncodeUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         {
             if (capi2_rsp->result != RESULT_OK)
             {
-                KRIL_DEBUG(DBG_INFO, "BCM_RESPCAPI2Cmd:: capi2_rsp->result=%d !=RESULT_OK\n", capi2_rsp->result);
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            else if (capi2_rsp->msgType == MSG_STK_CC_SETUPFAIL_IND)
-            {
-                StkCallSetupFail_t *rsp = (StkCallSetupFail_t *) capi2_rsp->dataBuf;
-                KRIL_DEBUG(DBG_ERROR, "STK block the request::failRes:%d\n", rsp->failRes);
-                // The USSD session is released. Reset the session related global variables.
-                gDialogID = 0;
-                gUssdID[pdata->ril_cmd->SimId] = CALLINDEX_INVALID;
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
             }
             else
             {
-                 if ((capi2_rsp->msgType == MSG_SSAPI_USSDSRVREQ_RSP) ||
-                     (capi2_rsp->msgType == MSG_SSAPI_DATAREQ_RSP ))
-                 {
-                    // Do nothing. MSG_CLIENT_SS_SRV_{RSP|REL|IND} will trigger the sending of RIL_UNSOL_ON_USSD
-                    pdata->handler_state = BCM_FinishCAPI2Cmd;
-                 }
-                 else
-                 {
-                    // The USSD session is released. Reset the session related global variables.
-                    gDialogID = 0;
-                    gUssdID[pdata->ril_cmd->SimId] = CALLINDEX_INVALID;
-                    pdata->handler_state = BCM_ErrorCAPI2Cmd;
-                 }
+                int i;
+                USSDataInfo_t *rsp = (USSDataInfo_t *) capi2_rsp->dataBuf;
+                KrilReceiveUSSDInfo_t *rdata = (KrilReceiveUSSDInfo_t *) pdata->bcm_ril_rsp;
+
+                KRIL_DEBUG(DBG_INFO, "call_index:%d service_type:%d oldindex:%d newindex:%d prob_tag:%d prob_code:%d err_code:%d code_type:0x%x used_size:%d\n", rsp->call_index,rsp->ussd_data.service_type,rsp->ussd_data.oldindex,rsp->ussd_data.newindex,rsp->ussd_data.prob_tag,
+                rsp->ussd_data.prob_code,rsp->ussd_data.err_code,rsp->ussd_data.code_type,rsp->ussd_data.used_size);
+
+                if (USSD_REQUEST == rsp->ussd_data.service_type || 
+                	   USSD_REGISTRATION == rsp->ussd_data.service_type)
+                {
+                    rdata->type = 1;
+                }
+                else if (USSD_NOTIFICATION == rsp->ussd_data.service_type)
+                {
+                    rdata->type = 0;
+                }
+                else if (USSD_RELEASE_COMPLETE_RETURN_RESULT == rsp->ussd_data.service_type)
+                {
+                    rdata->type = 2;
+                    if (rsp->ussd_data.used_size < 0)
+                    {
+                        pdata->handler_state = BCM_FinishCAPI2Cmd;
+                        return;
+                    }
+                }
+                else if (USSD_FACILITY_RETURN_RESULT == rsp->ussd_data.service_type)
+                {
+                    if (rsp->ussd_data.used_size > 0)
+                    {
+                        rdata->type = 1;
+                    }
+                    if (rsp->ussd_data.used_size < 0)
+                    {
+                        rdata->type = 0;
+                        memset(rdata->USSDString, 0, PHASE1_MAX_USSD_STRING_SIZE+1);
+                        pdata->handler_state = BCM_FinishCAPI2Cmd;
+                return;
             }
-         }
-         break;
+                }
+                else if (USSD_FACILITY_REJECT == rsp->ussd_data.service_type ||
+                            USSD_RELEASE_COMPLETE_REJECT == rsp->ussd_data.service_type)
+                {
+                    gUssdID = CALLINDEX_INVALID;
+                    rdata->type = 4;
+                    pdata->handler_state = BCM_FinishCAPI2Cmd;
+                    return;
+                }
+                else if (USSD_FACILITY_RETURN_ERROR == rsp->ussd_data.service_type ||
+                            USSD_RELEASE_COMPLETE_RETURN_ERROR == rsp->ussd_data.service_type)
+                {
+                    gUssdID = CALLINDEX_INVALID;
+                    rdata->type = 5;
+                }
+                else if (USSD_RESEND == rsp->ussd_data.service_type)
+                {
+                    if (gUssdID == rsp->ussd_data.oldindex)
+                    {
+                        KrilSendUSSDInfo_t *tdata = (KrilSendUSSDInfo_t *)pdata->ril_cmd->data;
+                        gUssdID = rsp->ussd_data.newindex;
+                        CAPI2_SS_SendUSSDData(GetNewTID(), GetClientID(), gUssdID, 0x0F, tdata->StringSize, (UInt8 *) tdata->USSDString);
+                    }
+            else
+            {
+                        gUssdID = CALLINDEX_INVALID;
+                        gPreviousUssdID = CALLINDEX_INVALID;
+                        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+                   }
+                    return;
+                }
+                rdata->Length = rsp->ussd_data.used_size;
+                rdata->codetype = rsp->ussd_data.code_type;
+
+                for (i = 0 ; i < rdata->Length ; i++)
+                    KRIL_DEBUG(DBG_TRACE2, "string:0x%x\n", rsp->ussd_data.string[i]);
+
+                memset(rdata->USSDString, 0, PHASE1_MAX_USSD_STRING_SIZE+1);
+                memcpy(rdata->USSDString, rsp->ussd_data.string, rdata->Length);
+                pdata->handler_state = BCM_FinishCAPI2Cmd;
+            }
+        }
+        break;
 
         default:
         {
@@ -763,10 +748,6 @@ void KRIL_SRIL_SendEncodeUSSDHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         }
     }
 }
-
-
-
-
 #endif
 void KRIL_SRIL_PhoneBookStorageInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
@@ -887,7 +868,7 @@ void KRIL_SRIL_PhoneBookStorageInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi
         }
 
             // handle those supported by CP
-            CAPI2_PbkApi_SendInfoReq(InitClientInfo(pdata->ril_cmd->SimId), pbk_id);
+            CAPI2_PBK_SendInfoReq(GetNewTID(), GetClientID(), pbk_id);
 
             pdata->handler_state = BCM_RESPCAPI2Cmd;
         break;
@@ -946,7 +927,7 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
 
-    KRIL_DEBUG(DBG_TRACE,"pdata->handler_state:0x%lX\n", pdata->handler_state);
+    KRIL_DEBUG(DBG_ERROR,"pdata->handler_state:0x%lX\n", pdata->handler_state);
 
     if (capi2_rsp && capi2_rsp->result != RESULT_OK)
     {
@@ -970,9 +951,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		pdata->rsp_len = sizeof(KrilPhonebookGetEntry_t );
 		end_index = start_index;
             PBK_Id_t pbk_id = fileid_to_pbk_id(cmd_data->fileid);
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_id : %d!!\n", pbk_id);
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:start_index : %d!!\n", start_index);
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:end_index : %d!!\n", end_index);
 
             if (pbk_id == 0)
             {
@@ -995,7 +973,7 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 
             // handle those supported by CP
-            CAPI2_PbkApi_SendReadEntryReq(InitClientInfo(pdata->ril_cmd->SimId), pbk_id, start_index, end_index);
+            CAPI2_PBK_SendReadEntryReq(GetNewTID(), GetClientID(), pbk_id, start_index, end_index);
 
             pdata->handler_state = BCM_RESPCAPI2Cmd;
         break;
@@ -1010,7 +988,7 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		USIM_PBK_EXT_DATA_t	*pbk_etc_rec = (USIM_PBK_EXT_DATA_t *)&rsp->usim_adn_ext;
 		int temp_length = 0;
 
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:BCM_RESPCAPI2Cmd!!\n");
+                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:BCM_RESPCAPI2Cmd!!\n");
             if (MSG_PBK_ENTRY_DATA_RSP != capi2_rsp->msgType)	//HJKIM_ADN
             {
                 KRIL_DEBUG(DBG_ERROR,"RIL_REQUEST_GET_PHONEBOOK_ENTRY: Receive error MsgType:0x%x...!\n", capi2_rsp->msgType);
@@ -1029,16 +1007,13 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
             
 
 
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->rsp_len : %d\n", pdata->rsp_len);
-
-
             {
                 PBK_ENTRY_DATA_RESULT_t data_result = (PBK_ENTRY_DATA_RESULT_t)rsp->data_result;
 
             ril_rsp = (KrilPhonebookGetEntry_t  *)pdata->bcm_ril_rsp;
 
 
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: data_result : %d\n", (int) data_result);
+                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: data_result : %d\n", (int) data_result);
 
 
                 switch(data_result)
@@ -1046,10 +1021,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			case PBK_ENTRY_VALID_NOT_LAST:
 				ril_rsp->index = pbk_rec->location;
 				ril_rsp->next_index = rsp->next_valid_index;    // assuming continuous
-				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: PBK_ENTRY_VALID_NOT_LAST\n");
-
-				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pbk_rec->location : %d\n", pbk_rec->location);
-				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->next_index  : %d\n", ril_rsp->next_index );
 
                     break;
                     
@@ -1106,10 +1077,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
                 ril_rsp->length_name = (int)alpha_data->alpha_size + 1;
 
 
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->alpha_data : %s\n", alpha_data->alpha);
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: strlen(alpha_data->alpha) : %d\n", strlen(alpha_data->alpha));
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: alpha_data->alpha_coding: %d\n", alpha_data->alpha_coding);
-
                 switch(alpha_data->alpha_coding)
                 {
 			case ALPHA_CODING_UCS2_80:
@@ -1158,8 +1125,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 			break;
                 }
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->dataTypeAlphas[0]: %d\n",  ril_rsp->name_datatpye);
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->alphaTags[0] : %s\n", ril_rsp->name);
 
             }
 //Phone Number            
@@ -1167,9 +1132,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			int num_len = strlen(pbk_rec->number);
 			ril_rsp->length_number = num_len;
 
-			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: number: %s\n", (char *)pbk_rec->number);
-			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  num_len: %d\n",  num_len);
-			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->lengthNumbers[0]: %d\n",  ril_rsp->length_number);
 
 			memset( ril_rsp->number, 0, sizeof(num_len) + 1);
 
@@ -1181,10 +1143,9 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			}
 
 			memcpy(ril_rsp->number, (char *)pbk_rec->number, num_len);
-			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->numbers[0]: %s\n", ril_rsp->number);
 
 			}
-			KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_etc_rec->num_of_email: %d\n", pbk_etc_rec->num_of_email);
+			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_etc_rec->num_of_email: %d\n", pbk_etc_rec->num_of_email);
 
 //Email
 	if((pbk_etc_rec->num_of_email >= 1 ) && (pbk_etc_rec->email[0].alpha_size > 0) &&( rsp->pbk_id ==PB_3G_GLOBAL))
@@ -1211,10 +1172,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		}
 		else
 			memset(ril_rsp->email, 0, sizeof(email_data->alpha) + 2);
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: email_valid : %s\n", email_valid);
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->email_data : %s\n", email_data->alpha);
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->lengthAlphas[2]: %d\n",  ril_rsp->length_email);
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: email_data->alpha_size: %d\n",  email_data->alpha_size);
 
 		if( email_valid )
 		{
@@ -1278,13 +1235,11 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 
             }
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->dataTypeAlphas[2]: %d\n",  ril_rsp->email_datatpye);
-		KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->alphaTags[2] : %s\n", ril_rsp->email);
 		
         }
             pdata->handler_state = BCM_FinishCAPI2Cmd;
 
-                KRIL_DEBUG(DBG_TRACE,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->handler_state : %d\n", pdata->handler_state);
+                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->handler_state : %d\n", pdata->handler_state);
 
         break;
         }
@@ -1317,9 +1272,8 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
             KrilPhonebookAccess_t *cmd_data_fdn = (KrilPhonebookAccess_t *)pdata->ril_cmd->data;
 		if((cmd_data_fdn->fileid == 0x6F3B)&&(cmd_data_fdn->pin2  != NULL))
 		{
-		        KRIL_DEBUG(DBG_ERROR,"HJKIM > CAPI2 KRIL_SRIL_AccessPhoneBookEnteryHandler pincheck:%s\n", cmd_data_fdn->pin2 );
 
-	            	CAPI2_SimApi_SendVerifyChvReq(InitClientInfo(pdata->ril_cmd->SimId), CHV2, cmd_data_fdn->pin2);
+	            	CAPI2_SIM_SendVerifyChvReq(GetNewTID(), GetClientID(), CHV2, cmd_data_fdn->pin2);
 	            	pdata->handler_state = BCM_SRIL_CHECK_PIN2_FDN;
 			break;
 		}
@@ -1351,8 +1305,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
             UInt8 num_length = cmd_data->numberLength;
 
             USIM_PBK_EXT_DATA_t *usim_adn_ext_data = NULL;    // FixMe
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: alphaTag %s \n",  cmd_data->alphaTag);
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: number %s \n", cmd_data->number);
 
 
             PBK_Id_t pbk_id = fileid_to_pbk_id(cmd_data->fileid);
@@ -1365,10 +1317,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 			return;
 		}
 
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: alphaTagDCS %d \n", cmd_data->alphaTagDCS);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: emailTagDCS %d \n", cmd_data->emailTagDCS);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: [EF_type] pbk_id %d \n", pbk_id);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: command %d \n", cmd_data->command);
 
 
             switch(cmd_data->command)
@@ -1381,7 +1329,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 
 		if(cmd_data->emailLength > 0)
 		{
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: Email saving with DCS : %d \n", emailalpha_coding);
 			usim_adn_ext_data = kmalloc(sizeof(USIM_PBK_EXT_DATA_t),GFP_KERNEL);
 			memset(usim_adn_ext_data , 0x00 , sizeof(USIM_PBK_EXT_DATA_t));
 			usim_adn_ext_data->num_of_email=1;
@@ -1402,7 +1349,7 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 			usim_adn_ext_data->email[0].alpha_size = 0;
 			usim_adn_ext_data->email[0].alpha_coding = 0;
 		}
-		CAPI2_PbkApi_SendUpdateEntryReq(InitClientInfo(pdata->ril_cmd->SimId), pbk_id,
+		CAPI2_PBK_SendUpdateEntryReq(GetNewTID(), GetClientID(), pbk_id,
 			special_fax_num, index, type_of_number,
 			(char *)cmd_data->number, alpha_coding, alpha_size, (UInt8 *)cmd_data->alphaTag,
 			usim_adn_ext_data);
@@ -1419,14 +1366,14 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 
 
                 KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: DELETE  \n");
-
+ 
 		usim_adn_ext_data = kmalloc(sizeof(USIM_PBK_EXT_DATA_t),GFP_KERNEL);
 		memset(usim_adn_ext_data , 0x00 , sizeof(USIM_PBK_EXT_DATA_t));
 		usim_adn_ext_data->num_of_email=0;
 		usim_adn_ext_data->email[0].alpha_size = 0;
 		usim_adn_ext_data->email[0].alpha_coding = 0;
-          
-            CAPI2_PbkApi_SendUpdateEntryReq(InitClientInfo(pdata->ril_cmd->SimId), pbk_id,
+           
+            CAPI2_PBK_SendUpdateEntryReq(GetNewTID(), GetClientID(), pbk_id,
                 special_fax_num, index, 0,
                 NULL, 0, 0, NULL,
                 usim_adn_ext_data);
@@ -1461,7 +1408,7 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 		}
 
 
-           CAPI2_PbkApi_SendUpdateEntryReq(InitClientInfo(pdata->ril_cmd->SimId), pbk_id,
+            CAPI2_PBK_SendUpdateEntryReq(GetNewTID(), GetClientID(), pbk_id,
                 special_fax_num, index, type_of_number,
                 (char *)cmd_data->number, alpha_coding, alpha_size, (UInt8 *)cmd_data->alphaTag,
                 usim_adn_ext_data);
@@ -1616,8 +1563,8 @@ extern UInt16 Select_Mf_Path;
 #define SIM_GetMfPathLen() ( sizeof(Select_Mf_Path) / sizeof(UInt16) )
 #define SIM_GetMfPath() (&Select_Mf_Path)
 
-//extern void CAPI2_SMS_GetSMSStorageStatus(UInt32 tid, UInt8 clientId, SmsStorage_t storageType);
-//extern void CAPI2_MS_GetElement(UInt32 tid, UInt8 clientId, MS_Element_t inElemType);
+extern void CAPI2_SMS_GetSMSStorageStatus(UInt32 tid, UInt8 clientId, SmsStorage_t storageType);
+extern void CAPI2_MS_GetElement(UInt32 tid, UInt8 clientId, MS_Element_t inElemType);
 
 static unsigned char sms_rec_no = 0; 
 
@@ -1652,7 +1599,7 @@ void KRIL_SRIL_ReadSMSFromSIMHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			memset(pdata->bcm_ril_rsp, 0, pdata->rsp_len);
 			sms_rec_no = *recno;
 			KRIL_DEBUG(DBG_ERROR,"[READ_SMS] sms_rec_no: %d\n", sms_rec_no);
-		    CAPI2_SimApi_SendRecordEFileReadReq(InitClientInfo(pdata->ril_cmd->SimId), APDUFILEID_EF_SMS, (KRIL_GetSimAppType(pdata->ril_cmd->SimId) == SIM_APPL_2G)?APDUFILEID_DF_TELECOM : APDUFILEID_USIM_ADF, *recno, SIM_SMS_REC_LEN, SIM_GetMfPathLen(), SIM_GetMfPath());
+		    CAPI2_SIM_SendRecordEFileReadReq(GetNewTID() ,GetClientID(), APDUFILEID_EF_SMS, (KRIL_GetSimAppType() == SIM_APPL_2G)?APDUFILEID_DF_TELECOM : APDUFILEID_USIM_ADF, *recno, SIM_SMS_REC_LEN, SIM_GetMfPathLen(), SIM_GetMfPath());
             pdata->handler_state = BCM_RESPCAPI2Cmd;
         }
         break;
@@ -1678,11 +1625,11 @@ void KRIL_SRIL_ReadSMSFromSIMHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
 				if( pSimResult->ptr[1] == 0xff )
 				{
-					SetSMSMesgStatus(pdata->ril_cmd->SimId, sms_rec_no, SIMSMSMESGSTATUS_FREE);
+					SetSMSMesgStatus(sms_rec_no, SIMSMSMESGSTATUS_FREE);
 				}
 				else
 				{
-					SetSMSMesgStatus(pdata->ril_cmd->SimId, sms_rec_no, SIMSMSMESGSTATUS_UNREAD);
+					SetSMSMesgStatus(sms_rec_no, SIMSMSMESGSTATUS_UNREAD);
 				}
 				pdata->handler_state = BCM_FinishCAPI2Cmd;
 			}
@@ -1736,7 +1683,7 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			}
             memset(pdata->bcm_ril_rsp, 0, sizeof(RIL_Usim_PB_Capa));
             pdata->rsp_len = sizeof(RIL_Usim_PB_Capa) ;
-			CAPI2_PbkApi_SendInfoReq(InitClientInfo(pdata->ril_cmd->SimId), pbk_id);
+			CAPI2_PBK_SendInfoReq(GetNewTID(), GetClientID(), pbk_id);
 			pdata->handler_state = BCM_RESPCAPI2Cmd;
 			break;
 			// break;	// it's not a missing. no break; hear
@@ -1766,7 +1713,6 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			rsp_config_info = (USIM_PBK_CONFIG_LIST_t *)(&(rsp->config_info));
 			ril_rsp = (RIL_Usim_PB_Capa *)pdata->bcm_ril_rsp;
 			pbk_config = &rsp_config_info->configInfo[0][0];
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_USIM_PB_CAPA: MAX_DATA_LEN %d \n", MAX_DATA_LEN);
 
 
 		if(rsp_result->usim_adn_info_exist)
@@ -1794,7 +1740,7 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
 	                KRIL_DEBUG(DBG_ERROR,"RIL_REQUEST_USIM_PB_CAPA: Usim without ADN case ");
 
-	
+
 			for (i = 0; i < MAX_3GPP_TYPE ; i++)
 			{
 				ril_rsp->response[i][0] =i+1;
@@ -1820,7 +1766,7 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 						ril_rsp->response[i][j] =0;
 					}
 				}
-
+				
 			}
 	
 			}
@@ -1838,7 +1784,7 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
 
 
-//extern void CAPI2_MS_GetElement(UInt32 tid, UInt8 clientId, MS_Element_t inElemType);
+extern void CAPI2_MS_GetElement(UInt32 tid, UInt8 clientId, MS_Element_t inElemType);
 
 void KRIL_SRIL_GetStorageMSGCountHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
@@ -1861,7 +1807,7 @@ void KRIL_SRIL_GetStorageMSGCountHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_
             memset(pdata->bcm_ril_rsp, 0, sizeof(KrilStoredMsgCount));
             pdata->rsp_len = sizeof(KrilStoredMsgCount);
             
-            CAPI2_SmsApi_GetSMSStorageStatus(InitClientInfo(pdata->ril_cmd->SimId), 0); // SIM_STORAGE is 0
+			CAPI2_SMS_GetSMSStorageStatus(GetNewTID(), GetClientID(), 0); // SIM_STORAGE is 0
             pdata->handler_state = BCM_RESPCAPI2Cmd;
 			break;
         }
@@ -1975,7 +1921,9 @@ void KRIL_SRIL_LockInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			rdata->lock_type = *tdata;
 			if(rdata->lock_type == KRIL_LOCK_PIN1 ||  rdata->lock_type == KRIL_LOCK_PIN2 ||  rdata->lock_type == KRIL_LOCK_PUK2)
 			{
-            	CAPI2_MsDbApi_GetElement(InitClientInfo(pdata->ril_cmd->SimId), (rdata->lock_type == KRIL_LOCK_PIN1)?MS_SIM_ELEM_PIN1_STATUS:MS_SIM_ELEM_PIN2_STATUS);
+            	CAPI2_MS_GetElement(GetNewTID(), 
+            						GetClientID(), 
+            						(rdata->lock_type == KRIL_LOCK_PIN1)?MS_SIM_ELEM_PIN1_STATUS:MS_SIM_ELEM_PIN2_STATUS);
             	pdata->handler_state = BCM_SRIL_CHECK_PIN_STATUS;
 			}
 			else
@@ -2004,14 +1952,6 @@ void KRIL_SRIL_LockInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			switch(chv_status)
 			{
 				case CHVSTATUS_CHV_NOT_NEEDED:
-//[SIDI_SYSTEM_PIN] r.zaiden_O0100056649_PIN Attempts Fix June.11.2012
-#if defined (CONFIG_LTN_COMMON)
-					// prepare resp data
-					rdata->lock_status = KRIL_PIN_NOT_NEED;
-					rdata->remaining_attempt = 3;
-					KRIL_DEBUG(DBG_ERROR, "Lock info - 0: lock type=%d,lock status=%d \n", rdata->lock_type, rdata->lock_status);
-					break;
-#endif
 				case CHVSTATUS_CHV_VERIFIED:
 					// prepare resp data
 					rdata->lock_status = KRIL_PIN_NOT_NEED;
@@ -2043,7 +1983,7 @@ void KRIL_SRIL_LockInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 					break;
 			}
 			// Call CAPI API to get PIN1 remaining attempt
-            CAPI2_SimApi_SendRemainingPinAttemptReq(InitClientInfo(pdata->ril_cmd->SimId));
+            CAPI2_SIM_SendRemainingPinAttemptReq(GetNewTID(), GetClientID());
             pdata->handler_state = BCM_RESPCAPI2Cmd;
 			break;
 		}	
@@ -2061,12 +2001,7 @@ void KRIL_SRIL_LockInfoHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             }
 			if(rdata->lock_type == KRIL_LOCK_PIN1)
 			{
-//[SIDI_SYSTEM_PIN] r.zaiden_O0100056649_PIN Attempts Fix June.11.2012
-#if defined (CONFIG_LTN_COMMON)
-				if((rdata->lock_status == KRIL_PIN) || (rdata->lock_status == KRIL_PIN_NOT_NEED))
-#else
 				if(rdata->lock_status == KRIL_PIN)
-#endif
 				{
 					rdata->remaining_attempt = rsp->pin1_attempt_left;
             		KRIL_DEBUG(DBG_ERROR, "Lock info - 5: lock type=%d,lock status=%d, attempt=%d \n", rdata->lock_type, rdata->lock_status, rdata->remaining_attempt);
@@ -2180,6 +2115,7 @@ void KRIL_SRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSrilSetBand_t *tdata)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
+    ClientInfo_t clientInfo;
 
     if (capi2_rsp != NULL)    	
         KRIL_DEBUG(DBG_INFO, "KRIL_SRIL_SetBandHandler: handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
@@ -2191,45 +2127,19 @@ void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSr
             //KrilSrilSetBand_t *tdata = (KrilSrilSetBand_t *)pdata->ril_cmd->data;
 
             KRIL_DEBUG(DBG_INFO, "band: %d, curr_rat: %d\n", tdata->new_band, tdata->curr_rat);
-	    KRIL_DEBUG(DBG_ERROR, "Master SIM ID:%d\n", pdata->ril_cmd->SimId);
-//	    CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, BAND_NULL);
- /*+20110904 HKP BAND SELECTION FOR DS*/
-              		
-	  if((RATSelect_t) tdata->curr_rat == GSM_ONLY)
-	  {
-	     CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, (BandSelect_t) tdata->new_band);
-         }
-	  else
-	  {
-	    CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_FIRST),(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, BAND_NULL);
-	  }
-        	 pdata->handler_state = BCM_RESPCAPI2Cmd;
-        }
-        break;
 
-        case BCM_RESPCAPI2Cmd:
-        {
-            if (capi2_rsp->result != RESULT_OK)
-            {
-                KRIL_DEBUG(DBG_ERROR, "result :%d error...!\n", capi2_rsp->result);
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            else
-            {
-                pdata->handler_state = BCM_FinishCAPI2Cmd;
-            }
-        }
-        break;
+	    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+	    CAPI2_NetRegApi_SetSupportedRATandBand ( &clientInfo,(RATSelect_t) tdata->curr_rat, (BandSelect_t) tdata->new_band, GSM_ONLY, BAND_NULL);
+       
 
 			/*CAPI2_MS_SetSupportedRATandBand(GetNewTID(), 
 											GetClientID(), 
 											(RATSelect_t) tdata->curr_rat, 
 											(BandSelect_t) tdata->new_band
 											);*/
-  /*     		pdata->handler_state = BCM_RESPCAPI2Cmd;
+            		pdata->handler_state = BCM_RESPCAPI2Cmd;
 			break;
 		}	
-	
 		case BCM_RESPCAPI2Cmd:
         {
             if(capi2_rsp->result != RESULT_OK )
@@ -2242,9 +2152,7 @@ void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSr
             			pdata->handler_state = BCM_FinishCAPI2Cmd;
 			}
 			break;
-		}*/
-		
-/*-20110904 HKP BAND SELECTION FOR DS*/		
+		}
         default:
         {
             KRIL_DEBUG(DBG_ERROR, "handler_state - 2:%lu error...!\n", pdata->handler_state);
@@ -2252,68 +2160,13 @@ void KRIL_SRIL_SetBandHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSr
             break;
         }
 	}
-}
-
-/*- Band Selection sh0515.lee -*/
+}/*- Band Selection sh0515.lee -*/
 /*+ Ciphering Mode sh0515.lee /  Integrity Mode sh0515.lee +*/
-
-/*+20110824 HKPARK SLAVE BAND SELECTION*/
-void KRIL_SRIL_SetBandHandler2(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilSrilSetBand2_t *tdata)
-{
-    KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
-
-    if (capi2_rsp != NULL)    	
-        KRIL_DEBUG(DBG_INFO, "KRIL_SRIL_SetBandHandler2: handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
-
-    switch(pdata->handler_state)
-    {
-        case BCM_SendCAPI2Cmd:
-        {
-            //KrilSrilSetBand_t *tdata = (KrilSrilSetBand_t *)pdata->ril_cmd->data;
-
-            KRIL_DEBUG(DBG_INFO, "band2: %d, curr_rat2: %d\n", tdata->new_band2, tdata->curr_rat2);
-
-	    CAPI2_NetRegApi_SetSupportedRATandBand ( InitClientInfo(SIM_DUAL_SECOND),(RATSelect_t) tdata->curr_rat2, (BandSelect_t) tdata->new_band2, GSM_ONLY, BAND_NULL);
-       
-
-		/*	CAPI2_MS_SetSupportedRATandBand(GetNewTID(), 
-											GetClientID(), 
-											(RATSelect_t) tdata->curr_rat, 
-											(BandSelect_t) tdata->new_band
-											);*/
-            pdata->handler_state = BCM_RESPCAPI2Cmd;
-	  }	
-	 break;
-	 
-	 case BCM_RESPCAPI2Cmd:
-        {
-            if(capi2_rsp->result != RESULT_OK )
-            {
-            	KRIL_DEBUG(DBG_ERROR, "handler_state_s -1:%lu error...!\n", pdata->handler_state);
-              pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-	     else
-	    {
-            			pdata->handler_state = BCM_FinishCAPI2Cmd;
-	      }
-
-	   }
-	  break;
-	  
-        default:
-        {
-            KRIL_DEBUG(DBG_ERROR, "handler_state_s - 2:%lu error...!\n", pdata->handler_state);
-            pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            break;
-        }
-	}
-
-}
-/*-20110824 HKPARK SLAVE BAND SELECTION*/
 
 void KRIL_SRIL_SetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
+    ClientInfo_t clientInfo;
 
     if (capi2_rsp != NULL)    	
         KRIL_DEBUG(DBG_INFO, "KRIL_SRIL_SetStackClasssMarkHandler: handler_state:0x%lX::result:%d\n", pdata->handler_state, capi2_rsp->result);
@@ -2347,7 +2200,8 @@ void KRIL_SRIL_SetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_
 					return;
 			}
 
-                        CAPI2_MsDbApi_SetElement (InitClientInfo(pdata->ril_cmd->SimId), &data);
+                        CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                        CAPI2_MsDbApi_SetElement (&clientInfo, &data);
 			//CAPI2_MS_SetElement(GetNewTID(),GetClientID(), &data);
             		pdata->handler_state = BCM_RESPCAPI2Cmd;
 			break;
@@ -2365,52 +2219,10 @@ void KRIL_SRIL_SetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_
         }
 	}
 
-}
-
-
-
-/*- new Ciphering Mode sh0515.lee /  Integrity Mode sh0515.lee -*/
-CAPI2_MS_Element_t KRIL_SRIL_GetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata)
-{
-	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
-	CAPI2_MS_Element_t data;
-
-	KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_GetStackClasssMarkHandler \n");
-
-	switch (pdata->handler_state)
-	{
-		case BCM_SendCAPI2Cmd:
-		{
-	        	CAPI2_MsDbApi_GetElement ( InitClientInfo(pdata->ril_cmd->SimId), MS_STACK_ELEM_NVRAM_CLASSMARK);
-	        	pdata->handler_state = BCM_RESPCAPI2Cmd;
-	        	break;
-		}
-		
-		case BCM_RESPCAPI2Cmd:
-		{
-			CAPI2_MS_Element_t* rsp = (CAPI2_MS_Element_t*)capi2_rsp->dataBuf;
-
-    			if (!rsp)
-    			{
-        			KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");
-        			pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        			return data;
-    			}
-			if (rsp->inElemType != MS_STACK_ELEM_NVRAM_CLASSMARK)
-			{
-				KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_GetStackClasssMarkHandler : inElemType Error!! inElemType:%d\n",rsp->inElemType);
-				pdata->handler_state = BCM_ErrorCAPI2Cmd;
-        			return data;
-			}
-
-
-			switch(tdata->classmark_id)
-			{
-				case KRIL_CIPHERING_MODE:
+}/*- new Ciphering Mode sh0515.lee /  Integrity Mode sh0515.lee -*/CAPI2_MS_Element_t KRIL_SRIL_GetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp, KrilStackNvramClassMark_t *tdata){	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;	ClientInfo_t clientInfo;	CAPI2_MS_Element_t data;	KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_GetStackClasssMarkHandler \n");	switch (pdata->handler_state)	{		case BCM_SendCAPI2Cmd:		{	        	CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());	        	CAPI2_MsDbApi_GetElement ( &clientInfo, MS_STACK_ELEM_NVRAM_CLASSMARK);	        	pdata->handler_state = BCM_RESPCAPI2Cmd;	        	break;		}				case BCM_RESPCAPI2Cmd:		{			CAPI2_MS_Element_t* rsp = (CAPI2_MS_Element_t*)capi2_rsp->dataBuf;    			if (!rsp)    			{        			KRIL_DEBUG(DBG_ERROR,"capi2_rsp->dataBuf is NULL, Error!!\n");        			pdata->handler_state = BCM_ErrorCAPI2Cmd;        			return data;    			}			if (rsp->inElemType != MS_STACK_ELEM_NVRAM_CLASSMARK)			{				KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_GetStackClasssMarkHandler : inElemType Error!! inElemType:%d\n",rsp->inElemType);				pdata->handler_state = BCM_ErrorCAPI2Cmd;        			return data;			}			switch(tdata->classmark_id)			{				case KRIL_CIPHERING_MODE:
             			//data.inElemType = MS_STACK_ELEM_NVRAM_CLASSMARK;
             			data.data_u.stackClassmark.uasConfigParams.ciphering_updated = rsp->data_u.stackClassmark.uasConfigParams.ciphering_updated;
-					data.data_u.stackClassmark.uasConfigParams.ciphering_support = rsp->data_u.stackClassmark.uasConfigParams.ciphering_support;
-					return data;
+					data.data_u.stackClassmark.uasConfigParams.ciphering_support = rsp->data_u.stackClassmark.uasConfigParams.ciphering_support;					return data;
 				case KRIL_INTEGRATE_MODE:
             			//data.inElemType = MS_STACK_ELEM_NVRAM_CLASSMARK;
             			data.data_u.stackClassmark.uasConfigParams.integrity_updated = rsp->data_u.stackClassmark.uasConfigParams.integrity_updated;
@@ -2419,29 +2231,15 @@ CAPI2_MS_Element_t KRIL_SRIL_GetStackClasssMarkHandler(void *ril_cmd, Kril_CAPI2
 				default:
 		            		KRIL_DEBUG(DBG_ERROR, "wrong classmark id:%lu error...!\n", tdata->classmark_id);
 		            		pdata->handler_state = BCM_ErrorCAPI2Cmd;
-					return data;
-			
-			}			
-
-		}
-
-		default:
-		{
-	        	KRIL_DEBUG(DBG_ERROR, "handler_state:%lu error...!\n", pdata->handler_state);
-	        	pdata->handler_state = BCM_ErrorCAPI2Cmd;
-	        	return data;
-		}
-	}
-	return data;
-}
+					return data;						}					}		default:		{	        	KRIL_DEBUG(DBG_ERROR, "handler_state:%lu error...!\n", pdata->handler_state);	        	pdata->handler_state = BCM_ErrorCAPI2Cmd;	        	return data;
+		}	}	return data;}
 
 
 int KRIL_SRIL_requestOemSvcGetHsdpaPhyCategoryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
 	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
 	KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_requestOemSvcGetHsdpaPhyCategoryHandler \n");
-
-	switch (pdata->handler_state)
+	switch (pdata->handler_state)
 	{
 		case BCM_SendCAPI2Cmd:
 		{
@@ -2499,8 +2297,27 @@ void KRIL_SRIL_requestOemSvcSetHsdpaPhyCategoryHandler(void *ril_cmd, Kril_CAPI2
 	{
 		case BCM_SendCAPI2Cmd:
 		{
+			struct file *filp;
+			mm_segment_t fs;
+			int ret;
 			UInt32 NewTID;
 			UInt32 ClientID;
+			
+			filp = filp_open("/data/hsdpa.dat",  O_RDWR|O_CREAT, 0);
+			if (IS_ERR(filp))
+			{
+				KRIL_DEBUG(DBG_ERROR,"File open(create) fail\n");
+			}
+			else
+			{
+				fs = get_fs();
+				set_fs(get_ds());
+				ret = filp->f_op->write(filp, (char __user *)&hsdpa_phy_cat, sizeof(hsdpa_phy_cat), &filp->f_pos);
+				// The saved file will be check in KRIL_InitCmdHandler() when power on device.
+				set_fs(fs);
+				filp_close(filp, NULL);
+			}
+
 			NewTID = GetNewTID();
 			ClientID = GetClientID();
 			KRIL_DEBUG(DBG_ERROR,"BCM_SendCAPI2Cmd  NewTID=%d, ClientID=%d\n",NewTID,ClientID);

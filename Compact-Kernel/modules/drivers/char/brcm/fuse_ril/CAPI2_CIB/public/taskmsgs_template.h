@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   taskmsgs.h
@@ -55,7 +56,7 @@ the GPL, without Broadcom's express prior written consent.
 /**
 	Maximum number of filtered event masks for each client
  **/
-#define  MAX_FILTERED_EVENT_MASK_NUM		10
+#define  MAX_FILTERED_EVENT_MASK_NUM		20
 
 typedef enum
 {
@@ -88,7 +89,6 @@ typedef enum
 	MSG_GRP_LCS 				= 0x0D00,
 	MSG_GRP_TLS 				= 0x0E00,
 	MSG_GRP_FTP 				= 0x0F00,
-	MSG_GRP_SECMODEM            = 0x1000,
 
 	MSG_GRP_INT_UTIL			= 0x2000,
 	MSG_GRP_INT_ATC 			= 0x2100,
@@ -98,7 +98,6 @@ typedef enum
 	MSG_GRP_INT_SIM				= 0x2500,
 	MSG_GRP_INT_STK				= 0x2600,
 	MSG_GRP_INT_VCC				= 0x2700,
-	MSG_GRP_INT_SECMODEM        = 0x2800,
 
 	MSG_GRP_CAPI2_LCS			= 0x3200,
 	MSG_GRP_CAPI2_SMS			= 0x3300,
@@ -455,7 +454,6 @@ Boolean SYS_RegisterForRemoteClient(CallbackFunc_t* callback);
 void SYS_DefaultRemoteHandler(InterTaskMsg_t* inMsg);
 
 
-
 #ifdef VMF_INCLUDE
 
 //***************************************************************************************
@@ -485,9 +483,6 @@ void VccApi_ResetVmfCtx(ClientInfo_t* inClientInfoPtr, UInt8 origVmId);
 
 #define VccApi_ResetVmf(clientInfoPtr) VccApi_ResetVmfCtx(clientInfoPtr, orig_ctx_id);
 
-void VccApi_ResetDataVmf(ClientInfo_t* pClientInfo);
-
-
 //***************************************************************************************
 /**
     Function to Init SIM-Id in clientInfo based on global vm-id
@@ -503,8 +498,6 @@ void VccApi_InitSimId(ClientInfo_t* inClientInfoPtr);
 #define VccApi_ActivateVmf(p)
 #define VccApi_ResetVmf(p)
 #define VccApi_InitSimId(p)
-#define VccApi_ResetDataVmf(p)
-
 
 #endif
 

@@ -1,5 +1,5 @@
 /*
-	?007 Broadcom Corporation
+	©2007 Broadcom Corporation
 
 	Unless you and Broadcom execute a separate written software license
 	agreement governing use of this software, this software is licensed to you
@@ -323,9 +323,7 @@ static const char* EndPointName[] =
 	"IpcEpCsdCp",
 	"IpcEpCsdAp",
 	"IpcEpCustomerAp",
-	"IpcEpCustomerCp",
-	"IpcEpSerialAp",
-	"IpcEpSerialCp"
+	"IpcEpCustomerCp"
 };
 
 const char* IPC_GetEndPointName(IPC_EndpointId_T ep)

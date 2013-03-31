@@ -839,7 +839,9 @@ static int brcm_netconsole_netdev_event(struct notifier_block *this,
 	struct brcm_netconsole_target *nt;
 	struct net_device *dev = ptr;
 
-	/* Coverity check */
+	if (!(event == NETDEV_CHANGENAME))
+		goto done;
+
 	spin_lock_irqsave(&target_list_lock, flags);
 	list_for_each_entry(nt, &target_list, list) {
 		brcm_netconsole_target_get(nt);
@@ -931,8 +933,9 @@ int brcm_klogging(char *data, int length)
                 if (nt->enabled && netif_running(nt->np.dev) && netif_carrier_ok(nt->np.dev)) {
 
 			  if (netpoll_free_memory() == 0) {
-			  	pr_info("brcm_netconsole_klogging: out of memory.....");
-				goto end_of_send;			
+			  	//pr_info("brcm_netconsole_klogging: out of memory.....");
+				spin_unlock_irqrestore(&target_list_lock, flags);
+				return 0;
 			  }
                         /*
                          * We nest this inside the for-each-target loop above
@@ -944,18 +947,12 @@ int brcm_klogging(char *data, int length)
 
                         for (left = length; left;) {
                                 frag = min(left, MAX_PRINT_CHUNK);
-				if (frag > netpoll_free_memory()) {
-					pr_info("brcm_klogging not enough mem to send req:%d left:%d\n",
-						frag, netpoll_free_memory());
-						goto end_of_send;
-				}
                                 netpoll_send_udp(&nt->np, tmp, frag);
                                 tmp += frag;
                                 left -= frag;
 				len_sent += frag;
                         }
-                }
-end_of_send:		  
+                }		  
                 brcm_netconsole_target_put(nt);
         }
         spin_unlock_irqrestore(&target_list_lock, flags);

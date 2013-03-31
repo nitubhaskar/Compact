@@ -703,7 +703,7 @@ static struct bcm_keymap newKeymap[] = {
 #endif
 
 static struct bcm_keypad_platform_info bcm215xx_keypad_data = {
-	.row_num = 2,
+	.row_num = 4,
 	.col_num = 2,
 	.keymap = newKeymap,
 	.iocr_cfg = bcm_keypad_config_iocr,
@@ -1190,7 +1190,7 @@ static struct max8986_audio_pdata audio_pdata = {
 };
 
 static struct max8986_power_pdata power_pdata = {
-	.usb_charging_cc = MAX8986_CHARGING_CURR_450MA,
+	.usb_charging_cc = MAX8986_CHARGING_CURR_550MA,
 	.wac_charging_cc = MAX8986_CHARGING_CURR_550MA,
 	.eoc_current = MAX8986_EOC_100MA,
 
@@ -1485,20 +1485,20 @@ static u32 pmu_event_callback(int event, int param)
 		break;
 
 	case PMU_EVENT_CHARGER_INSERT:
-	pr_info("%s: PMU_EVENT_CHARGER_INSERT (%d)\n", __func__, param);
+	pr_info("%s: PMU_EVENT_CHARGER_INSERT\n", __func__);
 
 	/* try to start the usb enumeration process. this may not succeed if
 	 * the usb stack is still not up.
 	 */
-	if ((param == PMU_MUIC_CHGTYP_USB) || (param == PMU_MUIC_CHGTYP_DOWNSTREAM_PORT)) {
+	if (param == PMU_MUIC_CHGTYP_USB) {
 		usb_charger_detected = true;
 		pmu_usb_start();
 	}
 	break;
 
 	case PMU_EVENT_CHARGER_REMOVE:
-	pr_info("%s: PMU_EVENT_CHARGER_REMOVE (%d)\n", __func__, param);
-	if ((param == PMU_MUIC_CHGTYP_USB) || (param == PMU_MUIC_CHGTYP_DOWNSTREAM_PORT)) {
+	pr_info("%s: PMU_EVENT_CHARGER_REMOVE\n", __func__);
+	if (param == PMU_MUIC_CHGTYP_USB) {
 		usb_charger_detected = false;
 		pmu_usb_stop();
 	}
@@ -2262,11 +2262,7 @@ int board_sysconfig(uint32_t module, uint32_t op)
                         u32 val;
                         /* IOCR 0 */
                         val = readl(ADDR_SYSCFG_IOCR0) & ~(SYSCFG_IOCR0_CAMCK_GPIO_MUX);
-				// for camera flash by ksh0807.kim
-				writel(val | 
-						SYSCFG_IOCR0_GPIO52_GPEN7_MUX |
-						SYSCFG_IOCR0_GPIO53_GPEN8_MUX , ADDR_SYSCFG_IOCR0);
-						
+                        writel(val, ADDR_SYSCFG_IOCR0);
                         /* IOCR 3 */
                         val = readl(ADDR_SYSCFG_IOCR3);
                          /* Clear bits 6,5 and 4 */
@@ -2514,31 +2510,10 @@ int board_sysconfig(uint32_t module, uint32_t op)
 							ADDR_SYSCFG_IOCR4);
 		} else if (op == SYSCFG_DISABLE) {
 			/* Offset for IOCR2 = 0x0c */
-#if 0		//set no-pull
 			writel(readl(ADDR_SYSCFG_IOCR2) &
 				~(SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN) |
 			         SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
 			       ADDR_SYSCFG_IOCR2);
-#else		// set pull-down
-			writel(readl(ADDR_SYSCFG_IOCR2)
-				   & ~(SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
-				   ADDR_SYSCFG_IOCR2);
-			
-			/* Offset for IOCR2 = 0x0c */
-			writel(readl(ADDR_SYSCFG_IOCR2)
-				   | SYSCFG_IOCR2_SD3CMD_PULL_CTRL(SD_PULL_DOWN),
-				   ADDR_SYSCFG_IOCR2);
-			
-			/* Offset for IOCR2 = 0x0c */
-			writel(readl(ADDR_SYSCFG_IOCR2)
-				   & ~(SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_UP | SD_PULL_DOWN)),
-				   ADDR_SYSCFG_IOCR2);
-			
-			/* Offset for IOCR2 = 0x0c */
-			writel(readl(ADDR_SYSCFG_IOCR2)
-				   | SYSCFG_IOCR2_SD3DAT_PULL_CTRL(SD_PULL_DOWN),
-				   ADDR_SYSCFG_IOCR2);
-#endif
 		}
 		break;
 #ifdef CONFIG_USB_DWC_OTG
@@ -2963,63 +2938,6 @@ static void __init update_pm_sysparm(void)
 #endif
 }
 
-
-static void cooperve_init_gpio(void)
-{
-/* +++ H/W req */
-#define ADDR_GPIO_GPIPUD0 (HW_GPIO_BASE + 0x028) //0x088CE028 GPIO 0 - 31
-#define ADDR_GPIO_GPIPUD1 (HW_GPIO_BASE + 0x02c) //0x088CE02C GPIO 32 - 63
-
-#define IOTR_GPIO(GPIO) ((GPIO%16)<<1)
-#define GPIPEN_PULL_EN(GPIO) (1<<(GPIO%32))
-#define GPIPUD_PULL_DOWN(GPIO) (~(1<<(GPIO%32)))
-
-
-				/*Set as GPIO*/
-
-				writel(readl(ADDR_SYSCFG_IOCR5)|(1<<24),ADDR_SYSCFG_IOCR5);/*58,59,60*/
-				/* GPIO35_MUX set to GPIO35 */
-//				writel((readl(ADDR_SYSCFG_IOCR5) & SYSCFG_IOCR5_GPIO35_UARTA_OUT2N_MUX(0x00)),ADDR_SYSCFG_IOCR5);
-
-				/*Set as input */
-				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(6))),ADDR_GPIO_IOTR0);
-				
-				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(10))),ADDR_GPIO_IOTR0);
-				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(11))),ADDR_GPIO_IOTR0);
-				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(12))),ADDR_GPIO_IOTR0);
-// 				writel(readl(ADDR_GPIO_IOTR2)&(~(3<<IOTR_GPIO(35))),ADDR_GPIO_IOTR2);
- 				writel(readl(ADDR_GPIO_IOTR3)&(~(3<<IOTR_GPIO(58))),ADDR_GPIO_IOTR3);				
-				writel(readl(ADDR_GPIO_IOTR3)&(~(3<<IOTR_GPIO(59))),ADDR_GPIO_IOTR3);
-				writel(readl(ADDR_GPIO_IOTR3)&(~(3<<IOTR_GPIO(60))),ADDR_GPIO_IOTR3);
-				
-
-				/*Enable pull up/down*/
-				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(6),ADDR_GPIO_GPIPEN0);
- 				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(10),ADDR_GPIO_GPIPEN0);
-				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(11),ADDR_GPIO_GPIPEN0);
-				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(12),ADDR_GPIO_GPIPEN0);
-
-//				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(35),ADDR_GPIO_GPIPEN1);
-				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(58),ADDR_GPIO_GPIPEN1);
-				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(59),ADDR_GPIO_GPIPEN1);
-				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(60),ADDR_GPIO_GPIPEN1);
-
-				/*Set as pull down*/
-				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(6),ADDR_GPIO_GPIPUD0);
- 				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(10),ADDR_GPIO_GPIPUD0);
-				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(11),ADDR_GPIO_GPIPUD0);
-				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(12),ADDR_GPIO_GPIPUD0);
-				
-//				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(35),ADDR_GPIO_GPIPUD1);
- 				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(58),ADDR_GPIO_GPIPUD1);
-				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(59),ADDR_GPIO_GPIPUD1);
-				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(60),ADDR_GPIO_GPIPUD1);
-				
-/* --- H/W req */
-
-	
-
-}
 static void __init bcm21553_init_machine(void)
 {
 	bcm21553_platform_init();
@@ -3027,8 +2945,6 @@ static void __init bcm21553_init_machine(void)
 	athenaray_add_i2c_slaves();
 	athenaray_add_platform_data();
 	platform_add_devices(devices, ARRAY_SIZE(devices));
-	cooperve_init_gpio();
-
 #ifdef CONFIG_SPI
 	/*Function to register SPI board info : required when spi device is
 	   present */

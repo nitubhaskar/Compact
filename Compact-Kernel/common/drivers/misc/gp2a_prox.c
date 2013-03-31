@@ -53,29 +53,8 @@ static struct miscdevice gp2a_prox_misc_device = {
     .fops   = &gp2a_prox_fops,
 };
 
-#if defined(CONFIG_SENSORS_MMC328X)
-extern void proximity_set_init_value(void);
-#endif
 extern int bcm_gpio_pull_up(unsigned int gpio, bool up);
 extern int bcm_gpio_pull_up_down_enable(unsigned int gpio, bool enable);
-
-#if defined(CONFIG_SENSORS_LUISA)
-void prox_ctrl_regulator_forced(void)
-{
-	prox_regulator = regulator_get(NULL,"prox_vcc");
-       
-	if(!regulator_is_enabled(prox_regulator))
-	{
-		regulator_set_voltage(prox_regulator,2900000,2900000);
-		regulator_enable(prox_regulator);
-                printk(KERN_INFO "[GP2A] : prox_ctrl_regulator_forced \n");                          
-                prox_power_mode = true;        
-        /*After Power Supply is supplied, about 1ms delay is required before issuing read/write commands */
-                mdelay(2);            
-	}
-}
-EXPORT_SYMBOL(prox_ctrl_regulator_forced);
-#endif
 
 static void prox_ctrl_regulator(int on_off)
 {
@@ -339,10 +318,6 @@ static int gp2a_prox_mode(int enable)
 		if((ret=gp2a_i2c_write(GP2A_REG_CON,&reg_value))<0)
 			error("gp2a_i2c_write 4 failed");
 		
-#if defined(CONFIG_SENSORS_MMC328X)		
-                proximity_set_init_value();
-#endif                
-
 		proximity_enable=1;
 	}
 	else 
@@ -379,6 +354,22 @@ static int gp2a_prox_mode(int enable)
  * get_gp2a_proximity_value() is called by magnetic sensor driver(ak8973)
  * for reading proximity value.
  */
+
+int proximity_get_int_value(void)
+{
+        int int_value;
+        
+        PROXDBG("[GP2A] proximity_get_int_value GPIO_PS_OUT : %d\n", gpio_get_value(GPIO_PS_OUT));     
+        
+        if(gpio_get_value(GPIO_PS_OUT))
+                int_value =1;
+        else
+                int_value =0;                
+        
+        return int_value;
+        }
+EXPORT_SYMBOL(proximity_get_int_value);
+        
 
 int gp2a_get_proximity_value(void)
 {
@@ -449,11 +440,12 @@ static void gp2a_prox_work_func(struct work_struct *work)
 			error("[PROXIMITY] wake_lock is already set \n");
 	}
 
-#if defined(CONFIG_SENSORS_HSCD)
-		input_report_abs(gp2a_data->prox_input_dev, ABS_DISTANCE,((vout == 1)? 0:1));
+	if(USE_INPUT_DEVICE)
+	{
+		input_report_abs(gp2a_data->prox_input_dev, ABS_DISTANCE,(int)vout);
 		input_sync(gp2a_data->prox_input_dev);
 		mdelay(1);
-#endif
+	}
 
 	/* Write HYS Register */
 #if defined(CONFIG_SENSORS_TOTORO) //mode B2 : Internal receiver sensitivity is now 2 times higher than B1		    
@@ -509,7 +501,6 @@ static irqreturn_t gp2a_irq_handler( int irq, void *unused )
 }
 #endif
 
-#if 0
 /*sysfs -operation_mode*/
 static ssize_t gp2a_show_operation_mode(struct device *dev,struct device_attribute *attr, char *buf)
 {    		
@@ -542,7 +533,7 @@ static ssize_t gp2a_show_prox_value(struct device *dev,struct device_attribute *
 }
 //static DEVICE_ATTR(prox_value, S_IRUGO, gp2a_show_prox_value,NULL);
 
-
+#if 0
 static struct attribute *gp2a_prox_attributes[] = {
 	&dev_attr_operation_mode.attr,    
 	&dev_attr_prox_value.attr,
@@ -552,63 +543,6 @@ static struct attribute *gp2a_prox_attributes[] = {
 static const struct attribute_group gp2a_prox_attr_group = {
          .attrs = gp2a_prox_attributes,
  };
-#endif
-
-#if defined(CONFIG_SENSORS_HSCD)
-
-static ssize_t proximity_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-
-	return sprintf(buf, "%d\n", proximity_enable);
-}
-
-static ssize_t proximity_enable_store(struct device *dev, struct device_attribute *attr,  const char *buf, size_t size)
-{
-    bool new_value;
-
-    if (sysfs_streq(buf, "1"))
-        new_value = true;
-    else if (sysfs_streq(buf, "0"))
-        new_value = false;
-    else {
-        pr_err("%s: invalid value %d\n", __func__, *buf);
-        return -EINVAL;
-    }
-
-    printk(KERN_INFO "[GP2A] proximity_enable_store : new_value=%d\n", new_value);
-    
-    mutex_lock(&gp2a_data->power_lock);
-    
-    if (new_value ){  
-        
-        input_report_abs(gp2a_data->prox_input_dev, ABS_DISTANCE, 1);
-        input_sync(gp2a_data->prox_input_dev);
-        
-        gp2a_prox_mode(1);
-        
-    }
-    else if (!new_value ) 
-    {
-        gp2a_prox_mode(0);        
-    }
-
-    mutex_unlock(&gp2a_data->power_lock);
-    return size;
-}
-
-static struct device_attribute dev_attr_prox_enable =
-	__ATTR(enable, S_IRUGO | S_IWUSR | S_IWGRP,
-	       proximity_enable_show, proximity_enable_store);
-
-static struct attribute *gp2a_prox_attributes[] = {
-	&dev_attr_prox_enable.attr,
-	NULL
-};
-
-static struct attribute_group gp2a_prox_attr_group = {
-	.attrs = gp2a_prox_attributes,
-};
-
 #endif
 
 static int gp2a_prox_probe(struct i2c_client *client,const struct i2c_device_id *id)
@@ -649,9 +583,6 @@ static int gp2a_prox_probe(struct i2c_client *client,const struct i2c_device_id 
         bcm_gpio_pull_up_down_enable(out_pin, true);   
 //	gpio_free(out_pin);
 	
-
-	mutex_init(&gp2a_data->power_lock);
-	
 	/*Input Device Settings*/
 	gp2a_data->prox_input_dev = input_allocate_device();
 	if (!gp2a_data->prox_input_dev) 
@@ -663,8 +594,6 @@ static int gp2a_prox_probe(struct i2c_client *client,const struct i2c_device_id 
 	gp2a_data->prox_input_dev->name = "proximity_sensor";
 	set_bit(EV_SYN,gp2a_data->prox_input_dev->evbit);
 	set_bit(EV_ABS,gp2a_data->prox_input_dev->evbit);	
-
-	input_set_capability(gp2a_data->prox_input_dev, EV_ABS, ABS_DISTANCE);    
 	input_set_abs_params(gp2a_data->prox_input_dev, ABS_DISTANCE, 0, 1, 0, 0);
 	ret = input_register_device(gp2a_data->prox_input_dev);
 	if (ret) 
@@ -674,16 +603,6 @@ static int gp2a_prox_probe(struct i2c_client *client,const struct i2c_device_id 
 		goto MISC_DREG;
 	}
 	debug("Input device settings complete");
-    
-#if defined(CONFIG_SENSORS_HSCD)
-	/*create sysfs attributes*/
-	ret = sysfs_create_group(&gp2a_data->prox_input_dev->dev.kobj, &gp2a_prox_attr_group);
-	if (ret)
-	{
-		error("Failed to create sysfs attributes");
-		goto MISC_DREG;
-	}
-#endif    
     
 #if USE_INTERRUPT	
 	/* Workqueue Settings */
@@ -716,6 +635,16 @@ static int gp2a_prox_probe(struct i2c_client *client,const struct i2c_device_id 
 	timeA = ktime_set(0,0);
 	timeB = ktime_set(0,0);
 	
+#if 0	
+	/*create sysfs attributes*/
+	ret = sysfs_create_group(&client->dev.kobj, &gp2a_prox_attr_group);
+	if (ret)
+	{
+		error("Failed to create sysfs attributes");
+		goto FREE_IRQ;
+	}
+#endif    
+	
 	/*Device Initialisation with recommended register values from datasheet*/
 	
 	reg_value = 0x18;
@@ -745,12 +674,6 @@ static int gp2a_prox_probe(struct i2c_client *client,const struct i2c_device_id 
 	/*Setting the device into shutdown mode*/
 	gp2a_prox_mode(0);
 
-#if defined(CONFIG_SENSORS_HSCD)
-	/* set initial proximity value as 1 */
-	input_report_abs(gp2a_data->prox_input_dev, ABS_DISTANCE, 1);
-	input_sync(gp2a_data->prox_input_dev);
-#endif
-
 	printk(KERN_INFO "[GP2A] %s end\n", __func__);	
 	return ret;
 #if 0 /* prevent CID58528 */
@@ -774,13 +697,12 @@ static int __devexit gp2a_prox_remove(struct i2c_client *client)
 	gp2a_prox_mode(0);
 	gp2a_data->gp2a_prox_i2c_client = NULL;
 	free_irq(PROX_IRQ,NULL);
-#if defined(CONFIG_SENSORS_HSCD)
+#if 0    
 	sysfs_remove_group(&client->dev.kobj, &gp2a_prox_attr_group);
 #endif
 	destroy_workqueue(gp2a_prox_wq);
 	input_unregister_device(gp2a_data->prox_input_dev);	
 	misc_deregister(&gp2a_prox_misc_device);
-	mutex_destroy(&gp2a_data->power_lock);
 	kfree(gp2a_data);
 	return 0;
 }

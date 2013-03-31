@@ -73,7 +73,6 @@
 #include <plat/osdal_os_driver.h>
 #include <plat/csl/csl_lcd.h>
 #include <plat/csl/csl_lcdc.h>
-#include <linux/clk.h>
 
 #if defined(CONFIG_PANEL_MAGNA_D51E5TA7601)
 #include "../../displays/panel-magna-d51e5ta7601.h"
@@ -93,10 +92,8 @@
 #include "../../displays/lcd_ili9341_boe.h"
 #elif defined(CONFIG_BCM_LCD_S6D05A1X31_COOPERVE)
 #include "../../displays/lcd_s6d05a1x31_cooperve.h"
-#elif defined(CONFIG_BCM_LCD_ILI9486_BOE)
-#include "../../displays/lcd_ili9486_boe_amaging.h"
 #else
-#include "../../displays/lcd_ili9341_boe_rev05.h"
+#include "../../displays/lcd_ili9341_rev05.h"
 #endif
 
 #ifdef CONFIG_CPU_FREQ_GOV_BCM21553

@@ -366,8 +366,7 @@ Int32 csl_dma_config_channel(DMA_CHANNEL chanID, Dma_Chan_Info * pChanInfo)
 		return -1;
 
 	pChanInfo->prot = 0;
-	pChanInfo->dstMaster = 0;
-	pChanInfo->srcMaster = 0;
+
 
 	pChanInfo->dmaCfgReg =
 	    ((pChanInfo->
@@ -420,7 +419,7 @@ Int32 csl_dma_obtain_channel(UInt8 srcID, UInt8 dstID)
 #if (defined (_HERA_) || defined (_RHEA_) || defined (_SAMOA_))
 	chal_dmux_alloc_channel(pdma->dmuxHandle, &chan);
 #else
-	chan_scan_min = DMA_CHANNEL_5;
+	chan_scan_min = DMA_CHANNEL_4;
 	chan_scan_max = DMA_CHANNEL_11;
 
 #if defined (_ATHENA_)
@@ -432,8 +431,6 @@ Int32 csl_dma_obtain_channel(UInt8 srcID, UInt8 dstID)
 		chan = DMA_CHANNEL_0;
 	} else if (dstID == DMA_CLIENT_POLYRING_OUT_FIFO) {
 		chan = DMA_CHANNEL_1;
-	} else if (dstID == DMA_CLIENT_LCD) {
-		chan = DMA_CHANNEL_4;
 	} else
 #endif
 	{
@@ -445,7 +442,7 @@ Int32 csl_dma_obtain_channel(UInt8 srcID, UInt8 dstID)
 
 		switch (priority) {
 		case DMA_CHAN_PRI_LOW:
-				/* Find one free channel from low priority to high */
+						/* Find one free channel from low priority to high */
 				for (idx = chan_scan_max; idx >= chan_scan_min; idx--) {
 					if (chanArray[idx].bUsed == FALSE) {
 					chan = idx;
@@ -475,7 +472,7 @@ Int32 csl_dma_obtain_channel(UInt8 srcID, UInt8 dstID)
 
 		case DMA_CHAN_PRI_HIGH:
 						/* Find one free channel from high priority to low */
-						for (idx = chan_scan_min; idx <= (chan_scan_max / 2) + 1; idx++) {
+						for (idx = chan_scan_min; idx <= chan_scan_max / 2; idx++) {
 				if (chanArray[idx].bUsed == FALSE) {
 					chan = idx;
 					break;
@@ -695,6 +692,12 @@ void csl_dma_force_shutdown_channel(DMA_CHANNEL chanID)
 	 */
 
 	chal_dma_force_shutdown_chan(pdma->handle, chanID);
+
+	if (csl_dma_release_channel(chanID) == 0) {
+		dprintf(1,
+			"csl_dma: csl_dma_release_channel fail, chanID: %d\n",
+			chanID);
+	}
 
 	return;
 }

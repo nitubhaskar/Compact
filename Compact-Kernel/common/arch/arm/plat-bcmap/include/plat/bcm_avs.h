@@ -46,8 +46,16 @@ struct silicon_type_info
 	int nm_voltage;
 	/* NM2 turbo mode voltage. Pass -1 if no update needed */
 	int nm2_turbo_voltage;
-	/* NM2 turbo mode voltage. Pass -1 if no update needed */
+	/* NM2 turbol mode voltage. Pass -1 if no update needed */
+	int nm2_turbol_voltage;
+	/* NM2 medb mode voltage. Pass -1 if no update needed */
+	int nm2_medb_voltage;
+	/* NM2 meda mode voltage. Pass -1 if no update needed */
+	int nm2_meda_voltage;
+	/* NM2 normal mode voltage. Pass -1 if no update needed */
 	int nm2_normal_voltage;
+	/* NM2 lowa mode voltage. Pass -1 if no update needed */
+	int nm2_lowa_voltage;
 };
 
 struct bcm_avs_platform_data_t
@@ -61,6 +69,32 @@ struct bcm_avs_platform_data_t
 	 * Pass NULL if not supported/need not update
 	 */
 	char *core_nml_regl;
+
+	/* Name of the regulator to control core lowa mode voltage
+	 * Pass NULL if not supported/need not update
+	 */
+	char *core_lowa_regl;
+
+	/* Name of the regulator to control core normal mode voltage
+	 * Pass NULL if not supported/need not update
+	 */
+	char *core_normal_regl;
+
+	/* Name of the regulator to control core meda mode voltage
+	 * Pass NULL if not supported/need not update
+	 */
+	char *core_meda_regl;
+
+	/* Name of the regulator to control core medb mode voltage
+	 * Pass NULL if not supported/need not update
+	 */
+	char *core_medb_regl;
+
+	/* Name of the regulator to control core turbol mode voltage
+	 * Pass NULL if not supported/need not update
+	 */
+	char *core_turbol_regl;
+
 	/* Name of the regulator to control core turbo mode voltage
 	 * Pass NULL if not supported/need not update
 	 */

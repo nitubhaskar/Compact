@@ -459,19 +459,15 @@ void static cslLcdcParSetIntfType(CHAL_PAR_BUS_TYPE_t busType)
 #endif /* #ifdef LCDC_USE_SYSCFG_OPEN_OS_RDB */
 }
 
-#define LCDC_WAIT_MAX_TIMEOUT 1000
 /* ***************************************************************************** */
 /* Function Name:   cslLcdcWaitWhileFifoIsFull */
 /* Description:     (Z80/M68/DBI) */
 /* ***************************************************************************** */
 INLINE static void cslLcdcWaitWhileFifoIsFull(void)
 {
-	int timeout=0;
 	/* wait while TX FIFO is FULL  [BEFORE SENDING COMMAND] */
-	while ((chal_lcdc_rd_status(cslLcdcDrv.chalH) &
-	       LCDC_STATUS_FFFULL_MASK) && timeout++<LCDC_WAIT_MAX_TIMEOUT);
-	if (timeout>=LCDC_WAIT_MAX_TIMEOUT)
-		pr_crit("cslLcdcWaitWhileFifoIsFull timeout %d", timeout);
+	while (chal_lcdc_rd_status(cslLcdcDrv.chalH) &
+	       LCDC_STATUS_FFFULL_MASK) ;
 }
 
 #ifdef _ATHENA_
@@ -481,16 +477,10 @@ INLINE static void cslLcdcWaitWhileFifoIsFull(void)
 /* ***************************************************************************** */
 INLINE static void cslLcdcWaitWhileLcdcIsBusy(void)
 {
-	int timeout=0;
-
 	/* wait while CTRLR IS BUSY */
 	/* ZEUS DON'T HAVE BUSY FLAG */
-	while ((chal_lcdc_rd_status(cslLcdcDrv.chalH) &
-	       LCDC_STATUS_LCD_BUSY_MASK) && timeout++<LCDC_WAIT_MAX_TIMEOUT) ;
-
-	if (timeout>=LCDC_WAIT_MAX_TIMEOUT)
-		pr_crit("cslLcdcWaitWhileLcdcIsBusy timeout %d", timeout);
-
+	while (chal_lcdc_rd_status(cslLcdcDrv.chalH) &
+	       LCDC_STATUS_LCD_BUSY_MASK) ;
 }
 #endif
 

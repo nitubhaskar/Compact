@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   ostypes.h
@@ -112,8 +113,12 @@ typedef void *Mutex_t;
 typedef void *Timer_t;
 
 /// Ticks are the basic time unit.
-
-typedef UInt32 Ticks_t;
+//
+// **FIXME**  get redefinition of UInt32 error when building this under Linux using typedef...
+#ifndef Ticks_t
+#define Ticks_t UInt32
+#endif
+//typedef UInt32 Ticks_t;
 
 #ifdef WIN32
 #define TICKS_FOREVER					((Ticks_t)0xFFFFFFFF)

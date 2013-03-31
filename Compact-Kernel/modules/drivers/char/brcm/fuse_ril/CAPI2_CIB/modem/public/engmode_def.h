@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   engmode_def.h
@@ -54,10 +56,12 @@ typedef struct
 	UInt32	meas_bler;		             //FFFFFFFF if not present
 	Int32	target_sir;		             //0xFFFF if not present
 	Int32	meas_sir;		             //0xFFFF if not present
+// Begin under_dev
     UInt32  dl_tpc_up_count;             //Number of DL TPC "UP" commands
     UInt32  dl_tpc_down_count;           //Number of DL TPC "DOWN" commands
     UInt32  ul_tpc_up_count;             //Number of UL TPC "UP" commands
     UInt32  ul_tpc_down_count;           //Number of UL TPC "DOWN" commands
+// End under_dev
 } MS_UmtsDchReport_t;
 
 
@@ -972,8 +976,8 @@ typedef struct {
 typedef struct {
     // Voice RLC-U Information
     UInt8    umts_amr_codec_mode; //3G codec being used, NB-AMR or WB-AMR, 0 for NB-AMR , 1 for WB-AMR and 2 for Invalid AMR Mode
-    UInt8    frame_rate_whole;    // Whole part of the AMR codec frame rate
-    UInt8    frame_rate_frac;     // Fractional part of the AMR codec frame rate  
+    UInt8    frame_rate_whole;         // Whole part of the AMR codec frame rate
+    UInt8    frame_rate_frac;          // Fractional part of the AMR codec frame rate  
 } MS_UmtsAmrInfo;
 
 #define MAX_HSUPA_PERL_RL_INFO 4
@@ -1254,9 +1258,9 @@ typedef struct
     MS_UmtsRabRbInfo        rab_rb_info;         ///< RAB and RB Info
     MS_UmtsAmrInfo          amr_info;            ///< AMR codec info
     MS_UmtsRachInfo         rach_info;           ///< RACH info
-	PLMNId_t				plmn_id;
 
-
+			PLMNId_t				plmn_id;
+			
 } MS_UMTSParam_t;    // this structure corresponds to T_RRC_TESTPARAM struct in stack					
 
 typedef struct
@@ -1281,15 +1285,6 @@ typedef struct
 
 } MS_Ext_SMSParam_t;
 
-typedef enum
-{
-
-	EM_READY_STATE,
-	EM_AA_READY_STATE,
-	EM_STANDBY_STATE,
-	EM_IDLE_STATE
-
-} MS_Ext_ReadyState_t;
 
 typedef struct
 {
@@ -1335,10 +1330,6 @@ typedef struct
 	// equivelant PLMN
 	EQUIV_PLMN_LIST_t	eqv_plmn_list;
 
-	// force to standy flag
-	Boolean		force_to_standby;
-	Boolean		ps_suspended;
-
 } MS_Ext_MMParam_t;
 
 
@@ -1376,37 +1367,6 @@ typedef struct
 	
 } MS_Ext_RRParam_t;
 
-typedef enum
-{
-	EM_MACMODE_MM_SINGLE_BLOCK,
-	EM_MACMODE_SINGLE_BLOCK_WITHOUT_TBF,
-	EM_MACMODE_DYNAMIC_ALLOCATION,
-	EM_MACMODE_EXT_DYNAMIC_ALLOCATION,
-	EM_MACMODE_FIXED_HALF_DUPLEX,
-	EM_MACMODE_FIXED_FULL_DUPLEX,
-	EM_MACMODE_MAC_MODE_UNDEFINED,
-	EM_MACMODE_MM_EXT_DYNAMIC_ALLOCATION,
-	EM_MACMODE_MM_DYNAMIC_ALLOCATION,
-	EM_MACMODE_MM_FIXED_ALLOCATION
-
-} MS_Ext_MACMode_t;
-
-typedef enum
-{
-	EM_RLC_ACK,
-	EM_RLC_UNACK,
-	EM_RLC_MODE_UNDEFINED 
-	
-} MS_Ext_RLCMode_t;
-
-typedef enum
-{
-
-	EM_TBF_TYPE_OPEN_ENDED,
-	EM_TBF_TYPE_CLOSE_ENDED,
-	EM_TBF_TYPE_UNDEFINED 
-
-} MS_Ext_TbfType_t;
 
 typedef struct
 {
@@ -1415,7 +1375,6 @@ typedef struct
 	UInt8		rlc_mode;
 	UInt8		tbf_type;
 	UInt32		n3102;
-	Boolean		usf_granularity; 
 
 } MS_Ext_RLCParam_t;
 

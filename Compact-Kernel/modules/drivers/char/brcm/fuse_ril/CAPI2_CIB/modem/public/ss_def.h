@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   ss_def.h
@@ -33,8 +35,9 @@ the GPL, without Broadcom's express prior written consent.
 #define MAX_CCBS_LIST_SIZE					5		///< Max CCBS List Size
 #define ALL_CCBS_INDEX						0xFF	///< All CCBS Indexes
 #define INDEFINITE_LENGTH_INDICATOR			0x80	///< Infinite Length Indicator
-#define MAX_SS_REQ_RESEND					0x00	///< 0=DISABLED. Resend limite in case SATK initiated svc req failure
+#define MAX_SS_REQ_RESEND					0x02	///< Resend limite in case SATK initiated svc req failure
 #define	TERMITATE_TIMER_60_SEC		(Ticks_t)(60 * TICKS_ONE_SECOND )	///< Terminate Timer 60 Second
+#define	RESEND_STK_SS_TIMER_5_SEC	(Ticks_t)(5 * TICKS_ONE_SECOND )	///< Resend Timer 30 Second
 
 //masks for ssStatus as per 3GPP 29.002 17.7.4
 #define SS_STATUS_MASK_ACTIVE				0x01	///< SS-Status Mas Active

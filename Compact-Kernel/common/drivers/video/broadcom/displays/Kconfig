@@ -40,19 +40,7 @@ config BCM_LCD_ILI9341_BOE_REV05
         tristate "LCD Panel- S6D04H0A01 controller"
         default Y
         help
-	  QVGA LCD panel (ILI9341 controller)
-
-config BCM_LCD_ILI9341_ZANIN
-        tristate "LCD Panel- ILI9341 controller"
-        default Y
-        help
-	  QVGA LCD panel (ILI9341 controller)
-
-config BCM_LCD_ILI9486_BOE
-        tristate "LCD Panel- ILI9486 controller"
-        default Y
-        help
-	  HVGA LCD panel (ILI9486 controller)
+	  QVGA LCD panel (BOE controller)
 
 config BCM_LCD_S6D04K1
         tristate "LCD Panel- S6D04K1 controller"
@@ -72,17 +60,6 @@ config BCM_LCD_R61581
         help
 	  HVGA LCD panel (Renesas R61581 controller)
 
-config BCM_LCD_ILI9481
-        tristate "LCD Controller- ILI9481 controller"
-        default N
-        help
-	  HVGA LCD panel (ILI9481 controller)
-
-config BCM_LCD_S6D04K1_LUISA_HW02
-        tristate "LCD Panel- S6D04K1 controller"
-        default N
-        help
-	  QVGA LCD panel (S6D04H0A01 controller)
 
 if BCM_LCD_NT35582 || BCM_LCD_R61581
 menu "Custom display resolution"

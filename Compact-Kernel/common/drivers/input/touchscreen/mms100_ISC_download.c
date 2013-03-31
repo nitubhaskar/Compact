@@ -34,12 +34,10 @@
 
 //#include "COOPER_R00_V01_bin.c"
 //#include "COOPER_R00_V02_bin.c"
-#if defined (CONFIG_TOUCHSCREEN_MMS128_COOPERVE) //CooperVE
+#ifdef CONFIG_TOUCHSCREEN_TMA340_COOPERVE //CooperVE
 #include "MCS8000_bin_rev04.c"
-#elif defined (CONFIG_TOUCHSCREEN_MMS128_TASSVE)	// TassVE
-#include "MCS8000_bin_rev04_TassVE.c"
 #else //CONFIG_TOUCHSCREEN_TMA340 //TassVE
-#error "[TSP][Error] mms100_ISC_download.c : Feature missing!!"
+#include "MCS8000_bin_rev04_TassVE.c"
 #endif
 
 extern const UINT16 binary_nLength;

@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   phonebk_def.h
@@ -26,24 +28,17 @@ the GPL, without Broadcom's express prior written consent.
 
 #define PBK_NAME	40	///< Phonebook name length
 
-#define MAX_NUM_OF_ANR_FILE		6	///< Maximum number of type1 and type2 files suppoprted per EF-PBR record, i.e. support up to (6 + 6) type1/type2
-									///< Defining the max type1 and type2 numbers to be the same allows phonebook module to share the same data structure for both 
-									///< Do not change this since phonebook implementations assume it.
-
-#define MAX_NUM_OF_TYPE1_ANR_FILE	MAX_NUM_OF_ANR_FILE	///< Maximum number of type1 EF-ANR files supported per EF-PBR record 
-
-#define MAX_NUM_OF_TYPE2_ANR_FILE	MAX_NUM_OF_ANR_FILE	///< Maximum number of type2 EF-ANR files supported per EF-PBR record 
+#define MAX_NUM_OF_TYPE1_ANR_FILE 6	///< Maximum number of type1 EF-ANR files supported per EF-PBR record 
 
 #define MAX_NUM_OF_GROUP 10	///< Maximum number of groups an ADN can belong to
 
+#define MAX_NUM_OF_TYPE1_EMAIL_FILE 6 ///< Maximum number of type1 EF-EMAIL files supported per EF-PBR record 
 
-#define MAX_NUM_OF_EMAIL_FILE 6 ///< Maximum number of type1 and type2 EF-EMAIL files supported per EF-PBR record, i.e. support up to (6 + 6) type1/type2
-								///< Defining the max type1 and type2 numbers to be the same allows phonebook module to share the same data structure for both 
-								///< Do not change this since phonebook implementations assume it.
+///< Maximum number of type2 EF-ANR files supported per EF-PBR record 
+#define MAX_NUM_OF_TYPE2_ANR_FILE 6
 
-#define MAX_NUM_OF_TYPE1_EMAIL_FILE		MAX_NUM_OF_EMAIL_FILE ///< Maximum number of type1 EF-EMAIL files supported per EF-PBR record 
-
-#define MAX_NUM_OF_TYPE2_EMAIL_FILE		MAX_NUM_OF_EMAIL_FILE ///< Maximum number of type2 EF-EMAIL files supported per EF-PBR record 	
+///< Maximum number of type2 EF-EMAIL files supported per EF-PBR record 
+#define MAX_NUM_OF_TYPE2_EMAIL_FILE 6
 
 /// Maximum number of second name (type1 and type2)
 #define MAX_NUM_OF_SECOND_NAME 2

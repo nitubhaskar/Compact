@@ -83,7 +83,7 @@ int max8986_request_irq(struct max8986 *max8986, int irq, bool enable_irq,
 	irq_info->irq = irq;
 
 	mutex_lock(&max8986->list_lock);
-	list_add_tail(&irq_info->node, &max8986->irq_handlers);
+	list_add(&irq_info->node, &max8986->irq_handlers);
 	mutex_unlock(&max8986->list_lock);
 
 	enable_irq ? max8986_enable_irq(max8986, irq) : \
@@ -312,39 +312,37 @@ static void max8986_irq_workq(struct work_struct *work)
 	}
 		
 	mutex_unlock(&max8986->list_lock);
-
 		/*
-		 * PMU interrupt is GPIO based and is edge trigerred interrupt
-		 * (GPIO lib supports only edge triggerred interrupt for now).
-		 * Since there are three interrupt status regs in the PMU,
-		 * following scenario can occur and lock out the PMU from
-		 * generating any more interrupts:
-		 * 1. One interrupt bit in INT1 and INT2 regs. PMU asserts
-		 *    the interrupt line low.
-		 * 2. ISR schedules workqueue to handle the interrupt.
-		 * 3. Worker thread reads INT1, which clears INT1 bits.
-		 * 4. Worker thread begins read of INT2. At the same time,
-		 *    another interrupt bit in INT1 gets set.
-		 * 5. Worker thread completes reading INT2 and INT3 and
-		 *    completes interrupt handling and returns.
-		 * 6. But the PMU INT line is still asserted because of the
-		 * interrupt bit that got set in step 3 above.
-		 * Since no interrupt was recognized by Linux, this bit never
-		 * gets cleared and no more interrutps are recevied from the
-		 * PMU.
-		 *
-		 * So to fix the issue, after processing all the interrrupts,
-		 * the interrupt line status is read. If the line is still
-		 * asserted, we again read all the three status regs and handle
-		 * the interrupts. This is repeated until the INT line is no
-		 * longer asserted.
-		 */
+		* PMU interrupt is GPIO based and is edge trigerred interrupt
+		* (GPIO lib supports only edge triggerred interrupt for now).
+		* Since there are three interrupt status regs in the PMU,
+		* following scenario can occur and lock out the PMU from
+		* generating any more interrupts:
+		* 1. One interrupt bit in INT1 and INT2 regs. PMU asserts
+		* the interrupt line low.
+		* 2. ISR schedules workqueue to handle the interrupt.
+		* 3. Worker thread reads INT1, which clears INT1 bits.
+		* 4. Worker thread begins read of INT2. At the same time,
+		* another interrupt bit in INT1 gets set.
+		* 5. Worker thread completes reading INT2 and INT3 and
+		* completes interrupt handling and returns.
+		* 6. But the PMU INT line is still asserted because of the
+		* interrupt bit that got set in step 3 above.
+		* Since no interrupt was recognized by Linux, this bit never
+		* gets cleared and no more interrutps are recevied from the
+		* PMU.
+		*
+		* So to fix the issue, after processing all the interrrupts,
+		* the interrupt line status is read. If the line is still
+		* asserted, we again read all the three status regs and handle
+		* the interrupts. This is repeated until the INT line is no
+		* longer asserted.
+		*/
 		int_state = gpio_get_value(IRQ_TO_GPIO(max8986->irq));
 		if( int_state==0 )
 			pr_debug("%s: PMU INT line is still asserted\n", __func__);
 
-	} while (int_state == 0);
-
+	}while (int_state == 0); 
 	pr_debug("%s: end\n", __func__);
 }
 

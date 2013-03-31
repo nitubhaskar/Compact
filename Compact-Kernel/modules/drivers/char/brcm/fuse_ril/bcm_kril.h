@@ -55,7 +55,7 @@ typedef void * BRIL_Token;
 
 // for Response
 #define BCM_MAX_CALLS_NO        10
-#define BCM_MAX_PLMN_SEARCH     30
+#define BCM_MAX_PLMN_SEARCH     10
 #define MAX_PW_LENGTH           10
 #define BCM_MAX_SS_CLASS_SIZE   15	///< Maximum number of service classes returned by a query.
 #define PHONE_NUMBER_LENGTH_MAX 40
@@ -77,6 +77,7 @@ typedef void * BRIL_Token;
 #define PDP_USERNAME_LEN_MAX 65
 #define PDP_PASSWORD_LEN_MAX 65
 #define L2P_STRING_LENGTH_MAX 6		//possible l2p values: PPP, M-xxxx, BRCM supports only PPP
+
 
 // for Android message structure identifier type
 typedef enum {
@@ -181,21 +182,8 @@ typedef enum {
 #define BCM_RIL_RESTRICTED_STATE_CS_ALL         0x04
 #define BCM_RIL_RESTRICTED_STATE_PS_ALL         0x10
 
-
 // for Notification
 
-#ifndef _TASKMSGS_H_
-/**
-Structure : Sim Identifier Type
-**/
-typedef enum
-{
-    SIM_SINGLE,      ///< single SIM case
-    SIM_DUAL_FIRST,  ///< the first SIM
-    SIM_DUAL_SECOND, ///< the second SIM
-    SIM_ALL = 0xFF   ///< for all the SIMs
-} SimNumber_t;
-#endif
 
 /**
      @struct  KRIL_Command_t
@@ -204,19 +192,17 @@ typedef enum
  */
 typedef struct
 {
-    unsigned short client; //Client ID
-    SimNumber_t SimId;     //SIM ID (SIM_SINGLE, SIM_DUAL_FIRST, SIM_DUAL_SECOND, SIM_ALL)
+    unsigned short client;  //Client ID
     BRIL_Token t;          //TBD
-    unsigned long CmdID;   //URIL Command ID
-    void *data;            //pointer to user buffer
-    size_t datalen;        //length of user buffer
+    unsigned long CmdID;    //URIL Command ID
+    void *data;             // pointer to user buffer
+    size_t datalen;         // length of user buffer
 } KRIL_Command_t;
 
 
 typedef struct 
 {
     unsigned short client; //Client ID
-    SimNumber_t SimId;     //SIM ID (SIM_SINGLE, SIM_DUAL_FIRST, SIM_DUAL_SECOND, SIM_ALL)
     BRIL_Token t;          //TBD
     unsigned long CmdID;   //URIL Command ID
     BRIL_Errno result;     //Response result
@@ -236,18 +222,17 @@ typedef struct {
              * clir == 2 on "CLIR suppression" (allow CLI presentation)
              */
     unsigned char isEmergency;
-    unsigned char emergencySvcCat;                    ///< Emergency Service Category Value
+	unsigned char emergencySvcCat;                    ///< Emergency Service Category Value
     unsigned short isVTcall;
 } KrilDial_t;
 
 
 //Used by Kril_DataStateHandler
 typedef struct {
-    char l2p[L2P_STRING_LENGTH_MAX+1];
+    char l2p[L2P_STRING_LENGTH_MAX];
     int  cid;
 
 } KrilDataState_t;
-
 
 //Used by Kril_SendDataHandler
 typedef struct {
@@ -257,18 +242,14 @@ typedef struct {
 
 
 typedef struct {
-    int  onOff;
-    int  powerOffcard;
-} KrilRadioPower_t;
-
-
-typedef struct {
     int  index;
 } KrilSeparate_t;
 
 
 typedef struct {
     char   networkInfo[30];
+    int    manualRat;
+    int    permanentAutoEnable;
 } KrilManualSelectInfo_t;
 
 
@@ -279,8 +260,6 @@ typedef struct {
 
 typedef struct {
     int    networktype;
-    int    networktypeEx;
-    int    band;
 } KrilSetPreferredNetworkType_t;
 
 
@@ -326,7 +305,7 @@ typedef struct {
 typedef struct {
     int       StringSize;
     char    USSDString[MAX_USSD_STRING+1];
-    unsigned char	dcs;  // (dcs&0x0F)>>2: 0-Default Alphabet; 1-8bit; 2-UCS2
+	unsigned char	dcs;  // (dcs&0x0F)>>2: 0-Default Alphabet; 1-8bit; 2-UCS2
 } KrilSendUSSDInfo_t;
 
 
@@ -359,15 +338,15 @@ typedef struct
 typedef struct
 {
     int    fac_id;
-    char   OldPasswd[MAX_PW_LENGTH+1];
-    char   NewPasswd[MAX_PW_LENGTH+1];
-    char   NewPassConfirm[MAX_PW_LENGTH+1];
+    char   OldPasswd[MAX_PW_LENGTH];
+    char   NewPasswd[MAX_PW_LENGTH];
+    char   NewPassConfirm[MAX_PW_LENGTH];
 } KrilCallBarringPasswd_t;
 
 
 typedef struct {
-    char password[CHV_MAX_LENGTH+1];
-    char newpassword[CHV_MAX_LENGTH+1];
+    char password[CHV_MAX_LENGTH];
+    char newpassword[CHV_MAX_LENGTH];
 } KrilSimPinNum_t;
 
 
@@ -408,7 +387,7 @@ typedef struct
 
 typedef struct {
     KrilFacility_t     fac_id;
-    char               password[CHV_MAX_LENGTH+1];
+    char               password[CHV_MAX_LENGTH];
     int                service;
 } KrilGetFacLock_t;
 
@@ -416,7 +395,7 @@ typedef struct {
 typedef struct {
     KrilFacility_t     fac_id;
     int                lock;
-    char               password[CHV_MAX_LENGTH+1];
+    char               password[CHV_MAX_LENGTH];
     int                service;
 } KrilSetFacLock_t;
 
@@ -432,7 +411,7 @@ typedef struct {
     int  p2;
     int  p3;
     char data[MAX_SIMIO_CMD_LENGTH];       /* May be NULL*/
-    char pin2[CHV_MAX_LENGTH+1];       /* May be NULL*/
+    char pin2[MAX_SIMIO_PIN2_LENGTH];       /* May be NULL*/
 } KrilSimIOCmd_t;
 
 
@@ -440,21 +419,10 @@ typedef enum {
     BRIL_HOOK_SET_PREFDATA, // To Set the which SIM need to support preferred data connection.
     BRIL_HOOK_QUERY_SIM_PIN_REMAINING,
     BRIL_HOOK_GET_SIM_VOLTAGE,
-    BRIL_HOOK_SET_BPM_MODE,
     BRIL_HOOK_GENERIC_SIM_ACCESS,
-    BRIL_HOOK_EAP_SIM_AUTHENTICATION,
-    BRIL_HOOK_EAP_AKA_AUTHENTICATION,
-    BRIL_HOOK_SET_PDP_ACTIVATION_FDN_CONTROL, // config ms database element MS_LOCAL_PCH_ELEM_PDP_ACTIVATION_FDN_CONTROL
-    BRIL_HOOK_QUERY_NETWORK_LOCK,          // Query network lock information(includes lock indicator, remain attempts and lock code)
-    BRIL_HOOK_QUERY_NETWORK_SUBSET_LOCK,   // Query network subset lock information(includes lock indicator, remain attempts and lock code)
-    BRIL_HOOK_QUERY_SERVICE_PROVIDE_LOCK,  // Query service provide lock information(includes lock indicator, remain attempts and lock code)
-    BRIL_HOOK_QUERY_CORPORATE_LOCK,        // Query corporate lock information(includes lock indicator, remain attempts and lock code)
-    BRIL_HOOK_QUERY_PHONE_LOCK,            // Query phone lock information (includes lock status and IMSI)
-    BRIL_HOOK_QUERY_ENG_MODE,              // Query Engineer Mode
-    BRIL_HOOK_QUERY_FLASH_OTP_TOTAL_PAGES,	// Query total pages of flash otp
-    BRIL_HOOK_QUERY_FLASH_OTP_FREE_PAGES,		// Query free pages of flash otp
-    BRIL_HOOK_QUERY_ENG_MODE_SET_AMR_TYPE,     // Set AMR Type in Eng Mode, NB-AMR or WB-AMR, 0 for NB-AMR , 1 for WB-AMR and 2 for Invalid AMR Mode
-    BRIL_HOOK_FDN_SKIP
+    BRIL_HOOK_EAP_SIM_AUTHENTICATION,	// BCM_EAP_SIM
+    BRIL_HOOK_EAP_AKA_AUTHENTICATION	 
+
 } HOOK_msgType;
 
 
@@ -473,7 +441,7 @@ typedef struct {
     char            name[BCM_MAX_DIGITS*2];
     size_t          namelen;
     char            namePresentation;
-    char            number[BCM_MAX_DIGITS+1];     /* phone number */
+    char            number[PHONE_NUMBER_LENGTH_MAX];     /* phone number */
     size_t          numlen;     /* phone number length*/
     char            numberPresentation; /* 0 = Allowed, 
                                            1 = Restricted,
@@ -499,7 +467,6 @@ typedef struct
 typedef struct {
     int              type;
     int              codetype;
-	int				 ussdtype; //_REL = 1 , _IND, _RSP = 0
     unsigned char    Length;
     unsigned char    USSDString[PHASE1_MAX_USSD_STRING_SIZE+1];
 } KrilReceiveUSSDInfo_t;
@@ -668,7 +635,7 @@ typedef enum {
 
 typedef struct
 {
-    BRIL_Errno result;    ///< SIM access result
+	BRIL_Errno result;		    ///< SIM access result
 	int remain_attempt;		  ///< Facility lock status.
 } KrilSimPinResult_t;
 
@@ -685,13 +652,13 @@ typedef struct
 
 typedef struct
 {
-    BRIL_Errno result; ///< SIM access result
+	BRIL_Errno result;		///< SIM access result
 	int lock;		        ///< Facility lock status.
 } KrilFacLock_t;
 
 
 typedef struct {
-    BRIL_Errno  result;    ///< SIM access result
+    BRIL_Errno  result;		///< SIM access result
     int  command;
     int  fileid;
     int  sw1;
@@ -703,15 +670,14 @@ typedef struct {
 
 typedef struct
 {
-    BRIL_Errno result;                ///< SIM access result
+    BRIL_Errno result;		                ///< SIM access result
     char imsi[IMSI_DIGITS+1];		  ///< IMSI.
-    char PlmnName[PLMN_LONG_NAME];		/// JSHAN
 } KrilImsiData_t;
 
 
 typedef struct
 {
-    BRIL_Errno result;                ///< SIM access result
+    BRIL_Errno result;		                ///< SIM access result
     char imei[IMEI_DIGITS+1];		        ///< IMEI (+1 for null termination)
     unsigned char  imeisv[3];		        ///< IMEISV (+1 for null termination)
 } KrilImeiData_t;
@@ -742,6 +708,7 @@ typedef struct {
     BRIL_Errno result;
     unsigned char index;
 } KrilMsgIndexInfo_t;
+
 
 typedef struct
 {
@@ -833,11 +800,47 @@ typedef struct {
     iKrilGetCBSMSConfigInfo_t content[MAX_CHNLID_LIST_SIZE];
 } KrilGsmBroadcastGetSmsConfigInfo_t;
 
+//	ycao@032311
+
+#define     MO_VOICE 0x00
+#define     MO_SMS   0x01
+#define     MO_SS    0x02
+#define     MO_USSD  0x03
+#define     PDP_CTXT 0x04    
+
+
+#define      CALL_CONTROL_NO_CONTROL  0
+#define      CALL_CONTROL_ALLOWED_NO_MOD 1
+#define      CALL_CONTROL_NOT_ALLOWED 2
+#define      CALL_CONTROL_ALLOWED_WITH_MOD 3   
+
+
+
+typedef struct { 				
+   char call_type;                                         
+   char control_result;                            
+    int alpha_id_present;				
+    char alpha_id_len;				
+    char alpha_id[64];				
+    char call_id;				
+   char old_call_type;                                   
+    char modadd_ton;				
+    char modadd_npi;				
+    char modadd_len;				
+    char modadd[200];				
+}KrilStkCallCtrlResult_t;				
+
+// Broadcom define Message data
+//#define BRCM_URIL_REQUEST_BASE  (URILC_REQUEST_BASE - 100)
+//#define BRCM_URIL_UNSOLICITED_BASE  (RIL_UNSOL_RESPONSE_BASE + 1000)
+
 
 typedef struct {
     int    simAppType;
     char   simecclist[BCM_MAX_DIGITS];
 } Kril_SIMEmergency;
+
+
 
 /**
  *  The data structure carried by BRIL_REQUEST_KRIL_INIT
@@ -848,19 +851,13 @@ typedef struct {
  *  The data structure now carries IMEI, and it can be exteneded in the future.
  */
 typedef struct {
-    int               is_valid_imei;
-    char              imei[IMEI_DIGITS+1];
-    int               is_valid_imeiEx;
-    char              imeiEx[IMEI_DIGITS+1];
+     int               is_valid_imei;
+     char              imei[IMEI_DIGITS+1];
     int               networktype;
-    int               networktypeEx;
     int               band;
-    int               dataprefer;
-    int               bpmsetting;
     //++ JSHAN Attach for next power on
     int               gprs_attach_init;
     //-- JSHAN Attach for next power on
-    int               assertflag;
 } KrilInit_t;
 
 
@@ -869,13 +866,12 @@ typedef struct {
     int    datalen;
 } KrilTlvData;
 
-
 typedef enum {
     BRIL_HOOK_UNSOL_SIM_ERROR,        // Notify user SIM Card is error.
-    BRIL_HOOK_UNSOL_SIM_DATA,          // Notify user SIM Data for IMSI/GID1/GID2
-    BRIL_HOOK_UNSOL_MASTER_SIM_MODE,    // Notify if the Master SIM mode is invoked
+    BRIL_HOOK_UNSOL_SIM_DATA,		  //Notify user SIM Data for IMSI/GID1/GID2
     BRIL_HOOK_UNSOL_SIM_MSISDN_DATA     //Notify user SIM Data for MSISDN
 } HOOK_unsol_msgType;
+
 
 
 /* message id defination for request 
@@ -909,6 +905,7 @@ typedef enum {
  * in order to avoid conflict with constants defined in \\hardware\ril\include\telephony\ril.h
  *
  */
+
 
 // Android request defination
 #define BRCM_RIL_REQUEST_GET_SIM_STATUS 1
@@ -1050,6 +1047,7 @@ typedef enum {
 #define BRCM_RIL_UNSOL_RINGBACK_TONE 1029
 #define BRCM_RIL_UNSOL_RESEND_INCALL_MUTE 1030
 
+
 // URIL request defination
 #define BRCM_URIL_REQUEST_BASE  (BRCM_RIL_UNSOL_RESPONSE_BASE - 200)
 
@@ -1088,18 +1086,6 @@ typedef enum {
  */
 #define BRIL_UNSOL_EMERGENCY_NUMBER (BRCM_URIL_UNSOLICITED_BASE+1)
 
-/**
- * BRIL_UNSOL_VMPWR_SAVING_MODE
- *
- * Reports VM power saving mode.
- *
- * "data" is a int value
- * ((int *)data)[0] == 0 the VM is not in power saving mode.
- * ((int *)data)[0] == 1 the VM is in power saving mode.
- *
- */
-#define BRIL_UNSOL_VMPWR_SAVING_MODE (BRCM_URIL_UNSOLICITED_BASE+2)
-
 
 #ifdef VIDEO_TELEPHONY_ENABLE
 // VT request defination
@@ -1124,6 +1110,7 @@ typedef enum {
 #define BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_MODIFY_RES              BRCM_RIL_UNSOL_RESPONSE_VT_BASE + 10
 #define BRCM_RIL_UNSOL_RESPONSE_VT_CALL_EVENT_UNKNOWN                 BRCM_RIL_UNSOL_RESPONSE_VT_BASE + 11
 #endif //VIDEO_TELEPHONY_ENABLE
+
 
 
 //AGPS
@@ -1232,6 +1219,22 @@ typedef enum
 } AgpsCp_RrcStatus;
 
 #endif //BRCM_AGPS_CONTROL_PLANE_ENABLE
+
+//SAMSUNG_SELLOUT_FEATURE
+typedef struct
+{
+	unsigned char	bSelloutEnable;
+	unsigned char	OperateMode;	
+	unsigned char	ProdutInfo;
+	unsigned char	bSmsSending;
+	char			Mcc[4];
+	char			Mnc[3];
+}SellOutSMS;
+
+#define FLASH_READ_NV_DATA( _Buf_, _Idx_ )		Flash_Read_NV_Data( _Buf_, _Idx_ )
+#define FLASH_WRITE_NV_DATA( _Buf_, _Idx_ )	Flash_Write_NV_Data( _Buf_, _Idx_ )
+//SAMSUNG_SELLOUT_FEATURE
+
 
 #ifdef OEM_RIL_ENABLE
 #include "bcm_kril_ext.h"

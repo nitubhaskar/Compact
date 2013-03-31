@@ -111,13 +111,6 @@ struct mmc_host_ops {
 
 	/* optional callback for HC quirks */
 	void	(*init_card)(struct mmc_host *host, struct mmc_card *card);
-
-	/* functions for panic dumping */
-	int (*panic_probe)(struct raw_hd_struct *rhd, int type);
-	int (*panic_write)(struct raw_hd_struct *rhd, char *buf,
-			unsigned int offset, unsigned int len);
-	int (*panic_erase)(struct raw_hd_struct *rhd, unsigned int offset,
-			unsigned int len);
 };
 
 struct mmc_card;

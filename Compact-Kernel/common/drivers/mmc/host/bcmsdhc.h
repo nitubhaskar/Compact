@@ -122,7 +122,6 @@
 /* Host Control Register (3.2.10) */
 #define HOSTCTL_LED_CONTROL             0x01
 #define HOSTCTL_DAT_4BIT_WIDTH          0x02
-#define HOSTCTL_DAT_8BIT_WIDTH          0x20
 #define HOSTCTL_HIGH_SPEED              0x04
 #define HOSTCTL_CTRL_DMA_MASK	        0x18
 #define HOSTCTL_CTRL_SDMA	            0x00
@@ -338,7 +337,6 @@ struct bcmsdhc_host {
 	bool m_fAutoCMD12Success;	/* Auto CMD 12 enable */
 	bool enable_sdio_interrupt;	/* Current SDIO interrupt state */
 	bool bus_4bit_mode;	/* Current Bus Width 4 bit */
-	bool bus_8bit_mode;	/* Current Bus Width 8 bit */
 	struct device *dev;
 
 	struct sg_mapping_iter sg_miter;	/* SG state for PIO */
@@ -366,18 +364,7 @@ struct bcmsdhc_host {
 
 	struct timer_list timer;	/* Timer for timeouts */
 
+	unsigned long private[0] ____cacheline_aligned;
 	struct regulator	*vcc;
 	struct pm_qos_request_list *sdio_driver_pm_qos_req;
-
-	unsigned long private[0] ____cacheline_aligned;
 };
-
-#define MMC_DEFAULT_DELAY_COUNT	500 /* 500msec */
-#define MMC_1SEC_DELAY_COUNT	1000 /* 1000msec */
-
-/* Global enum for context flag */
-enum {
-	NORMAL = 0,
-	IN_PANIC
-};
-

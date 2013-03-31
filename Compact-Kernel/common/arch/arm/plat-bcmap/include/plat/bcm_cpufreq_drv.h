@@ -16,6 +16,11 @@
 #ifndef BCM_CPUFREQ_DRV_H
 #define BCM_CPUFREQ_DRV_H
 
+#define CPUFREQ_ETERNAL_LATENCY		400000
+#ifndef CPUFREQ_ETERNAL
+#define CPUFREQ_ETERNAL				-1
+#endif
+
 struct bcm_freq_tbl {
 	u32 cpu_freq;         /* in MHz */
 	u32 cpu_voltage;      /* in uV  */
@@ -46,6 +51,16 @@ struct bcm_cpu_info {
 	 * to turbo mode needs special handling.
 	 */
 	int index_turbo;
+	/* Index of turbol mode cpu frequency in DVFS table. */
+	int index_turbol;
+	/* Index of medb mode cpu frequency in DVFS table. */
+	int index_medb;
+	/* Index of meda mode cpu frequency in DVFS table. */
+	int index_meda;
+	/* Index of normal mode cpu frequency in DVFS table. */
+	int index_normal;
+	/* Index of lower mode cpu frequency in DVFS table. */
+	int index_lowa;
 };
 
 /* Platform data for BCM21553 cpufreq driver */

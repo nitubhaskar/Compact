@@ -1,24 +1,12 @@
-  /*
- *
- * sensor type definition 
- *
-. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2010   
- *
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
+/*.......................................................................................................
+. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2009           
+. All rights are reserved. Reproduction and redistiribution in whole or 
+. in part is prohibited without the written consent of the copyright owner.
+. 
+.   Developer:
+.   Date:
+.   Description:  
+..........................................................................................................
 */
 
 #if !defined(_CAMACQ_TYPES_H_)
@@ -63,13 +51,11 @@
 #include <linux/slab.h>
 #endif /* WIN32 */
 
-/* Definition */#if defined (CONFIG_BCM_SINGLE_CAM)#define CAMACQ_SENSOR_MAX       1#define CAM_SENSOR_NUM 1 //swsw_dual
-#elif defined (CONFIG_BCM_DUAL_CAM)#define CAMACQ_SENSOR_MAX       2#define CAM_SENSOR_NUM 2 //swsw_dual#else
-#define CAMACQ_SENSOR_MAX       1
-#define CAM_SENSOR_NUM 1 //swsw_dual
-#endif
-
 /* Global */
+
+/* Definition */
+
+#define CAMACQ_SENSOR_MAX       1
 
 #define CAMACQ_SENSOR_MAIN 		0       // main sensor
 #define CAMACQ_SENSOR_SUB  		1       // sub sensor 
@@ -83,10 +69,7 @@
 #define CAMACQ_LOG_ERR 0x01
 #define CAMACQ_LOG_DBG 0x02
 #define CAMACQ_LOG_MUX (CAMACQ_LOG_ERR | CAMACQ_LOG_DBG)
-#define CAMACQ_LOG_LVL CAMACQ_LOG_ERR
-
-#define TRUE  1
-#define FALSE 0
+#define CAMACQ_LOG_LVL CAMACQ_LOG_MUX
 
 #if defined(WIN32)
 #define CAMACQ_RDONLY "r"
@@ -132,7 +115,7 @@
 #define CamacqSeek(ifd, uioffset, uiwhence) vfs_llseek((struct file*)ifd, uioffset, uiwhence)
 #define CamacqTell(ifd) ((struct file*)ifd)->f_dentry->d_inode->i_size
 
-#if 0
+#if 1
 #define CamacqTraceErr(fmt, args...)\
     if(CAMACQ_LOG_LVL & CAMACQ_LOG_ERR)\
         printk( "%s"fmt"\n", __FUNCTION__, ##args)
@@ -146,8 +129,8 @@
     if(CAMACQ_LOG_LVL & CAMACQ_LOG_DBG)\
         printk( "%s OUT"fmt"\n", __FUNCTION__, ##args)
 #define CamacqTraceDbg_v(fmt, args...)\
-    if(CAMACQ_LOG_LVL & CAMACQ_LOG_DBG)\
-        printk( "%s OUT"fmt"\n", __FUNCTION__, ##args)
+//    if(CAMACQ_LOG_LVL & CAMACQ_LOG_DBG)\
+//        printk( "%s OUT"fmt"\n", __FUNCTION__, ##args)
 #else
 static struct timeval g_stDbgTimeval;
 #define CAMACQ_DBG_MSEC ( ((g_stDbgTimeval.tv_sec)*1000000 + g_stDbgTimeval.tv_usec) ) 

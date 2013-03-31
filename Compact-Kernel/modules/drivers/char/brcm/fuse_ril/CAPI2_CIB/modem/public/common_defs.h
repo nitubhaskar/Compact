@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   common_defs.h
@@ -148,7 +150,7 @@ typedef enum
 												///< should not be used for Phonebook telephone unless
 												///< the Phonebook is also limited to this size.
 
-#define MAX_PLMN_SEARCH					30		///< Maximum PLMN Search value
+#define MAX_PLMN_SEARCH					10		///< Maximum PLMN Search value
 #define MAX_SIGNAL_STRENGTH_LEVEL		63		///< Max. Signal strength level 0x3f
 #define	MAXNUM_CALLS					16 		///< Max. number of connected call allowed
 #define PROTOCOLDISC_CC					0x03	///< CC protocol discriminator
@@ -249,7 +251,7 @@ typedef struct
 } TelephoneNumber_t;
 
 
-#define MAX_BCD_NUMBER_SIZE				40						///< Max BCD Number Size
+#define MAX_BCD_NUMBER_SIZE				20						///< Max BCD Number Size
 #define MAX_PHONE_NUMBER_SIZE			MAX_BCD_NUMBER_SIZE * 2	///< Max Phone Number Size
 #define MAX_PHONE_SUBADDRESS_SIZE		21						///< Max Phone Subaddress Size
 
@@ -1628,8 +1630,8 @@ typedef enum
 /// Structure : Radio status indicating whether we are in TBF state
 typedef struct
 {
-	RadioDirection_t 	radio_direction;
-	RadioStatus_t 		radio_status;
+	RadioDirection_t radio_direction;
+	RadioStatus_t radio_status;
 	UInt32				max_dl_data_rate;		
 	
 } MS_Radio_Status_t;
@@ -1813,8 +1815,7 @@ typedef struct
 	UInt8	gmsk_multislot_pwr_profile;
 	Boolean random_l2_fill_bits_updated;
 	Boolean random_l2_fill_bits;
-    Boolean psk8_multislot_pwr_profile_updated;
-    UInt8  	psk8_multislot_pwr_profile;
+
 }
 GASConfigParam_t;
 
@@ -1837,21 +1838,6 @@ typedef struct
     Boolean interrat_nacc_support;
 	Boolean primary_power_on_wcdma_band_updated;
 	UInt8	primary_power_on_wcdma_band;
-    Boolean  	fast_dormancy_support_updated;
-    Boolean  	fast_dormancy_support;
-    Boolean  	enhanced_fdpch_supported_updated;
-    Boolean  	enhanced_fdpch_supported;
-    Boolean  	CPC_support_updated;
-    Boolean  	CPC_support;
-    Boolean  	cs_voice_over_hspa_supported_updated;
-    Boolean  	cs_voice_over_hspa_supported;
-	Boolean  	enhanced_cell_fach_dl_support_updated;
-	Boolean  	enhanced_cell_fach_dl_supported;
-	Boolean  	hsdpa_support_updated;
-	Boolean  	hsdpa_support;
-	Boolean  	hsupa_support_updated;
-	Boolean  	hsupa_support;
-
 }
 UASConfigParam_t;
 
@@ -1907,19 +1893,6 @@ typedef struct
     Boolean  gps_rrc_ue_b_supported;
     Boolean  gps_rrc_standalone_updated;
     Boolean  gps_rrc_standalone_supported;
-    Boolean  h3g_cs_call_int_ps_stream_updated;					
-    Boolean  h3g_cs_call_int_ps_stream;					
-    Boolean  ps_act_ind_for_svc_rqst_updated;					
-    Boolean  ps_act_ind_for_svc_rqst;					
-    Boolean  hplmn_over_lreg_in_auto_mode_updated;					
-    Boolean  hplmn_over_lreg_in_auto_mode;					
-    Boolean  	fido_sim_in_rogers_nw_updated;
-    Boolean  	fido_sim_in_rogers_nw_supported;
-	Boolean xsim_lock_active_updated;
-	Boolean xsim_lock_active;
-	Boolean	 	u2_sor_support_updated;
-	Boolean 	u2_sor_support;
-
 }
 NASConfigParam_t;
 

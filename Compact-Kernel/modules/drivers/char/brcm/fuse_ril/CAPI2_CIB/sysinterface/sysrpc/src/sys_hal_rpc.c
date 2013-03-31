@@ -15,6 +15,9 @@
 #define UNDEF_SYS_GEN_MIDS
 #define DEFINE_SYS_GEN_MIDS_NEW
 
+#ifndef UNDER_LINUX
+#include "string.h"
+#endif
 #include "mobcom_types.h"
 #include "resultcode.h"
 #include "taskmsgs.h"
@@ -26,6 +29,9 @@
 #include "xdr_porting_layer.h"
 #include "xdr.h"
 #include "rpc_api.h"
+#ifndef UNDER_LINUX
+#include "string.h"
+#endif
 #include "mobcom_types.h"
 #include "resultcode.h"
 #include "taskmsgs.h"
@@ -106,8 +112,7 @@ void SYSRPC_HAL_ADC_Ctrl(HAL_ADC_Action_en_t action, HAL_ADC_ReadConfig_st_t *re
 
 
 static HAL_EM_BATTMGR_Cb_t gBattEmptyCbk = NULL;
-static HAL_EM_BATTMGR_Cb_t gBattLowCbk = NULL;
-static HAL_EM_BATTMGR_ExtTempCB_t gTempExtremeCbk = NULL; 
+static HAL_EM_BATTMGR_Cb_t gBattLowCbk = NULL;static HAL_EM_BATTMGR_ExtTempCB_t gTempExtremeCbk = NULL; 
 static HAL_EM_BATTMGR_Cb_t gChargerRestartCbk = NULL; 
 static HAL_EM_BATTMGR_Cb_t gChargerTimeoutCbk =NULL; 
 static HAL_EM_BATTMGR_BattLevelCB_t gBattLevelCbk = NULL;
@@ -128,8 +133,7 @@ Result_t Handle_CAPI2_HAL_EM_BATTMGR_Notification(RPC_Msg_t* pReqMsg, HAL_EM_BAT
 	else if (event == BATTMGR_LOW_BATT_EVENT && gBattLowCbk)
 	{
 		gBattLowCbk();
-	}
-	else if (event == BATTMGR_BATT_EXTREME_TEMP_EVENT && gTempExtremeCbk)
+	}	else if (event == BATTMGR_BATT_EXTREME_TEMP_EVENT && gTempExtremeCbk)
 	{
 		gTempExtremeCbk((EM_BATTMGR_ExtTempState_en_t)inLevel, (Int16)inAdc_avg);
 	}
@@ -166,8 +170,7 @@ HAL_EM_BATTMGR_ErrorCode_en_t _HAL_EM_BATTMGR_RegisterEventCB(
 	else if (event == BATTMGR_LOW_BATT_EVENT)
 	{
 		gBattLowCbk = (HAL_EM_BATTMGR_Cb_t)callback;
-	}
-	else if ( event == BATTMGR_BATT_EXTREME_TEMP_EVENT )
+	}	else if ( event == BATTMGR_BATT_EXTREME_TEMP_EVENT )
 	{
 		gTempExtremeCbk = (HAL_EM_BATTMGR_ExtTempCB_t)callback;
 	}

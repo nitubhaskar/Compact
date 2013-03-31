@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_sim_msg.c
@@ -31,6 +33,9 @@ the GPL, without Broadcom's express prior written consent.
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -82,6 +87,7 @@ the GPL, without Broadcom's express prior written consent.
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -403,16 +409,7 @@ xdr_SIM_EFILE_UPDATE_RESULT_t( XDR* xdrs, SIM_EFILE_UPDATE_RESULT_t* data)
 {
 	XDR_LOG(xdrs,"SIM_EFILE_UPDATE_RESULT_t")
 
-	if ( XDR_ENUM(xdrs, &data->result, SIMAccess_t) &&
-		_xdr_u_char(xdrs, &data->sw1,"sw1") &&
-		_xdr_u_char(xdrs, &data->sw2,"sw2") )
-	{
-		return TRUE;
-	}
-	else
-	{
-		return FALSE;
-	}
+		return XDR_ENUM(xdrs, &data->result, SIMAccess_t);
 }
 
 
@@ -439,8 +436,6 @@ xdr_SIM_EFILE_DATA_t( XDR* xdrs, SIM_EFILE_DATA_t* data)
 	XDR_LOG(xdrs,"SIM_EFILE_DATA_t")
 
 	if( XDR_ENUM(xdrs, &data->result, SIMAccess_t) &&
-		_xdr_u_char(xdrs, &data->sw1,"sw1") && 
-		_xdr_u_char(xdrs, &data->sw2,"sw2") && 
 		_xdr_u_int16_t(xdrs, &data->data_len,"data_len")
 		)
 	{
@@ -472,11 +467,7 @@ xdr_SIM_EFILE_INFO_t( XDR* xdrs, SIM_EFILE_INFO_t* data)
 		XDR_ENUM(xdrs, &data->usim_deactivate_access_cond, USIM_EFILE_ACCESS_CONDITION_t) &&
 		_xdr_u_char(xdrs, &data->validated,"validated")	&&
 		_xdr_u_char(xdrs, &data->accessible_invalidated,"accessible_invalidated")	&&
-		XDR_ENUM(xdrs, &data->life_cycle_satus, USIM_LIFE_CYCLE_STATYS_t) &&     
-		_xdr_u_char(xdrs, &data->sw1,"sw1") && 
-		_xdr_u_char(xdrs, &data->sw2,"sw2") &&         
-		_xdr_u_char(xdrs, &data->fciLen,"fciLen") &&
-		xdr_opaque(xdrs, (caddr_t)&data->fci, MAX_FCI_LEN)
+		XDR_ENUM(xdrs, &data->life_cycle_satus, USIM_LIFE_CYCLE_STATYS_t)
 		)
 		return(TRUE);
 	else
@@ -571,11 +562,7 @@ xdr_SIM_DFILE_INFO_t( XDR* xdrs, SIM_DFILE_INFO_t* data)
 		_xdr_u_char(xdrs, &data->chv1_unblock_attempt,"chv1_unblock_attempt")	&&
 		_xdr_u_char(xdrs, &data->chv2_code_initialized,"chv2_code_initialized")	&&
 		_xdr_u_char(xdrs, &data->chv2_unlock_attempt,"chv2_unlock_attempt")	&&
-		_xdr_u_char(xdrs, &data->chv2_unblock_attempt,"chv2_unblock_attempt") &&        
-		_xdr_u_char(xdrs, &data->sw1,"sw1") &&        
-		_xdr_u_char(xdrs, &data->sw2,"sw2") &&
-		_xdr_u_char(xdrs, &data->fciLen,"fciLen") &&
-		xdr_opaque(xdrs, (caddr_t)&data->fci, MAX_FCI_LEN)
+		_xdr_u_char(xdrs, &data->chv2_unblock_attempt,"chv2_unblock_attempt")
 		)
 		return(TRUE);
 	else
@@ -828,17 +815,9 @@ xdr_SIM_GENERIC_APDU_CMD_BUF_t( XDR* xdrs, SIM_GENERIC_APDU_CMD_BUF_t* data)
 }
 
 
-bool_t 
-xdr_ICCID_ASCII_t( XDR* xdrs, ICCID_ASCII_t* data)
-{
-	XDR_LOG(xdrs,"ICCID_ASCII_t")
 
-	if( xdr_opaque(xdrs, (caddr_t)data, sizeof(ICCID_ASCII_t))
-		)
-		return(TRUE);
-	else
-		return(FALSE);
-}
+
+
 
 bool_t
 xdr_SIM_DETECTION_t(XDR* xdrs, SIM_DETECTION_t *sim_detection)
@@ -851,9 +830,7 @@ xdr_SIM_DETECTION_t(XDR* xdrs, SIM_DETECTION_t *sim_detection)
 	if ( XDR_ENUM(xdrs, &sim_detection->sim_appl_type, SIM_APPL_TYPE_t) &&
 		 xdr_union(xdrs, (enum_t *) &dscm, (caddr_t) (void *) &(sim_detection->lang_info), SIM_DETECTION_t_dscrm, NULL_xdrproc_t, &entry, NULL) &&
 		 xdr_Boolean(xdrs, &sim_detection->ruim_supported) &&
-		 xdr_u_char(xdrs, &sim_detection->sim_slot) &&
-		 xdr_Boolean(xdrs, &sim_detection->master_sim_mode) &&
-		 xdr_ICCID_ASCII_t(xdrs, &sim_detection->iccid))
+		 xdr_u_char(xdrs, &sim_detection->sim_slot) )
 	{
 		return(TRUE);
 	}
@@ -909,7 +886,7 @@ xdr_SIMLOCK_SIM_DATA_t(XDR* xdrs, SIMLOCK_SIM_DATA_t *sim_data)
 		 xdr_opaque(xdrs, (caddr_t) &sim_data->gid1, sizeof(GID_DIGIT_t)) &&
 		 xdr_u_char(xdrs, &sim_data->gid1_len) &&
 		 xdr_opaque(xdrs, (caddr_t) &sim_data->gid2, sizeof(GID_DIGIT_t)) &&
-		 xdr_u_char(xdrs, &sim_data->gid2_len))
+		 xdr_u_char(xdrs, &sim_data->gid2_len) )
 	{
 		return(TRUE);
 	}
@@ -925,12 +902,7 @@ xdr_SIMLOCK_STATE_t(XDR* xdrs, SIMLOCK_STATE_t *simlock_state)
 {
 	XDR_LOG(xdrs,"xdr_SIMLOCK_STATE_t");
 
-	if ( xdr_Boolean(xdrs, &simlock_state->network_lock_enabled) &&
-		 xdr_Boolean(xdrs, &simlock_state->network_subset_lock_enabled) &&
-		 xdr_Boolean(xdrs, &simlock_state->service_provider_lock_enabled) &&
-		 xdr_Boolean(xdrs, &simlock_state->corporate_lock_enabled) &&
-		 xdr_Boolean(xdrs, &simlock_state->phone_lock_enabled) &&
-		 XDR_ENUM(xdrs, &simlock_state->network_lock, SIM_SECURITY_STATE_t) &&
+	if ( XDR_ENUM(xdrs, &simlock_state->network_lock, SIM_SECURITY_STATE_t) &&
 		 XDR_ENUM(xdrs, &simlock_state->network_subset_lock, SIM_SECURITY_STATE_t) &&
 		 XDR_ENUM(xdrs, &simlock_state->service_provider_lock, SIM_SECURITY_STATE_t) &&
 		 XDR_ENUM(xdrs, &simlock_state->corporate_lock, SIM_SECURITY_STATE_t) &&
@@ -951,6 +923,18 @@ xdr_GID_DIGIT_t( XDR* xdrs, GID_DIGIT_t* data)
 	XDR_LOG(xdrs,"GID_DIGIT_t")
 
 	if( xdr_opaque(xdrs, (caddr_t)data, sizeof(GID_DIGIT_t))
+		)
+		return(TRUE);
+	else
+		return(FALSE);
+}
+
+bool_t 
+xdr_ICCID_ASCII_t( XDR* xdrs, ICCID_ASCII_t* data)
+{
+	XDR_LOG(xdrs,"ICCID_ASCII_t")
+
+	if( xdr_opaque(xdrs, (caddr_t)data, sizeof(ICCID_ASCII_t))
 		)
 		return(TRUE);
 	else
@@ -1026,27 +1010,6 @@ bool_t xdr_AD_DATA_t(XDR* xdrs, AD_DATA_t* data)
 	if ( _xdr_u_char(xdrs, &data->adLen, "adLen") )
 	{
 		return xdr_opaque(xdrs, (caddr_t) &data->adData, data->adLen);
-	}
-	else
-	{
-		return FALSE;
-	}
-}
-
-bool_t xdr_SimPinInd_t(XDR* xdrs, SimPinInd_t* res)
-{
-	XDR_LOG(xdrs,"xdr_SimPinInd_t")
-
-    if( _xdr_Boolean(xdrs, &res->Pin1Enabled, "Pin1Enabled") &&
-		_xdr_Boolean(xdrs, &res->Pin1Verified, "Pin1Verified") &&
-		_xdr_Boolean(xdrs, &res->Pin1Blocked, "Pin1Blocked") &&
-		_xdr_Boolean(xdrs, &res->Pin1PukBlocked, "Pin1PukBlocked") &&
-		_xdr_Boolean(xdrs, &res->Pin2Enabled, "Pin2Enabled") &&
-		_xdr_Boolean(xdrs, &res->Pin2Verified, "Pin2Verified") &&
-		_xdr_Boolean(xdrs, &res->Pin2Blocked, "Pin2Blocked") &&
-		_xdr_Boolean(xdrs, &res->Pin2PukBlocked, "Pin2PukBlocked") ) 
-	{
-		return TRUE;
 	}
 	else
 	{

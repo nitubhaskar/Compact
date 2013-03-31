@@ -79,10 +79,9 @@ Int32 KPDP_GetRsp(struct file *filp, UInt32 cmd, UInt32 arg)
         }
     }
 
-    rsp.SimId = buf_handle->result_info.SimId;
     rsp.result = buf_handle->result_info.result;
     rsp.CmdID = buf_handle->result_info.CmdID;
-    rsp.datalen = buf_handle->result_info.datalen;    
+    rsp.datalen = buf_handle->result_info.datalen;
 
     if (0 != buf_handle->result_info.datalen)
     {
@@ -139,7 +138,7 @@ Int32 KPDP_SendCmd(UInt32 cmd, UInt32 arg)
     void *tdata = NULL;
 
 
-    kpdp_cmd = (KPDP_CmdQueue_t *)kmalloc(sizeof(KPDP_CmdQueue_t), GFP_KERNEL);
+    kpdp_cmd = kmalloc(sizeof(KPDP_CmdQueue_t), GFP_KERNEL);
 
     if(!kpdp_cmd)
     {
@@ -148,21 +147,10 @@ Int32 KPDP_SendCmd(UInt32 cmd, UInt32 arg)
     else
     {
         kpdp_cmd->cmd = cmd;
-        kpdp_cmd->pdp_cmd = NULL;
-        kpdp_cmd->pdp_cmd = (KPDP_Command_t *)kmalloc(sizeof(KPDP_Command_t), GFP_KERNEL);
-        if(kpdp_cmd->pdp_cmd == NULL) {
-            KPDP_DEBUG(DBG_ERROR, "Unable to allocate pdp_cmd memory\n");
-            kfree(kpdp_cmd);
-            return 0;
-        }
+        kpdp_cmd->pdp_cmd = kmalloc(sizeof(KPDP_Command_t), GFP_KERNEL);
+        copy_from_user(kpdp_cmd->pdp_cmd, (KPDP_Command_t *)arg, sizeof(KPDP_Command_t));
 
-        if(copy_from_user(kpdp_cmd->pdp_cmd, (KPDP_Command_t *)arg, sizeof(KPDP_Command_t)) != 0)
-        {
-            KPDP_DEBUG(DBG_ERROR,"KPDP_SendCmd() - copy_from_user() had error\n");			
-            kfree(kpdp_cmd->pdp_cmd);
-            kfree(kpdp_cmd);
-            return 0;
-        }
+        KPDP_DEBUG(DBG_INFO, "CmdID:%d datalen:%d\n", kpdp_cmd->pdp_cmd->CmdID, (int)kpdp_cmd->pdp_cmd->datalen);
 
         if (0 != kpdp_cmd->pdp_cmd->datalen)
         {
@@ -170,20 +158,10 @@ Int32 KPDP_SendCmd(UInt32 cmd, UInt32 arg)
             if(NULL == tdata)
             {
                 KPDP_DEBUG(DBG_ERROR, "tdata memory allocate fail!\n");
-                kfree(kpdp_cmd->pdp_cmd);
-                kfree(kpdp_cmd);
-                return 0;
             }
             else
             {
-                if(copy_from_user(tdata, kpdp_cmd->pdp_cmd->data, kpdp_cmd->pdp_cmd->datalen) != 0)
-                {
-                    KPDP_DEBUG(DBG_ERROR,"KPDP_SendCmd() - copy_from_user() had error\n");			
-                    kfree(kpdp_cmd->pdp_cmd);
-                    kfree(kpdp_cmd);
-                    kfree(tdata);
-                    return 0;
-                }
+                copy_from_user(tdata, kpdp_cmd->pdp_cmd->data, kpdp_cmd->pdp_cmd->datalen);
                 KPDP_DEBUG(DBG_INFO, "tdata memory allocate success tdata:%p\n", kpdp_cmd->pdp_cmd->data);
                 kpdp_cmd->pdp_cmd->data = tdata;
             }

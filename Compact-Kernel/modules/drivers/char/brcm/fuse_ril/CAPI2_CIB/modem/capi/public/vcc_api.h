@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   vcc_api.h
@@ -19,6 +21,16 @@ the GPL, without Broadcom's express prior written consent.
 ****************************************************************************/
 #ifndef _VCC_API_H_
 #define _VCC_API_H_
+
+#include "vcc_def.h"
+
+
+typedef enum
+{
+	VCC_VM_SUSPENDED,     ///< VM has been suspended, network request is likely rejected after VCC retry timeout
+	VCC_VM_RESUMED,       ///< VM has been resumed, network request will be processed
+	VCC_VM_CS_ALLOWED	  ///< VM is still suspended for PS connection, but CS request will be processed by suspending PS connection
+} VCC_VM_STATUS_t;
 
 
 #define VccApi_PostIdleIndication(clientInfoPtr, chkClientId, isPowerDownCnf) VccApi_PostIdleInd(clientInfoPtr, chkClientId, isPowerDownCnf, __FILE__, __LINE__)

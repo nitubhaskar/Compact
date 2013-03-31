@@ -31,6 +31,7 @@ extern Boolean StkIcon;  // gearn not support icon TR
 
 
 
+static void SendCAPI2STKRsp( UInt32 tid, UInt8 clientID, SATK_EVENTS_t toEvent, UInt8 result1, UInt8 result2, SATKString_t *inText, UInt8 menuID);
 
 //******************************************************************************
 //
@@ -187,11 +188,6 @@ int STK_ParseResult(UInt8 *byte, SATK_ResultCode_t *resultcode, SATK_ResultCode2
             *resultcode = SATK_Result_NumberUnknownToMe;
             break;
         
-	case 0x34:
-           *resultcode = SATK_Result_SSReturnResultError;
-            break;
-
-		
         case 0x36:
             *resultcode = SATK_Result_ValueMissingError;
             break;
@@ -297,9 +293,9 @@ int STK_ParseItemIdentifier(UInt8 *byte, UInt8 *itemId)
 //******************************************************************************
 int STK_ParseTextString(UInt8 *byte, SATKString_t *intext)
 {
-    // Check Text string tag
-    UInt8 add_len;
-    UInt8 DCS;
+		// Check Text string tag
+		UInt8 add_len;
+		UInt8 DCS;
 
     if (!(byte[0] == 0x8D || byte[0] == 0x0D))
     {
@@ -308,24 +304,27 @@ int STK_ParseTextString(UInt8 *byte, SATKString_t *intext)
     }    
     
     // Check Length
-    //intext->len = byte[1] - 1;
-    add_len = byte[1];
-    if (add_len == 0x81)  // gearn large  get input
-    {
-        intext->len= byte[2]- 1;
-        DCS = byte[3];
-        // Parse Text string
-        memcpy(intext->string, &byte[4], intext->len);
-        KRIL_DEBUG(DBG_ERROR,"STK_ParseTextString DCS:0x%X add_len:%d intext->len:%d\n", DCS, add_len, intext->len);
-    }
-    else
-    {
-        intext->len = byte[1] - 1;
-        DCS = byte[2];  
-        memcpy(intext->string, &byte[3], intext->len);
-        KRIL_DEBUG(DBG_ERROR,"STK_ParseTextString DCS:0x%X add_len:%d intext->len:%d\n", DCS, add_len, intext->len);
-    }   
+		//intext->len = byte[1] - 1;
+		add_len = byte[1];
+		if (add_len == 0x81)  // gearn large  get input
+        {
+			intext->len= byte[2]- 1;
+		DCS = byte[3];
+			// Parse Text string
+			memcpy(intext->string, &byte[4], intext->len);
+			KRIL_DEBUG(DBG_ERROR,"STK_ParseTextString DCS:0x%X add_len:%d intext->len:%d\n", DCS, add_len, intext->len);
+
+        }
+       else
+       {
+		
+			intext->len= byte[1]- 1;
+		DCS = byte[2];	
+			memcpy(intext->string, &byte[3], intext->len);
+			KRIL_DEBUG(DBG_ERROR,"STK_ParseTextString DCS:0x%X add_len:%d intext->len:%d\n", DCS, add_len, intext->len);
+       }   
 	
+		
     // Check Data coding scheme
     switch (DCS)
     {
@@ -346,22 +345,23 @@ int STK_ParseTextString(UInt8 *byte, SATKString_t *intext)
             return 0;
     }
     
-    return 1;
+   return 1;
 }
 
-
+	
 //******************************************************************************
 //
-// Function Name: STK_ParseLanguageSelection
+// Function Name: STK_ParseEventList
 //
-// Description:   Parse Language selection event(refer to 11.14 section 12.45)
+// Description:   Parse Event List(refer to 11.14 section 12.45)
 //
 // Notes:
 //
 //******************************************************************************
-int STK_ParseLanguageSelection(SimNumber_t SimId, UInt8 *byte)
+int STK_ParseLanguageSelection(UInt8 *byte)
 {
     UInt16 language;
+    ClientInfo_t clientInfo;
     
     // Check Language Selection tag
     if (!(byte[0] == 0x2D || byte[0] == 0xAD))
@@ -372,7 +372,8 @@ int STK_ParseLanguageSelection(SimNumber_t SimId, UInt8 *byte)
     
     language =  byte[2] << 8 | byte[3];
     
-    CAPI2_SatkApi_SendLangSelectEvent (InitClientInfo(SimId), language);
+    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+    CAPI2_SatkApi_SendLangSelectEvent (&clientInfo, language);
     return 1;
 }
 
@@ -386,8 +387,10 @@ int STK_ParseLanguageSelection(SimNumber_t SimId, UInt8 *byte)
 // Notes:
 //
 //******************************************************************************
-int STK_ParseEventList(SimNumber_t SimId, UInt8 *byte)
-{    
+int STK_ParseEventList(UInt8 *byte)
+{
+    ClientInfo_t clientInfo;
+    
     // Check Event List tag
     if (!(byte[0] == 0x19 || byte[0] == 0x99))
     {
@@ -408,21 +411,23 @@ int STK_ParseEventList(SimNumber_t SimId, UInt8 *byte)
         case 4:
         {
            // User activity
-	         CAPI2_SatkApi_SendUserActivityEvent (InitClientInfo(SimId));
+	         CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+	         CAPI2_SatkApi_SendUserActivityEvent (&clientInfo);
 	         break;       
         }
     
         case 5:
         {
             // Idle screen available
-	          CAPI2_SatkApi_SendIdleScreenAvaiEvent (InitClientInfo(SimId));            
+	          CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+	          CAPI2_SatkApi_SendIdleScreenAvaiEvent (&clientInfo);            
             break;
         }
         
         case 7:
         {
             // Language selection
-            if (!STK_ParseLanguageSelection(SimId, &byte[7]))
+            if (!STK_ParseLanguageSelection(&byte[7]))
                 return 0;
                 
             break;
@@ -448,7 +453,7 @@ int STK_ParseEventList(SimNumber_t SimId, UInt8 *byte)
 // Notes:
 //
 //******************************************************************************
-int STK_SetupMenuRsp(SimNumber_t SimId, UInt8 *byte)
+int STK_SetupMenuRsp(UInt8 *byte)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -460,7 +465,7 @@ int STK_SetupMenuRsp(SimNumber_t SimId, UInt8 *byte)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
 
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SETUP_MENU, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SETUP_MENU, resultcode, resultcode2, NULL, 0);
         
     return 1;
 }
@@ -475,7 +480,7 @@ int STK_SetupMenuRsp(SimNumber_t SimId, UInt8 *byte)
 // Notes:
 //
 //******************************************************************************
-int STK_SelectItemRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_SelectItemRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -500,7 +505,7 @@ int STK_SelectItemRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
             return 0;
     }
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SELECT_ITEM, resultcode, resultcode2, NULL, itemId);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SELECT_ITEM, resultcode, resultcode2, NULL, itemId);
     
     return 1;
 }
@@ -515,7 +520,7 @@ int STK_SelectItemRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_GetInputRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_GetInputRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -545,9 +550,9 @@ int STK_GetInputRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     }
     
     if (intext.len > 0)
-        CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_GET_INPUT, resultcode, resultcode2, &intext, 0);
+        SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_GET_INPUT, resultcode, resultcode2, &intext, 0);
     else
-        CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_GET_INPUT, resultcode, resultcode2, NULL, 0);
+        SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_GET_INPUT, resultcode, resultcode2, NULL, 0);
     
     return 1;
 }
@@ -562,7 +567,7 @@ int STK_GetInputRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_GetInkeyRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_GetInkeyRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -592,9 +597,9 @@ int STK_GetInkeyRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     }
     
     if (intext.len > 0)
-        CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_GET_INKEY, resultcode, resultcode2, &intext, 0);
+        SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_GET_INKEY, resultcode, resultcode2, &intext, 0);
     else
-        CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_GET_INKEY, resultcode, resultcode2, NULL, 0);
+        SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_GET_INKEY, resultcode, resultcode2, NULL, 0);
     
     return 1;    
 }
@@ -609,7 +614,7 @@ int STK_GetInkeyRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_DisplayTextRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_DisplayTextRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -622,7 +627,7 @@ int STK_DisplayTextRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_DISPLAY_TEXT, resultcode, resultcode2, NULL, 0);        
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_DISPLAY_TEXT, resultcode, resultcode2, NULL, 0);        
     return 1;
 }
 
@@ -650,7 +655,7 @@ int STK_SendMOSMSRsp(UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SATKCmdResp(GetNewTID(), GetClientID(), SATK_EVENT_SEND_SHORT_MSG, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SEND_SHORT_MSG, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
 #endif
@@ -665,8 +670,9 @@ int STK_SendMOSMSRsp(UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_PlayToneRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_PlayToneRsp(UInt8 *byte, UInt8 cmdlen)
 {
+    ClientInfo_t clientInfo;
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
 
@@ -678,7 +684,8 @@ int STK_PlayToneRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_SendPlayToneRes(InitClientInfo(SimId), resultcode);
+    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+    CAPI2_SatkApi_SendPlayToneRes(&clientInfo, resultcode);        
     return 1;
 }
 
@@ -692,7 +699,7 @@ int STK_PlayToneRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_SetupIdleModeTextRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_SetupIdleModeTextRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -705,7 +712,7 @@ int STK_SetupIdleModeTextRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_IDLEMODE_TEXT, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_IDLEMODE_TEXT, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
 
@@ -719,7 +726,7 @@ int STK_SetupIdleModeTextRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_RefreshRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_RefreshRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -732,7 +739,7 @@ int STK_RefreshRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_REFRESH, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_REFRESH, resultcode, resultcode2, NULL, 0);
     return 1;
 }
 
@@ -746,7 +753,7 @@ int STK_RefreshRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_LanuchBrowserRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_LanuchBrowserRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -759,7 +766,7 @@ int STK_LanuchBrowserRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_LAUNCH_BROWSER, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_LAUNCH_BROWSER, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
 
@@ -772,7 +779,7 @@ int STK_LanuchBrowserRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_EventListRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_EventListRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -785,7 +792,7 @@ int STK_EventListRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SETUP_EVENT_LIST, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SETUP_EVENT_LIST, resultcode, resultcode2, NULL, 0);
     return 1;        
     
 }
@@ -802,7 +809,7 @@ int STK_EventListRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_SetupCallRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_SetupCallRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -815,7 +822,7 @@ int STK_SetupCallRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SETUP_CALL, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SETUP_CALL, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
 
@@ -829,7 +836,7 @@ int STK_SetupCallRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_SendSSRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_SendSSRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -842,7 +849,7 @@ int STK_SendSSRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SEND_SS, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SEND_SS, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
 //******************************************************************************
@@ -854,7 +861,7 @@ int STK_SendSSRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_SendUSSDRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_SendUSSDRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -867,7 +874,7 @@ int STK_SendUSSDRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SEND_USSD, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SEND_USSD, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
 //******************************************************************************
@@ -879,7 +886,7 @@ int STK_SendUSSDRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
 // Notes:
 //
 //******************************************************************************
-int STK_SendSMSRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
+int STK_SendSMSRsp(UInt8 *byte, UInt8 cmdlen)
 {
     SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
     SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
@@ -892,13 +899,12 @@ int STK_SendSMSRsp(SimNumber_t SimId, UInt8 *byte, UInt8 cmdlen)
     if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
         return 0;
     
-    CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_SEND_SHORT_MSG, resultcode, resultcode2, NULL, 0);
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SEND_SHORT_MSG, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
-#endif
 
+#endif
 //******************************************************************************
-//
 // Function Name: STK_SendTerminalRsp
 //
 // Description:   Handle Send terminal response
@@ -924,71 +930,71 @@ int STK_SendTerminalRsp(KRIL_Command_t *ril_cmd)
     switch (byte[3])
     {
         case STK_SETUPMENU:
-            if (!STK_SetupMenuRsp(ril_cmd->SimId, byte))
+            if (!STK_SetupMenuRsp(byte))
                 return 0;
             break;
         
         case STK_SELECTITEM:
-            if (!STK_SelectItemRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_SelectItemRsp(byte, cmdlen))
                 return 0;
             break;
         
         case STK_GETINPUT:
-            if (!STK_GetInputRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_GetInputRsp(byte, cmdlen))
                 return 0;
             break;
         
         case STK_GETINKEY:
-            if (!STK_GetInkeyRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_GetInkeyRsp(byte, cmdlen))
                 return 0;
             break;
             
         case STK_DISPLAYTEXT:
-            if (!STK_DisplayTextRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_DisplayTextRsp(byte, cmdlen))
                 return 0;
             break;
         
         case STK_PLAYTONE:
-            if (!STK_PlayToneRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_PlayToneRsp(byte, cmdlen))
                 return 0;
             break;
         
         case STK_SETUPIDLEMODETEXT:
-            if (!STK_SetupIdleModeTextRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_SetupIdleModeTextRsp(byte, cmdlen))
                 return 0;
             break;
         
         case STK_REFRESH:
-            if (!STK_RefreshRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_RefreshRsp(byte, cmdlen))
                 return 0;
             break;
             
         case STK_LAUNCHBROWSER:
-            if (!STK_LanuchBrowserRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_LanuchBrowserRsp(byte, cmdlen))
                 return 0;
             break;
         case STK_EVENTLIST:
-            if (!STK_EventListRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_EventListRsp(byte, cmdlen))
                 return 0;
             break;
             			
 #ifdef OEM_RIL_ENABLE
         case STK_SETUPCALL:
-            if (!STK_SetupCallRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_SetupCallRsp(byte, cmdlen))
                 return 0;
             break;
         case STK_SENDSMS:
-            if (!STK_SendSMSRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_SendSMSRsp(byte, cmdlen))
                 return 0;
             break;
             
         case STK_SENDSS:
-            if (!STK_SendSSRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_SendSSRsp(byte, cmdlen))
                 return 0;
             break;
 	
         case STK_SENDUSSD:
-            if (!STK_SendUSSDRsp(ril_cmd->SimId, byte, cmdlen))
+            if (!STK_SendUSSDRsp(byte, cmdlen))
                 return 0;
             break;
 #else
@@ -1018,7 +1024,7 @@ int STK_SendTerminalRsp(KRIL_Command_t *ril_cmd)
 // Notes:
 //
 //******************************************************************************
-int STK_MenuSelection(SimNumber_t SimId, UInt8 *envelopeCmd)
+int STK_MenuSelection(UInt8 *envelopeCmd)
 {
     UInt8 length;
     UInt8 itemId = 0;
@@ -1051,9 +1057,9 @@ int STK_MenuSelection(SimNumber_t SimId, UInt8 *envelopeCmd)
     }
     
     if (helpRequest)
-        CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_MENU_SELECTION, 1, 0, NULL, itemId);
+        SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_MENU_SELECTION, 1, 0, NULL, itemId);
     else
-        CAPI2_SatkApi_CmdResp(InitClientInfo(SimId), SATK_EVENT_MENU_SELECTION, SATK_Result_CmdSuccess, 0, NULL, itemId);
+        SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_MENU_SELECTION, SATK_Result_CmdSuccess, 0, NULL, itemId);
     
     return 1;
 }
@@ -1061,13 +1067,13 @@ int STK_MenuSelection(SimNumber_t SimId, UInt8 *envelopeCmd)
 
 //******************************************************************************
 //
-// Function Name: STK_EventDownload
+// Function Name: STK_MenuSelection
 //
-// Description:   Handle EVENT Download
+// Description:   Handle Menu Selection
 // Notes:
 //
 //******************************************************************************
-int STK_EventDownload(SimNumber_t SimId, UInt8 *envelopeCmd)
+int STK_EventDownload(UInt8 *envelopeCmd)
 {
     UInt8 length;
 
@@ -1075,7 +1081,7 @@ int STK_EventDownload(SimNumber_t SimId, UInt8 *envelopeCmd)
     length = envelopeCmd[1];
     
     // Parse Event List
-    if (!STK_ParseEventList(SimId, &envelopeCmd[2]))
+    if (!STK_ParseEventList(&envelopeCmd[2]))
         return 0;
     
     return 1;
@@ -1100,15 +1106,13 @@ int STK_SendEnvelopeCmd(KRIL_Command_t *ril_cmd)
     switch (envelopeCmd[0])
     {
         case 0xD3:
-            if (!STK_MenuSelection(ril_cmd->SimId, envelopeCmd))
+            if (!STK_MenuSelection(envelopeCmd))
                 return 0;
             break;
         
         case 0xD6:
-            if (!STK_EventDownload(ril_cmd->SimId, envelopeCmd))
+            if (!STK_EventDownload(envelopeCmd))
                 return 0;
-            break;
-            
         default:
             KRIL_DEBUG(DBG_ERROR,"Not suppported tag:0x%X\n", envelopeCmd[0]);
             return 0;
@@ -1245,10 +1249,10 @@ void KRIL_StkHandleCallSetupRequestedHandler(void *ril_cmd, Kril_CAPI2Info_t *ca
             
             KRIL_DEBUG(DBG_INFO,"accept:%d\n", *accept);
             if (*accept)
-                CAPI2_SatkApi_CmdResp(InitClientInfo(pdata->ril_cmd->SimId), SATK_EVENT_SETUP_CALL, SATK_Result_CmdSuccess, 0, NULL, 0);
+                SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SETUP_CALL, SATK_Result_CmdSuccess, 0, NULL, 0);
                 //CAPI2_SATK_SendSetupCallRes(GetNewTID(), GetClientID(), SATK_Result_CmdSuccess);
             else
-                CAPI2_SatkApi_CmdResp(InitClientInfo(pdata->ril_cmd->SimId), SATK_EVENT_SETUP_CALL, SATK_Result_UserNotAcceptingCallSetup, 0, NULL, 0);
+                SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SETUP_CALL, SATK_Result_UserNotAcceptingCallSetup, 0, NULL, 0);
                 //CAPI2_SATK_SendSetupCallRes(GetNewTID(), GetClientID(), SATK_Result_UserNotAcceptingCallSetup);
             
             pdata->handler_state = BCM_RESPCAPI2Cmd;
@@ -1332,6 +1336,7 @@ void KRIL_StkGetProfile(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 //******************************************************************************
 void KRIL_StkSetProfile(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
+    ClientInfo_t clientInfo;
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
 
     KRIL_DEBUG(DBG_INFO,"pdata->handler_state:0x%lX\n", pdata->handler_state);
@@ -1354,11 +1359,11 @@ void KRIL_StkSetProfile(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             // Update terminal_profile_data[]
             memcpy(terminal_profile_data, stkprofile, sizeof(terminal_profile_data)/sizeof(UInt8));
             
-            CAPI2_SatkApi_SetTermProfile(InitClientInfo(pdata->ril_cmd->SimId), stkprofile,
+            CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+            CAPI2_SatkApi_SetTermProfile(&clientInfo, stkprofile,
                 pdata->ril_cmd->datalen);
             
             pdata->handler_state = BCM_RESPCAPI2Cmd;
-            break;            
         }    
         
         case BCM_RESPCAPI2Cmd:
@@ -1399,7 +1404,9 @@ void KRIL_StkService_Running(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)  // gea
     {
         case BCM_SendCAPI2Cmd:
         {
-            CAPI2_SatkApi_SendTerminalProfileReq (InitClientInfo(pdata->ril_cmd->SimId),17,  terminal_profile_data);
+            ClientInfo_t clientInfo = {0};
+            
+            CAPI2_SatkApi_SendTerminalProfileReq ( &clientInfo,17,  terminal_profile_data);
             pdata->handler_state = BCM_RESPCAPI2Cmd;
         }    
         
@@ -1414,5 +1421,24 @@ void KRIL_StkService_Running(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)  // gea
             break;        
         
     }    
+}
+
+
+
+
+
+//******************************************************************************
+//
+// Function Name: SendCAPI2STKRsp
+//
+// Description:   
+// Notes:
+//
+//******************************************************************************
+void SendCAPI2STKRsp( UInt32 tid, UInt8 clientID, SATK_EVENTS_t toEvent, UInt8 result1, UInt8 result2, SATKString_t *inText, UInt8 menuID)
+{
+    ClientInfo_t clientInfo;
+    CAPI2_InitClientInfo(&clientInfo, tid, clientID);
+    CAPI2_SatkApi_CmdResp(&clientInfo, toEvent, result1, result2, inText, menuID);
 }
 

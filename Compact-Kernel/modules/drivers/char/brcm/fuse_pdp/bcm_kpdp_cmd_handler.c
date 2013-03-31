@@ -17,7 +17,7 @@
 #include "bcm_kpdp_ioctl.h"
 #include "bcm_kpdp_capi2_handler.h"
 //#include "bcm_cp_cmd_handler.h"
-static ClientInfo_t ClientInfo;
+
 static UInt8  g_PdpClientID = 0;
 static UInt32 g_PdpCAPI2TID = 0;
 
@@ -120,28 +120,6 @@ UInt32 KPDPGetClientID(void)
     return g_PdpClientID;
 }
 
-//******************************************************************************
-/**
-*  Function to get the Client Info
-*
-*  @param    None
-*
-*  @return   Vaid
-*
-*  @note
-*  Get the Client Info
-*  
-*******************************************************************************/
-ClientInfo_t* KPDPInitClientInfo(SimNumber_t SimId)
-{
-    ClientInfo.clientId = g_PdpClientID;
-    KPDP_DEBUG(DBG_TRACE, "SimId:%d\n", SimId);
-    ClientInfo.simId = SimId;
-    ClientInfo.clientRef = 0;
-    ClientInfo.dialogId = 0;
-    ClientInfo.reserved = KPDPGetNewTID();
-    return &ClientInfo;
-}
 
 //******************************************************************************
 /**
@@ -198,18 +176,9 @@ void KPDP_InitHandler(void)
 void KPDP_SendResponse(KPDP_CmdList_t *listentry)
 {
     UInt32  flags;
-    KPDP_ResultQueue_t *entry = NULL;
-
-    entry = (KPDP_ResultQueue_t *)kmalloc(sizeof(KPDP_ResultQueue_t), GFP_KERNEL);
-
-    if(entry == NULL)
-    {
-        KPDP_DEBUG(DBG_ERROR, "Unable to allocate entry buf\n");        
-        return;
-    }
+    KPDP_ResultQueue_t *entry = kmalloc(sizeof(KPDP_ResultQueue_t), GFP_KERNEL);
 
     entry->result_info.CmdID = listentry->pdp_cmd->CmdID;
-    entry->result_info.SimId= listentry->pdp_cmd->SimId;
     entry->result_info.datalen = listentry->rsp_len;
     entry->result_info.result = listentry->result; // Assign the error result
 
@@ -222,11 +191,6 @@ void KPDP_SendResponse(KPDP_CmdList_t *listentry)
     else
     {
         entry->result_info.data = kmalloc(entry->result_info.datalen, GFP_KERNEL);
-        if(entry->result_info.data == NULL)
-        {
-            KPDP_DEBUG(DBG_ERROR, "Unable to allocate result_info.data buf\n");        
-            return;
-        }
         memcpy(entry->result_info.data, listentry->bcm_pdp_rsp, entry->result_info.datalen);
     }
     spin_lock_irqsave(&(gKpdpParam.recv_lock), flags);
@@ -249,22 +213,14 @@ void KPDP_SendResponse(KPDP_CmdList_t *listentry)
 *  Send notify data in result queue
 *  
 *******************************************************************************/
-void KPDP_SendNotify(SimNumber_t SimId, int CmdID, void *rsp_data, UInt32 rsp_len)
+void KPDP_SendNotify(int CmdID, void *rsp_data, UInt32 rsp_len)
 {
     UInt32  flags;
-    KPDP_ResultQueue_t *entry = NULL;
-
-    entry = (KPDP_ResultQueue_t *)kmalloc(sizeof(KPDP_ResultQueue_t), GFP_KERNEL);
-
-    if(entry == NULL){
-        KPDP_DEBUG(DBG_ERROR, "Unable to allocate entry buf\n");        
-        return;
-    }
+    KPDP_ResultQueue_t *entry = kmalloc(sizeof(KPDP_ResultQueue_t), GFP_KERNEL);
 
     entry->result_info.CmdID = CmdID;
     entry->result_info.datalen = rsp_len;
-    entry->result_info.SimId = SimId;
-    KPDP_DEBUG(DBG_INFO, "SimId:%d CmdID:%lu\n",entry->result_info.SimId, entry->result_info.CmdID);
+    KPDP_DEBUG(DBG_INFO, " CmdID:%lu\n", entry->result_info.CmdID);
     KPDP_DEBUG(DBG_INFO, "notify_len:%ld CmdID:%d\n", rsp_len, CmdID);
     if (0 == entry->result_info.datalen)
     {
@@ -273,11 +229,6 @@ void KPDP_SendNotify(SimNumber_t SimId, int CmdID, void *rsp_data, UInt32 rsp_le
     else
     {
         entry->result_info.data = kmalloc(entry->result_info.datalen, GFP_KERNEL);
-        if(entry->result_info.data == NULL)
-        {
-            KPDP_DEBUG(DBG_ERROR, "Unable to allocate result_info.data buf\n");        
-            return;
-        }
         memcpy(entry->result_info.data, rsp_data, entry->result_info.datalen);
     }
     spin_lock_irqsave(&(gKpdpParam.recv_lock), flags);
@@ -316,10 +267,6 @@ void KPDP_CommandThread(struct work_struct *data)
 
         // add cmd list
         cmd_list = kmalloc(sizeof(KPDP_CmdList_t), GFP_KERNEL);
-        if(!cmd_list) {
-            KPDP_DEBUG(DBG_ERROR, "unable to allocate cmd_list buf\n");
-            return;
-        }
         memset(cmd_list, 0, sizeof(KPDP_CmdList_t));
         cmd_list->cmd = entry->cmd;
         cmd_list->pdp_cmd = entry->pdp_cmd;
@@ -347,14 +294,7 @@ void KPDP_CommandThread(struct work_struct *data)
                     {
                         KPDP_DEBUG(DBG_INFO, "contextSize %d\n", g_kpdp_capi2_handler_array[i].contextSize);
                         cmd_list->cmdContext = kmalloc(g_kpdp_capi2_handler_array[i].contextSize, GFP_KERNEL);
-                        if(!cmd_list->cmdContext ) {
-                            KPDP_DEBUG(DBG_ERROR, "unable to allocate cmdtext buf\n");                         
-                            return;
-                        }
-                        else
-                        {    
-                            memset(cmd_list->cmdContext, 0, g_kpdp_capi2_handler_array[i].contextSize);
-                        }
+                        memset(cmd_list->cmdContext, 0, g_kpdp_capi2_handler_array[i].contextSize);
                     }
                     found = TRUE;
                     break;
@@ -367,7 +307,7 @@ void KPDP_CommandThread(struct work_struct *data)
         }
         //KPDP_DEBUG(DBG_ERROR, "Iterations are over...!\n");
         //KPDP_SendResponse(cmd_list);
-        if((TRUE == found) && (i < ARRAY_SIZE(g_kpdp_capi2_handler_array)))
+        if(TRUE == found)
         {
             mutex_lock(&gKpdpCmdList.mutex);
             KPDP_DEBUG(DBG_INFO, "match command success 0x%lx, msgid %d\n", entry->cmd, i);

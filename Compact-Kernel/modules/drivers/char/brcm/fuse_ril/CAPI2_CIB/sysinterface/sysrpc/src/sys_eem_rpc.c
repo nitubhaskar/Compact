@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   sys_eem_rpc.c
@@ -20,7 +21,9 @@ the GPL, without Broadcom's express prior written consent.
 #define UNDEF_SYS_GEN_MIDS
 #define DEFINE_SYS_GEN_MIDS_NEW
 
+#ifndef UNDER_LINUX
 #include "string.h"
+#endif
 #include "mobcom_types.h"
 #include "resultcode.h"
 #include "taskmsgs.h"
@@ -35,9 +38,11 @@ the GPL, without Broadcom's express prior written consent.
 
 
 #include "uelbs_api.h"
+#ifndef UNDER_LINUX
 #include "chip_version.h"
 #include "sio.h"
 #include "string.h"
+#endif
 
 
 #include "rpc_sync_api.h"
@@ -50,9 +55,13 @@ the GPL, without Broadcom's express prior written consent.
 #include "i2c_drv.h"
 #include "hal_pmu_glue.h"
 #include "cpps_control.h"
+#ifndef UNDER_LINUX
 #include "flash_api.h"
+#endif
 #include "sys_usb_rpc.h"
+#ifndef UNDER_LINUX
 #include "sysparm.h"
+#endif
 #include "sys_api.h"
 #include "capi2_cp_hal_api.h"
 #include "hal_adc.h"
@@ -62,14 +71,43 @@ the GPL, without Broadcom's express prior written consent.
 #include "sys_gen_rpc.h"
 #include "sys_rpc.h"
 #include "msconsts.h"
+#ifndef UNDER_LINUX
 #include "ostask.h"
 #include "ossemaphore.h"
 #include "osqueue.h"
+#else
+// ostask abstraction doesn't currently support 
+// OSTASK_GetCurrentTask, so for now,
+// use our own implementations; once support 
+// for OSTASK_GetCurrentTask is added, we can just
+// uncomment the #include on the following line
+//#include <plat/osabstract/ostask.h>
+#include <plat/types.h>
+#include <plat/osabstract/ostypes.h>
+#include <plat/osabstract/ossemaphore.h>
+#include <linux/delay.h>
+#include <linux/syscalls.h>
+#define OSHEAP_Alloc(x) kmalloc( x, GFP_KERNEL )
+#define OSHEAP_Delete(x) kfree( x )
+#define OSTASK_GetCurrentTask( ) sys_gettid( )
+#define OSTASK_IsValidTask(x)  TRUE
+#define OSTASK_Sleep(x)  msleep(x) 
+#endif
+#ifndef UNDER_LINUX
 #include "logapi.h"
+#else
+// **FixMe**
+#define Log_DebugPrintf(logID,fmt,args...) 
+
+//#define Log_DebugPrintf dprintf
+
+//#define Log_DebugPrintf(logid,args...) printk(args)
+#endif
+#ifndef UNDER_LINUX
 #include "xassert.h"
+#endif
 #include "sys_eem_rpc.h"
 #include "rpc_ipc_config.h"
-
 
 static eem_cb_t sEemCb = {0};
 
@@ -86,7 +124,7 @@ typedef struct
 
 
 void EEM_SendEx(void *buffer, UInt32 buflen, UInt8 hdr, UInt8 footer, UInt8 cacheAlign)
-{
+    {
     PACKET_BufHandle_t pkt;
     
     pkt = RPC_PACKET_AllocateBufferCacheAlign(INTERFACE_USB_EEM, (buflen + hdr + footer), 0, PKT_ALLOC_WAIT_FOREVER, cacheAlign);
@@ -104,16 +142,16 @@ void EEM_SendEx(void *buffer, UInt32 buflen, UInt8 hdr, UInt8 footer, UInt8 cach
 	    RPC_PACKET_SendData(0, INTERFACE_USB_EEM, 0, pkt );
     
 		Log_DebugPrintf(LOGID_SYSEEMRPC, "EEM_Send: pkt:0x%x buffer=0x%x len=%d", pkt, buf,buflen);   
-	}
+}
 	else
 		Log_DebugPrintf(LOGID_SYSEEMRPC, "EEM_Send: Alloc fail size=%d", pkt, buflen);   
 
 }
 
 void EEM_Send(void *buffer, UInt32 buflen)
-{
+    {
 	EEM_SendEx(buffer, buflen, EEM_HEADER, EEM_FOOTER, CACHE_ALIGN);
-}
+    }
 
 void EEM_Echo(void *buffer, UInt32 buflen)
 {

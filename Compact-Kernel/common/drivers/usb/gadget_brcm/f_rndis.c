@@ -894,8 +894,3 @@ void rndis_interface_enable(int enable)
 		pr_info("RNDIS is not initialized............... \n");
 	pr_info("rndis_interface_enable---\n");
 }
-
-void rndis_set_ether_addr(u8 ethaddr[ETH_ALEN])
-{
-	memcpy(rndis->ethaddr, ethaddr, ETH_ALEN);
-}

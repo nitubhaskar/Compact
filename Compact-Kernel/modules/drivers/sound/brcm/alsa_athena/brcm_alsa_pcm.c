@@ -130,6 +130,7 @@ static int gvoiceFMprepared = 0;
 #define	PCM_MIN_VOIP_CAPTURE_PERIOD_BYTES    (8*1024)
 #define	PCM_MAX_VOIP_CAPTURE_PERIOD_BYTES    (8*1024)
 
+
 int playback_prev_time = 0;
 int period_ms = 0;
 
@@ -474,8 +475,6 @@ static int PcmPlaybackPrepare(
 			frames_to_bytes(runtime, runtime->period_size), frames_to_bytes(runtime, runtime->buffer_size), runtime->stop_threshold);
     
    
-
-   
     //we need to do the device prepare agin if the device state is chaged to SETUP, Ex:data underrun case or when snd_pcm_drain is called
     //In this case if we have prepared the voice or FM audio path already,we should not prepare again,this will avoid audio breaks . 
    if(gvoiceFMprepared == 0)
@@ -701,7 +700,11 @@ static snd_pcm_uframes_t PcmPlaybackPointer(struct snd_pcm_substream * substream
 //	pos = g_brcm_alsa_chip->pcm_read_ptr[0] + g_brcm_alsa_chip->pcm_ptr[0] - bytes_to_frames(runtime, datasize*2);
 	pos = g_brcm_alsa_chip->pcm_read_ptr[0] + g_brcm_alsa_chip->pcm_ptr[0];
 //	DEBUG("\n pos=%d(%d- %d) pcm_read_ptr=%d datasize=%d\n", pos,  (pos % runtime->buffer_size), (pos-bytes_to_frames(runtime, datasize*2))%runtime->buffer_size, g_brcm_alsa_chip->pcm_read_ptr[0], bytes_to_frames(runtime, datasize*2));
-	
+	if(pos<0)
+	{
+		//DEBUG("\n %lx:Error playback_pointer %d\n",jiffies,(int)wordPos);
+		pos += runtime->buffer_size;
+	}
 	pos %= runtime->buffer_size;
     validPcmSize = runtime->control->appl_ptr-g_brcm_alsa_chip->pcm_read_ptr[0];
 
@@ -1232,7 +1235,7 @@ void AUDIO_DRIVER_InterruptPeriodCB(AUDIO_DRIVER_HANDLE_t drv_handle)
                 AUDIO_DRIVER_DMA_t dma_params;
 
                 UInt32 int_period,num_periods = 1;
-                UInt32 int_time,validPcmSize, valid_pcm_periods=0;
+                UInt32 int_time,validPcmSize, valid_pcm_periods;
 
                 validPcmSize = runtime->control->appl_ptr-g_brcm_alsa_chip->pcm_read_ptr[0];
                

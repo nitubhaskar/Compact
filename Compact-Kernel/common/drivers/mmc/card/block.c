@@ -47,7 +47,7 @@ MODULE_ALIAS("mmc:block");
 /*
  * max 8 partitions per card
  */
-#define MMC_SHIFT	4
+#define MMC_SHIFT	3
 #define MMC_NUM_MINORS	(256 >> MMC_SHIFT)
 
 static DECLARE_BITMAP(dev_use, MMC_NUM_MINORS);
@@ -65,100 +65,6 @@ struct mmc_blk_data {
 };
 
 static DEFINE_MUTEX(open_lock);
-
-static LIST_HEAD(mmcpart_notifiers);
-
-#define MAX_MMC_HOST 3
-/* mutex used to control both the table and the notifier list */
-DEFINE_MUTEX(mmcpart_table_mutex);
-struct mmcpart_alias {
-	struct raw_hd_struct hd;
-	char partname[BDEVNAME_SIZE];
-};
-static struct mmcpart_alias mmcpart_table[MAX_MMC_HOST][1 << MMC_SHIFT];
-static struct raw_mmc_panic_ops mmc_panic_ops_table[MAX_MMC_HOST];
-
-void register_mmcpart_user(struct mmcpart_notifier *new)
-{
-	int i, j;
-
-	mutex_lock(&mmcpart_table_mutex);
-
-	list_add(&new->list, &mmcpart_notifiers);
-
-	__module_get(THIS_MODULE);
-
-	for (i = 0; i < MAX_MMC_HOST; i++)
-		for (j = 0; j < (1 << MMC_SHIFT); j++)
-			if (!strncmp(mmcpart_table[i][j].partname,
-					new->partname, BDEVNAME_SIZE) &&
-					mmcpart_table[i][j].hd.nr_sects) {
-				new->add(&mmcpart_table[i][j].hd,
-					&mmc_panic_ops_table[i]);
-				break;
-			}
-
-	mutex_unlock(&mmcpart_table_mutex);
-}
-
-int unregister_mmcpart_user(struct mmcpart_notifier *old)
-{
-	int i, j;
-
-	mutex_lock(&mmcpart_table_mutex);
-
-	module_put(THIS_MODULE);
-
-	for (i = 0; i < MAX_MMC_HOST; i++)
-		for (j = 0; j < (1 << MMC_SHIFT); j++)
-			if (!strncmp(mmcpart_table[i][j].partname,
-					old->partname, BDEVNAME_SIZE)) {
-				old->remove(&mmcpart_table[i][j].hd);
-				break;
-			}
-
-	list_del(&old->list);
-	mutex_unlock(&mmcpart_table_mutex);
-	return 0;
-}
-
-/*
- * return alias name of mmc partition
- * device may not be there
- */
-void get_mmcalias_by_id(char *buf, int major, int minor)
-{
-	int host_index, partno;
-
-	buf[0] = '\0';
-	if (major != MMC_BLOCK_MAJOR)
-		return;
-
-	mutex_lock(&mmcpart_table_mutex);
-	host_index = minor / (1 << MMC_SHIFT);
-	partno = minor % (1 << MMC_SHIFT);
-	strncpy(buf, mmcpart_table[host_index][partno].partname, BDEVNAME_SIZE);
-	buf[BDEVNAME_SIZE - 1] = '\0';
-	mutex_unlock(&mmcpart_table_mutex);
-}
-
-int get_mmcpart_by_name(char *part_name, char *dev_name)
-{
-	int i, j;
-
-	mutex_lock(&mmcpart_table_mutex);
-	for (i = 0; i < MAX_MMC_HOST; i++)
-		for (j = 0; j < (1 << MMC_SHIFT); j++)
-			if (!strncmp(part_name, mmcpart_table[i][j].partname,
-					BDEVNAME_SIZE)) {
-				snprintf(dev_name, BDEVNAME_SIZE,
-					"mmcblk%dp%d", i, j);
-				mutex_unlock(&mmcpart_table_mutex);
-				return 0;
-			}
-	mutex_unlock(&mmcpart_table_mutex);
-	return -1;
-}
 
 static struct mmc_blk_data *mmc_blk_get(struct gendisk *disk)
 {
@@ -693,9 +599,7 @@ static struct mmc_blk_data *mmc_blk_alloc(struct mmc_card *card)
 static int mmc_blk_probe(struct mmc_card *card)
 {
 	struct mmc_blk_data *md;
-	struct mmcpart_notifier *nt;
 	int err;
-	int i, index;
 
 	char cap_str[10];
 
@@ -724,57 +628,6 @@ static int mmc_blk_probe(struct mmc_card *card)
 	mmc_set_bus_resume_policy(card->host, 1);
 #endif
 	add_disk(md->disk);
-
-	mutex_lock(&mmcpart_table_mutex);
-	index = md->disk->first_minor >> MMC_SHIFT;
-	if (md->queue.card) {
-		mmc_panic_ops_table[index].type = md->queue.card->type;
-		mmc_panic_ops_table[index].panic_probe =
-			md->queue.card->host->ops->panic_probe;
-		mmc_panic_ops_table[index].panic_write =
-			md->queue.card->host->ops->panic_write;
-		mmc_panic_ops_table[index].panic_erase =
-			md->queue.card->host->ops->panic_erase;
-	}
-
-	for (i = 0; i < md->disk->part_tbl->len; i++) {
-#if 0
-		printk(KERN_ERR "%s: partition_name: %s, start_sect: %d,"
-						"nr_sects: %d, partno: %d, major: %d, minor: %d\n",
-						__FUNCTION__,
-						md->disk->part_tbl->part[i]->partition_name,
-						md->disk->part_tbl->part[i]->start_sect,
-						md->disk->part_tbl->part[i]->nr_sects,
-						i,
-						md->disk->major,
-						md->disk->first_minor);
-#endif
-
-		strncpy(mmcpart_table[index][i].partname,
-			md->disk->part_tbl->part[i]->partition_name, BDEVNAME_SIZE);
-
-		mmcpart_table[index][i].hd.start_sect =
-			md->disk->part_tbl->part[i]->start_sect;
-		mmcpart_table[index][i].hd.nr_sects =
-			md->disk->part_tbl->part[i]->nr_sects;
-		mmcpart_table[index][i].hd.partno = i;
-		mmcpart_table[index][i].hd.major = md->disk->major;
-		mmcpart_table[index][i].hd.first_minor = md->disk->first_minor;
-
-		list_for_each_entry(nt, &mmcpart_notifiers, list) {
-			if (strlen(nt->partname) && !strncmp(nt->partname,
-					mmcpart_table[index][i].partname,
-					BDEVNAME_SIZE)) {
-				printk(KERN_INFO "%s: adding mmcblk%dp%d:%s\n",
-					__func__, index, i,
-					mmcpart_table[index][i].partname);
-				nt->add(&mmcpart_table[index][i].hd,
-					&mmc_panic_ops_table[index]);
-			}
-		}
-	}
-	mutex_unlock(&mmcpart_table_mutex);
-
 	return 0;
 
  out:
@@ -786,27 +639,9 @@ static int mmc_blk_probe(struct mmc_card *card)
 
 static void mmc_blk_remove(struct mmc_card *card)
 {
-	int i, index;
-	struct mmcpart_notifier *nt;
 	struct mmc_blk_data *md = mmc_get_drvdata(card);
 
 	if (md) {
-		index = md->disk->first_minor >> MMC_SHIFT;
-		mutex_lock(&mmcpart_table_mutex);
-		for (i = 0; i < md->disk->part_tbl->len; i++) {
-			list_for_each_entry(nt, &mmcpart_notifiers, list)
-				if (strlen(nt->partname) &&
-				    !strncmp(nt->partname,
-				    mmcpart_table[index][i].partname,
-				    BDEVNAME_SIZE))
-					nt->remove(&mmcpart_table[index][i].hd);
-			memset(&mmcpart_table[index][i].hd, 0,
-				sizeof(struct raw_hd_struct));
-		}
-		memset(&mmc_panic_ops_table[index], 0,
-			sizeof(struct raw_mmc_panic_ops));
-		mutex_unlock(&mmcpart_table_mutex);
-
 		/* Stop new requests from getting into the queue */
 		del_gendisk(md->disk);
 

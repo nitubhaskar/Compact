@@ -638,16 +638,12 @@ static int mmc_sd_suspend(struct mmc_host *host)
  * This function tries to determine if the same card is still present
  * and, if so, restore all state to it.
  */
-#ifdef CONFIG_MMC_PARANOID_SD_INIT
-#define MMC_PARANOID_SD_INIT_RETRY_CNT	5
-#endif
 static int mmc_sd_resume(struct mmc_host *host)
 {
 	int err;
 	struct bcmsdhc_host *bcm_host;
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
 	int retries;
-	int power_mdelay_table[MMC_PARANOID_SD_INIT_RETRY_CNT]={300, 300, 250, 200, 150};
 #endif
 
 	BUG_ON(!host);
@@ -657,7 +653,7 @@ static int mmc_sd_resume(struct mmc_host *host)
 
 	mmc_claim_host(host);
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
-	retries = MMC_PARANOID_SD_INIT_RETRY_CNT;
+	retries = 5;
 	while (retries) {
 		err = mmc_sd_init_card(host, host->ocr, host->card);
 
@@ -669,7 +665,7 @@ static int mmc_sd_resume(struct mmc_host *host)
 			if(bcm_host->bcm_plat->flags&SDHC_DEVTYPE_SD){
 				//force to power-off/on
 				mmc_power_off_brcm(host);
-				mdelay(power_mdelay_table[retries]);
+				mdelay(1);
 				mmc_power_up_brcm(host);
 			}
 			continue;

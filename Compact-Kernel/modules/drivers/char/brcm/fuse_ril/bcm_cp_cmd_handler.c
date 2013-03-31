@@ -31,13 +31,12 @@ extern struct work_struct ffs_control_wq;
 
 extern UInt32 TIMER_GetValue(void);
 
-extern void SetSIMData(SimNumber_t SimId,SIMLOCK_SIM_DATA_t *sim_data);
+extern void SetSIMData(SIMLOCK_SIM_DATA_t *sim_data);
 
 #define MAX_BUF_SIZE 1024
 static char buf[MAX_BUF_SIZE];
 int RpcLog_DebugPrintf(char* fmt, ...)
 {
-#if 0 // blocked RPC LOG - jaesub.kim
 #ifdef CONFIG_BRCM_UNIFIED_LOGGING
     va_list ap;
     va_start(ap, fmt);
@@ -53,7 +52,6 @@ int RpcLog_DebugPrintf(char* fmt, ...)
         va_end(ap);
         pr_info("TS[%ld]%s",TIMER_GetValue(),buf);
     }
-#endif
 #endif
     return 1;
 }
@@ -274,11 +272,11 @@ void CAPI2_FFS_Control(UInt32 tid, UInt8 clientID, UInt32 cmd, UInt32 address, U
     struct file *hFileTmp = NULL;
     struct inode *inode   = NULL;
     UInt32 fsize, tmpSize;
-    void * pPersistDataAddr = NULL;
+    void* pPersistDataAddr = NULL;
     mm_segment_t orgfs = get_fs();
     set_fs(KERNEL_DS);
     char* tmpBuf = NULL;
-
+            
     KRIL_DEBUG(DBG_ERROR,"tid:%lu clientID:%u cmd:%lu address:0x%lX offset:%lu size:%lu\n",
         tid, clientID, cmd, address, offset, size);
         
@@ -459,7 +457,6 @@ void CAPI2_FFS_Control(UInt32 tid, UInt8 clientID, UInt32 cmd, UInt32 address, U
     }
 
 Exit:
-    if(hFileTmp)
     filp_close(hFileTmp, NULL);
 
 Exit_No_Close:
@@ -615,22 +612,17 @@ void _DEF(CAPI2_RTC_GetTimeZone)(UInt32 tid, UInt8 clientID)
 #endif
 
 #ifndef CONFIG_BRCM_FUSE_RIL_CIB
-void _DEF(CAPI2_SimLockApi_GetStatus)(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_t *sim_data)
+void _DEF(CAPI2_SIMLOCK_GetStatus)(UInt32 tid, UInt8 clientID, SIMLOCK_SIM_DATA_t *sim_data)
 #else
-void CAPI2_SimLockApi_GetStatus(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_t *sim_data, Boolean is_testsim)
+void CAPI2_SIMLOCK_GetStatus(UInt32 tid, UInt8 clientID, SIMLOCK_SIM_DATA_t *sim_data, Boolean is_testsim)
 #endif
 {
     SIMLOCK_STATE_t simlock_state;
-    char msg[5 + IMSI_DIGITS + 1 + 1 + GID_DIGITS + 1 + GID_DIGITS]  ;	///< NULL terminated IMSI string in ASCII format
+
+	char msg[5 + IMSI_DIGITS + 1 + 1 + GID_DIGITS + 1 + GID_DIGITS]  ;	///< NULL terminated IMSI string in ASCII format
 	
     KRIL_DEBUG(DBG_INFO,"Get SIM lock status\n");
-    SetSIMData(inClientInfoPtr->simId,sim_data);
-    
-    simlock_state.network_lock_enabled = FALSE;			
-    simlock_state.network_subset_lock_enabled = FALSE;			
-    simlock_state.service_provider_lock_enabled = FALSE;		
-    simlock_state.corporate_lock_enabled = FALSE;				
-    simlock_state.phone_lock_enabled = FALSE;
+    SetSIMData(sim_data);
     
     simlock_state.network_lock = SIM_SECURITY_OPEN; 
     simlock_state.network_subset_lock = SIM_SECURITY_OPEN;
@@ -639,15 +631,16 @@ void CAPI2_SimLockApi_GetStatus(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_
     simlock_state.phone_lock = SIM_SECURITY_OPEN;
 
 #ifdef CONFIG_BRCM_SIM_SECURE_ENABLE     
-    SIMLockCheckAllLocks(inClientInfoPtr->simId,sim_data->imsi_string, (0 != sim_data->gid1_len ? sim_data->gid1 : NULL), 
+    SIMLockCheckAllLocks(sim_data->imsi_string, (0 != sim_data->gid1_len ? sim_data->gid1 : NULL), 
         (0 != sim_data->gid2_len ? sim_data->gid2 : NULL));
     
-    SIMLockUpdateSIMLockState(inClientInfoPtr->simId);
+    SIMLockUpdateSIMLockState();
     
-    SIMLockGetSIMLockState(inClientInfoPtr->simId, &simlock_state);
+    SIMLockGetSIMLockState(&simlock_state);
 #endif //CONFIG_BRCM_SIM_SECURE_ENABLE
     
-    CAPI2_SimLockApi_GetStatus_RSP(inClientInfoPtr, simlock_state);
+    CAPI2_SIMLOCK_GetStatus_RSP(tid, clientID, simlock_state);
+
 		
 	memset(msg,0,sizeof(msg));
 		
@@ -656,20 +649,24 @@ void CAPI2_SimLockApi_GetStatus(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_
 	msg[2]=(UInt8)'C';
 	msg[3]=(UInt8)'M';
 	msg[4]=(UInt8)BRIL_HOOK_UNSOL_SIM_DATA;
-
+	
     strncpy(&msg[5],(char*)sim_data->imsi_string,(IMSI_DIGITS+1)); //IMSI
- 
-    msg[5 + IMSI_DIGITS +1] = sim_data->gid1_len;
- 
-    if (sim_data->gid1_len > 0)
-        memcpy(&msg[5 + IMSI_DIGITS + 1 + 1], sim_data->gid1, GID_DIGITS); //GID1
-    
-    msg[5 + IMSI_DIGITS + 1 + 1 + GID_DIGITS] = sim_data->gid2_len;
-  
-    if (sim_data->gid2_len > 0)
-        memcpy(&msg[5 + IMSI_DIGITS + 1 + 1 + GID_DIGITS + 1], sim_data->gid2, GID_DIGITS); //GID2
+	
+	msg[5 + IMSI_DIGITS +1] = sim_data->gid1_len;
 
-    KRIL_SendNotify(inClientInfoPtr->simId, BRCM_RIL_UNSOL_OEM_HOOK_RAW, msg, sizeof(msg));
+
+	
+	if(sim_data->gid1_len > 0)
+               	memcpy(&msg[5 + IMSI_DIGITS + 1 + 1],sim_data->gid1,GID_DIGITS); //GID1
+               
+
+	msg[5 + IMSI_DIGITS + 1 + 1 + GID_DIGITS] = sim_data->gid2_len;
+	if(sim_data->gid2_len > 0)
+       		memcpy(&msg[5 + IMSI_DIGITS + 1 + 1 + GID_DIGITS + 1],sim_data->gid2,GID_DIGITS); //GID2
+
+	KRIL_SendNotify(BRCM_RIL_UNSOL_OEM_HOOK_RAW, msg, sizeof(msg));
+
+
 }
 
 #ifndef CONFIG_BRCM_FUSE_RIL_CIB

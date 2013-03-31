@@ -22,7 +22,7 @@
 #include "capi2_reqrep.h"
 
 
-extern KpdpDataCallResponse_t Kpdp_pdp_resp[DUAL_SIM_SIZE][BCM_NET_MAX_DUN_PDP_CNTXS];
+extern KpdpDataCallResponse_t Kpdp_pdp_resp[BCM_NET_MAX_DUN_PDP_CNTXS];
 
 
 //using hotplug to stop pppd
@@ -64,24 +64,23 @@ void KPDP_ProcessNotification(Kpdp_CAPI2Info_t *notify)
         case MSG_PDP_DEACTIVATION_IND:
         {
             PDP_PDPDeactivate_Ind_t *pind = (PDP_PDPDeactivate_Ind_t *) notify->dataBuf;
-            UInt8 i,Sim_Id;
+            UInt8 i;
             
             KPDP_DEBUG(DBG_INFO, "MSG_PDP_DEACTIVATION_IND::cid %d,type[%s],add[%s]\n", pind->cid, pind->pdpType, pind->pdpAddress);
-            for(Sim_Id = 0;Sim_Id<DUAL_SIM_SIZE;Sim_Id++) {
-                for (i=0; i<BCM_NET_MAX_DUN_PDP_CNTXS; i++)
+            for (i=0; i<BCM_NET_MAX_DUN_PDP_CNTXS; i++)
+            {
+                if (pind->cid == Kpdp_pdp_resp[i].cid)
                 {
-                    if (pind->cid == Kpdp_pdp_resp[Sim_Id][i].cid)
-                    {
-                        //Kpdp_pdp_resp[Sim_Id][i].active = 0;
-                        memset(&Kpdp_pdp_resp[Sim_Id][i], 0, sizeof(KpdpDataCallResponse_t));
-                        Kpdp_pdp_resp[Sim_Id][i].cid = pind->cid;
-                        KPDP_DEBUG(DBG_INFO, "SimID:%d MSG_PDP_DEACTIVATION_IND[%d]=%d \n", Sim_Id, i, Kpdp_pdp_resp[Sim_Id][i].cid);
-                        //KPDP_SendNotify(Sim_Id, PDP_UNSOL_DATA_CALL_LIST_CHANGED, &Kpdp_pdp_resp[Sim_Id][i], sizeof(KpdpDataCallResponse_t));
-                        Kpdp_pdp_resp[Sim_Id][i].cid = 0; //KPDP_SendNotify has backup Kpdp_Kpdp_pdp_resp by memcpy, so we can modify here
-		        //notify user space
-		        Kpdp_pdp_deactivate_ind(pind->cid);
-                        break;
-                    }
+                    //Kpdp_pdp_resp[i].active = 0;
+                    memset(&Kpdp_pdp_resp[i], 0, sizeof(KpdpDataCallResponse_t));
+		    Kpdp_pdp_resp[i].cid = pind->cid;
+                    KPDP_DEBUG(DBG_INFO, "MSG_PDP_DEACTIVATION_IND[%d]=%d \n", i, Kpdp_pdp_resp[i].cid);
+                    //KPDP_SendNotify(PDP_UNSOL_DATA_CALL_LIST_CHANGED, &Kpdp_pdp_resp[i], sizeof(KpdpDataCallResponse_t));
+                    Kpdp_pdp_resp[i].cid = 0; //KPDP_SendNotify has backup Kpdp_Kpdp_pdp_resp by memcpy, so we can modify here
+
+		    //notify user space
+		    Kpdp_pdp_deactivate_ind(pind->cid);
+                    break;
                 }
             }
             break;

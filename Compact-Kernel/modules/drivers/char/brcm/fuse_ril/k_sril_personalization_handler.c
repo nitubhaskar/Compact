@@ -109,7 +109,7 @@ static void KRIL_SRIL_requestGetLockStatus(void *ril_cmd,  Kril_CAPI2Info_t *cap
 				return;          
 			}                        
 
-			SIMLockGetSIMLockState(pdata->ril_cmd->SimId,&simlock_state);// gearn fixed for DV 2.0
+			SIMLockGetSIMLockState(&simlock_state);
 
 			test[0] = simlock_state.network_lock; //np (if active = 1, deactive = 0)
 			test[1] = simlock_state.network_subset_lock; //subset
@@ -201,7 +201,7 @@ static void KRIL_SRIL_requestUnlockMode(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 				return;          
 			}                        
 
-			simlock_status = SIMLockUnlockSIM(pdata->ril_cmd->SimId,simlock_type, (UInt8*)password); // gearn fixed for DV 2.0
+			simlock_status = SIMLockUnlockSIM(simlock_type, (UInt8*)password);
 #if 0
 			switch (simlock_status)
 			{
@@ -295,7 +295,7 @@ static void KRIL_SRIL_requestLockMode(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rs
 		mccmnc[i] = rawdata[i+7];	//svcMode
 	}
 
-	// KRIL_DEBUG(DBG_ERROR,"mccmnc :%s",mccmnc);
+	KRIL_DEBUG(DBG_ERROR,"mccmnc :%s",mccmnc);
 
 
 	for (i=0; i<8; i++)		
@@ -324,7 +324,8 @@ static void KRIL_SRIL_requestLockMode(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rs
 
 
 //SIMLock_Status_t  SIMLockSetLock(UInt8 action, Boolean ph_sim_full_lock_on, SIMLockType_t lockType, UInt8* key, UInt8* imsi, UInt8* gid1, UInt8* gid2)			
-			simlock_status = SIMLockSetLock(pdata->ril_cmd->SimId,1, FALSE, simlock_type, (UInt8*)password, (UInt8*)mccmnc, NULL, NULL); // gearn fixed for DV 2.0
+			simlock_status = SIMLockSetLock(1, FALSE, simlock_type, (UInt8*)password, (UInt8*)mccmnc, NULL, NULL);
+
 #if 0
 			switch (simlock_status)
 			{

@@ -25,13 +25,16 @@ extern KRIL_NotifyWq_t gKrilNotifyWq;
 extern struct wake_lock kril_rsp_wake_lock;
 extern struct wake_lock kril_notify_wake_lock;
 #endif
-void KRIL_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, SimNumber_t SimId, UInt32 DialogId, Result_t result, void *dataBuf, UInt32 dataLength, ResultDataBufHandle_t dataBufHandle)
+void KRIL_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, UInt32 DialogId, Result_t result, void *dataBuf, UInt32 dataLength, ResultDataBufHandle_t dataBufHandle)
 {
     Kril_CAPI2Info_t *capi2_rsp = NULL;
 
-    KRIL_DEBUG(DBG_TRACE, "tid:%lu msgtype:0x%x result:%d\n", tid, msgType, result);
+    //KRIL_DEBUG(DBG_INFO, "tid:%lu msgtype:0x%x result:%d\n", tid, msgType, result);
     if(MSG_STK_CC_DISPLAY_IND == msgType)
     {
+       // KRIL_DEBUG(DBG_TRACE, "temporary discard the message MSG_STK_CC_DISPLAY_IND...!\n");
+       // RPC_SYSFreeResultDataBuffer(dataBufHandle);
+        //return;
 		  KRIL_DEBUG(DBG_INFO, "KRIL_Capi2HandleRespCbk::MSG_STK_CC_DISPLAY_IND tid=%lu\n", tid)
 		  tid = 0;
     }
@@ -47,7 +50,6 @@ void KRIL_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, SimN
     capi2_rsp->tid = tid;
     capi2_rsp->clientID = clientID;    
     capi2_rsp->msgType = msgType;
-    capi2_rsp->SimId = SimId;
     capi2_rsp->DialogId = DialogId;
     capi2_rsp->result = result;
     capi2_rsp->dataBuf = dataBuf;
@@ -69,31 +71,11 @@ void KRIL_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, SimN
         capi2_rsp->tid = KRIL_GetNetworkSelectTID();
         KRIL_SetNetworkSelectTID(0);
     }
-    else if ((MSG_VOICECALL_RELEASE_CNF  == capi2_rsp->msgType) && (KRIL_GetHungupForegroundResumeBackgroundEndMPTY() != 0))
+    else if ( (KRIL_GetHungupForegroundResumeBackgroundEndMPTY() != 0) && (MSG_VOICECALL_RELEASE_CNF  == capi2_rsp->msgType) )
     {
         capi2_rsp->tid = KRIL_GetHungupForegroundResumeBackgroundEndMPTY();
     }
-    else if ( (MSG_MNSS_CLIENT_SS_SRV_REL == capi2_rsp->msgType) && (KRIL_GetSsSrvReqTID() != 0) )
-    {
-        capi2_rsp->tid = KRIL_GetSsSrvReqTID();
-        KRIL_SetSsSrvReqTID(0);
-       
-    }
-    else if (MSG_MS_LOCAL_ELEM_NOTIFY_IND == capi2_rsp->msgType)
-    {
-        // Refer to SS_LocalSettingProcedure(.) and SsApi_SsSrvReq(.) of ss_api.c
-        MS_LocalElemNotifyInd_t *rsp = (MS_LocalElemNotifyInd_t *) capi2_rsp->dataBuf;
-
-        // maybe add CLIP, COLP in the furture if a set API is available
-        if (rsp->elementType == MS_LOCAL_SS_ELEM_CLIR)
-        {
-            if (KRIL_GetSsSrvReqTID() != 0)
-            {
-               capi2_rsp->tid = KRIL_GetSsSrvReqTID();
-               KRIL_SetSsSrvReqTID(0);
-            }
-        }
-    }
+	
 /*+20110418 BCOM PATCH FOR DebugScreen*/
     else if (MSG_MEASURE_REPORT_PARAM_IND == capi2_rsp->msgType && KRIL_GetMeasureReportTID() != 0)  // Change the notify message to response message for the MSG_MEASURE_REPORT_PARAM_IND
     {

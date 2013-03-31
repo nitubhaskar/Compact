@@ -100,8 +100,6 @@ extern wait_queue_head_t bcmlogreadq;
 //static int audio_stop = 0;
 int audio_data_arrived = 0;
 
-bool isLoopback = false;  // 20111110
-
 
 // IOCTL for audio logging
 #define LOG_IOCTL_CONFIG_CHANNEL                105
@@ -162,7 +160,7 @@ AUDTST_VOIF (UInt32 Val2,UInt32 Val3, UInt32 Val4, UInt32 Val5, UInt32 Val6);
 static int __devinit DriverProbe(struct platform_device *pdev)
 {
 	struct snd_card *card;
-	int err,error;
+	int err;
 	
 	DEBUG("\n %lx:DriverProbe \n",jiffies);
 		
@@ -181,9 +179,7 @@ static int __devinit DriverProbe(struct platform_device *pdev)
 	g_brcm_alsa_chip->card = card;
 	
 	card->dev = &pdev->dev;
-	//Coverity - Function does not return error b
-	strncpy(card->driver, pdev->dev.driver->name, sizeof(card->driver)-1);
-	card->driver[15] = '\0';
+	strncpy(card->driver, pdev->dev.driver->name, sizeof(card->driver));
 
 
 	//PCM interface	
@@ -199,8 +195,8 @@ static int __devinit DriverProbe(struct platform_device *pdev)
 		
 	strcpy(card->driver, "Broadcom");
 	strcpy(card->shortname, "Broadcom ALSA");
-	error = sprintf(card->longname, "Broadcom ALSA PCM %i", 0);
-	DEBUG("\n probe card->longname ret = %d\n",error);
+	sprintf(card->longname, "Broadcom ALSA PCM %i", 0);
+	
 	
 	err = snd_card_register(card);
 	if (err==0)
@@ -221,10 +217,8 @@ static int __devinit DriverProbe(struct platform_device *pdev)
 err:
 	DEBUG("\n probe failed =%d\n",err);
 	if (card)
-	{		
-		error = snd_card_free(card);
-		DEBUG("\n probe snd_card_free ret = %d\n",error);
-	}       
+		snd_card_free(card);
+	
 	g_brcm_alsa_chip=NULL;
 	return err;
 }
@@ -291,7 +285,7 @@ static int
 BCMLOG_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 
-	int error;
+
     if ( wait_event_interruptible(bcmlogreadq, (audio_data_arrived != 0)))
     {   
         //(" Wait for read  ...\n");
@@ -299,8 +293,7 @@ BCMLOG_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
     }   
     audio_data_arrived = 0;  
 
-	error = copy_to_user(buf, "read", 4);
-	DEBUG("BCMLOG_read:: copy_to_user return = %d\n", error);
+	copy_to_user(buf, "read", 4); 
     return DATA_TO_READ;
                
 }
@@ -480,8 +473,6 @@ UInt32 GetVoiceChannelId(AudioMode_t mode)
 			break;
 		case	AUDIO_MODE_BLUETOOTH:
 		case	AUDIO_MODE_BLUETOOTH_WB:
-		case	AUDIO_MODE_HANDSFREE:
-		case	AUDIO_MODE_HANDSFREE_WB:
 			voice_chnl = 3;
 			break;
 		case	AUDIO_MODE_SPEAKERPHONE:
@@ -602,7 +593,6 @@ BCMVOIP_release(struct inode *inode, struct file *file)
 static ssize_t BCMVOIP_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
     OSStatus_t status;
-	int error;
 
     status = OSSEMAPHORE_Obtain(voip_driver_lock, 40);
 
@@ -618,8 +608,7 @@ static ssize_t BCMVOIP_read(struct file *file, char __user *buf, size_t count, l
         {
             if( voip_driver_handle->voip_data_ul_buf_ptr )
             {
-                error = copy_to_user(buf, voip_driver_handle->voip_data_ul_buf_ptr + voip_driver_handle->voip_data_ul_rd_index,320);
-				//DEBUG("BCMVOIP_read:: copy_to_user return = %d\n", error);
+                copy_to_user(buf, voip_driver_handle->voip_data_ul_buf_ptr + voip_driver_handle->voip_data_ul_rd_index,320);
                 voip_driver_handle->voip_ul_framecount--;
                 voip_driver_handle->voip_data_ul_rd_index += VOIP_FRAME_SIZE;
                 if( voip_driver_handle->voip_data_ul_rd_index >= VOIP_BUFFER_SIZE )
@@ -655,7 +644,6 @@ static ssize_t BCMVOIP_read(struct file *file, char __user *buf, size_t count, l
 ***************************************************************************/
 static ssize_t BCMVOIP_write(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-	int error;
 //    OSSEMAPHORE_Obtain(voip_driver_lock, TICKS_FOREVER);
     if( voip_driver_handle )
     {
@@ -665,9 +653,7 @@ static ssize_t BCMVOIP_write(struct file *file, char __user *buf, size_t count, 
             {
                 DEBUG(" BCMVOIP_write:  Write Size does not match VOIP Frame Size\r\n");
             }
-            error = copy_from_user(voip_driver_handle->voip_data_dl_buf_ptr + voip_driver_handle->voip_data_dl_wr_index, buf, VOIP_FRAME_SIZE);
-            //DEBUG("BCMVOIP_write::copy_from_user ret %d\r\n",error);
-
+            copy_from_user(voip_driver_handle->voip_data_dl_buf_ptr + voip_driver_handle->voip_data_dl_wr_index, buf, VOIP_FRAME_SIZE);
             voip_driver_handle->voip_dl_framecount++;
             voip_driver_handle->voip_data_dl_wr_index += VOIP_FRAME_SIZE;
             if( voip_driver_handle->voip_data_dl_wr_index >= VOIP_BUFFER_SIZE )
@@ -812,6 +798,8 @@ static UInt32 VOIP_buf_dl_index = 0;
 static UInt32 lp_voip_mic;
 static UInt32 lp_voip_speaker;
 
+//UInt32 lp_voip_start = 0; /* 20110715 for loopback check */
+
 static Boolean LB_VOIP_DumpUL_CB(
 AUDIO_DRIVER_HANDLE_t drv_handle,
 UInt8		*pSrc,		// pointer to start of speech data
@@ -832,7 +820,7 @@ static int
 BCMPCG_ioctl(struct inode *inode, struct file *file,
              unsigned int cmd, UInt32 arg)
 {
-    int rtn = 1,error;
+    int rtn = 1;
 
      
      //const UInt16 volume_max = 14;
@@ -841,14 +829,8 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     {
     case PCG_IOCTL_SETMODE:
     {
-        UInt32 pcg_arg, voice_chnl,cur_mode,cur_channel;;
-        error = copy_from_user(&pcg_arg, (UInt32 *)arg, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
-		cur_mode = AUDCTRL_GetAudioMode();
-        cur_channel = GetVoiceChannelId(cur_mode);
-        AUDCTRL_DisableTelephony(AUDIO_HW_VOICE_IN,AUDIO_HW_VOICE_OUT,sgTableIDChannelOfVoiceCallDev[cur_channel].mic,sgTableIDChannelOfVoiceCallDev[cur_channel].speaker);
-
-		
+        UInt32 pcg_arg, voice_chnl;
+        copy_from_user(&pcg_arg, (UInt32 *)arg, sizeof(UInt32));
         voice_chnl = GetVoiceChannelId(pcg_arg);
         AUDCTRL_SaveAudioModeFlag( pcg_arg,0 );
         AUDCTRL_EnableTelephony(AUDIO_HW_VOICE_IN,AUDIO_HW_VOICE_OUT,sgTableIDChannelOfVoiceCallDev[voice_chnl].mic,sgTableIDChannelOfVoiceCallDev[voice_chnl].speaker);
@@ -862,8 +844,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     {
         UInt32 curmode;
         curmode = AUDCTRL_GetAudioMode();
-        error = copy_to_user((UInt32 *)arg, &curmode, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl:: copy_to_user return = %d\n", error);
+        copy_to_user((UInt32 *)arg, &curmode, sizeof(UInt32));
         rtn=1;
         DEBUG("AUD:PCG_IOCTL_GETMODE curmode=%x  \n",curmode);
     }
@@ -872,8 +853,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     {
         UInt32 volume;
         volume = AUDCTRL_GetTelephonySpkrVolume();
-        error = copy_to_user( (UInt32 *)arg, &volume, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl:: copy_to_user return = %d\n", error);
+        copy_to_user( (UInt32 *)arg, &volume, sizeof(UInt32));
         rtn = 1;
         DEBUG("AUD:PCG_IOCTL_GETVOL volume=%x  \n",volume);
     }
@@ -881,8 +861,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     case PCG_IOCTL_SETVOL:
     {
         UInt32 spkvol;
-        error = copy_from_user(&spkvol, (UInt32 *)arg, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
+        copy_from_user(&spkvol, (UInt32 *)arg, sizeof(UInt32));
 
         AUDCTRL_SetPlayVolume(AUDIO_HW_VOICE_OUT,AUDCTRL_SPK_HANDSET,AUDIO_GAIN_FORMAT_HW_REG,spkvol,spkvol);
         
@@ -893,8 +872,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     case PCG_IOCTL_SetExtPAVol:
 	{
 		UInt32 extvol;
-		error = copy_from_user(&extvol, (UInt32 *)arg, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
+		copy_from_user(&extvol, (UInt32 *)arg, sizeof(UInt32));
 	
 		DEBUG("AUD:  PCG_IOCTL_SetExtPAVol	extvol=%d  \r\n", extvol);
 
@@ -908,8 +886,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     {
         UInt32 lb_status;
         lb_status = loopback_status;
-        error = copy_to_user( (UInt32 *)arg, &lb_status, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl:: copy_to_user return = %d\n", error);
+        copy_to_user( (UInt32 *)arg, &lb_status, sizeof(UInt32));
         rtn = 1;
         DEBUG("AUD:PCG_IOCTL_GETLPBKSTATUS lb_status=%x  \n",lb_status);
 
@@ -918,8 +895,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     case PCG_IOCTL_SETLPBK:
     {
         UInt32 lb_status;
-        error = copy_from_user(&lb_status, (UInt32 *)arg, sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
+        copy_from_user(&lb_status, (UInt32 *)arg, sizeof(UInt32));
 
         if(lb_status >1)
             lb_status = 1;
@@ -945,8 +921,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
         lbpaths[0] = loopback_input;
         lbpaths[1] = lb_output;
 
-        error = copy_to_user( (UInt32 *)arg, lbpaths, 2* sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl:: copy_to_user return = %d\n", error);
+        copy_to_user( (UInt32 *)arg, lbpaths, 2* sizeof(UInt32));
     
         rtn = 1;
         DEBUG("AUD:PCG_IOCTL_GETLPBKPATH lb_output=%d loopback_input=%d  \n",lb_output,loopback_input);
@@ -958,8 +933,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
 //        UInt32 lb_output;
         UInt32 lbpaths[2];
 
-        error = copy_from_user(lbpaths, (UInt32 *)arg, 2* sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
+        copy_from_user(lbpaths, (UInt32 *)arg, 2* sizeof(UInt32));
     
 
         if(lbpaths[1] == 2)
@@ -980,8 +954,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
 	 //   int i;
 	    arg_t voip;
         UInt16 voip_audio_mode;
-        error = copy_from_user(&voip,(const void*)arg, sizeof(voip));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
+        copy_from_user(&voip,(const void*)arg, sizeof(voip));
 
         DEBUG("AUD:PCG_IOCTL_MAUDTST VOIP val1 =%d val2=%d val3=%d val4=%d val5=%d val6=%d  \n",voip.val1,voip.val2,voip.val3,voip.val4,voip.val5,voip.val6);
 	
@@ -989,10 +962,9 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
   	    {
            case 100:
             {
-				if( !isLoopback )
-				{
                 UInt32 delay, delay_in_frames;
                 DEBUG("Start loopback \n");
+                //lp_voip_start = 1; /* 20110715 for loopback check */
                 voip_loopbackbuffer = (UInt8*) OSDAL_ALLOCHEAPMEM(LB_VOIP_BUFFER_SIZE);
 
                 if(!voip_loopbackbuffer)
@@ -1038,7 +1010,6 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
                         break;
                 }
                 AUDCTRL_SaveAudioModeFlag(voip_audio_mode, AUDIO_APP_VOICE_CALL);
-				isLoopback = true;
 
                 // set the speaker and mic
                 lp_voip_speaker = voip.val3;
@@ -1076,16 +1047,6 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
                 if(voip.val3 == AUDIO_MODE_SPEAKERPHONE)	
                     AUDDRV_GPIO_Start();
                 else
-                    AUDDRV_GPIO_Stop();					
-				}
-				else
-				{
-					printk("AUD:PCG_IOCTL_MAUDTST, already in loopback mode!");
-				}
-
-                if(voip.val3 == AUDIO_MODE_SPEAKERPHONE)	
-                    AUDDRV_GPIO_Start();
-                else
                     AUDDRV_GPIO_Stop();
 
             }
@@ -1093,13 +1054,14 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
 
            case 99:
            {
-				if( isLoopback )
-				{
                 DEBUG("Stop  loopback\n");
+                //lp_voip_start = 0; /* 20110715 for loopback check */
                 AUDIO_DRIVER_Ctrl(drv_handle,AUDIO_DRIVER_STOP,NULL);
                 AUDCTRL_DisableTelephony(AUDIO_HW_VOICE_IN,AUDIO_HW_VOICE_OUT,lp_voip_mic,lp_voip_speaker);
+
                 // reactivate NS to refer to sysparm.
                 AUDCTRL_NS(TRUE); // set TRUE for the next call for AUDCTRL_EnableTelephony().
+
                 AUDIO_DRIVER_Close(drv_handle);
                 
                 if(voip_loopbackbuffer != NULL)
@@ -1112,11 +1074,6 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
                 drv_handle = NULL;
 
                 AUDDRV_GPIO_Stop();
-
-					isLoopback = false;
-				}
-				else
-					printk("AUD:PCG_IOCTL_MAUDTST, loopback already stopped!");
             }
             return 1; 
             
@@ -1150,26 +1107,17 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
             case 121:
             {
                 
-                UInt32 param_value;
-                UInt32 param_id;
+                UInt32 ext_preamp_gain;
+                UInt32 amp_id;
                 
-                param_id = voip.val2;
-                param_value = voip.val3;
-                if(param_id == 1)
+                amp_id = voip.val2;
+                ext_preamp_gain = voip.val3;
+                if(amp_id == 1)
                 {
-                    DEBUG("AUD:  SetPreamp gain	ext_preamp_gain=%d  \r\n", param_value);
-                    setExternalPreAmpGain(param_value);
+                    DEBUG("AUD:  SetPreamp gain	ext_preamp_gain=%d  \r\n", ext_preamp_gain);
+                    setExternalPreAmpGain(ext_preamp_gain);
 
                 }
-				else if( (param_id >= 2) && (param_id <= 5))
-				{
-				    DEBUG("AUD:  set external parameter param%d=%d  \r\n",param_id, param_value);
-					setExternalParameter(param_id,param_value);
-				}
-				else
-				{
-					DEBUG("AUD:  Inavlid paramid %d  \r\n",param_id);
-				}
                 
             }
             return 1; 
@@ -1182,24 +1130,6 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
             }
             return 1; 
    
-#if (defined(CONFIG_MFD_D2041) && (defined(D2041_USE_OWN_TUNING_TOOL)))
-           case AUDIO_D2041_GAIN_CONTROL:
-           {
-                arg_t d2041arg;
-
-                error = copy_from_user(&d2041arg,(const void*)arg, sizeof(arg_t));
-
-                d2041_gain_control((void *)d2041arg);
-
-                if(d2041arg.val1 < 10)
-                {
-                    copy_to_user((UInt32 *)arg, &d2041arg, sizeof(arg_t));
-                }
-
-                rtn=1;
-           }
-           return 1;
-#endif           
            default:
                DEBUG("Invalid ioctl: '0x%x'  \n", voip.val1);
             return 0; 
@@ -1210,8 +1140,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
     {
         UInt32 pcg_arg[2];
         UInt32 mode,app,voice_chnl,cur_mode,cur_channel;
-        error = copy_from_user(&pcg_arg, (UInt32 *)arg, 2 * sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl::copy_from_user ret %d\r\n",error);
+        copy_from_user(&pcg_arg, (UInt32 *)arg, 2 * sizeof(UInt32));
 
         cur_mode = AUDCTRL_GetAudioMode();
         cur_channel = GetVoiceChannelId(cur_mode);
@@ -1221,14 +1150,12 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
         app= pcg_arg[1];
 
         voice_chnl = GetVoiceChannelId(pcg_arg[0]);
-        if((app == AUDIO_APP_VOICE_CALL_WB) || 
-            (app == AUDIO_APP_VT_CALL_WB))
+        if(app == AUDIO_APP_VOICE_CALL_WB)
         {
             mode = pcg_arg[0] + AUDIO_MODE_NUMBER;
         }
        
-        if((app == AUDIO_APP_VOICE_CALL) || (app == AUDIO_APP_VOICE_CALL_WB) ||
-            (app == AUDIO_APP_VT_CALL) || (app == AUDIO_APP_VT_CALL_WB))
+        if((app == AUDIO_APP_VOICE_CALL) || (app == AUDIO_APP_VOICE_CALL_WB))
         {
             DEBUG("Enable Telephony\n");
             AUDCTRL_SaveAudioModeFlag( mode,app);
@@ -1255,8 +1182,7 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
         if ( pcg_arg[0] >= AUDIO_MODE_NUMBER )
             pcg_arg[0] = (AudioMode_t) (pcg_arg[0] - AUDIO_MODE_NUMBER);
 
-        error = copy_to_user((UInt32 *)arg, pcg_arg, 2* sizeof(UInt32));
-		DEBUG("BCMPCG_ioctl:: copy_to_user return = %d\n", error);
+        copy_to_user((UInt32 *)arg, pcg_arg, 2* sizeof(UInt32));
         rtn=1;
         DEBUG("AUD:PCG_IOCTL_GETMODEAPP mode=%d app=%d  \n",pcg_arg[0],pcg_arg[1]);
     }

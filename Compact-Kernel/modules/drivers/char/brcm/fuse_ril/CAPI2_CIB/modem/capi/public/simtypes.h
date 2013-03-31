@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   simtypes.h
@@ -44,6 +46,7 @@ typedef enum
 	SIMMSG_DEACTIVATE_APPLI_ID,
 	SIMMSG_CLOSE_SOCKET_IND,
 	SIMMSG_SIMI_RESET_IND,
+	SIMMSG_SIMI_ERR_IND,
 
 	SIMMSG_SIMI_CHV_VERIFY_CNF,
 	SIMMSG_SIMI_CHV_VERIFY_REJ,
@@ -285,7 +288,7 @@ typedef struct
 	UInt8				alpha_id_sz;		// only valid with is_first_part == TRUE
 	Boolean				is_extension;
 	UInt8				data_sz;			// size of data_buf
-	UInt8				data_buf[sizeof(T_SI_DATA)]; // sizeof(T_SI_DATA)
+	UInt8				data_buf[32];		// sizeof(T_SI_DATA)
 } SIMParmSMParamReadCnf_t;
 
 typedef struct
@@ -310,6 +313,10 @@ typedef struct
 	SIMSupport_t        sim_support;
 } SIMParmInfoInd_t;
 
+typedef struct
+{
+	T_SIM_ERROR_CODE	error_code;
+} SIMParmErrInd_t;
 
 typedef struct
 {
@@ -436,7 +443,6 @@ typedef struct
 {
 	T_ALPHA_IDENTIFIER 	text;			///< a string shich MI displays. Passed to MN and MN infomrs MI
 	T_SI_ICON_ID		icon;			///< optional icon id
-	Boolean             packingReq;     ///< TRUE if packing required
 	STK_SMS_DATA_t		sms_data;		///< SMS data including Service Center Address and TPDU
 } SIMParmMoSMSAlphaInd_t;
 
@@ -533,6 +539,7 @@ typedef union
 {
 	SIMParmInitInd_t		init_ind;
 	SIMParmInfoInd_t		info_ind;
+	SIMParmErrInd_t			err_ind;
 
 	SIMParmCHVStatus_t		chv_generic_status;
 	SIMParmCHVStatus_t		chv_verify_cnf;

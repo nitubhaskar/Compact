@@ -539,15 +539,6 @@ static ssize_t ofm_sumXY_fs_read(struct device *dev, struct device_attribute *at
 	return count;
 }
 
-static ssize_t ofm_level_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	int count = 0;
-
-	count = sprintf(buf,"%d,%d\n", ofm_global.x_level, ofm_global.y_level);
-
-	return count;
-}
-
 static ssize_t ofm_level_store(struct device *dev,struct device_attribute *attr, const char *buf, size_t count)
 {    
 	int rc;
@@ -580,12 +571,10 @@ static ssize_t ofm_level_store(struct device *dev,struct device_attribute *attr,
 
 
 static struct device_attribute dev_attr_set_level =
-	__ATTR(ojkeylevel, S_IRUGO | S_IWUSR | S_IWGRP,
-	       ofm_level_show, ofm_level_store);
+	__ATTR(ojkeylevel, 0664 , NULL, ofm_level_store);
 
 static struct device_attribute dev_attr_get_ojkeysum =
-	__ATTR(ojkeysum, S_IRUGO | S_IWUSR | S_IWGRP, 
-	       ofm_sumXY_fs_read, NULL);
+	__ATTR(ojkeysum, 0444, ofm_sumXY_fs_read, NULL);
 
 
 static struct attribute *ofm_sysfs_attrs[] = {
@@ -625,8 +614,8 @@ static int ofm_i2c_probe(struct i2c_client *client, const struct i2c_device_id *
 	ofm_global.input_dev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 
 	ofm_global.input_dev->name = "Optical_Joystick";
-	ofm_global.input_dev->id.bustype = BUS_HOST;//BUS_I2C;
-	//ofm_global.input_dev->dev.parent = &client->dev;
+	ofm_global.input_dev->id.bustype = BUS_I2C;
+	ofm_global.input_dev->dev.parent = &client->dev;
 	ofm_global.input_dev->phys = "ojkey/input0";
 	ofm_global.input_dev->id.vendor = 0x0001;
 	ofm_global.input_dev->id.product = 0x0001;
@@ -643,6 +632,13 @@ static int ofm_i2c_probe(struct i2c_client *client, const struct i2c_device_id *
 	//ofm->ofm_motion = &ofm_motion;
 	//ofm->ofm_power_dn = &ofm_power_dn;
 
+	/* pin setting */
+	gpio_request(OTP_SHDN, "otp_shut_down");
+	gpio_direction_output(OTP_SHDN, 0);
+	mdelay(5);
+
+	mutex_init(&ofm_global.ops_lock);
+
 	result = input_register_device(ofm_global.input_dev);
 	if (result)
 	{
@@ -656,13 +652,6 @@ static int ofm_i2c_probe(struct i2c_client *client, const struct i2c_device_id *
 		printk(KERN_ERR "[OFM] Creating sysfs attribute group failed");
 		goto err1;
 	}
-
-	/* pin setting */
-	gpio_request(OTP_SHDN, "otp_shut_down");
-	gpio_direction_output(OTP_SHDN, 0);
-	mdelay(5);
-
-	mutex_init(&ofm_global.ops_lock);
 
         /*Default Sensitivity Level*/
         ofm_global.x_level = OFM_SENSITIVITY_X_DEFAULT;

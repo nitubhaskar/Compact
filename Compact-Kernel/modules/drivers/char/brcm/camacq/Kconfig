@@ -6,18 +6,3 @@ config VIDEO_CAMACQ
 	---help---
 	  This is I2c and a Video4Linux2 sensor-level driver for the camacq.
 	  
-config BCM_DUAL_CAM
-	tristate "dual sensor support"
-	depends on I2C
-	depends on VIDEO_CAMACQ
-	default N
-	---help---
-	  This is I2c and dual camera driver for the camacq.
-	  
-config BCM_SINGLE_CAM
-	tristate "single sensor support"
-	depends on I2C
-	depends on VIDEO_CAMACQ
-	default N
-	---help---
-	  This is I2c and single camera driver for the camacq.

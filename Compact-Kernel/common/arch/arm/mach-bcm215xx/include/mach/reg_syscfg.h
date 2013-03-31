@@ -29,7 +29,6 @@
 #define ADDR_SYSCFG_IOCR0			    (HW_SYSCFG_BASE + 0x000)
 #define   SYSCFG_IOCR0_SD3_MUX(x)		    (((x) & 0x3) << 0)
 #define   SYSCFG_IOCR0_SD1_MUX(x)		    (((x) & 0x3) << 3)
-#define	SYSCFG_IOCR0_I2S_MUX(x)			    (((x) & 0x3) << 5)
 #define   SYSCFG_IOCR0_GPIO2928_GPEN1312_MUX(x)     (((x) & 0x3) << 7)
 #define   SYSCFG_IOCR0_GPIO17_PWM0_MUX	    	    (1 << 9)
 #define   SYSCFG_IOCR0_SPI_UARTC_MUX		    (1 << 11)
@@ -44,11 +43,6 @@
 #define	  SYSCFG_IOCR0_PCM_SPI2_GPIO4043_MUX(x)	    (((x) & 0x3) << 22)
 #define	  SYSCFG_IOCR0_DIGMIC_GPIO6362_MUX    	    (1 << 24)
 #define	  SYSCFG_IOCR0_GPEN9_SPI_GPIO54_H_MUX 	    (1 << 27)
-#define   SYSCFG_IOCR0_LCD_CTRL_MUX	    	    (1 << 29)
-#define   SYSCFG_IOCR0_PRIVATE		    	    (1 << 26)
-#define   SYSCFG_IOCR0_MPHI_MUX		    	    (1 << 28)
-#define   SYSCFG_IOCR0_LCDD1_LCDD15_MUX		    	    (1 << 25)
-#define   SYSCFG_IOCR0_LCD16_LCD17_MUX		    	    (1 << 19)
 #define   SYSCFG_IOCR0_LCD_CTRL_MUX	    	    (1 << 29)
 #define   SYSCFG_IOCR0_MPHI_MUX		    	    (1 << 25)
 #define	  SYSCFG_IOCR0_FLASH_SD2_MUX	    	    (1 << 30)
@@ -91,14 +85,14 @@
 #define   SYSCFG_IOCR3_CAMD_PD	    	    	    (1 << 10)
 #define   SYSCFG_IOCR3_TWIF_ENB			    (1 << 21)
 #define   SYSCFG_IOCR3_SIMDAT_PU		    (1 << 27)
-#define   SYSCFG_IOCR3_PCMDI_PD			    (1 << 30)
 #define   SYSCFG_IOCR3_I2C3_EN			    (1 << 31)
 #define ADDR_SYSCFG_IOCR4                           (HW_SYSCFG_BASE + 0x020)
 #define	  SYSCFG_IOCR4_CAM_DRV_STGTH(x)  	    (((x) & 0x7) << 12)
 #define	  SYSCFG_IOCR4_SD1_DAT_DRV_STGTH(x)  	    (((x) & 0x7) << 27)
 #define	SYSCFG_IOCR4_SD3_DAT_DRV_STGTH(x)           (((x) & 0x7) << 6)
-#define	SYSCFG_IOCR4_SD3_DRV_STGTH(x)           (((x) & 0x7) << 6)
 #define	SYSCFG_IOCR4_SD3_CLK_DRV_STGTH(x)  	    	(((x) & 0x7) << 9)
+
+
 #define ADDR_SYSCFG_IOCR5                           (HW_SYSCFG_BASE + 0x024)
 #define   SYSCFG_IOCR5_GPIO34_UARTA_OUT1N_MUX(x)    (((x) & 0x3) << 8)
 #define	  SYSCFG_IOCR5_GPIO35_UARTA_OUT2N_MUX(x)    (((x) & 0x3) << 10)
@@ -215,10 +209,6 @@ GPIO General-Purpose Output Register
  // GPIO pull up/down enable (0 : disable, 1 : enable)
 #define ADDR_GPIO_GPIPEN0			(HW_GPIO_BASE + 0x020) //0x088CE020 GPIO 0 - 31
 #define ADDR_GPIO_GPIPEN1			(HW_GPIO_BASE + 0x024) //0x088CE024 GPIO 32 - 63
-
-// GPIO pull up/down set (0 : pull-donw, 1 : pull-up)
-#define ADDR_GPIO_GPIPUD0			(HW_GPIO_BASE + 0x028) //0x088CE028 GPIO 0 - 31
-#define ADDR_GPIO_GPIPUD1			(HW_GPIO_BASE + 0x02C) //0x088CE02C GPIO 32 - 63
 
 /* PERIPH_AHB_CLK_GATE_MON register bit defines */
 #define PERIPH_AHB_CLK_GATE_MON_DMAC         (1 << 4)

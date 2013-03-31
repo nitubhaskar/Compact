@@ -37,43 +37,6 @@
 *CSRCTRL1[4:0], and CSR_VOUT_T[4:0] in CSRCTRL3[4:0] are used for
 *CSR output voltage
 */
-#ifdef CONFIG_MFD_MAX8999_REV0
-enum {
-	CSR_VOUT_0_84V,
-	CSR_VOUT_0_86V,
-	CSR_VOUT_1_46V,
-	CSR_VOUT_1_44V,
-	CSR_VOUT_1_42V,
-	CSR_VOUT_1_40V,
-	CSR_VOUT_1_38V,
-	CSR_VOUT_1_36V,
-	CSR_VOUT_1_34V,
-	CSR_VOUT_1_32V,
-	CSR_VOUT_1_30V,
-	CSR_VOUT_1_28V,
-	CSR_VOUT_1_26V,
-	CSR_VOUT_1_24V,
-	CSR_VOUT_1_22V,
-	CSR_VOUT_1_20V,
-	CSR_VOUT_1_18V,
-	CSR_VOUT_1_16V,
-	CSR_VOUT_1_14V,
-	CSR_VOUT_1_12V,
-	CSR_VOUT_1_10V,
-	CSR_VOUT_1_08V,
-	CSR_VOUT_1_06V,
-	CSR_VOUT_1_04V,
-	CSR_VOUT_1_02V,
-	CSR_VOUT_1_00V,
-	CSR_VOUT_0_98V,
-	CSR_VOUT_0_96V,
-	CSR_VOUT_0_94V,
-	CSR_VOUT_0_92V,
-	CSR_VOUT_0_90V,
-	CSR_VOUT_0_88V,
-	CSR_VOUT_MAX
-};
-#else
 enum {
 	CSR_VOUT_0_76V = 0,
 	CSR_VOUT_0_78V,
@@ -109,7 +72,6 @@ enum {
 	CSR_VOUT_0_88V,
 	CSR_VOUT_MAX
 };
-#endif /* CONFIG_MFD_MAX8999_REV0 */
 
 /* Main battery control charging voltage  MBCCTRL3[3:0] */
 enum {
@@ -264,10 +226,6 @@ enum {
 		MAX8986_REG_ENCODE(0x2A, MAX8986_PM_I2C_ADDRESS)
 #define MAX8986_PM_REG_IOSRCTRL2			\
 		MAX8986_REG_ENCODE(0x2C, MAX8986_PM_I2C_ADDRESS)
-#ifdef CONFIG_MFD_MAX8999_REV0
-#define MAX8986_PM_REG_IOSRCTRL3			\
-		MAX8986_REG_ENCODE(0x2D, MAX8986_PM_I2C_ADDRESS)
-#endif
 #define MAX8986_PM_REG_IOSROPMODCTRL			\
 		MAX8986_REG_ENCODE(0x34, MAX8986_PM_I2C_ADDRESS)
 
@@ -832,7 +790,6 @@ extern int max8986_muic_register_event_handler(int event,void (*handler) (int, u
 					void* data);
 extern void max8986_muic_unregister_event_handler(int event);
 extern pmu_muic_chgtyp max8986_muic_get_charger_type(void);
-extern pmu_muic_chgtyp fsa880_muic_get_charger_type(void);
 extern void max8986_muic_force_charger_detection(void);
 extern void pmu_set_charging_current(pmu_charging_current charging_cur);
 extern pmu_charging_current pmu_get_charging_current(void);

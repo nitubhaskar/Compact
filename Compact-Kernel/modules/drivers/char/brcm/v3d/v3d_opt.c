@@ -62,7 +62,7 @@ the GPL, without Broadcom's express prior written consent.
 /* Job Error Handling variables */
 #define V3D_JOB_CACHE_CLEAR
 #ifdef V3D_JOB_CACHE_CLEAR
-#define V3D_ISR_TIMEOUT_IN_MS	(750)
+#define V3D_ISR_TIMEOUT_IN_MS	(250)
 #define V3D_CACHE_MAX_RETRIES	(1)
 #define V3D_JOB_TIMEOUT_IN_MS	(V3D_ISR_TIMEOUT_IN_MS * (V3D_CACHE_MAX_RETRIES+1))
 #else
@@ -597,18 +597,18 @@ static irqreturn_t v3d_isr(int irq, void *dev_id)
 #ifdef DEBUG_V3D_ISR
 			dbg_v3d_oom_blk2_usage_cnt++;
 #endif
-			KLOG_V("v3d oom blk 1 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
+			KLOG_D("v3d oom blk 1 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
 				flags, v3d_read(INTCTL), v3d_read(BPOA), v3d_read(BPOS), v3d_read(BPCA), v3d_read(BPCS));
 			iowrite32(v3d_bin_oom_block2,	v3d_base + BPOA);
 			iowrite32(v3d_bin_oom_size2,	v3d_base + BPOS);
 			v3d_oom_block_used = 2;
-			KLOG_V("v3d oom blk 2 given: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
+			KLOG_D("v3d oom blk 2 given: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
 				flags, v3d_read(INTCTL), v3d_read(BPOA), v3d_read(BPOS), v3d_read(BPCA), v3d_read(BPCS));
 		}else {
 #ifdef DEBUG_V3D_ISR
 			dbg_v3d_oom_fatal_cnt++;
 #endif
-			KLOG_V("v3d fatal: oom blk 2 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
+			KLOG_E("v3d fatal: oom blk 2 used: flags[0x%02x] intctl[0x%08x] bpoa[0x%08x] bpos[0x%08x] bpca[0x%08x] bpcs[0x%08x]", 
 				flags, v3d_read(INTCTL), v3d_read(BPOA), v3d_read(BPOS), v3d_read(BPCA), v3d_read(BPCS));
 			v3d_flags |= (1 << 5);
 			iowrite32(1 << 2, v3d_base + INTDIS);
@@ -622,7 +622,7 @@ static irqreturn_t v3d_isr(int irq, void *dev_id)
 		v3d_in_use = 0;
 		v3d_oom_block_used = 0;
 		if ((v3d_flags != 1) && (v3d_flags != 2)) {
-			KLOG_V("v3d isr signal, v3d_flags[0x%x]", v3d_flags);
+			KLOG_D("v3d isr signal, v3d_flags[0x%x]", v3d_flags);
 		}
 		wake_up_interruptible(&v3d_isr_done_q);
 	}
@@ -1386,7 +1386,7 @@ static int v3d_thread(void *data)
 					}
                                 } else if (v3d_job_curr->job_intern_state == 0) {
                                         ret = v3d_job_start(1);
-                                } else {
+				} else {
                                         KLOG_E("Assert: v3d thread wait exited as 'done' or 'killed' but job state not valid");
 				}
 			}else {
@@ -1771,7 +1771,7 @@ static int v3d_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, u
 #ifdef CONFIG_BCM21553_V3D_SYNC_ENABLE
 			unsigned long flags;
 #endif
-			if (copy_from_user(&reg_addr, (u32 *)arg, sizeof(u32))) {
+			if (copy_from_user(&reg_addr, (u32 *)arg, sizeof(reg_addr))) {
 				KLOG_E("V3D_IOCTL_READ_REG copy_from_user failed");
 				ret = -EFAULT;
 				break;
@@ -1780,16 +1780,12 @@ static int v3d_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, u
 #ifdef CONFIG_BCM21553_V3D_SYNC_ENABLE
 			spin_lock_irqsave(&dev->lock, flags);
 #endif
-		if(reg_addr > 0xF23) {
-		    KLOG_E("reg_addr greater than the max V3D reg address space\n");
-		    reg_addr = 0;
-		}
 		reg_value = v3d_read(reg_addr);
 #ifdef CONFIG_BCM21553_V3D_SYNC_ENABLE
 			spin_unlock_irqrestore(&dev->lock, flags);
 #endif
 
-			if (copy_to_user((u32 *)arg, &reg_value, sizeof(u32))) {
+			if (copy_to_user((u32 *)arg, &reg_value, sizeof(reg_value))) {
 				KLOG_E("V3D_IOCTL_READ_REG copy_to_user failed");
 				ret = -EFAULT;
 			}

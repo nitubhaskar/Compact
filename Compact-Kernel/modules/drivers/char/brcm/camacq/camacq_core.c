@@ -1,24 +1,12 @@
-  /*
- *
- * sensor core definition 
- *
-. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2010   
- *
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
+/*.......................................................................................................
+. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2009           
+. All rights are reserved. Reproduction and redistiribution in whole or 
+. in part is prohibited without the written consent of the copyright owner.
+. 
+.   Developer:
+.   Date:
+.   Description:  
+..........................................................................................................
 */
 
 #if !defined(_CAMACQ_CORE_C_)
@@ -82,7 +70,7 @@ static struct i2c_driver CamacqMainDriver = {
 	.remove		= CamacqCoreRemove,
 };
 
-#if (CAM_SENSOR_NUM==2)//swsw_dual #if (CAMACQ_SENSOR_MAX==2)
+#if (CAMACQ_SENSOR_MAX==2)
 struct i2c_device_id CamacqSubIdtable[] = {
 	{ CAMACQ_SUB_NAME, 0 },
 	{ }
@@ -109,16 +97,15 @@ static S32 __init CamacqCoreInit(void)
 
     CreateCamacqSensorManager( &g_pstCamacqSensorManager );
 
-#if (CAM_SENSOR_NUM==2)//swsw_dual
-    g_pstCamacqSensorManager->SetSensor( g_pstCamacqSensorManager, CAMACQ_SENSOR_SUB );	//g_pstCamacqSensorManager->SetSensor( g_pstCamacqSensorManager, CAMACQ_SENSOR_MAIN ); //Test purpose only
-   // iRet = i2c_add_driver( &CamacqSubDriver );
-	printk("i2c add sub\n");
-	iRet = i2c_add_driver( &CamacqSubDriver ); //test purpose only
-    CamacqTraceDbg( " : sub iRet[%d]", iRet );
+#if (CAMACQ_SENSOR_MAX==2)
+    g_pstCamacqSensorManager->SetSensor( g_pstCamacqSensorManager, CAMACQ_SENSOR_SUB );
+    iRet = i2c_add_driver( &CamacqSubDriver );
+    CamacqTraceDbg( " : iRet[%d]", iRet );
 #endif /* CAMACQ_SENSOR_MAX==2 */
-    g_pstCamacqSensorManager->SetSensor( g_pstCamacqSensorManager, CAMACQ_SENSOR_MAIN );    CamacqTraceDbg( "driver_name=%s", CamacqMainDriver.driver.name);
-    iRet = i2c_add_driver( &CamacqMainDriver );    CamacqTraceDbg( " :main iRet[%d]", iRet );
 
+    g_pstCamacqSensorManager->SetSensor( g_pstCamacqSensorManager, CAMACQ_SENSOR_MAIN );
+    iRet = i2c_add_driver( &CamacqMainDriver );
+    CamacqTraceDbg( " : iRet[%d]", iRet );
 
 	// attach pxa950_camera.c
     ccic_sensor_attach( g_pstCamacqSensorManager );

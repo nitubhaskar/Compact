@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+*
+***************************************************************************/
 /**
 *
 *   @file   capi2_old_sim.h
@@ -432,8 +434,8 @@ Boolean SIM_IsCachedDataReady(void);
 	@return		SERVICE_FLAG_STATUS_t
 	@note
 	Function returns 
-	TRUE – if the relevant bit is set in EF-CSP
-	FALSE – if the relevant bit is not set or the relevant group code or EF-CSP does not exist
+	TRUE ?if the relevant bit is set in EF-CSP
+	FALSE ?if the relevant bit is not set or the relevant group code or EF-CSP does not exist
 **/	
 
 SERVICE_FLAG_STATUS_t SIM_GetServiceCodeStatus(SERVICE_CODE_STATUS_CPHS_t service_code);
@@ -480,7 +482,7 @@ Boolean SIM_IsALSEnabled(void);
 /**
 	This function returns the current selected default voice line (L1 or L2 of ALS).
 
-	@return		UInt8 : 0 – if L1 is selected, 1 - if L2 is selected
+	@return		UInt8 : 0 ?if L1 is selected, 1 - if L2 is selected
 	@note
 	Upon powerup, L1 is the default line, but the client can change the line by calling
 	SIM_SetAlsDefaultLine() function. Note that upon power recycle, the default line reverts

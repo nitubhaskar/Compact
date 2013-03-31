@@ -273,7 +273,7 @@ int brcm_init_hostwake(const struct bcm_bt_lpm_platform_data *gpio_data)
 	/* make sure host_wake is pulled into the right direction if BT chips is NOT powered to avoid
 	 * wake lock being blocked accidentally! The value of HOST_WAKE_DEASSERT gives the direction
 	 * to pull to. */
-#if  defined (CONFIG_BOARD_THUNDERBIRD_EDN5x) || defined(CONFIG_BOARD_ACAR)
+#ifdef CONFIG_BOARD_THUNDERBIRD_EDN5x
     if ( 0 <= bcm_gpio_pull_up(gpio_data->gpio_host_wake, HOST_WAKE_DEASSERT) ) {
         if ( 0 > bcm_gpio_pull_up_down_enable(gpio_data->gpio_host_wake, 1) ) {
             pr_info( "bcm_gpio_pull_up_down_enable failed for gpio: %d", gpio_data->gpio_host_wake );

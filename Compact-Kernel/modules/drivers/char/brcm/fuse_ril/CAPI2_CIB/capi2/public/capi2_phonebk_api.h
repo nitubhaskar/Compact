@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_phonebk_api.h
@@ -20,7 +22,7 @@ the GPL, without Broadcom's express prior written consent.
 /**
 
 *   @defgroup   CAPI2_PBKAPIGroup   PhoneBook
-*	@ingroup	@ingroup CPS2Group
+*   @ingroup    CAPI2_PBKGroup
 *
 *   @brief      This group defines the types and prototypes for the Phonebook API functions.
 *	
@@ -162,8 +164,7 @@ void CAPI2_PbkApi_SendUsimGasInfoReq(ClientInfo_t* inClientInfoPtr, PBK_Id_t pbk
 	
 	 @n@b Responses 
 	 @n@b MsgType_t : ::MSG_PBK_GETALPHA_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData : CAPI2_PbkApi_GetAlpha_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData : CAPI2_PbkApi_GetAlpha_Rsp_t
 **/
 void CAPI2_PbkApi_GetAlpha(ClientInfo_t* inClientInfoPtr, char* number);
 

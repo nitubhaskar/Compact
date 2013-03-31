@@ -899,12 +899,13 @@ int rndis_function_bind_config(struct usb_configuration *c)
 		printk(KERN_ERR "rndis_pdata null in rndis_function_bind_config\n");
 		return -1;
 	}
-
+#if 0	// log delete
 	printk(KERN_INFO
 		"rndis_function_bind_config MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
 		rndis_pdata->ethaddr[0], rndis_pdata->ethaddr[1],
 		rndis_pdata->ethaddr[2], rndis_pdata->ethaddr[3],
 		rndis_pdata->ethaddr[4], rndis_pdata->ethaddr[5]);
+#endif
 
 	ret = gether_setup(c->cdev->gadget, rndis_pdata->ethaddr);
 	if (ret == 0)

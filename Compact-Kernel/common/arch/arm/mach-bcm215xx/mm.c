@@ -37,7 +37,7 @@
 }
 
 #define __IO_DEV_DESC_TEMP(x, sz)	{		\
-	.virtual	= 0xF8600000,	\
+	.virtual	= 0xE0000000,	\
 	.pfn		= __phys_to_pfn(x),	\
 	.length		= sz,			\
 	.type		= MT_DEVICE,		\
@@ -62,7 +62,7 @@ static struct map_desc bcm21553_io_desc[] __initdata = {
 	__IO_DEV_DESC(BCM21553_VEC_BASE, SZ_1M),
 	__IO_DEV_DESC(BCM21553_HTM0_BASE, SZ_1M),
 	__IO_DEV_DESC(BCM21553_CRYPTO_BASE, SZ_512K),
-	/*__IO_DEV_DESC(BCM21553_AHB_ARM_DSP_BASE, SZ_4M + SZ_512K),*/
+	__IO_DEV_DESC(BCM21553_AHB_ARM_DSP_BASE, SZ_4M + SZ_512K),
 	__IO_DEV_DESC_TEMP(BCM21553_SCRATCHRAM_BASE, SZ_64K)
 };
 

@@ -219,11 +219,5 @@ config REGULATOR_MAX8986
         help
           Say y here to support Maxim MAX8986 PMU regulator driver
 
-config REGULATOR_D2041
-	tristate "Dialog D2041 PMU regulator driver"
-	depends on MFD_D2041
-	help
-	  Supprot for Dialog D2041 PMU regulator driver
-
 endif
 

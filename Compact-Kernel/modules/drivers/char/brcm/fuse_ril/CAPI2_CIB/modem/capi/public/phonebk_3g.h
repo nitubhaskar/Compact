@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   phonebk_3g.h
@@ -33,12 +35,6 @@ the GPL, without Broadcom's express prior written consent.
 
 #define USIM_HIDDEN_KEY_FILE_LEN 4	///< EF-Hidden_Key length in USIM
 
-typedef struct
-{
-	UInt16 pbr_index;	/* 0-based EF-PBR record index */
-	UInt16 adn_index;	/* 0-based EF-ADN record index */
-} USIM_PBK_INDEX_t;
-
 /* Path information for the parent of DF-Phonebook */
 typedef struct
 {
@@ -58,8 +54,6 @@ typedef enum
 //******************************************************************************
 //							Function Declarations
 //******************************************************************************
-
-USIM_PBK_INDEX_t PBK_GetIndex(USIM_PBK_SELECT_t pbk_type, UInt16 rec_index);
 
 //**************************************************************************************
 /**
@@ -115,12 +109,11 @@ void PBK_DeleteUsimAllNofication(USIM_PBK_SELECT_t pbk_type);
     This function returns the 3G extended phonebook configuration information. 
 
     @param pbk_type (in) Global or Local phonebook
-	@param pbr_index (in) 0-based PBR index
 	
 	@return	UInt16
 	@note
 **/
-UInt16 PBK_GetUsimExt1FileId(USIM_PBK_SELECT_t pbk_type, UInt8 pbr_index);
+UInt16 PBK_GetUsimExt1FileId(USIM_PBK_SELECT_t pbk_type);
 
 
 //**************************************************************************************
@@ -133,6 +126,18 @@ UInt16 PBK_GetUsimExt1FileId(USIM_PBK_SELECT_t pbk_type, UInt8 pbr_index);
 	@note
 **/
 USIM_PBK_PATH_INFO_t PBK_GetUsimPathInfo(USIM_PBK_SELECT_t pbk_type);
+
+
+//**************************************************************************************
+/**
+    This function returns the 3G extended phonebook configuration information. 
+
+    @param pbk_type (in) Global or Local phonebook
+	
+	@return	UInt16
+	@note
+**/
+UInt16 PBK_GetUsimAdnFileId(USIM_PBK_SELECT_t pbk_type);
 
 
 //**************************************************************************************
@@ -162,15 +167,14 @@ UInt16 PBK_GetUsimAdnNonFreeCount(USIM_PBK_SELECT_t pbk_type);
 
 //**************************************************************************************
 /**
-    This function returns the length of alpha data in EF-ADN in 3G USIM EF-PBR set 
+    This function returns the length of alpha data in EF-ADN in 3G USIM. 
 
     @param pbk_type (in) Global or Local phonebook
-	@param pbr_index (in) 0-based EF-PBR record
 	
 	@return	Length of alpha data in EF-ADN
 	@note
 **/
-UInt8 PBK_GetUsimAdnAlphaLen(USIM_PBK_SELECT_t pbk_type, UInt8 pbr_index);
+UInt8 PBK_GetUsimAdnAlphaLen(USIM_PBK_SELECT_t pbk_type);
 
 
 //**************************************************************************************
@@ -225,23 +229,7 @@ void PBK_GetUsimAdnExtData(USIM_PBK_SELECT_t pbk_type, USIM_PBK_EXT_DATA_t *ext_
 	@return	none
 	@note
 **/
-PBK_WRITE_RESULT_t PBK_WriteUsimAdnData( USIM_PBK_SELECT_t pbk_type, const PBK_ADN_DATA_t *adn_data, const USIM_PBK_EXT_DATA_t *ext_data, UInt16 index, Boolean *try_next_pbr_set);
-
-
-//**************************************************************************************
-/**
-    This function returns the next 0-based index (across all EF-PBR sets) of an empty
-	EF-ADN slot which resides in the EF-PBR set after the passed 0-based index. 
-
-    @param pbk_type (in) Global or Local phonebook
-	@param index (in) 0-based EF-ADN index
-	
-	@return	The next 0-based index (across all EF-PBR sets) of an empty EF-ADN slot which 
-			resides in the EF-PBR set after the passed 0-based index. If an empty slot
-			is not found, INVALID_PBK_INDEX is returned. 
-	@note
-**/
-UInt16 PBK_GetNextFreeAdnIndex(USIM_PBK_SELECT_t pbk_type, UInt16 index);
+PBK_WRITE_RESULT_t PBK_WriteUsimAdnData(USIM_PBK_SELECT_t pbk_type, const PBK_ADN_DATA_t *adn_data, const USIM_PBK_EXT_DATA_t *ext_data, UInt16 index);
 
 
 //**************************************************************************************
@@ -325,7 +313,7 @@ Boolean PBK_WriteUsimHdkData(HDKString_t *hidden_key);
 	@return	none
 	@note
 **/
-void PBK_GetUsimExt1Data(USIM_PBK_SELECT_t pbk_type, USIM_PBK_INDEX_t pbk_index, UInt8 *pbk_ext1, UInt16 index);
+void PBK_GetUsimExt1Data(USIM_PBK_SELECT_t pbk_type,  UInt8 *pbk_ext1, UInt16 index);
 
 
 //**************************************************************************************

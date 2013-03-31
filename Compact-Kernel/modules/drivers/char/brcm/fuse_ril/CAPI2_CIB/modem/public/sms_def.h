@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   sms_def.h
@@ -599,11 +601,10 @@ typedef enum
 /// SMS Bearer DataBase
 typedef struct {
 	SMS_BEARER_PREFERENCE_t prefer;	///< Preferred Bearer for Sending SMS 
-#ifndef UNDER_LINUX
-	SMS_BEARER_PREFERENCE_t current;///< Current Bearer for Sending SMS 
-#else
-SMS_BEARER_PREFERENCE_t currents;///< Current Bearer for Sending SMS 
-#endif
+//**FIXME** MAG - build error in gcc here for some weird reason...
+// ../modules/drivers/char/brcm/fuse_ril/CAPI2_CIB/ext_headers/modem/public/sms_def.h:626: warning: function declaration isn't a prototype
+// ../modules/drivers/char/brcm/fuse_ril/CAPI2_CIB/ext_headers/modem/public/sms_def.h:626: error: field 'get_current' declared as a function
+//	SMS_BEARER_PREFERENCE_t current;///< Current Bearer for Sending SMS 
 } smsBearerDb_t;
 
 /// SMS Module Ready Status
@@ -1058,18 +1059,18 @@ typedef struct {
 
 typedef struct 
 {
-    Int32  nbr_of_msg_id_ranges;
+    UInt8  nbr_of_msg_id_ranges;
     MS_MN_CB_MSG_ID_RANGE_LIST  msg_id_range_list;
 } MS_MN_CB_MSG_IDS;
 
 typedef struct 
 {
-    UInt8  A[13];
+    UInt16  A[13];
 }  MS_MN_CB_LANGUAGE_LIST;
 
 typedef struct 
 {
-    Int32 nbr_of_languages;
+    UInt8 nbr_of_languages;
     MS_MN_CB_LANGUAGE_LIST  language_list;
 } MS_MN_CB_LANGUAGES;
 //

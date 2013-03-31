@@ -159,7 +159,7 @@ static DMA_BSIZE _translate_dma_bsize(OSDAL_DMA_BSIZE bsize)
 	switch(bsize) {
 	case OSDAL_DMA_BURST_SIZE_1:
 		drv_bsize = DMA_BURST_SIZE_1;
-        break;
+        	break;
 #if defined (_HERA_)
 	case OSDAL_DMA_BURST_SIZE_2:
 		drv_bsize = DMA_BURST_SIZE_2;

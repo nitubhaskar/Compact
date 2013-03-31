@@ -47,7 +47,6 @@
 #define   RECOVERY_ACTION_SYSRESET_USERCONFIRM      2
 #define   RECOVERY_ACTION_TBD                       3
 
-extern int cp_crashed;
 //
 // following structs must match definition for CP from dump.h
 // **FIXME** MAG - add dump.h to headers imported from CP when doing 
@@ -179,7 +178,6 @@ void ProcessCPCrashedDump(struct work_struct *work)
 		//only CP crash would enter here, AP crash does not trigger CP crash
 		lcdc_disp_img(IMG_INDEX_CP_DUMP);  //parameter 2: Draw CP crash
 #endif
-
 
     // **NOTE** for now, continue doing simple dump out IPC_DEBUG so there
     // is some indication of CP crash in console (in case user not running MTT)
@@ -475,9 +473,10 @@ void DUMP_CP_assert_log(void)
  	sys_sync();
     IPC_DEBUG(DBG_ERROR,"CP crash dump complete\n");
 
-	if ((BCMLOG_CPCRASH_MTD != BCMLOG_GetCpCrashDumpDevice()) && cp_crashed == 1)
+	if (BCMLOG_CPCRASH_MTD != BCMLOG_GetCpCrashDumpDevice())
 		abort();
 #ifdef CONFIG_BRCM_KPANIC_UI_IND
+	else
 		lcdc_disp_img(IMG_INDEX_END_DUMP);  //parameter 1: Draw the Kpanic Dump complete picture
 #endif
 

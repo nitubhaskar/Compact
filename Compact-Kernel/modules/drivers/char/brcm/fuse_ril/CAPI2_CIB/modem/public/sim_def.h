@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   sim_def.h
@@ -21,7 +23,7 @@ the GPL, without Broadcom's express prior written consent.
 #ifndef _SIM_DEF_H_
 #define _SIM_DEF_H_
    
-#include "taskmsgs.h"
+
 /**
  Mode for READ RECORD and UPDATE RECORD SIM command
 **/
@@ -98,6 +100,7 @@ typedef struct
 } HomezoneIndData_t;
 
 
+
 /// APDU File ID
 typedef enum
 {
@@ -120,8 +123,6 @@ typedef enum
 
 	/* German O2 HomeZone DF/EF */
 	APDUFILEID_DF_HOMEZONE			= 0x7F43,	///< HomeZone DF defined by German O2 network
-	APDUFILEID_DF_O2				= 0x7F43,
-	APDUFILEID_EF_O2_PERSONALIZATION = 0x6F02,
 
 	APDUFILEID_EF_HOMEZONE_PARAM	= 0x6F60,	///< HomeZone parameters for CB-HZI-UE algorithm
 	APDUFILDID_EF_HOMEZONE_CACHE1	= 0x6F61,	///< HomeZone cache for zone ID 1 for CB-HZI-UE algorithm
@@ -272,8 +273,6 @@ typedef enum
 	APDUFILEID_EF_MMSUP			= 0x6FD1,
 
 	APDUFILEID_EF_MMSUCP		= 0x6FD2,
-
-	APDUFILEID_EF_EHPLMNPI		= 0x6FDB,
 
 	/* If this is passed to the SIM API functions: the API functions obtain
 	 * the Dedicated File ID based on the passed Elementary File ID.
@@ -443,7 +442,7 @@ typedef enum
 {
     SIM_POWER_ON_GENERIC_MODE,			///< For generic application, e.g. BT-SAP
     SIM_POWER_ON_NORMAL_MODE,			///< For normal application, e.g. phone application and Java application
-	SIM_POWER_OFF_FORCE_MODE,           ///< Force power off even if PDP or CSD is active
+    SIM_POWER_OFF_FORCE_MODE,           ///< Force power off even if PDP or CSD is active
     SIM_POWER_ON_INVALID_MODE = 0xff	///< Invalid power on mode
 }SIM_POWER_ON_MODE_t;
 
@@ -462,12 +461,6 @@ typedef enum
 /// SIMLOCK status for all SIMLOCK types
 typedef struct
 {
-	Boolean	network_lock_enabled;			///< TRUE if network lock is enabled
-	Boolean	network_subset_lock_enabled;	///< TRUE if network subset lock is enabled
-	Boolean	service_provider_lock_enabled;	///< TRUE if service provider lock is enabled
-	Boolean	corporate_lock_enabled;			///< TRUE if corporate lock is enabled
-	Boolean	phone_lock_enabled;				///< TRUE if phone lock is enabled
-
 	SIM_SECURITY_STATE_t network_lock;			///< Network Lock status
 	SIM_SECURITY_STATE_t network_subset_lock;	///< Network Subset Lock status
 	SIM_SECURITY_STATE_t service_provider_lock;	///< Service Provider Lock status
@@ -541,10 +534,10 @@ typedef enum
 	SIMPBK_BDN			///< Barred Dialing Number Phonebook
 } SIMPBK_ID_t;			///< SIM Phonebook ID
 
-
-#ifndef _COMMON_DEFS_H_
+// **FIXME** won't build under linux because of type redefinition (also def'd in common_defs.h)
+#ifndef UNDER_LINUX
 typedef UInt32 CallMeterUnit_t;	///< General Call Meter Unit
-#endif
+#endif // UNDER_LINUX
 
 #define CURRENCY_SIZE	3	///< Currency name string size 
 
@@ -647,37 +640,6 @@ typedef enum
 	SIMSERVICE_GSM_SECURITY_CONTEXT,		///< Exists only for USIM: GSM security context
 	SIMSERVICE_EXT5,						///< Exists only for USIM: Extension 5
 	SIMSERVICE_GPRS_CALL_CONTROL,			///< Exists only for USIM: Call Control on GPRS
-	SIMSERVICE_PSEUDONYM,					///< Exists only for USIM: Pseudonym
-	SIMSERVICE_USR_PLMN_IWAN,				///< Exists only for USIM: User Controlled PLMN selector for I-WLAN access
-	SIMSERVICE_OPR_PLMN_IWAN,				///< Exists only for USIM: Operator Controlled PLMN selector for I-WLAN access
-	SIMSERVICE_USR_WSID,					///< Exists only for USIM: User controlled WSID list
-	SIMSERVICE_OPR_WSID,					///< Exists only for USIM: Operator controlled WSID list
-	SIMSERVICE_VGCS_SECURITY,				///< Exists only for USIM: VGCS security
-	SIMSERVICE_VBS_SECURITY,				///< Exists only for USIM: VBS security
-	SIMSERVICE_REAUTH_WLAN,					///< Exists only for USIM: WLAN Reauthentication Identity
-	SIMSERVICE_MMS_STORAGE,					///< Exists only for USIM: Multimedia Messages Storage
-	SIMSERVICE_GBA,							///< Exists only for USIM: Generic Bootstrapping Architecture (GBA)
-	SIMSERVICE_MBMS_SECURITY,				///< Exists only for USIM: MBMS security
-	SIMSERVICE_DOWNLOAD_USSD,				///< Exists only for USIM: Data download via USSD and USSD application mode
-	SIMSERVICE_EHPLMN,						///< Exists only for USIM: Equivalent HPLMN
-	SIMSERVICE_ADDI_TERM_PROFILE,			///< Exists only for USIM: Additional TERMINAL PROFILE after UICC activation
-	SIMSERVICE_EHPLMN_PI,					///< Exists only for USIM: Equivalent HPLMN Presentation Indication
-	SIMSERVICE_RPLMN_SEL_IND,				///< Exists only for USIM: Last RPLMN Selection Indication
-	SIMSERVICE_BCAST_CARD_PROFILE,			///< Exists only for USIM: OMA BCAST Smart Card Profile
-	SIMSERVICE_LOCAL_KEY_ESTABLISH,			///< Exists only for USIM: GBA-based Local Key Establishment Mechanism
-	SIMSERVICE_TERMINAL_APPLI,				///< Exists only for USIM: Terminal Applications
-	SIMSERVICE_PROVIDER_NAME_ICON,			///< Exists only for USIM: Service Provider Name Icon
-	SIMSERVICE_PLMN_NAME_ICON,				///< Exists only for USIM: PLMN Network Name Icon
-	SIMSERVICE_CONN_PARAM_USIM_IP,			///< Exists only for USIM: Connectivity Parameters for USIM IP connections
-	SIMSERVICE_HOME_WLAN_ID_LIST,			///< Exists only for USIM: Home I-WLAN Specific Identifier List
-	SIMSERVICE_WLAN_EHPLMN_PI,				///< Exists only for USIM: I-WLAN Equivalent HPLMN Presentation Indication
-	SIMSERVICE_WLAN_HPLMN_PRIORITY,			///< Exists only for USIM: I-WLAN HPLMN Priority Indication
-	SIMSERVICE_WLAN_RPLMN,					///< Exists only for USIM: I-WLAN Last Registered PLMN
-	SIMSERVICE_EPS_MOB_MANAGEMENT,			///< Exists only for USIM: EPS Mobility Management Information
-	SIMSERVICE_ALLOWED_CGS_LIST,			///< Exists only for USIM: Allowed CSG Lists and corresponding indications
-	SIMSERVICE_EPS_CALL_CONTROL,			///< Exists only for USIM: Call control on EPS PDN connection by USIM
-	SIMSERVICE_HPLMN_DIRECT_ACCESS,			///< Exists only for USIM: HPLMN Direct Access
-	SIMSERVICE_ECALL_DATA,					///< Exists only for USIM: eCall Data
 
 	SIMSERVICE_RFU							///< SIM service undefined
 
@@ -1106,7 +1068,7 @@ typedef struct
 #define SVC_PROV_SIZE	16	///< Service Provider string size
 
 
-typedef UInt8 SvcProvName_t[SVC_PROV_SIZE]; ///< Service provider name (16 bytes data, can be 7bit or UCS2)
+typedef UInt8 SvcProvName_t[SVC_PROV_SIZE + 1]; ///< NULL terminated Service provider name
 										
 
 /// SIM Service Provider name
@@ -1287,8 +1249,6 @@ typedef struct
 	SIM_LANGUAGE_INFO_t	lang_info;		///< SIM language list: applicable only if SIM inserted (sim_appl_type is SIM_APPL_2G or SIM_APPL_3G)
 	Boolean				ruim_supported;	///< TRUE if the inserted SIM is RUIM (CDMA2000 SIM)
 	UInt8               sim_slot;		///< 1 if associated with phyisical SIM slot 1; 2 if associated with physical SIM slot 2
-	Boolean             master_sim_mode; ///< TRUE if Master SIM mode is invoked.
-	ICCID_ASCII_t       iccid;          ///< ASCII ICCID
 } SIM_DETECTION_t;
 
 /// APDU data structure
@@ -1355,7 +1315,7 @@ typedef struct
 
 // SIM Lock Callback function
 
-typedef void (SIMLockCbackFunc_t)(ClientInfo_t* clientInfoPtr, SIMLOCK_STATE_t *simlock_state, const SIMLOCK_SIM_DATA_t *sim_data, Boolean is_test_sim);
+typedef void (SIMLockCbackFunc_t)(SIMLOCK_STATE_t *simlock_state, const SIMLOCK_SIM_DATA_t *sim_data, Boolean is_test_sim);
 
 typedef enum
 {

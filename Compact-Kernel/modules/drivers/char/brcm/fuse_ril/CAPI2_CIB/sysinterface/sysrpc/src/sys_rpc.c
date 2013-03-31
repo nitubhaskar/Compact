@@ -15,17 +15,10 @@
 #define UNDEF_SYS_GEN_MIDS
 #define DEFINE_SYS_GEN_MIDS_NEW
 
-#include "mobcom_types.h"
-#include "resultcode.h"
-#include "taskmsgs.h"
+#ifndef UNDER_LINUX
+#include "string.h"
+#endif
 
-#include "ipcproperties.h"
-#include "rpc_global.h"
-#include "rpc_ipc.h"
-
-#include "xdr_porting_layer.h"
-#include "xdr.h"
-#include "rpc_api.h"
 #include "mobcom_types.h"
 #include "resultcode.h"
 #include "taskmsgs.h"
@@ -64,6 +57,7 @@
 #if !defined(UNDER_LINUX)
 #include "at_mtest.h"
 #endif
+
 #if !defined(WIN32) && !defined(UNDER_CE) && !defined(UNDER_LINUX)
 #include "logapi.h"
 #endif
@@ -144,6 +138,7 @@ Result_t Handle_CAPI2_FLASH_SaveImage(RPC_Msg_t* pReqMsg, UInt32 flash_addr, UIn
 	return result;
 }
 
+
 /*
 const UInt8 *SYSPARM_GetIMEI( void )
 {
@@ -207,7 +202,9 @@ Result_t Handle_CAPI2_PMU_BattADCReq(RPC_Msg_t* pReqMsg)
 
 	memset(&data, 0, sizeof(SYS_ReqRep_t));
 
+#if temp_CCCflag_HAL_EM_BATTMGR_BattADCReq_support
 	HAL_EM_BATTMGR_BattADCReq();
+#endif
 	data.result = result;
 	Send_SYS_RspForRequest(pReqMsg, MSG_PMU_BATT_LEVEL_RSP, &data);
 	return result;
@@ -215,7 +212,6 @@ Result_t Handle_CAPI2_PMU_BattADCReq(RPC_Msg_t* pReqMsg)
 
 
 #endif
-
 
 #ifndef UNDER_LINUX
 Result_t Handle_SYS_AT_MTEST_Handler(RPC_Msg_t* pReqMsg, UInt8* p1, UInt8* p2, UInt8* p3, UInt8* p4, UInt8* p5, UInt8* p6, UInt8* p7, UInt8* p8, UInt8* p9, Int32 output_size)
@@ -392,9 +388,8 @@ static void HandleSysEventRspCb(RPC_Msg_t* pMsg,
 						 UInt32 userContextData)
 {
 	//SYS_ReqRep_t* rsp;
-#ifndef UNDER_LINUX
-	SYS_TRACE( "HandleSysEventRspCb msg=0x%x clientID=%d \n", pMsg->msgId, 0);
-#endif
+    // SYS_TRACE( "HandleSysEventRspCb msg=0x%x clientID=%d \n", pMsg->msgId, 0);
+
 
 	RPC_SYSFreeResultDataBuffer(dataBufHandle);
 }
@@ -470,9 +465,7 @@ void SYS_InitRpc(void)
         sys_usb_init();
 #endif
 
-#ifndef UNDER_LINUX
-		SYS_TRACE( "SYS_InitRpc \n");
-#endif
+//		SYS_TRACE( "SYS_InitRpc \n");
 	}
 }
 

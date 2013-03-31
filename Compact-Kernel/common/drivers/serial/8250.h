@@ -15,16 +15,6 @@
 
 #include <linux/serial_8250.h>
 
-#if defined(CONFIG_BOARD_ACAR)
-
-enum UART_PORT_N
-{
-	UART_PORT_A,
-	UART_PORT_B,
-	UART_PORT_C,
-};
-#endif
-
 struct old_serial_port {
 	unsigned int uart;
 	unsigned int baud_base;

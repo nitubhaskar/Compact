@@ -20,11 +20,11 @@ EXTRA_CFLAGS += -DSTACK_wedge
 
 obj-$(CONFIG_BRCM_FUSE_RIL_CIB) += \
             capi2_gen_api.o \
+            capi2_gen_api_old.o \
             capi2_gen_apps_switch.o \
             capi2_gen_msg.o \
             capi2_gen_switch.o \
             capi2_gen_ind.o
 
-#            capi2_gen_api_old.o \
 
                       

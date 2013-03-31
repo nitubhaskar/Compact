@@ -343,7 +343,7 @@ config INPUT_WINBOND_CIR
 	  To compile this driver as a module, choose M here: the module will be
 	  called winbond_cir.
 
-config INPUT_GPIOKEY_MATRIX
+config INPUT_GPIO
 	tristate "GPIO driver support"
 	help
 	  Say Y here if you want to support gpio based keys, wheels etc...
@@ -440,10 +440,6 @@ config INPUT_BMA150_SMB380
 	tristate "Bosch BMA150 accelerometer support"
 	help
 	  Say Y to enable BMA150/ SMB380 based acceleromter support
-
-config INPUT_ONKEY_D2041
-	tristate "Onkey D2041 support"
-	depends on MFD_D2041	
 
 config SENSORS_AK8973
 	tristate "AK8973 3-axis Electronic Compass support"

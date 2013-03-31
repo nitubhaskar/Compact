@@ -271,27 +271,6 @@ config BACKLIGHT_COOPERVE
 	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
 	  this driver.
 	  
-config BACKLIGHT_TORINO
-	tristate "Generic cat4253 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.	
-	  
-config BACKLIGHT_CORI
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.	
-	    
-config BACKLIGHT_AMAZING
-	tristate "Generic ktd253b wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by KTD253B wire, say Y to enable
-	  this driver.	
-	  	  
 config BACKLIGHT_MAX8925
 	tristate "Backlight driver for MAX8925"
 	depends on MFD_MAX8925
@@ -384,20 +363,6 @@ config BACKLIGHT_CAT3648
 	If you have a LCD backlight adjustable by CAT3648 wire, say Y to enable
 	this driver.
 
-config BACKLIGHT_CAT4253
-	tristate "Generic CAT4253 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	If you have a LCD backlight adjustable by CAT4253 wire, say Y to enable
-	this driver.
-	
-config BACKLIGHT_KTD253B
-	tristate "Generic CAT4253 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	If you have a LCD backlight adjustable by CAT4253 wire, say Y to enable
-	this driver.	
-	
 config BACKLIGHT_BCM_PWM_KEYPAD
 	tristate "Broadcom PWM based Keypad Backlight Driver"
 	depends on BACKLIGHT_CLASS_DEVICE && HAVE_PWM && BCM_PWM_CORE

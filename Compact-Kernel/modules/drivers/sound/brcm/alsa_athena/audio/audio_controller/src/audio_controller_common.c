@@ -67,8 +67,6 @@ the GPL, without Broadcom's express prior written consent.
 #include "gpio_handler.h"
 #endif
 
-extern bool isLoopback;  // 20111110
-
 //=============================================================================
 // Public Variable declarations
 //=============================================================================
@@ -162,12 +160,9 @@ void AUDCTRL_RateChangeTelephony( )
 	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_RateChangeTelephony::  stAudioMode %d \n",stAudioMode);
 
     AUDDRV_SetAudioMode(stAudioMode, stAudioApp);
-    if ((stAudioApp == AUDIO_APP_VOICE_CALL) ||
-        (stAudioApp == AUDIO_APP_VT_CALL))
-
+    if(stAudioApp == AUDIO_APP_VOICE_CALL)
         AUDDRV_Telephony_RateChange(8000);
-    else if ((stAudioApp == AUDIO_APP_VOICE_CALL_WB) ||
-             (stAudioApp == AUDIO_APP_VT_CALL_WB))
+    else if (stAudioApp == AUDIO_APP_VOICE_CALL_WB)
         AUDDRV_Telephony_RateChange(16000);
 }
 
@@ -401,11 +396,6 @@ AudioApp_t AUDCTRL_GetAudioApp( void )
 //**********************************************************************/
 void AUDCTRL_SaveAudioModeFlag( AudioMode_t mode, AudioApp_t app )
 {
-	if(isLoopback)
-	{
-		Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_SaveAudioModeFlag: RETURN!! isLoopback = %d\n",  isLoopback);
-		return;
-	}
 	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_SaveAudioModeFlag: mode = %d, app=%d\n",  mode, app);
 	stAudioMode = mode;
 	stAudioApp = app;
@@ -424,33 +414,7 @@ void AUDCTRL_SetAudioMode( AudioMode_t mode, AudioApp_t app)
 	AUDCTRL_SaveAudioModeFlag( mode, app );
 	AUDDRV_SetAudioMode( mode, app );
 }
-//*********************************************************************
-/**
-*   Get BTM headset NB or WB info
 
-*	@return		Boolean, TRUE for WB and FALSE for NB (8k) 
-*   @note      
-**********************************************************************/
-Boolean AUDCTRL_IsBTMWB( void )
-{
-	Boolean isWB = FALSE;
-	isWB = AUDDRV_IsBTMWB();
-	return isWB;
-}
-
-//*********************************************************************
-/**
-*   Set BTM type 
-
-*	@param		Boolean isWB 
-*	@return		none
-*
-*	@note	isWB=TRUE for BT WB headset; =FALSE for BT NB (8k) headset.
-**********************************************************************/
-void AUDCTRL_SetBTMTypeWB( Boolean isWB)
-{
-	AUDDRV_SetBTMTypeWB(isWB);
-}
 //=============================================================================
 // Private function definitions
 //=============================================================================

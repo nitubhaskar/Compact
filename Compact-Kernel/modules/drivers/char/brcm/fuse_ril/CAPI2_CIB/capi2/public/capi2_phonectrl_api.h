@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_phonectrl_api.h
@@ -40,6 +42,8 @@ extern "C" {
  * @{
  */
 
+
+
 /**
 Rx Level
 **/
@@ -58,6 +62,18 @@ typedef struct {
 	UInt8				chan; ///< AT channel on AP
 }AtResponse_t;
 
+typedef struct
+{
+#define SOCKET_PACKETFILTER_WHITELIST                0x00
+#define SOCKET_PACKETFILTER_BLACKLIST                0x01
+        UInt16        filterType;            // SOCKET_PACKETFILTER_WHITELIST is used only
+        Boolean         bAutomaticRrcRelease; // determine to 'RRC Release' or not in 3 sec after getting unsolicited packet
+#define SOCKET_PACKETFILTER_UDP_MAX           24  // number of supported UDP port
+#define SOCKET_PACKETFILTER_TCP_MAX           48  // number of supported TCP port
+#define SOCKET_PACKETFILTER_PORT_NOTSET      0
+        UInt16  udpList[SOCKET_PACKETFILTER_UDP_MAX];
+        UInt16  tcpList[SOCKET_PACKETFILTER_TCP_MAX];
+} WL_SocketFilterList_t;
 
 /**
 MS Element
@@ -112,16 +128,12 @@ typedef struct
 
 /**
 CAPI2 Response callback result data buffer handle.
-**/
-#ifndef UNDER_LINUX
+**/#ifndef UNDER_LINUX
 typedef void* ResultDataBufHandle_t;
 #endif
 
 typedef UInt8* CAPI2_Patch_Revision_Ptr_t;
 
-/**
-Sysparm class structure
-**/
 typedef struct
 {
 	UInt16			pgsm_supported;
@@ -158,6 +170,7 @@ typedef struct
 
 } CAPI2_Class_t;
 
+Result_t WL_PsSetFilterList(ClientInfo_t* inClientInfoPtr, UInt8 inCid, WL_SocketFilterList_t* inDataPtr);
 
 //***************************************************************************************
 /**
@@ -239,8 +252,7 @@ void CAPI2_PhoneCtrlApi_SetSystemState(ClientInfo_t* inClientInfoPtr, SystemStat
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SYS_GET_RX_LEVEL_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_PhoneCtrlApi_GetRxSignalInfo_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_PhoneCtrlApi_GetRxSignalInfo_Rsp_t
 **/
 void CAPI2_PhoneCtrlApi_GetRxSignalInfo(ClientInfo_t* inClientInfoPtr);
 
@@ -302,18 +314,16 @@ void CAPI2_NetRegApi_SelectBand(ClientInfo_t* inClientInfoPtr, BandSelect_t band
 //***************************************************************************************
 /**
 	This function sets the RATs Radio Access Technologies and bands to be<br> supported by platform.
-	@param		inClientInfoPtr (in) Client Information Pointer.
-	@param		RAT_cap (in)  rat cap
+	@param		inClientInfoPtr (in) Client Information Pointer.	@param		RAT_cap (in)  rat cap
 	@param		band_cap (in)  bad cap selected
 	@param		RAT_cap2 (in)  sim2 rat
 	@param		band_cap2 (in)  sim2 band
-	
+
 	 Responses 
 	 @n@b MsgType_t: ::MSG_MS_SET_RAT_BAND_RSP
 	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
 	 @n@b ResultData: N/A
-**/
-void CAPI2_NetRegApi_SetSupportedRATandBand(ClientInfo_t* inClientInfoPtr, RATSelect_t RAT_cap, 
+**/void CAPI2_NetRegApi_SetSupportedRATandBand(ClientInfo_t* inClientInfoPtr, RATSelect_t RAT_cap, 
 											BandSelect_t band_cap, RATSelect_t RAT_cap2, BandSelect_t band_cap2);
 
 //***************************************************************************************
@@ -344,8 +354,7 @@ void CAPI2_NetRegApi_CellLock(ClientInfo_t* inClientInfoPtr, Boolean Enable, Ban
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_PLMN_SELECT_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_NetRegApi_PlmnSelect_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_NetRegApi_PlmnSelect_Rsp_t
 **/
 void CAPI2_NetRegApi_PlmnSelect(ClientInfo_t* inClientInfoPtr, Boolean ucs2, PlmnSelectMode_t selectMode, PlmnSelectFormat_t format, char* plmnValue);
 
@@ -421,8 +430,7 @@ void CAPI2_NetRegApi_AutoSearchReq(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_MS_PLMN_NAME_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_NetRegApi_GetPLMNNameByCode_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_NetRegApi_GetPLMNNameByCode_Rsp_t
 **/
 void CAPI2_NetRegApi_GetPLMNNameByCode(ClientInfo_t* inClientInfoPtr, UInt16 mcc, UInt8 mnc, UInt16 lac, Boolean ucs2);
 
@@ -647,25 +655,6 @@ void CAPI2_DiagApi_MeasurmentReportReq(ClientInfo_t* inClientInfoPtr, Boolean in
 
 
 /** @} */
-
-/** \cond  */
-
-typedef struct
-{
-#define SOCKET_PACKETFILTER_WHITELIST                0x00
-#define SOCKET_PACKETFILTER_BLACKLIST                0x01
-        UInt16        filterType;            // SOCKET_PACKETFILTER_WHITELIST is used only
-        Boolean         bAutomaticRrcRelease; // determine to 'RRC Release' or not in 3 sec after getting unsolicited packet
-#define SOCKET_PACKETFILTER_UDP_MAX           24  // number of supported UDP port
-#define SOCKET_PACKETFILTER_TCP_MAX           48  // number of supported TCP port
-#define SOCKET_PACKETFILTER_PORT_NOTSET      0
-        UInt16  udpList[SOCKET_PACKETFILTER_UDP_MAX];
-        UInt16  tcpList[SOCKET_PACKETFILTER_TCP_MAX];
-} WL_SocketFilterList_t;
-
-Result_t WL_PsSetFilterList(ClientInfo_t* inClientInfoPtr, UInt8 inCid, WL_SocketFilterList_t* inDataPtr);
-
-/** \endcond   */
 
 
 #ifdef __cplusplus

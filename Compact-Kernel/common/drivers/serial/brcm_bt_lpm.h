@@ -71,13 +71,6 @@ extern int brcm_init_hostwake(const struct bcm_bt_lpm_platform_data *gpio_data);
 #define GPIO_BT_CLK32K_EN (-1)
 #endif
 
-#if defined(CONFIG_BOARD_ACAR)
-#define GPIO_BT_WAKE 35
-#define GPIO_HOST_WAKE 23
-#define GPIO_UARTB_SEL (-1)
-#define GPIO_BT_CLK32K_EN (-1)
-#endif
-
 #if defined(CONFIG_BOARD_TOTORO)
 #define GPIO_BT_WAKE 39
 #define GPIO_HOST_WAKE 38
@@ -86,27 +79,6 @@ extern int brcm_init_hostwake(const struct bcm_bt_lpm_platform_data *gpio_data);
 #endif
 
 #if defined(CONFIG_BOARD_LUISA)
-#define GPIO_BT_WAKE 39
-#define GPIO_HOST_WAKE 38
-#define GPIO_UARTB_SEL (-1)
-#define GPIO_BT_CLK32K_EN (-1)
-#endif
-
-#if defined(CONFIG_BOARD_LUISA_DS)
-#define GPIO_BT_WAKE 39
-#define GPIO_HOST_WAKE 38
-#define GPIO_UARTB_SEL (-1)
-#define GPIO_BT_CLK32K_EN (-1)
-#endif
-
-#if defined(CONFIG_BOARD_TORINO)
-#define GPIO_BT_WAKE 39
-#define GPIO_HOST_WAKE 38
-#define GPIO_UARTB_SEL (-1)
-#define GPIO_BT_CLK32K_EN (-1)
-#endif
-
-#if defined(CONFIG_BOARD_TORINOK)
 #define GPIO_BT_WAKE 39
 #define GPIO_HOST_WAKE 38
 #define GPIO_UARTB_SEL (-1)
@@ -127,12 +99,6 @@ extern int brcm_init_hostwake(const struct bcm_bt_lpm_platform_data *gpio_data);
 #define GPIO_BT_CLK32K_EN (-1)
 #endif
 
-#if defined(CONFIG_BOARD_AMAZING) || defined(CONFIG_BOARD_CORI_DS) 
-#define GPIO_BT_WAKE 39
-#define GPIO_HOST_WAKE 38
-#define GPIO_UARTB_SEL (-1)
-#define GPIO_BT_CLK32K_EN (-1)
-#endif
 
 #ifndef GPIO_BT_WAKE
 #define GPIO_BT_WAKE (-1)

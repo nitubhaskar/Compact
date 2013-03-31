@@ -31,8 +31,6 @@
 #define BCM_TID_INIT   0X00
 #define BCM_TID_MAX    0XFFFFF
 
-#define DUAL_SIM_SIZE  (SIM_DUAL_SECOND + 1)
-
 typedef struct
 {
     struct list_head     list;
@@ -57,12 +55,12 @@ typedef struct  // for capi2 info
     UInt32 tid;
     UInt8 clientID;
     MsgType_t msgType;
-    SimNumber_t SimId;
     Result_t result;
     void *dataBuf;
     UInt32 dataLength;
     ResultDataBufHandle_t dataBufHandle;
 } Kpdp_CAPI2Info_t;
+
 
 typedef struct // for response queue
 {
@@ -128,22 +126,19 @@ void KPDP_CommandThread(struct work_struct *data);
 void KPDP_ResponseHandler(struct work_struct *data);
 void KPDP_NotifyHandler(struct work_struct *data);
 
-void KPDP_SendNotify(SimNumber_t SimId, int CmdID, void *rsp_data, UInt32 rsp_len);
-
+void KPDP_SendNotify(int CmdID, void *rsp_data, UInt32 rsp_len);
 void KPDP_ProcessNotification(Kpdp_CAPI2Info_t *entry);
 
 void KPDP_Capi2HandleRespCbk(UInt32 tid, UInt8 clientID, MsgType_t msgType, Result_t result, void *dataBuf, UInt32 dataLength,ResultDataBufHandle_t dataBufHandle);
 void KPDP_Capi2HandleAckCbk(UInt32 tid, UInt8 clientid, RPC_ACK_Result_t ackResult, UInt32 ackUsrData);
 void KPDP_Capi2HandleFlowCtrl(RPC_FlowCtrlEvent_t event, UInt8 channel);
 
-ClientInfo_t* KPDPInitClientInfo(SimNumber_t SimId);
-
 void KPDPSetClientID(UInt8 ClientID);
 UInt32 KPDPGetClientID(void);
 UInt32 KPDPGetNewTID(void);
 UInt32 KPDPGetTID(void);
 
-Boolean IsNeedToWait(SimNumber_t SimId, unsigned long CmdID);
+Boolean IsNeedToWait(unsigned long CmdID);
 
 //protypes
 void KPDP_SetupPdpHandler(void *pdp_cmd, Kpdp_CAPI2Info_t *capi2_rsp);

@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   netreg_def.h
@@ -367,7 +369,7 @@ typedef struct
 {
 	RadioDirection_t			radio_direction;
 	RadioStatus_t				radio_status;
-	UInt8						cid;
+	UInt8					cid;
 	UInt32						max_dl_data_rate;
 }MSRadioActivityInd_t;
 
@@ -402,13 +404,5 @@ typedef struct
 	UInt8 listLen;
 	UInt16 uarfcn[MAX_NUM_SEARCH_UARFCN];
 } MSUarfcnList_t;
-
-
-typedef enum
-{
-	SIM_INSTANCE_SUSPENDED,		///< CP has been suspended, network request is likely rejected after VCC retry timeout
-	SIM_INSTANCE_RESUMED,		///< CP has been resumed, network request will be processed
-	SIM_INSTANCE_CS_ALLOWED		///< CP is still suspended for PS connection, but CS request will be processed by suspending PS connection
-} SIM_INSTANCE_STATUS_t;
 
 #endif

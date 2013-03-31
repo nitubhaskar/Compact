@@ -23,10 +23,7 @@
 #include <linux/interrupt.h>
 #include <asm/uaccess.h>
 
-#include <linux/poll.h>
-
-#include <linux/broadcom/bcm_major.h>
-#include <linux/broadcom/bcm_reset_utils.h>
+#include <linux/broadcom/bcm_major.h>#include <linux/broadcom/bcm_reset_utils.h>
 
 #include "rpc_ipc_config.h"
 #include "vsp_debug.h"
@@ -56,13 +53,6 @@ static struct class *vsp_class;
 // During VT connect, CP will send 80 bytes twice every 20 msec to AP
 #define CSD_DOWNLINK_DATA_LEN  80
 
-// SIM ID for Dual SIM VT call
-#define VT_IO_MAGIC   'V'
-#define VT_SIM1       _IO(VT_IO_MAGIC, 1)
-#define VT_SIM2       _IO(VT_IO_MAGIC, 2)
-
-static int sSimId = 0;
-
 static UInt8 stempBuf[CSD_BUFFER_SIZE];
 static UInt32 sPendingBytes = 0;
 static UInt8 sCsdTempBuf[CSD_BUFFER_SIZE];
@@ -83,8 +73,6 @@ static spinlock_t csLocker;
 extern unsigned char SYS_GenClientID(void);
 static unsigned char g_CsdClientId = 0;
 static UInt8 csdULframeNum=1;
-
-static wait_queue_head_t g_csd_wait;
 
 //*******************************************************************************
 /**
@@ -338,11 +326,6 @@ UInt32 CSD_Send(const void* pBuf, const UInt32 len)
     void* bufferPtr = NULL;
     UInt8 cid=0;
 
-    if (!(1 == sSimId || 2 == sSimId))
-    {
-        VSP_DEBUG(DBG_ERROR, "vsp: sSimId is %d. Error!!!\n",sSimId);
-    }
-
     if (0 == csdULframeNum)
         csdULframeNum++;
 
@@ -370,8 +353,6 @@ UInt32 CSD_Send(const void* pBuf, const UInt32 len)
     
     // Set the buffer len
     RPC_PACKET_SetBufferLength(bufHandle, len);
-
-    RPC_PACKET_SetContext(INTERFACE_CSD, bufHandle, sSimId);
 
     if (RPC_RESULT_OK != RPC_PACKET_SendData(g_CsdClientId, INTERFACE_CSD, cid, bufHandle))
     {
@@ -430,7 +411,6 @@ RPC_Result_t CSD_DataIndCB(PACKET_InterfaceType_t interfaceType, UInt8 channel, 
             memcpy(&sCsdTempBuf[sCsdPendingBytes], data, len);
             sCsdPendingBytes += len;
             //VSP_DEBUG(DBG_INFO, "vsp: len:%ld sCsdPendingBytes:%ld\n", len, sCsdPendingBytes);
-            wake_up_interruptible(&g_csd_wait);
         }
 
         
@@ -493,7 +473,6 @@ static int vsp_open(struct inode *inode, struct file *filp)
     
     sCsdPendingBytes = 0;
     sPendingBytes = 0;
-    filp->private_data = &g_csd_wait;
 
     return 0;
 }
@@ -598,19 +577,11 @@ int vsp_read(struct file *filp, char __user *buf, size_t size, loff_t *offset)
     else if (dwRetSize > size)
     {
         VSP_DEBUG(DBG_ERROR, "vsp: dwRetSize:%ld > size:%d, Error!!!\n", dwRetSize, size);
-        if (0 != copy_to_user(buf, sReadTempBuf, size))
-        {
-            VSP_DEBUG(DBG_ERROR, "vsp: copy_to_user Fail!!!\n");
-            return 0;
-        }
+        copy_to_user(buf, sReadTempBuf, size);
     }
     else
     {
-        if (0 != copy_to_user(buf, sReadTempBuf, dwRetSize))
-        {
-            VSP_DEBUG(DBG_ERROR, "vsp: copy_to_user Fail!!!\n");
-            return 0;
-        }
+        copy_to_user(buf, sReadTempBuf, dwRetSize);
     }
     
     return dwRetSize;    
@@ -646,11 +617,7 @@ int vsp_write(struct file *filp, const char __user *buf, size_t size, loff_t *of
         return 0;
     }
 
-    if(copy_from_user(sSendTempBuf, buf, size)!=0)
-    {
-        VSP_DEBUG(DBG_ERROR, "vsp: copy_from_user is fail\n");
-        return 0;
-    }
+    copy_from_user(sSendTempBuf, buf, size);
     
     while (dwWriteLen)
     {
@@ -691,51 +658,12 @@ int vsp_write(struct file *filp, const char __user *buf, size_t size, loff_t *of
 //
 //
 // Notes:
-// Provide a interface for VT application can transmit SIM ID 
-// to VSP driver.
 //
 //******************************************************************************
 static int vsp_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, UInt32 arg)
 {
-    int rc = -EINVAL;
-    
-    switch (cmd)
-    {
-        case VT_SIM1:
-            sSimId = 1;
-            rc = 0;
-            break;
-        
-        case VT_SIM2:
-            sSimId = 2;
-            rc = 0;
-            break;
-        
-        default:
-            VSP_DEBUG(DBG_ERROR, "vsp: Unknow SIM ID:%d Error!!!\n",_IOC_NR(cmd));
-            break;
-    }
-    
-    VSP_DEBUG(DBG_ERROR, "vsp: SIM ID:%d\n",sSimId);
+    int rc = 0;
     return(rc);
-}
-
-
-static int vsp_poll(struct file *filp, poll_table *wait)
-{
-    int mask = 0;
-    int flags;
-
-   	poll_wait(filp, &g_csd_wait, wait);
-
-   	spin_lock(&csLocker);
-
-   	if ((0 < sCsdPendingBytes) || (0 < sPendingBytes))
-  		    mask |= (POLLIN | POLLRDNORM);
-
-	   spin_unlock(&csLocker);
-
-	   return mask;
 }
 
 
@@ -746,7 +674,6 @@ static struct file_operations vsp_ops =
 	.read  = vsp_read,
 	.write = vsp_write,
 	.ioctl = vsp_ioctl,
-	.poll  = vsp_poll,
 	.mmap	 = NULL,
 	.release = vsp_release,
 };
@@ -778,8 +705,6 @@ int VSP_Init(void)
     spin_lock_init(&csLocker_cploopback);   
 #endif
     spin_lock_init(&csLocker);
-
-    init_waitqueue_head(&g_csd_wait);
     
     return 0;
 }
@@ -800,7 +725,6 @@ int VSP_Init(void)
 static int __init bcm_fuse_vsp_init_module(void)
 {
     int ret = 0;
-
     // check for AP only boot mode
     if ( AP_ONLY_BOOT == get_ap_boot_mode() )
     {

@@ -1,5 +1,5 @@
 /*
-	©2007-2009 Broadcom Corporation
+	?007-2009 Broadcom Corporation
 
 	Unless you and Broadcom execute a separate written software license
 	agreement governing use of this software, this software is licensed to you

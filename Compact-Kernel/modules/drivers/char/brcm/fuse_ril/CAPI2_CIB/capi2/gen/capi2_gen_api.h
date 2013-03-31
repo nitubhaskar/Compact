@@ -227,18 +227,16 @@ void CAPI2_NetRegApi_SelectBand(ClientInfo_t* inClientInfoPtr, BandSelect_t band
 //***************************************************************************************
 /**
 	This function sets the RATs Radio Access Technologies and bands to be<br> supported by platform.
-	@param		inClientInfoPtr (in) Client Information Pointer.
-	@param		RAT_cap (in)  rat cap
+	@param		inClientInfoPtr (in) Client Information Pointer.	@param		RAT_cap (in)  rat cap
 	@param		band_cap (in)  bad cap selected
 	@param		RAT_cap2 (in)  sim2 rat
 	@param		band_cap2 (in)  sim2 band
-	
+
 	 Responses 
 	 MsgType_t : ::MSG_MS_SET_RAT_BAND_RSP
 	 Result_t :		::RESULT_OK or RESULT_ERROR
 	 ResultData : N/A
-**/
-void CAPI2_NetRegApi_SetSupportedRATandBand(ClientInfo_t* inClientInfoPtr, RATSelect_t RAT_cap, BandSelect_t band_cap, RATSelect_t RAT_cap2, BandSelect_t band_cap2);
+**/void CAPI2_NetRegApi_SetSupportedRATandBand(ClientInfo_t* inClientInfoPtr, RATSelect_t RAT_cap, BandSelect_t band_cap, RATSelect_t RAT_cap2, BandSelect_t band_cap2);
 
 //***************************************************************************************
 /**
@@ -6373,7 +6371,7 @@ void CAPI2_StkApi_SendBrowsingStatusEvent(ClientInfo_t* inClientInfoPtr, UInt8 *
 	 Result_t :		::RESULT_OK or RESULT_ERROR
 	 ResultData : N/A
 **/
-void CAPI2_SatkApi_SendCcSetupReq(ClientInfo_t* inClientInfoPtr, TypeOfNumber_t ton, NumberPlanId_t npi, char* number, BearerCapability_t *bc1, Subaddress_t *subaddr_data, BearerCapability_t *bc2, UInt8 bc_repeat_ind, Boolean simtk_orig);
+void CAPI2_SatkApi_SendCcSetupReq(ClientInfo_t* inClientInfoPtr, TypeOfNumber_t ton, NumberPlanId_t npi, char *number, BearerCapability_t *bc1, Subaddress_t *subaddr_data, BearerCapability_t *bc2, UInt8 bc_repeat_ind, Boolean simtk_orig);
 
 //***************************************************************************************
 /**
@@ -6819,8 +6817,7 @@ void CAPI2_CcApi_TransferCall(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 	
 	 Responses 
 	 MsgType_t : ::MSG_CC_GETCNAPNAME_RSP
-	 Result_t :		::RESULT_OK or RESULT_ERROR
-	 ResultData : CcCnapName_t
+	 Result_t :		::RESULT_OK or RESULT_ERROR	 ResultData : CcCnapName_t
 **/
 void CAPI2_CcApi_GetCNAPName(ClientInfo_t* inClientInfoPtr, UInt8 callIndex);
 
@@ -7435,21 +7432,7 @@ void CAPI2_CcApi_AbortDtmfTone(ClientInfo_t* inClientInfoPtr, ApiDtmf_t *inDtmfO
 void CAPI2_NetRegApi_SetSupportedRATandBandEx(ClientInfo_t* inClientInfoPtr, RATSelect_t RAT_cap, BandSelect_t band_cap, RATSelect_t RAT_cap2, BandSelect_t band_cap2);
 
 //***************************************************************************************
-/**
-	This function performs cold/warm SIM reset.
-	@param		inClientInfoPtr (in) Client Information Pointer.
-	@param		resetMode (in)  Reset mode cold/warm: 0/1
-	
-	 Responses 
-	 MsgType_t : ::MSG_SIM_RESET_SIM_RSP
-	 Result_t :		::RESULT_OK or RESULT_ERROR
-	 ResultData : N/A
-**/
-void CAPI2_SimApi_ResetSIM(ClientInfo_t* inClientInfoPtr, Boolean resetMode);
-
-//***************************************************************************************
-/**
-	Function to set time zone update mode
+/**	Function to set time zone update mode
 	@param		inClientInfoPtr (in) Client Information Pointer.
 	@param		mode (in)  Tz mode
 	
@@ -7471,28 +7454,12 @@ void CAPI2_NetRegApi_SetTZUpdateMode(ClientInfo_t* inClientInfoPtr, TimeZoneUpda
 	 ResultData : TimeZoneUpdateMode_t
 **/
 void CAPI2_NetRegApi_GetTZUpdateMode(ClientInfo_t* inClientInfoPtr);
-
-//***************************************************************************************
-/**
-	Function to HostToModemInd
-	@param		tid (in) Unique exchange/transaction id which is passed back in the response
-	@param		clientID (in) Client ID
-	@param		state (in) Param is state
-	
-	 Responses 
-	 MsgType_t : ::MSG_SEC_HOST_TO_MODEM_RSP
-	 Result_t :		::RESULT_OK or RESULT_ERROR
-	 ResultData : N/A
-**/
-void CAPI2_SEC_HostToModemInd(UInt32 tid, UInt8 clientID, UInt8 state);
-
 //***************************************************************************************
 /**
 	This function returns the EF-AD data in SIM
 	@param		inClientInfoPtr (in) Client Information Pointer.
 	@param		outAdPtr (in)  pointer to EF-AD data buffer
-	
-	 Responses 
+	 Responses 
 	 MsgType_t : ::MSG_SIM_AD_DATA_RSP
 	 Result_t :		::RESULT_OK or RESULT_ERROR
 	 ResultData : CAPI2_SimApi_GetAdData_Rsp_t
@@ -7508,8 +7475,7 @@ void CAPI2_SimApi_GetAdData(ClientInfo_t* inClientInfoPtr);
 	 MsgType_t : ::MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP
 	 Result_t :		::RESULT_OK or RESULT_ERROR
 	 ResultData : SimVoltage_t
-**/
-void CAPI2_SimApi_GetCurrentSimVoltage(ClientInfo_t* inClientInfoPtr);
+**/void CAPI2_SimApi_GetCurrentSimVoltage(ClientInfo_t* inClientInfoPtr);
 
 //***************************************************************************************
 /**
@@ -7518,22 +7484,10 @@ void CAPI2_SimApi_GetCurrentSimVoltage(ClientInfo_t* inClientInfoPtr);
 	@param		clientID (in) Client ID
 	@param		RAT_cap (in) Param is RAT_cap
 	@param		band_cap (in) Param is band_cap
-	
+
 	 Responses 
 	 MsgType_t : ::MSG_MS_SET_RAT_AND_BAND_RSP
 	 Result_t :		::RESULT_OK or RESULT_ERROR
 	 ResultData : N/A
 **/
 void CAPI2_MS_SetSupportedRATandBand(UInt32 tid, UInt8 clientID, RATSelect_t RAT_cap, BandSelect_t band_cap);
-
-//***************************************************************************************
-/**
-	Function to ConfigModemReq
-	@param		inClientInfoPtr (in) Client Information Pointer.
-	
-	 Responses 
-	 MsgType_t : ::MSG_SECMODEM_CONFIG_MODEM_RSP
-	 Result_t :		::RESULT_OK or RESULT_ERROR
-	 ResultData : UInt8
-**/
-void CAPI2_SecModemApi_ConfigModemReq(ClientInfo_t* inClientInfoPtr);

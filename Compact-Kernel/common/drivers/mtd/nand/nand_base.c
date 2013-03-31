@@ -52,10 +52,6 @@
 #include <linux/mtd/partitions.h>
 #endif
 
-#ifdef CONFIG_BRCM_NAND_OTP
-#include <plat/nand_otp.h>
-#endif
-
 /* Define default oob placement schemes for large and small page devices */
 static struct nand_ecclayout nand_oob_8 = {
 	.eccbytes = 3,
@@ -2258,22 +2254,12 @@ static int panic_nand_write(struct mtd_info *mtd, loff_t to, size_t len,
 {
 	struct nand_chip *chip = mtd->priv;
 	int ret;
-	int state = chip->state;
 
 	/* Do not allow reads past end of device */
 	if ((to + len) > mtd->size)
 		return -EINVAL;
 	if (!len)
 		return 0;
-
-	/* First reset chip when in panic to clean up any previous stale states */
-	if(oops_in_progress)
-		chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
-
-	if ((state == FL_ERASING) && (chip->options & NAND_IS_AND))
-		chip->cmdfunc(mtd, NAND_CMD_STATUS_MULTI, -1, -1);
-	else
-		chip->cmdfunc(mtd, NAND_CMD_STATUS, -1, -1);
 
 	/* Wait for the device to get ready.  */
 	panic_nand_wait(mtd, chip, 400);
@@ -2282,7 +2268,6 @@ static int panic_nand_write(struct mtd_info *mtd, loff_t to, size_t len,
 	panic_nand_get_device(chip, mtd, FL_WRITING);
 
 	chip->ops.len = len;
-	chip->ops.retlen = 0;
 	chip->ops.datbuf = (uint8_t *)buf;
 	chip->ops.oobbuf = NULL;
 
@@ -3036,14 +3021,45 @@ int nand_scan_ident(struct mtd_info *mtd, int maxchips,
 	return 0;
 }
 
-#ifdef CONFIG_BRCM_NAND_OTP
+static void nand_panic_wait(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd->priv;
+	int i;
 
-extern int config_nand_otp;
-extern uint32_t otp_start_addr;
-extern uint32_t otp_end_addr;
+	if (chip->state != FL_READY)
+		for (i = 0; i < 40; i++) {
+			if (chip->dev_ready(mtd))
+				break;
+			mdelay(10);
+		}
+	chip->state = FL_READY;
+}
 
-extern void enter_otp_mode(struct mtd_info *mtd);
-extern void exit_otp_mode(struct mtd_info *mtd);
+static int nand_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
+			    size_t *retlen, const u_char *buf)
+{
+	struct nand_chip *chip = mtd->priv;
+	int ret;
+
+	/* Do not allow reads past end of device */
+	if ((to + len) > mtd->size)
+		return -EINVAL;
+	if (!len)
+		return 0;
+
+	nand_panic_wait(mtd);
+
+	chip->ops.len = len;
+	chip->ops.datbuf = (uint8_t *)buf;
+	chip->ops.oobbuf = NULL;
+
+	ret = nand_do_write_ops(mtd, to, &chip->ops);
+
+	*retlen = chip->ops.retlen;
+	return ret;
+}
+
+#ifdef CONFIG_BRCM_TOSHIBA_NAND_OTP
 
 /* Interal OTP operation */
 typedef int (*otp_op_t)(struct mtd_info *mtd, loff_t form, size_t len,
@@ -3062,6 +3078,7 @@ typedef int (*otp_op_t)(struct mtd_info *mtd, loff_t form, size_t len,
 static int do_otp_read(struct mtd_info *mtd, loff_t from, size_t len,
 		size_t *retlen, u_char *buf)
 {
+	struct nand_chip *chip = mtd->priv;
 	int ret = -ENOTSUPP;
 
 	struct mtd_oob_ops ops = {
@@ -3074,14 +3091,15 @@ static int do_otp_read(struct mtd_info *mtd, loff_t from, size_t len,
 	};
 
 	/* Enter OTP access mode */
-	enter_otp_mode(mtd);
+	chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
+	chip->cmdfunc(mtd, 0x5A, -1, -1);
+	chip->cmdfunc(mtd, 0xB5, -1, -1);
 
 	ret = nand_do_read_ops(mtd, from, &ops);
 	*retlen = ops.retlen;
 
 	/* Exit OTP access mode */
-	exit_otp_mode(mtd);
-
+	chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
 	return ret;
 }
 
@@ -3098,6 +3116,7 @@ static int do_otp_read(struct mtd_info *mtd, loff_t from, size_t len,
 static int do_otp_write(struct mtd_info *mtd, loff_t to, size_t len,
 		size_t *retlen, u_char *buf)
 {
+	struct nand_chip *chip = mtd->priv;
 	unsigned char *pbuf = buf;
 	int ret;
 	struct mtd_oob_ops ops = {
@@ -3111,14 +3130,16 @@ static int do_otp_write(struct mtd_info *mtd, loff_t to, size_t len,
 	};
 
 	/* Enter OTP access mode */
-	enter_otp_mode(mtd);
+	chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
+
+	chip->cmdfunc(mtd, 0x5A, -1, -1);
+	chip->cmdfunc(mtd, 0xB5, -1, -1);
 
 	ret = nand_do_write_ops(mtd, to, &ops);
 	*retlen = ops.retlen;
 
 	/* Exit OTP access mode */
-	exit_otp_mode(mtd);
-
+	chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
 	return ret;
 }
 
@@ -3137,22 +3158,16 @@ static int nand_otp_walk(struct mtd_info *mtd, loff_t from, size_t len,
 			size_t *retlen, u_char *buf, otp_op_t action)
 {
 	struct nand_chip *chip = mtd->priv;
-	int otp_pages = 0;
+	int otp_pages;
 	int ret = 0;
-	loff_t real_from;
 
 	*retlen = 0;
 
-	/* Determine number of OTP pages */
-	if (config_nand_otp != NAND_OTP_NONE) {
-		otp_pages = ((otp_end_addr - otp_start_addr) / mtd->writesize) + 1;
-	}
-
-	/* The actual offset to read/write from otp_start_addr */
-	real_from = otp_start_addr + from;
+	/* One block is reserved for OTP on Toshiba NAND */
+	otp_pages = mtd->erasesize >> chip->page_shift;
 
 	/* Check OTP boundary */
-	if (((mtd->writesize * otp_pages) - (real_from + len)) < 0)
+	if (((mtd->writesize * otp_pages) - (from + len)) < 0)
 		return -EINVAL;
 
 	nand_get_device(chip, mtd, FL_OTPING);
@@ -3167,18 +3182,18 @@ static int nand_otp_walk(struct mtd_info *mtd, loff_t from, size_t len,
 			}
 
 			otpinfo = (struct otp_info *) buf;
-			otpinfo->start = real_from;
+			otpinfo->start = from;
 			otpinfo->length = mtd->writesize;
 			otpinfo->locked = 0;
 
-			real_from += mtd->writesize;
+			from += mtd->writesize;
 			buf += sizeof(struct otp_info);
 			*retlen += sizeof(struct otp_info);
 		} else {
 			size_t tmp_retlen;
 			int size = len;
 
-			ret = action(mtd, real_from, len, &tmp_retlen, buf);
+			ret = action(mtd, from, len, &tmp_retlen, buf);
 
 			buf += size;
 			len -= size;
@@ -3245,7 +3260,8 @@ static int nand_write_user_prot_reg(struct mtd_info *mtd, loff_t from,
 {
 	return nand_otp_walk(mtd, from, len, retlen, buf, do_otp_write);
 }
-#endif /* CONFIG_BRCM_NAND_OTP */
+#endif /* CONFIG_BRCM_TOSHIBA_NAND_OTP */
+
 
 /**
  * nand_scan_tail - [NAND Interface] Scan for the NAND device
@@ -3455,6 +3471,7 @@ int nand_scan_tail(struct mtd_info *mtd)
 	mtd->panic_write = panic_nand_write;
 	mtd->read_oob = nand_read_oob;
 	mtd->write_oob = nand_write_oob;
+	mtd->panic_write = nand_panic_write;
 	mtd->sync = nand_sync;
 	mtd->lock = NULL;
 	mtd->unlock = NULL;
@@ -3466,11 +3483,11 @@ int nand_scan_tail(struct mtd_info *mtd)
 	/* propagate ecc.layout to mtd_info */
 	mtd->ecclayout = chip->ecc.layout;
 
-#ifdef CONFIG_BRCM_NAND_OTP
+#ifdef CONFIG_BRCM_TOSHIBA_NAND_OTP
 	/*
 	 * When the OTPSELECT is passed to the mtdchar.c in ioctl
 	 * there is a check - if read_fact_prot_reg is not populated
-	 * a failure is returned. In our flash chips there is no factory
+	 * a failure is returned. In TOSHIBA Flash there is no factory
 	 * and user mode differentiation. Hence we are populating the
 	 * read_fact_prot_reg function pointer with the same function
 	 * as User mode.
@@ -3479,7 +3496,7 @@ int nand_scan_tail(struct mtd_info *mtd)
 	mtd->get_user_prot_info = nand_get_user_prot_info;
 	mtd->read_user_prot_reg = nand_read_user_prot_reg;
 	mtd->write_user_prot_reg = nand_write_user_prot_reg;
-#endif /* CONFIG_BRCM_NAND_OTP */
+#endif /* CONFIG_BRCM_TOSHIBA_NAND_OTP */
 
 	/* Check, if we should skip the bad block table scan */
 	if (chip->options & NAND_SKIP_BBTSCAN)

@@ -132,10 +132,7 @@ LCD_dev_info_t LCD_device[1] = {
 	 .height	= LCD_HEIGHT,
 	 .width		= LCD_WIDTH,
 	 .bits_per_pixel = LCD_BITS_PER_PIXEL,
-	 .te_supported	= true,
-	 .physical_height	= 70,	/* 69.84 */
-	 .physical_width	= 47,	/* 46.56 */
-	}
+	 .te_supported	= true}
 };
 
 Lcd_init_t power_on_seq[] = {

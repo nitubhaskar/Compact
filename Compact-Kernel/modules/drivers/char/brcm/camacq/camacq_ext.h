@@ -1,28 +1,3 @@
-  /*
- *
- * sensor value type definition 
- *
-. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2010   
- *
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
- */
-
-
-
 #if !defined(_CAMACQ_EXT_H_)
 #define _CAMACQ_EXT_H_
 
@@ -186,7 +161,7 @@ typedef enum eCamacqJpegQuality_e
 /* Type Definition */
 typedef struct stCamacqSensorRegs_t 
 {
-    const void*     pvInitRegs;    const void*     pvInitVtRegs;//swsw_vtcall
+    const void*     pvInitRegs;
     const void*     pvSleepRegs;
     const void*     pvWakeupRegs;
     const void*     pvPreviewRegs;
@@ -218,7 +193,6 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvSceneAutoRegs;
     const void*     pvSceneNightRegs;
     const void*     pvSceneNightDarkRegs;
-    const void*     pvSnapshotNightsceneRegs;
     const void*     pvSceneLandScapeRegs;
     const void*     pvSceneSunSetRegs;
     const void*     pvScenePortraitRegs;
@@ -245,17 +219,6 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvBrightness_7_Regs;
     const void*     pvBrightness_8_Regs;
 
-    const void*     pvCCDBrightness_0_Regs;
-    const void*     pvCCDBrightness_1_Regs;
-    const void*     pvCCDBrightness_2_Regs;
-    const void*     pvCCDBrightness_3_Regs;
-    const void*     pvCCDBrightness_4_Regs;
-    const void*     pvCCDBrightness_5_Regs;
-    const void*     pvCCDBrightness_6_Regs;
-    const void*     pvCCDBrightness_7_Regs;
-    const void*     pvCCDBrightness_8_Regs;
-
-
     /* ExposureCompensation */
     const void*     pvExpCompensation_0_Regs;
     const void*     pvExpCompensation_1_Regs;
@@ -266,18 +229,6 @@ typedef struct stCamacqSensorRegs_t
     const void*     pvExpCompensation_6_Regs;
     const void*     pvExpCompensation_7_Regs;
     const void*     pvExpCompensation_8_Regs;
-
-    #if defined (CONFIG_BCM_CAM_S5K4ECGX)
-
-    /* AE */  //swsw
-    const void*     pvAELockRegs;
-    const void*     pvAEUnlockRegs;
-    const void*     pvAWBLockRegs;
-    const void*     pvAWBUnlockReg;
-    
-    const void*     pvSingleAFStartRegs;
-    const void* 	pvPreviewRetRegs;
-    #endif
 
     /* AF */
     const void*     pvSetAFRegs;
@@ -360,7 +311,7 @@ typedef struct stCamacqSensorRegs_t
     
     /* Jpeg output size */
     const void*    pvJpegOutSize5M;
- 
+    const void*    pvJpegOutSize5M_2;
     const void*    pvJpegOutSize4M;
     const void*    pvJpegOutSize3M;
     const void*    pvJpegOutSize2M;
@@ -404,65 +355,10 @@ typedef struct stCamacqSensorRegs_t
     const void*    pvZoom_8_reg;
 
     const void*    pvCalibrationDefault;	
-#elif defined(CONFIG_BCM_CAM_S5K5CCGX)||defined (CONFIG_BCM_CAM_S5K4ECGX)
+#elif defined(CONFIG_BCM_CAM_S5K5CCGX)
 	const void*    pvSnapshotOutdoorRegs;
 	const void*    pvSnapshotLowlightRegs;
-    const void*    pvFlashLowCapOn;
-    const void*    pvFlashLowCapOff;
-//	const void*    pvSnapshotNightsceneRegs;
-#endif
-
-#if defined(CONFIG_BCM_CAM_S5K4ECGX)
-
-#if 0
-        const void*     pvFlashInit;
-        const void*     pvFlashPreOn;
-        const void*     pvFlashPreOff;
-        const void*     pvFlashOn;
-        const void*     pvFlashOff;
-        const void*     pvFlashLowCapOn;
-        const void*     pvFlashLowCapOff;
-#endif
-
-        const void*    pvZoom_1_25_reg_0;
-        const void*    pvZoom_1_25_reg_1;
-        const void*    pvZoom_1_25_reg_2;
-        const void*    pvZoom_1_25_reg_3;
-        const void*    pvZoom_1_25_reg_4;
-        const void*    pvZoom_1_25_reg_5;
-        const void*    pvZoom_1_25_reg_6;
-        const void*    pvZoom_1_25_reg_7;
-        const void*    pvZoom_1_25_reg_8;
-    
-        const void*    pvZoom_1_6_reg_0;
-        const void*    pvZoom_1_6_reg_1;
-        const void*    pvZoom_1_6_reg_2;
-        const void*    pvZoom_1_6_reg_3;
-        const void*    pvZoom_1_6_reg_4;
-        const void*    pvZoom_1_6_reg_5;
-        const void*    pvZoom_1_6_reg_6;
-        const void*    pvZoom_1_6_reg_7;
-        const void*    pvZoom_1_6_reg_8;
-    
-        const void*    pvZoom_2_reg_0;  
-        const void*    pvZoom_2_reg_1;
-        const void*    pvZoom_2_reg_2;
-        const void*    pvZoom_2_reg_3;
-        const void*    pvZoom_2_reg_4;
-        const void*    pvZoom_2_reg_5;
-        const void*    pvZoom_2_reg_6;
-        const void*    pvZoom_2_reg_7;
-        const void*    pvZoom_2_reg_8;
-    
-        const void*    pvZoom_4_reg_0;  
-        const void*    pvZoom_4_reg_1;
-        const void*    pvZoom_4_reg_2;
-        const void*    pvZoom_4_reg_3;
-        const void*    pvZoom_4_reg_4;
-        const void*    pvZoom_4_reg_5;
-        const void*    pvZoom_4_reg_6;
-        const void*    pvZoom_4_reg_7;
-        const void*    pvZoom_4_reg_8;
+	const void*    pvSnapshotNightsceneRegs;
 #endif
 
     /* Private Control */
@@ -547,9 +443,12 @@ GLOBAL S32      CamacqExtSetGpioConfig( S32 iGpio, S32 iMux, S32 iDirection, S32
 GLOBAL S32      CamacqExtWriteI2c( struct i2c_client *pClient, U8 * pucValue, U8 ucSize ); 
 GLOBAL S32      CamacqExtReadI2c( struct i2c_client *pClient, U16 usAddr, U8 ucAddrSize, U8 * pucBuf, U8 ucReadSize );
 GLOBAL S32      CamacqExtWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int iResType );
-GLOBAL S32      CamacqExtDirectlyWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int iResType );/* File System API */
+GLOBAL S32      CamacqExtDirectlyWriteI2cLists( struct i2c_client *pClient, const void *pvArg, int iResType );
+/* File System API */
+#if (CAMACQ_MAIN_FS_MODE)
 GLOBAL U8* CamacqExtReadFs( const S8 * szFileName, _eCamacqSelLen eLen, int iResType );
 GLOBAL U8  CamacqExtAsc2Hex( S8 *pcAscii );
+#endif
 
 /* EXT sensor depending API */
 #if defined(__ISX006_SONY__)||defined(__ISX005_SONY__)

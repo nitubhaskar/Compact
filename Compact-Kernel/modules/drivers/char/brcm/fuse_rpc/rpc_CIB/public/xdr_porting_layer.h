@@ -24,6 +24,7 @@
 #define __XDR_PORTING_LAYER_H__
 #ifdef UNDER_LINUX
 #include <linux/slab.h>
+#include <linux/vmalloc.h>
 typedef int32_t bool_t;
 typedef int32_t enum_t;
 #else

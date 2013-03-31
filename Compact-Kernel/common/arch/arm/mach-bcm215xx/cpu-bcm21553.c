@@ -34,10 +34,6 @@
 #include <mach/setup.h>
 #include <plat/syscfg.h>
 
-#ifdef CONFIG_BCMI2CNFC
-#include <linux/delay.h>
-#endif
-
 #ifdef CONFIG_BCM21553_V3D_SYNC_ENABLE
 void __iomem *sync_flag_base;
 #define SCRATCHRAM_V3D_SYNCVAR_OFFSET         0x00007000
@@ -169,12 +165,6 @@ void __init bcm21553_platform_init(void)
 
 	if (get_ap_boot_mode() != AP_ONLY_BOOT)
 	bcm21553_start_cp();
-
-#ifdef CONFIG_BCMI2CNFC
-    /* add 500ms delay here to avoid boot block, just temp work around, need fix later */
-    mdelay(500);
-    printk("nfc add mdelay=500=======!\n");
-#endif
 
 #ifdef CONFIG_BCM21553_L2_EVCT
 	bcm21553_l2_evt_buf_init();

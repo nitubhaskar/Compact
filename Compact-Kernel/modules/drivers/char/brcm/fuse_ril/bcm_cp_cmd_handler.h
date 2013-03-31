@@ -157,9 +157,9 @@ void _DEF(CAPI2_RTC_GetTimeZone)(UInt32 tid, UInt8 clientID);
 void _DEF(CAPI2_FLASH_SaveImage)(UInt32 tid, UInt8 clientID, UInt32 flash_addr, UInt32 length, UInt32 shared_mem_addr);
 #ifndef CONFIG_BRCM_FUSE_RIL_CIB
 void _DEF(CAPI2_FFS_Read)(UInt32 tid, UInt8 clientID, FFS_ReadReq_t *ffsReadReq);
-void _DEF(CAPI2_SimLockApi_GetStatus)(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_t *sim_data);
+void _DEF(CAPI2_SIMLOCK_GetStatus)(UInt32 tid, UInt8 clientID, SIMLOCK_SIM_DATA_t *sim_data);
 #else
-void _DEF(CAPI2_SimLockApi_GetStatus)(ClientInfo_t* inClientInfoPtr, SIMLOCK_SIM_DATA_t *sim_data, Boolean is_testsim);
+void _DEF(CAPI2_SIMLOCK_GetStatus)(UInt32 tid, UInt8 clientID, SIMLOCK_SIM_DATA_t *sim_data, Boolean is_testsim);
 #endif
 void _DEF(CAPI2_InterTaskMsgToAP)(UInt32 tid, UInt8 clientID, InterTaskMsg_t *inPtrMsg);
 
@@ -250,7 +250,7 @@ void CAPI2_SMS_GetMeSmsBufferStatus_RSP(UInt32 tid, UInt8 clientID, UInt32 bfree
 void CAPI2_RTC_GetTime_RSP(UInt32 tid, UInt8 clientID, RTCTime_t time);
 void CAPI2_RTC_GetTimeZone_RSP(UInt32 tid, UInt8 clientID, Int8 timeZone);
 void CAPI2_FLASH_SaveImage_RSP(UInt32 tid, UInt8 clientID, Boolean status);
-void CAPI2_SimLockApi_GetStatus_RSP(ClientInfo_t* inClientInfoPtr, SIMLOCK_STATE_t simlock_state);
+void CAPI2_SIMLOCK_GetStatus_RSP(UInt32 tid, UInt8 clientID, SIMLOCK_STATE_t simlock_state);
 #ifndef CONFIG_BRCM_FUSE_RIL_CIB
 void CAPI2_FFS_Read_RSP(UInt32 tid, UInt8 clientID, FFS_Data_t *ffsReadRsp);
 #endif

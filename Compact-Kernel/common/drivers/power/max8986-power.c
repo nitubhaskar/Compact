@@ -32,17 +32,16 @@
 #include <linux/power_supply.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
+#if defined(CONFIG_HAS_WAKELOCK)
+#include <linux/wakelock.h>
+#endif /*CONFIG_HAS_WAKELOCK*/
 #include <linux/mfd/max8986/max8986.h>
 #include <linux/mfd/max8986/max8986-private.h>
 #include <linux/broadcom/types.h>
 #include <linux/broadcom/bcm_kril_Interface.h>
 #include <linux/broadcom/bcm_fuse_sysparm.h>
-#include <linux/broadcom/bcm_rpc.h>
-#include <plat/bcm_auxadc.h>
-#if defined(CONFIG_HAS_WAKELOCK)
-#include <linux/wakelock.h>
-#endif /*CONFIG_HAS_WAKELOCK*/
 
+#include <plat/bcm_auxadc.h>
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif /*CONFIG_HAS_EARLYSUSPEND*/
@@ -51,14 +50,11 @@
 #include <mach/bcm21553_cpufreq_gov.h>
 #endif
 
-#if defined (CONFIG_BQ27425_FUEL)
-#include  "bq27425.h"
-#endif
-
-//DEFINE_MUTEX(spa_charger_mutex);
+DEFINE_MUTEX(spa_charger_mutex);
 
 #define TRUE	1
 #define FALSE	0
+
 #define FEAT_EN_TEST_MODE 1
 
 /* # of shifts used to divide the sum to get the average. */
@@ -68,45 +64,64 @@
 
 /*Macros to control schedule frequency of charging monitor work queue - with
  * and without charger present */
-#define BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING		5000 /* 5 sec */
-#define	BATTERY_LVL_MON_INTERVAL			30000 /* 30 sec */
+#define BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING		10000 
+#define	BATTERY_LVL_MON_INTERVAL			60000 /* 1 min */
+//#define BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING		10000 /* 10 sec */
+//#define	BATTERY_LVL_MON_INTERVAL			30000 /* 30 sec */
 #define BAT_TEMP_EXCEED_LIMIT_COUNT_MAX			3
 #define BATTERY_CHARGING_HYSTERESIS			10
 #define SUCCESS 0		/* request is successfull */
 #define USB_PREENUM_CURR				90
+#if defined(CONFIG_BOARD_COOPERVE)
+#define USB_PREENUM_CURR_REQ_VAL MAX8986_CHARGING_CURR_550MA
+#else
 #define USB_PREENUM_CURR_REQ_VAL MAX8986_CHARGING_CURR_450MA
+#endif
 
+#if defined(CONFIG_BOARD_COOPERVE)
+#define BATT_RECHARGE_VOLT	4120	//4130
+#else
 #define BATT_RECHARGE_VOLT	4130
+#endif
+
 #define BATT_LOW_VOLT		3400
-#define BATT_HIGH_VOLT		4400
 
 #define BAT_PERCENT_INIT_VALUE 1
 
+#if 0
+#define BATT_FULL_VOLT		4200
+#define BATT_LEVEL5_VOLT	3970
+#define BATT_LEVEL4_VOLT	3870
+#define BATT_LEVEL3_VOLT	3790
+#define BATT_LEVEL2_VOLT	3740
+#define BATT_LEVEL1_VOLT	3700
+#define BATT_LEVEL0_VOLT	3600
+#define BATT_LEVEL0_1_VOLT	3540
+#define BATT_LOW_VOLT		3400
+#endif
 #define HIGH_SUSPEND_TEMP	650
 #define LOW_SUSPEND_TEMP	-50
 #define HIGH_RECOVER_TEMP	430
 #define LOW_RECOVER_TEMP	0
 
+
 #define BAT_30SEC_INTERVAL_RECHARGE (10*HZ) /* 10 sec*/
 #define BAT_90MIN_INTERVAL_RECHARGE (90*60*HZ) /* 90 min*/
 #define MAX8986_LOG_CHARGING_TIME 1
-
 #define AUXADC_BATVOLT_CHANNEL		3
 #define AUXADC_BATTEMP_CHANNEL		0
 #define AUXADC_BATVF_CHANNEL		1
 
-#if !defined (CONFIG_BQ27425_FUEL)
-static int cnt_func_called=0;
-static int check_func_called_by_cp=false;
-#endif
-
 int prev_scaled_level=0;
-static int init_batt_lvl_interval=0;
-static int is_ovp_suspended=false;
-static struct platform_device *power_device;
 
-extern void dwc_otg_cil_get_BC11_Charger_Type(pmu_muic_chgtyp bc11_chargertype);
-int pmu_is_charger_inserted(void);
+static int is_ovp_suspended=false;
+static int init_batt_lvl_interval=0;
+static int check_func_called_by_cp=false;
+static int cnt_func_called=0;
+static struct platform_device *power_device;
+//static struct max8986_power *g_ptr_data;
+
+extern dwc_otg_cil_get_BC11_Charger_Type(pmu_muic_chgtyp bc11_chargertype);
 
 struct max8986_power {
 	struct max8986 *max8986;
@@ -134,26 +149,24 @@ struct max8986_power {
 	int is_jig_inserted;
 	int is_timer_expired;
 	int is_recharge;
-	int is_volt_recharge;
 	int level;
 	int tmp;
 	u8 volt[10];
 	int button;
 	int ear_adc;
-	int averageCurrent;
 	u32 temp_exceed_limit_count;
 
 	/* battery status */
 	int charging_status;
 	int suspended;
 	int isFullcharged;
-	int is_eoc;
 
+  //#if defined(CONFIG_BATT_LVL_FROM_ADC)
 	int level_running_sum;
 	int level_read_inx;
 	int level_reading[ADC_RUNNING_AVG_SIZE];
 	int batt_level_adc_avg;
-
+  //#endif
 	struct delayed_work batt_lvl_mon_wq;
 #if defined(CONFIG_HAS_WAKELOCK)
 	struct wake_lock usb_charger_wl;
@@ -175,7 +188,6 @@ struct max8986_power {
 	unsigned long next_expire_time;
 #endif
 	struct mutex power_mtx;
-	struct mutex eoc_mtx;
 };
 
 #if defined(CONFIG_CPU_FREQ_GOV_BCM21553)  
@@ -215,6 +227,7 @@ typedef struct {
 /*********************************************************************
  *                             DEBUG CODE                            *
  *********************************************************************/
+
 /* Enable/disable debug logs */
 enum {
 	/* Disable all logging */
@@ -274,6 +287,9 @@ static void cmd_set_log_lvl(const char *p)
 {
 	sscanf(p, "%x", &debug.log_lvl);
 }
+
+#define AUXADC_BATVOLT_CHANNEL		3
+#define AUXADC_BATTEMP_CHANNEL		4
 
 static void cmd_show_bat_stat(const char *p)
 {
@@ -390,7 +406,7 @@ static enum power_supply_property wall_props[] = {
 static enum power_supply_property usb_props[] = {
 	POWER_SUPPLY_PROP_ONLINE
 };
-
+int pmu_is_charger_inserted();
 static int max8986_usb_get_property(struct power_supply *psy,
 	enum power_supply_property psp,
 	union power_supply_propval *val)
@@ -620,7 +636,7 @@ static u8 max8986_get_charging_current(struct max8986_power *max8986_power,u8 ch
 	case PMU_MUIC_CHGTYP_USB:
 	case PMU_MUIC_CHGTYP_DOWNSTREAM_PORT:
 		*supply_type = POWER_SUPPLY_TYPE_USB;
-		cc =  pdata->usb_charging_cc;
+		cc =  USB_PREENUM_CURR_REQ_VAL;
 		break;
 
 	case PMU_MUIC_CHGTYP_DEDICATED_CHGR:
@@ -639,7 +655,7 @@ static u8 max8986_get_charging_current(struct max8986_power *max8986_power,u8 ch
 		break;
 
 	case PMU_MUIC_CHGTYP_DEAD_BATT_CHG:
-		*supply_type = POWER_SUPPLY_TYPE_MAINS; 
+		*supply_type = POWER_SUPPLY_TYPE_MAINS; //??
 		cc = MAX8986_CHARGING_CURR_90MA;
 		break;
 
@@ -667,6 +683,8 @@ static int max8986_get_batt_temperature(struct max8986_power *max8986_power)
 	int i;
 	struct max8986_power_pdata *pdata =
       		  max8986_power->max8986->pdata->power;
+
+	//max8986_power = g_ptr_data;
 
 	if (pdata->temp_adc_channel < 0)
 		return -EINVAL;
@@ -706,10 +724,10 @@ static int max8986_get_batt_temperature(struct max8986_power *max8986_power)
 		max8986_power->temp_running_sum >> ADC_RUNNING_AVG_SHIFT;
 	return max8986_power->batt_temp_adc_avg;
 }
-
 static void max8986_ctrl_charging(struct max8986_power *max8986_power, int ctrl)
 {
 	u8 regVal;
+    //	struct max8986 *max8986 = g_ptr_data->max8986;
 	struct max8986 *max8986 = max8986_power->max8986;
 
 	pr_info("%s:%s\n", __func__,(ctrl?"START CHARGING":"STOP CHARGING"));
@@ -736,12 +754,11 @@ static void max8986_start_charging(struct max8986_power *max8986_power,
 	struct max8986 *max8986 = max8986_power->max8986;
 	u8 charging_cc = max8986_get_charging_current(max8986_power,charger_type,&supply_type);
 
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 
 	if(supply_type == POWER_SUPPLY_TYPE_BATTERY)
 	{
 		pr_info("%s: NO charger connected !!!\n", __func__);
-		power_supply_changed(&max8986_power->battery);
 		return;
 	}
 
@@ -783,7 +800,7 @@ static void max8986_stop_charging(struct max8986_power *max8986_power,
 	enum power_supply_type old_pwr_src;
 	struct max8986 *max8986 = max8986_power->max8986;
 
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	mutex_lock(&max8986_power->power_mtx);
 	/* Disable charging and fast charging */
 	regVal = 0; //~(MAX8986_MBCCTRL2_VCHGR_FC | MAX8986_MBCCTRL2_MBCHOSTEN) - other bits are unused
@@ -813,48 +830,13 @@ static void max8986_stop_charging(struct max8986_power *max8986_power,
 	mutex_unlock(&max8986_power->power_mtx);
 }
 
-#if defined (CONFIG_BQ27425_FUEL)
-static void max8986_check_eoc(struct max8986_power *max8986_power)
-{
-	if(!max8986_power)
-		return;
-
-	struct max8986_power_pdata *pdata =
-	max8986_power->max8986->pdata->power;
-
-	mutex_lock(&max8986_power->eoc_mtx);
-	if(max8986_power->is_eoc == TRUE && max8986_power->batt_percentage >= 96 && 
-		max8986_power->averageCurrent  <= ((pdata->eoc_current * 10) + 50))
-	{
-		pr_info("%s: End of Charging\n", __func__);
-		max8986_power->charging_status = POWER_SUPPLY_STATUS_FULL;
-		max8986_power->batt_percentage = 100;
-		max8986_power->isFullcharged = TRUE;
-		max8986_power->is_timer_expired=FALSE;		
-		max8986_power->is_volt_recharge=FALSE;
-		max8986_power->is_eoc=FALSE;
-		max8986_stop_charging(max8986_power,FALSE);
-		power_supply_changed(&max8986_power->battery);
-#ifdef MAX8986_LOG_CHARGING_TIME
-		max8986_power->charging_end_time = ktime_get();
-		max8986_power->charging_time =
-			ktime_sub(max8986_power->charging_end_time,
-					max8986_power->charging_start_time);
-		pr_info("%s:Total Charging Time	%lld us\n", __func__,
-				ktime_to_us(max8986_power->charging_time));
-#endif
-	}
-
-	mutex_unlock(&max8986_power->eoc_mtx);
-}
-#endif
-
 static void max8986_check_batt_vf(struct max8986_power *max8986_power)
 {
 	int batt_vf;
 
 	batt_vf = auxadc_access(AUXADC_BATVF_CHANNEL);
 	batt_vf >>= 2;
+	//power_supply_changed(&max8986_power->battery);
 
 	if(max8986_power->is_charger_inserted){
 		if( batt_vf==0xFF )
@@ -864,10 +846,71 @@ static void max8986_check_batt_vf(struct max8986_power *max8986_power)
 			max8986_power->isFullcharged = FALSE;			
 			max8986_power->batt_health = POWER_SUPPLY_HEALTH_DEAD;
 			max8986_stop_charging(max8986_power,TRUE);			
+			power_supply_changed(&max8986_power->battery);
 		}
 	}
+		
 }
 
+#if 1
+#if 0
+int calculate_batt_level(int batt_volt)
+{
+	struct max8986_power *max8986_power;
+	int scaled_level = 0;
+
+	if(!power_device)
+		return;
+	max8986_power = platform_get_drvdata(power_device);	
+	max8986_power->level = 0;
+
+	if(batt_volt >= BATT_FULL_VOLT) {		//100%
+		scaled_level = 100;
+		max8986_power->level = 6;
+	}
+	else if(batt_volt >=  BATT_LEVEL5_VOLT) {	//99% ~ 80%
+		scaled_level = ((batt_volt -BATT_LEVEL5_VOLT+1)*20)/(BATT_FULL_VOLT-BATT_LEVEL5_VOLT);
+ 		scaled_level = scaled_level+80;
+		max8986_power->level = 5;
+	}
+	else if(batt_volt >= BATT_LEVEL4_VOLT) { 	//79% ~ 65%
+		scaled_level = ((batt_volt -BATT_LEVEL4_VOLT)*15)/(BATT_LEVEL5_VOLT-BATT_LEVEL4_VOLT);
+ 		scaled_level = scaled_level+65;
+		max8986_power->level = 4;
+	}
+	else if(batt_volt >= BATT_LEVEL3_VOLT) { 	//64% ~ 50%
+		scaled_level = ((batt_volt -BATT_LEVEL3_VOLT)*15)/(BATT_LEVEL4_VOLT-BATT_LEVEL3_VOLT);
+ 		scaled_level = scaled_level+50;
+		max8986_power->level = 3;
+	}
+	else if(batt_volt >= BATT_LEVEL2_VOLT) {	//49% ~ 35%
+		scaled_level = ((batt_volt -BATT_LEVEL2_VOLT)*15)/(BATT_LEVEL3_VOLT-BATT_LEVEL2_VOLT);
+		scaled_level = scaled_level+35;
+		max8986_power->level = 2;
+	}
+	else if(batt_volt >= BATT_LEVEL1_VOLT) {	//34% ~ 20%
+		scaled_level = ((batt_volt -BATT_LEVEL1_VOLT)*15)/(BATT_LEVEL2_VOLT-BATT_LEVEL1_VOLT);
+ 		scaled_level = scaled_level+20;
+		max8986_power->level = 1;
+	}
+	else if(batt_volt >= BATT_LEVEL0_VOLT) {	//19% ~ 5%
+		scaled_level = ((batt_volt -BATT_LEVEL0_VOLT)*15)/(BATT_LEVEL1_VOLT-BATT_LEVEL0_VOLT);
+ 		scaled_level = scaled_level+5;
+	}
+	else if(batt_volt >= BATT_LEVEL0_1_VOLT) {	// 4% ~ 3%
+		scaled_level = ((batt_volt -BATT_LEVEL0_1_VOLT)*2)/(BATT_LEVEL0_VOLT-BATT_LEVEL0_1_VOLT);
+ 		scaled_level = scaled_level+3;
+	}
+	else if(batt_volt > BATT_LOW_VOLT) {		// 2% ~ 1%
+		scaled_level = ((batt_volt -BATT_LOW_VOLT)*2)/(BATT_LEVEL0_VOLT-BATT_LOW_VOLT);
+ 		scaled_level = scaled_level+1;
+	}
+	else {
+		scaled_level = 1;
+	}
+	return scaled_level;
+}
+#endif
 static s8 max8986_get_batt_voltage(u16 batt_adc,struct batt_adc_tbl *batt_adc_tbl, u32 *voltage)
 {
 	int inx;
@@ -900,7 +943,54 @@ static s8 max8986_get_batt_voltage(u16 batt_adc,struct batt_adc_tbl *batt_adc_tb
 
 	return 0;
 }
+#else
+static s8 max8986_get_batt_capacity(u16 batt_adc,
+		struct batt_adc_tbl *batt_adc_tbl, u8 prev_per, u8 *new_per, u32 *voltage)
+{
+	int inx;
+	u32 per = 100;
+	int ratio = 0;
+	*voltage = batt_adc_tbl->bat_vol[batt_adc_tbl->num_entries - 1];
 
+	if (batt_adc < batt_adc_tbl->bat_adc[0]) {
+		*new_per = 0;
+		*voltage = batt_adc_tbl->bat_vol[0];
+		pr_info("%s: Batt voltage too low\n", __func__);
+		return -1; /*batt too low*/
+	} else if (batt_adc >
+			batt_adc_tbl->bat_adc[batt_adc_tbl->num_entries - 1]) {
+		pr_info("%s: Batt voltage too high\n", __func__);
+		*new_per = 100;
+				return 1; /*beyond max limit*/
+	}
+	for (inx = 0; inx < (batt_adc_tbl->num_entries - 1); inx++) {
+		if (batt_adc >= batt_adc_tbl->bat_adc[inx] &&
+				batt_adc < batt_adc_tbl->bat_adc[inx+1]) {
+			per = inx*100 +
+				((batt_adc - batt_adc_tbl->bat_adc[inx])*100)/
+				(batt_adc_tbl->bat_adc[inx+1]-batt_adc_tbl->bat_adc[inx]);
+			per /= batt_adc_tbl->num_entries-1;
+			/* using liner interpolation (lerp) */
+			ratio = ((batt_adc - batt_adc_tbl->bat_adc[inx]) * 1000)/(batt_adc_tbl->bat_adc[inx+1]-batt_adc_tbl->bat_adc[inx]);
+			*voltage = batt_adc_tbl->bat_vol[inx] + ((batt_adc_tbl->bat_vol[inx + 1] - batt_adc_tbl->bat_vol[inx]) * ratio)/1000;
+			break;
+		}
+	}
+	/*round to nearest multiple of 5. Needed to adjust
+	 * minor changes in battery % due to load
+	 * */
+	if (prev_per != 0xFF) {
+		if (per < prev_per)
+			per = ((per+5)/5)*5;
+		else
+			per = (per/5)*5;
+	}
+	*new_per = (u8)per;
+	pr_info("%s: Prev Battery Percentage = %d, New Percentage = %d\n",
+			__func__, prev_per, *new_per);
+	return 0;
+}
+#endif
 /****************************************************************************
 *
 * bcm59035_get_batt_level
@@ -908,6 +998,7 @@ static s8 max8986_get_batt_voltage(u16 batt_adc,struct batt_adc_tbl *batt_adc_tb
 * returns: voltage measurement in ADC units or -1 on error
 *
 ***************************************************************************/
+//#if defined(CONFIG_BATT_LVL_FROM_ADC)
 static int max8986_get_batt_level(struct max8986_power *max8986_power)
 {
 	int level;
@@ -956,23 +1047,13 @@ static int max8986_get_batt_level(struct max8986_power *max8986_power)
 	return max8986_power->batt_level_adc_avg;
 }
 
-static void max8986_get_batt_level_adc(struct max8986_power *max8986_power, int usecb)
+static void max8986_get_batt_level_adc(struct max8986_power *max8986_power)
 {
 	int batt_level;
 	s8 bat_state;
-	unsigned int bat_per = 0,old_bat_per=0;
-
-#if defined (CONFIG_BQ27425_FUEL)	
-	unsigned int bat_current = 0;
-	unsigned int bat_temp = 0;
-	unsigned int bat_flags = 0;
-#endif
-
-struct max8986_power_pdata *pdata =
-	max8986_power->max8986->pdata->power;
-
-if(!usecb)
-{
+	u8 bat_per = 0,old_bat_per=0;
+	struct max8986_power_pdata *pdata =
+		max8986_power->max8986->pdata->power;
 #if defined(CONFIG_HAS_WAKELOCK)
 	wake_lock(&max8986_power->temp_adc_wl);
 #endif
@@ -982,85 +1063,60 @@ if(!usecb)
 #endif
 
 	max8986_power->batt_adc_avg = batt_level-BATTERY_CHARGING_HYSTERESIS;
-	pr_info("%s:ADC average = %d, batt_level = %d\n",__func__, max8986_power->batt_adc_avg, batt_level);
-}
 
+	pr_info("%s:ADC average = %d, batt_level = %d\n",__func__, max8986_power->batt_adc_avg, batt_level);
+	pr_info("%s:battery percentage = %d\n",__func__, max8986_power->batt_percentage);
+#if 1//sehyoung	
 	bat_state = max8986_get_batt_voltage(max8986_power->batt_adc_avg,&pdata->batt_adc_tbl, &max8986_power->batt_voltage);
 	old_bat_per = max8986_power->batt_percentage;
-
-	#if defined (CONFIG_BQ27425_FUEL)
-		if(get_bq27425_battery_data(BQ27425_REG_SOC, &bat_per))
-		{
-			bat_per = old_bat_per;
-			printk("%s: error reading soc.\n", __func__);
-		}
-	
-		if(bat_per > 100)
-			bat_per = old_bat_per;
-	
-		if( bat_state != -1 && bat_per == 0 && max8986_power->batt_health != POWER_SUPPLY_HEALTH_DEAD)
-			bat_per = 1;
-		else if(max8986_power->batt_voltage <= 3450)
-			bat_per = 1;
-
-		get_bq27425_battery_data(BQ27425_REG_AI, &max8986_power->averageCurrent);
-		get_bq27425_battery_data(BQ27425_REG_RM, &bat_current);
-		get_bq27425_battery_data(BQ27425_REG_TEMP, &bat_temp);
-		get_bq27425_battery_data(BQ27425_REG_FLAGS, &bat_flags);
-		pr_info("%s: avg_current=%d, fg_current=%d, fg_temp=%d, fg_soc1=%d, fg_socf=%d\n",__func__, (signed short)max8986_power->averageCurrent, bat_current, bat_temp, ((bat_flags & (1<<2)) ? 1:0), ((bat_flags & (1<<1)) ? 1:0));
-	#else
+	//bat_per = calculate_batt_level(max8986_power->batt_voltage);
 	if (max8986_power->max8986->pdata->pmu_event_cb)
-	{
 		bat_per=max8986_power->max8986->pdata->pmu_event_cb(PMU_EVENT_BATT_ADC_TO_VOLTAGE,max8986_power->batt_voltage);	
-	}
-	#endif
-	pr_info("%s:  old soc=%d , new soc=%d, volt=%d\n",__func__, old_bat_per, bat_per, max8986_power->batt_voltage);
-
+#else
+	bat_state = max8986_get_batt_capacity(max8986_power->batt_adc_avg,
+			&pdata->batt_adc_tbl, max8986_power->batt_percentage,
+			&bat_per, &max8986_power->batt_voltage);
+#endif
 	if (bat_state > 0) {
 		max8986_power->batt_health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
 	} else if (max8986_power->batt_health ==POWER_SUPPLY_HEALTH_OVERVOLTAGE && is_ovp_suspended !=true) {
 		max8986_power->batt_health = POWER_SUPPLY_HEALTH_GOOD;
 	}
-
 	printk(KERN_INFO "%s:max8986_power->charging_status = %d\n",__func__,max8986_power->charging_status);
-
 	if (max8986_power->charging_status == POWER_SUPPLY_STATUS_FULL){
 		bat_per = 100;
 		prev_scaled_level=100;
 	}
 
-#if defined (CONFIG_BQ27425_FUEL)
-	if (bat_per == 100 && max8986_power->is_eoc == FALSE && max8986_power->is_timer_expired == FALSE
-		&& max8986_power->isFullcharged == FALSE && pmu_is_charger_inserted())
-		bat_per = 99;
-#endif
-
 	if (bat_per != old_bat_per) {
-
-	#if defined (CONFIG_BQ27425_FUEL)
-		max8986_power->batt_percentage  = bat_per;
-		max8986_power->level = max8986_power->batt_percentage/20;
-	#else
 		if( bat_per > old_bat_per)
 		{
+			//if( max8986_power->is_charger_inserted == TRUE )
+			//{
 				max8986_power->batt_percentage  = bat_per;
 				max8986_power->level = max8986_power->batt_percentage/20;
+			//}	
 		}
 		else
 		{
 			if( max8986_power->is_charger_inserted != TRUE  || max8986_power->batt_percentage==BAT_PERCENT_INIT_VALUE )
 			{
-			max8986_power->batt_percentage  = bat_per;
-			max8986_power->level = max8986_power->batt_percentage/20;
+				max8986_power->batt_percentage  = bat_per;
+				max8986_power->level = max8986_power->batt_percentage/20;
+			}
 		}		
-	
-		}		
-
-		if (bat_state >= 0 && max8986_power->batt_voltage   >   
-			pdata->batt_adc_tbl.bat_vol[pdata->batt_adc_tbl.num_entries-2])
-			max8986_power->batt_voltage = pdata->batt_adc_tbl.bat_vol[pdata->batt_adc_tbl.num_entries-2];
+#if 0
+		/*"N mV" = (("8-Bit_ADC_code" - 30) * 4) + 3400*/
+		max8986_power->batt_voltage =
+			(max8986_power->batt_adc_avg - 30)*4 + 3400 - 12;
 #endif
-
+		if (bat_state <= 0 &&
+				max8986_power->batt_voltage > pdata->batt_adc_tbl.bat_vol[pdata->batt_adc_tbl.num_entries-1])
+			max8986_power->batt_voltage =
+				pdata->batt_adc_tbl.bat_vol[pdata->batt_adc_tbl.num_entries-1];
+#if 0//sehyoung
+		max8986_power->batt_voltage = max8986_power->batt_voltage * 1000;
+#endif
 		/*max8986_power->batt_voltage *= 1000;*/
 		pr_info("%s: Battery percentage : %d, volt = %d\n", __func__,
 				max8986_power->batt_percentage,
@@ -1068,11 +1124,16 @@ if(!usecb)
 		power_supply_changed(&max8986_power->battery);
 	}
 }
-
+//#endif /* CONFIG_BATT_LVL_FROM_ADC */
+/*****************************************************************************
+ * cp callbacks
+ *****************************************************************************/
 #if defined(CONFIG_BRCM_FUSE_RIL_CIB) && !defined(CONFIG_BATT_LVL_FROM_ADC)
 
 static void inner_function(struct max8986_power *max8986_power)
 {
+  //max8986_power = g_ptr_data;
+
 	// 5hr_Timer
 	if(max8986_power->is_timer_expired)
 	{
@@ -1103,7 +1164,6 @@ static void inner_function(struct max8986_power *max8986_power)
 	if( (max8986_power->isFullcharged==TRUE)&&(max8986_power->batt_voltage <= BATT_RECHARGE_VOLT))
 	{
 		pr_info("%s:recharge:current_volt=%d\n", __func__,max8986_power->batt_voltage);	
-		max8986_power->is_volt_recharge=TRUE;
 		max8986_start_charging(max8986_power,max8986_power->charger_type);
 	}
 
@@ -1116,6 +1176,8 @@ static void inner_function(struct max8986_power *max8986_power)
 			max8986_power->isFullcharged = FALSE;
 			max8986_power->batt_health = POWER_SUPPLY_HEALTH_DEAD;
 			max8986_stop_charging(max8986_power,TRUE);
+			power_supply_changed(&max8986_power->battery);
+
 		}
 		else
 		{
@@ -1125,17 +1187,17 @@ static void inner_function(struct max8986_power *max8986_power)
 		}
 	}
 }
-
-/*****************************************************************************
- * cp callbacks
- *****************************************************************************/
-static void max8986_ril_adc_notify_cb(SimNumber_t SimId, unsigned long msg_type, int result,
+static void max8986_ril_adc_notify_cb(unsigned long msg_type, int result,
 		void *dataBuf, unsigned long dataLength)
 {
 	HAL_EM_BatteryLevel_t *batt_lvl = (HAL_EM_BatteryLevel_t *) dataBuf;
 	struct max8986_power *max8986_power;
 	struct max8986_power_pdata *pdata;
-
+	u8 bat_per = 0,old_bat_per=0;
+	s8 bat_state;
+	u32 voltage;
+	int celsius,temp;
+#if 1
 	if (batt_lvl == NULL || power_device == NULL) {
 		pr_err("%s:Invalid params ...\n", __func__);
 		return;
@@ -1145,6 +1207,8 @@ static void max8986_ril_adc_notify_cb(SimNumber_t SimId, unsigned long msg_type,
 		pr_err("%s:Device not init\n", __func__);
 		return;
 	}
+#endif
+	//max8986_power = g_ptr_data;
 
 	pdata = max8986_power->max8986->pdata->power;
 
@@ -1154,27 +1218,64 @@ static void max8986_ril_adc_notify_cb(SimNumber_t SimId, unsigned long msg_type,
 	
 	switch (batt_lvl->eventType) {
 	case EM_BATTMGR_BATTLEVEL_CHANGE_EVENT:
-#if !defined (CONFIG_BQ27425_FUEL)
+
+			max8986_power->batt_adc_avg = batt_lvl->inAdc_avg;
+		
+
+		bat_state = max8986_get_batt_voltage(max8986_power->batt_adc_avg,&pdata->batt_adc_tbl, &max8986_power->batt_voltage);
+		old_bat_per = max8986_power->batt_percentage;
+		//bat_per = calculate_batt_level(max8986_power->batt_voltage);
+		if (max8986_power->max8986->pdata->pmu_event_cb)
+			bat_per=max8986_power->max8986->pdata->pmu_event_cb(PMU_EVENT_BATT_ADC_TO_VOLTAGE,max8986_power->batt_voltage);	
 		check_func_called_by_cp=false;
-#endif
-		max8986_power->batt_adc_avg = batt_lvl->inAdc_avg;
-		max8986_get_batt_level_adc(max8986_power, 1);
+		if (bat_state > 0) {
+			max8986_power->batt_health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+		} else if (max8986_power->batt_health ==POWER_SUPPLY_HEALTH_OVERVOLTAGE && is_ovp_suspended !=true) {
+			max8986_power->batt_health = POWER_SUPPLY_HEALTH_GOOD;
+		}
+		if (max8986_power->charging_status == POWER_SUPPLY_STATUS_FULL){
+			bat_per = 100;
+			prev_scaled_level=100;
+		}
+
+		if (bat_per != old_bat_per) {
+			if( bat_per > old_bat_per)
+			{
+				//if( max8986_power->is_charger_inserted == TRUE )
+				//{
+					max8986_power->batt_percentage  = bat_per;
+					max8986_power->level = max8986_power->batt_percentage/20;
+				//}	
+			}
+			else
+			{
+				if( max8986_power->is_charger_inserted != TRUE  || max8986_power->batt_percentage==BAT_PERCENT_INIT_VALUE )
+				{
+					max8986_power->batt_percentage  = bat_per;
+					max8986_power->level = max8986_power->batt_percentage/20;
+				}
+			}
+
+			if (bat_state <= 0 &&
+					max8986_power->batt_voltage > pdata->batt_adc_tbl.bat_vol[pdata->batt_adc_tbl.num_entries-1])
+				max8986_power->batt_voltage =
+					pdata->batt_adc_tbl.bat_vol[pdata->batt_adc_tbl.num_entries-1];
+			power_supply_changed(&max8986_power->battery);
+		}
 		inner_function(max8986_power);				
 		break;
-		
 	case EM_BATTMGR_EMPTY_BATT_EVENT:
 		pr_info("%s: low batt  event\n", __func__);
 		if(!pmu_is_charger_inserted())
 			max8986_power->batt_percentage = 0;
 		else
-		max8986_power->batt_percentage = 1;
+			max8986_power->batt_percentage = 1;
 
 		max8986_power->batt_voltage =BATT_LOW_VOLT;
 
 		pr_info("Battery percentage : %d, volt = %d\n",
 				max8986_power->batt_percentage,
 				max8986_power->batt_voltage);
-
 		power_supply_changed(&max8986_power->battery);
 		break;
 	
@@ -1183,36 +1284,36 @@ static void max8986_ril_adc_notify_cb(SimNumber_t SimId, unsigned long msg_type,
 	}
 }
 #endif
-
 /*****************************************************************************
  * charger monitoring
  *****************************************************************************/
 static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 {
-	int temp,celsius;
+	int temp,charger_type,celsius;
 	struct max8986_power *max8986_power =
 		container_of(work, struct max8986_power, batt_lvl_mon_wq.work);
 	struct max8986_power_pdata *pdata =
 		max8986_power->max8986->pdata->power;
-
 	/*init to charging case */
 	int mon_interval = BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING;
 
-	if(!pmu_is_charger_inserted())
+	if (max8986_power->charging_status == POWER_SUPPLY_STATUS_DISCHARGING
+			|| max8986_power->charging_status ==
+			POWER_SUPPLY_STATUS_FULL) {
 		mon_interval = BATTERY_LVL_MON_INTERVAL;
+	}
 
-	if( init_batt_lvl_interval<=5){
+	if( init_batt_lvl_interval<=3){
 		++init_batt_lvl_interval;
-		mon_interval = BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING /2;
+		mon_interval = BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING;
 	}	
-	
 	/*Do temperature monitoring if a valid temp adc channel is specified */
 	if (pdata->temp_adc_channel >= 0) {
-
 #if defined(CONFIG_HAS_WAKELOCK)
 		wake_lock(&max8986_power->temp_adc_wl);
 #endif
 		temp = max8986_get_batt_temperature(max8986_power);
+
 #if defined(CONFIG_HAS_WAKELOCK)
 		wake_unlock(&max8986_power->temp_adc_wl);
 #endif
@@ -1233,6 +1334,7 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 
 				if (max8986_power->suspended == false) 
 				{
+
 					if (max8986_power->is_charger_inserted) 
 					{
 						max8986_power->batt_health =(celsius >= HIGH_SUSPEND_TEMP)
@@ -1242,7 +1344,10 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 
 						max8986_stop_charging(max8986_power,FALSE);
 						max8986_power->suspended = true;	
+						power_supply_changed(&max8986_power->battery);
 					}
+					//if (max8986_power->max8986->pdata->pmu_event_cb)
+						//max8986_power->max8986->pdata->pmu_event_cb(PMU_EVENT_BATT_TEMP_BEYOND_LIMIT, temp);
 				}
 			}
 			else if ((celsius >= LOW_RECOVER_TEMP) && (celsius <= HIGH_RECOVER_TEMP)) 
@@ -1255,40 +1360,49 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 					if (max8986_power->is_charger_inserted)
 					{
 						max8986_start_charging(max8986_power,max8986_power->power_src);
+						power_supply_changed(&max8986_power->battery);
 					}
 				}
 			}				
 		}
 		
 	}
-
+	/*Reading voltage level from ADC*/
+#if 0	
+#if defined(CONFIG_BATT_LVL_FROM_ADC)
+	max8986_get_batt_level_adc(max8986_power);
+#else
+#if defined(CONFIG_BRCM_FUSE_RIL_CIB)
+	pr_info("%s: calling KRIL_DevSpecific_Cmd\n", __func__);
+	if (KRIL_DevSpecific_Cmd(BCM_POWER_CLIENT,
+				RIL_DEVSPECIFICPARAM_BCM_PMU_GET_BATT_ADC,
+				NULL, 0) == FALSE)
+		pr_err("%s: KRIL_DevSpecific_Cmd failed\n", __func__);
+#endif
+#endif
+#else
 	if(pmu_is_charger_inserted())
 	{
-#if defined (CONFIG_BQ27425_FUEL)
-		max8986_get_batt_level_adc(max8986_power, 0);
-		max8986_check_eoc(max8986_power);
-		inner_function(max8986_power);
-#else
 		cnt_func_called++;
 
-		if( ((check_func_called_by_cp==true) && (cnt_func_called>=10)) ||( cnt_func_called  > 76) ||( init_batt_lvl_interval<=5)
-                       || ((check_func_called_by_cp==true) && (max8986_power->charging_status ==  POWER_SUPPLY_STATUS_FULL))  )
+		if( ((check_func_called_by_cp==true) && (cnt_func_called>=10)) ||( cnt_func_called  >= 60) ||( init_batt_lvl_interval<=3)
+                      || ((check_func_called_by_cp==true) && (max8986_power->charging_status ==  POWER_SUPPLY_STATUS_FULL)) )
 		{
 			pr_info("%s: cnt_func_called=%d init_batt_lvl_interval=%d\n",__func__, cnt_func_called,init_batt_lvl_interval);
 			cnt_func_called=0;
-		max8986_get_batt_level_adc(max8986_power, 0);
+			max8986_get_batt_level_adc(max8986_power);		
 		
 			if( mon_interval == BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING)
 				check_func_called_by_cp=true;
 		}
 		inner_function(max8986_power);
-#endif
 	}
 	else
 	{
-		if (KRIL_DevSpecific_Cmd(BCM_POWER_CLIENT,SIM_DUAL_FIRST,RIL_DEVSPECIFICPARAM_BCM_PMU_GET_BATT_ADC,NULL, 0) == FALSE)
+		if (KRIL_DevSpecific_Cmd(BCM_POWER_CLIENT,RIL_DEVSPECIFICPARAM_BCM_PMU_GET_BATT_ADC,NULL, 0) == FALSE)
 			pr_err("%s: KRIL_DevSpecific_Cmd failed\n", __func__);		
 	}
+#endif
 
 #if defined(CONFIG_HAS_WAKELOCK)
 		wake_lock(&max8986_power->temp_adc_wl);
@@ -1298,13 +1412,21 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 		wake_unlock(&max8986_power->temp_adc_wl);
 #endif
 
+#if 0	
+	queue_delayed_work(max8986_power->max8986->pmu_workqueue,
+			&max8986_power->batt_lvl_mon_wq,
+			msecs_to_jiffies(mon_interval));
+#else
 	schedule_delayed_work(&max8986_power->batt_lvl_mon_wq, msecs_to_jiffies(mon_interval));
-	power_supply_changed(&max8986_power->battery);
-}
 
+#endif
+	power_supply_changed(&max8986_power->battery);
+
+}
 /*****************************************************************************
  * MUIC event handler
  *****************************************************************************/
+
 static void max8986_muic_event(int event, u32 param,  void *data)
 {
 	struct max8986_power *max8986_power = data;
@@ -1354,16 +1476,17 @@ static void max8986_muic_event(int event, u32 param,  void *data)
 			if (max8986->pdata->pmu_event_cb)
 				max8986->pdata->pmu_event_cb(PMU_EVENT_CHARGER_REMOVE,
 					max8986_power->charger_type);
-#if defined(CONFIG_BRCM_FUSE_RPC_CIB)
-			BcmRpc_SetChargerInserted( false);
-#endif			
+			
 			max8986_power->is_charger_inserted=FALSE;
 			max8986_power->isFullcharged = FALSE;
-			max8986_power->is_eoc=FALSE;
 			max8986_power->is_timer_expired=FALSE;
 			is_ovp_suspended = false;
+#if defined(CONFIG_HAS_WAKELOCK)
+			//if(max8986_power->charger_type == PMU_MUIC_CHGTYP_USB ||max8986_power->charger_type == PMU_MUIC_CHGTYP_DOWNSTREAM_PORT)
 
-			/* Disable charging in pmu */
+			//	wake_unlock(&max8986_power->usb_charger_wl);	/* wake lock is needed only for usb */
+#endif
+/* Disable charging in pmu */
 			max8986_stop_charging(max8986_power, true);
 			max8986_power->charger_type = param;
 		}
@@ -1375,12 +1498,15 @@ static void max8986_muic_event(int event, u32 param,  void *data)
 			}
 			if(max8986_power->dcd_timout)
 			{
-				pr_info("%s: Invalid Charger\n", __func__);
-				break;
+				pr_info("%s: Invalid Charger(Carkit type)\n", __func__);
+// CS557898, Even broken USB inserted, charging should be enabled. 
+//
+				max8986_power->charger_type = PMU_MUIC_CHGTYP_DEDICATED_CHGR;
+//				break;
 			}
-			max8986_power->charger_type = param;
-
+			else max8986_power->charger_type = param;
 #if defined(CONFIG_HAS_WAKELOCK)
+			//if(max8986_power->charger_type == PMU_MUIC_CHGTYP_USB ||max8986_power->charger_type == PMU_MUIC_CHGTYP_DOWNSTREAM_PORT)
 				wake_lock(&max8986_power->usb_charger_wl);	/* wake lock is needed only for usb */
 #endif
 				/* Notify through event callback */
@@ -1389,33 +1515,27 @@ static void max8986_muic_event(int event, u32 param,  void *data)
 				max8986->pdata->pmu_event_cb(PMU_EVENT_CHARGER_INSERT,
 						max8986_power->charger_type);
 			}
-
-#if defined(CONFIG_BRCM_FUSE_RPC_CIB)
-			BcmRpc_SetChargerInserted( true);
-#endif
-
 			max8986_power->is_charger_inserted= TRUE;
-			cancel_delayed_work_sync(&max8986_power->batt_lvl_mon_wq);
-			schedule_delayed_work(&max8986_power->batt_lvl_mon_wq, msecs_to_jiffies(500));		
+
 			max8986_start_charging(max8986_power, max8986_power->charger_type);
 		}
 		break;
+
 	default:
 		break;
 	}
 }
-
+/*****************************************************************************
+ * power driver interrupt handling
+ *****************************************************************************/
 /* Charger insertion Check For TSP */
-#if defined(CONFIG_TOUCHSCREEN_F760) || defined(CONFIG_TOUCHSCREEN_TAT200A_LUISADS)
+#if defined(CONFIG_TOUCHSCREEN_F760)
 extern void set_tsp_for_ta_detect(int state);
 int tsp_charger_type_status=0;
 EXPORT_SYMBOL(tsp_charger_type_status);
 /* Charger insertion Check For TSP */
 #endif
 
-/*****************************************************************************
- * power driver interrupt handling
- *****************************************************************************/
 static void max8986_power_isr(int irq, void *data)
 {
 	u8 hostact;
@@ -1426,7 +1546,7 @@ static void max8986_power_isr(int irq, void *data)
 	switch (irq) {
 	case MAX8986_IRQID_INT2_CHGINS:
 		/* Charger insertion is taken care in CHGTYP interrupt */
-            #if defined(CONFIG_TOUCHSCREEN_F760) || defined(CONFIG_TOUCHSCREEN_TAT200A_LUISADS)
+            #if defined(CONFIG_TOUCHSCREEN_F760)
              tsp_charger_type_status = TRUE;//TSP Charging[JG]
              set_tsp_for_ta_detect(1);//TSP Charging[JG]
             #endif
@@ -1435,7 +1555,7 @@ static void max8986_power_isr(int irq, void *data)
 
 	case MAX8986_IRQID_INT2_CHGRM:
 		pr_info("%s: Charger Removed\n", __func__);
-            #if defined(CONFIG_TOUCHSCREEN_F760) || defined(CONFIG_TOUCHSCREEN_TAT200A_LUISADS)
+            #if defined(CONFIG_TOUCHSCREEN_F760)
              tsp_charger_type_status = FALSE;//TSP Charging[JG]
              set_tsp_for_ta_detect(0);//TSP Charging[JG]
              #endif
@@ -1447,19 +1567,11 @@ static void max8986_power_isr(int irq, void *data)
 		break;
 
 	case MAX8986_IRQID_INT2_CHGEOC:
-#if defined (CONFIG_BQ27425_FUEL)
-		pr_info("%s: EOC interrupt.\n", __func__);
-		max8986_disable_irq(max8986, MAX8986_IRQID_INT2_CHGEOC);
-		max8986_power->is_eoc=TRUE;
-		max8986_get_batt_level_adc(max8986_power, 0);
-		max8986_check_eoc(max8986_power);
-#else
 		pr_info("%s: End of Charging\n", __func__);
 		max8986_disable_irq(max8986, MAX8986_IRQID_INT2_CHGEOC);
 		max8986_power->charging_status = POWER_SUPPLY_STATUS_FULL;
 		max8986_power->isFullcharged = TRUE;
 		max8986_power->is_timer_expired=FALSE;		
-		max8986_power->is_volt_recharge=FALSE;
 		max8986_power->batt_percentage=100;
 		prev_scaled_level=100;
 		power_supply_changed(&max8986_power->battery);
@@ -1472,14 +1584,12 @@ static void max8986_power_isr(int irq, void *data)
 		pr_info("%s:Total Charging Time	%lld us\n", __func__,
 				ktime_to_us(max8986_power->charging_time));
 #endif
-#endif
 		break;
 	case MAX8986_IRQID_INT2_MBCCHGERR:
 		pr_info("%s:MAX8986_IRQID_INT2_MBCCHGERR\n", __func__);
 		max8986_disable_irq(max8986, MAX8986_IRQID_INT2_MBCCHGERR);
 		max8986_power->charging_status = POWER_SUPPLY_STATUS_FULL;
 		max8986_power->isFullcharged = FALSE;
-		max8986_power->is_eoc=FALSE;
 		power_supply_changed(&max8986_power->battery);	
 		max8986_power->is_timer_expired=TRUE;
 		max8986_power->next_expire_time = jiffies;
@@ -1516,8 +1626,7 @@ static void max8986_power_isr(int irq, void *data)
 		
 	} /* switch (irq) */
 }
-
-int pmu_is_charger_inserted(void)
+int pmu_is_charger_inserted()
 {
 	struct max8986_power *max8986_power;
 
@@ -1527,11 +1636,26 @@ int pmu_is_charger_inserted(void)
 	max8986_power = platform_get_drvdata(power_device);	
 
 	return max8986_power->is_charger_inserted;
-}
-EXPORT_SYMBOL(pmu_is_charger_inserted);
 
+}
 int current_charger_status(struct max8986_power *max8986_power)
 {
+#if 0
+      //	return g_ptr_data->is_charger_inserted;
+
+	struct max8986_power *max8986_power;
+	if(!power_device)
+		return -2;
+
+	max8986_power = platform_get_drvdata(power_device);
+	if(max8986_power) {
+        return max8986_power->is_charger_inserted;
+    }
+    else{
+		pr_err("%s: max8986_power is NULL ERROR\n", __func__);
+        return -1;
+    }
+#else
 	struct max8986 *max8986 = max8986_power->max8986;
 	int ret,chg_typ;
 	unsigned char status2=0;
@@ -1553,9 +1677,10 @@ int current_charger_status(struct max8986_power *max8986_power)
 		default:
 			return FALSE;
 	}
-}
-EXPORT_SYMBOL(current_charger_status);
+#endif	
 
+}
+EXPORT_SYMBOL(pmu_is_charger_inserted);
 void set_button(int value)
 {
 	struct max8986_power *max8986_power;
@@ -1568,8 +1693,7 @@ void set_button(int value)
 	max8986_power->button = value;
 }
 EXPORT_SYMBOL(set_button);
-
-int max8986_ear_adc(void)
+int max8986_ear_adc()
 {
 	int ear_adc = 0;
 	struct max8986_power *max8986_power;
@@ -1729,9 +1853,10 @@ void pmu_set_charging_current(pmu_charging_current charging_cur)
 	if(max8986_power)
 		max8986_set_fc_current(max8986_power,charging_cur);
 }
+
 EXPORT_SYMBOL(pmu_set_charging_current);
 
-u8 max8986_read_accessory_type(void)
+u8 max8986_read_accessory_type()
 {
 	struct max8986 *max8986;
 	struct max8986_power *max8986_power;
@@ -1753,8 +1878,10 @@ u8 max8986_read_accessory_type(void)
 	adc_val = MAX8986_M_STATUS1_ADC_MASK & status1;
 
 	return adc_val;
+
 }
 EXPORT_SYMBOL(max8986_read_accessory_type);
+
 
 static int max8986_power_ioctl_handler(u32 cmd, u32 arg, void *pri_data)
 {
@@ -1844,99 +1971,107 @@ static ssize_t spa_Test_Store(struct device *dev, struct device_attribute *attr,
         .store = spa_Test_Store,														\
 }
 
+
 enum {
-	BATT_HEALTH = 0,
-	BATT_WALL_CURRENT,
-	BATT_USB_CURRENT,
+	BATT_DEBUG_LEVEL =0,
+	BATT_HEALTH,
 	BATT_EOC,
 	BATT_SET_CHG_TIMER,
 	BATT_START_RECHARGE,
-	BATT_VOLT_RECHARGE,
+	BATT_AVG_VOLT,
+	BATT_AVG_TEMP,
+	BATT_AVG_TEMP_AVER,	
 	BATT_CUR_VOLT,
 	BATT_CUR_TEMP,
 	BATT_VOLT_ADC,
+	BATT_VOLT_ADC_AVER,
 	BATT_TEMP_ADC,
+	BATT_TEMP_ADC_AVER,	
 	BATT_CAPACITY,	
 	BATT_STATUS,
 	BATT_IS_FULL,
-	BATT_CHARGER_TYPE,
 	BATT_IS_CHG,
 	BATT_IS_JIG,
 	BATT_LEVEL,
-	BATT_AVG_CURRENT,
+	BATT_TEMP,
+	BATT_VOLT,
 	BUTTON,
-	BATT_FACTORY_TEMP,
-	BATT_FACTORY_VOLT,
-#if defined (CONFIG_BQ27425_FUEL)
-	FG_RST,
-	FG_DFFS,
-#endif
+	EAR_ADC,
+	BATT_RECHG_COUNT,
+	BATT_GET_TIMER_STATUS,
+	BATT_LEFT_CHG_TIME,
 };
 
 static struct device_attribute spa_Test_Attrs[] = {
+	SPA_TEST_ATTR(debug_level),
 	SPA_TEST_ATTR(health),
-	SPA_TEST_ATTR(WALL_CURRENT),
-	SPA_TEST_ATTR(USB_CURRENT),
 	SPA_TEST_ATTR(EOC),
 	SPA_TEST_ATTR(timerExpire),
-	SPA_TEST_ATTR(TimerRecharge),
-	SPA_TEST_ATTR(VoltRecharge),
+	SPA_TEST_ATTR(reCharge),
 	SPA_TEST_ATTR(batt_vol),
 	SPA_TEST_ATTR(batt_temp),
+	SPA_TEST_ATTR(batt_temp_aver),	
+	SPA_TEST_ATTR(batt_vol_aver),
+	SPA_TEST_ATTR(batt_tmp_adc_aver),
+	SPA_TEST_ATTR(batt_vol_adc_aver),
 	SPA_TEST_ATTR(batt_vol_adc),	
 	SPA_TEST_ATTR(batt_temp_adc),
+	SPA_TEST_ATTR(batt_temp_adc_aver),	
 	SPA_TEST_ATTR(capacity),	
 	SPA_TEST_ATTR(status),
 	SPA_TEST_ATTR(isFullcharged),
-	SPA_TEST_ATTR(charger_type),
 	SPA_TEST_ATTR(is_charger_inserted),
 	SPA_TEST_ATTR(is_jig_inserted),	
 	SPA_TEST_ATTR(level),	
-	SPA_TEST_ATTR(avg_current),	
-	SPA_TEST_ATTR(button),	
 	SPA_TEST_ATTR(tmp),	
-	SPA_TEST_ATTR(volt),	
-#if defined (CONFIG_BQ27425_FUEL)
-	SPA_TEST_ATTR(fg_rst),
-	SPA_TEST_ATTR(fg_dffs),
-#endif
+	SPA_TEST_ATTR(volt),		
+	SPA_TEST_ATTR(button),	
+	SPA_TEST_ATTR(ear_adc),		
+	SPA_TEST_ATTR(rechargeCount),
+	SPA_TEST_ATTR(get_timer_status),
+	SPA_TEST_ATTR(left_chg_time),
 };
 
 static ssize_t spa_Test_Show(struct device *dev, struct device_attribute *attr, char *buf)
 {
+	int tmp,tmp_value;
 	ssize_t i = 0;
 	const ptrdiff_t off = attr - spa_Test_Attrs;
 
+
 	struct max8986_power *max8986_power =
 		dev_get_drvdata(dev->parent);
+	struct max8986_power_pdata *pdata;
 	if (unlikely(!max8986_power || !max8986_power->max8986)) {
 		pr_err("%s: invalid driver data\n", __func__);
 		return -EINVAL;
 	}
+	pdata = max8986_power->max8986->pdata->power;
 
 	switch (off)
 	{
+		#if 1
+		//case BATT_DEBUG_LEVEL:
+		//	i += scnprintf(buf + i, PAGE_SIZE - i, "Debug Level = <%d>\n", pc_debug_level);
+		//	break;
 		case BATT_HEALTH:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_health);
 			break;
-		case BATT_WALL_CURRENT:
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->max8986->pdata->power->wac_charging_cc);
+		//case BATT_EOC:
+		//	i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", SPA_GET_STATUS(STATUS_EOC));
+		//	break;
+		//case BATT_START_RECHARGE:
+		//	i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", SPA_GET_STATUS(STATUS_RECHG));
+		//	break;
+		case BATT_AVG_VOLT:
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_voltage);
 			break;
-		case BATT_USB_CURRENT:
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->max8986->pdata->power->usb_charging_cc);
+		case BATT_AVG_TEMP:
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_temp_celsius);
 			break;
-		case BATT_EOC:			
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->max8986->pdata->power->eoc_current);
-			break;
-		case BATT_SET_CHG_TIMER:
-			i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", max8986_power->is_timer_expired);
-			break;
-		case BATT_START_RECHARGE:
-			i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", max8986_power->is_recharge);
-			break;
-		case BATT_VOLT_RECHARGE:
-			i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", max8986_power->is_volt_recharge);
-			break;
+		case BATT_AVG_TEMP_AVER:
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_temp_celsius);
+			break;			
 		case BATT_CUR_VOLT:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_voltage);
 			break;
@@ -1946,9 +2081,15 @@ static ssize_t spa_Test_Show(struct device *dev, struct device_attribute *attr, 
 		case BATT_VOLT_ADC :
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_adc_avg);
 			break;
+		case BATT_VOLT_ADC_AVER :
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_adc_avg);
+			break;			
 		case BATT_TEMP_ADC :
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_temp_adc_avg);
 			break;
+		case BATT_TEMP_ADC_AVER:
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_temp_adc_avg);
+			break;			
 		case BATT_CAPACITY:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->batt_percentage);
 			break;
@@ -1958,9 +2099,6 @@ static ssize_t spa_Test_Show(struct device *dev, struct device_attribute *attr, 
 		case BATT_IS_FULL:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->isFullcharged);
 			break;
-		case BATT_CHARGER_TYPE:
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->charger_type);
-			break;
 		case BATT_IS_CHG:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->is_charger_inserted);
 			break;
@@ -1969,38 +2107,40 @@ static ssize_t spa_Test_Show(struct device *dev, struct device_attribute *attr, 
 			break;
 		case BATT_LEVEL:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->level);
-			break;	
-		case BATT_AVG_CURRENT:
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->averageCurrent);
-			break;	
-		case BUTTON:
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%s\n", ((max8986_power->button)?"ON":"OFF"));
 			break;
-		case BATT_FACTORY_TEMP:
+		case BATT_TEMP:
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->tmp);			
 			break;
-		case BATT_FACTORY_VOLT:
-			{
-			int tmp, tmp_value;
+		case BATT_VOLT:
 			tmp = max8986_power->batt_voltage/10;
 			tmp_value = max8986_power->batt_voltage/1000;
-			if(tmp-100*tmp_value >=10)
-				scnprintf(max8986_power->volt,10,"%d.%d", tmp_value,tmp-100*tmp_value);
-			else
-				scnprintf(max8986_power->volt,10,"%d.0%d", tmp_value,tmp-100*tmp_value);
+			scnprintf(max8986_power->volt,10,"%d.%d", tmp_value,tmp-100*tmp_value);
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%s\n", max8986_power->volt);					
+			break;
+		case BUTTON:
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%s\n", ((max8986_power->button)?"ON":"OFF"));
+			break;			
 			
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%s\n", max8986_power->volt);
+		case EAR_ADC:
+			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", max8986_power->ear_adc);
+			break;			
+				
+			
 			break;
-			}
-#if defined (CONFIG_BQ27425_FUEL)
-		case FG_DFFS:
-			{
-			unsigned int version = 0;
-			get_bq27425_dffs_version(&version);
-			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", version);
-			break;
-			}
-#endif
+			
+		//case BATT_RECHG_COUNT:
+		//	i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", SPA_GET_STATUS(STATUS_RECHG_COUNT));
+		//	break;
+		//case BATT_GET_TIMER_STATUS :
+		//	i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", SPA_GET_STATUS(STATUS_CHG_TIMER));
+		//	break;
+		//case BATT_LEFT_CHG_TIME :
+		//	if(SPA_GET_STATUS(STATUS_CHG_TIMER) == CHARGE_TIMER_STARTED)
+		//		i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", jiffies_to_msecs(g_pdata->Charge_timer.expires - jiffies)/1000);
+		//	else
+		//		i += scnprintf(buf + i, PAGE_SIZE -i, "%d\n", 0);
+		//	break;	
+		#endif
 		default :
 			break;
 	}
@@ -2015,19 +2155,6 @@ static ssize_t spa_Test_Store(struct device *dev, struct device_attribute *attr,
 
 	switch (off)
 	{
-#if defined (CONFIG_BQ27425_FUEL)	
-		case FG_RST:
-			{
-			unsigned int flag = 0;
-			sscanf(buf, "%u", &flag);
-
-			if(flag)
-				bq27425_reset();
-			
-		        ret = count;
-			break;
-			}
-#endif
 		#if 0
 		case BATT_DEBUG_LEVEL:
 		        sscanf(buf, "%u", &pc_debug_level);
@@ -2112,6 +2239,7 @@ static ssize_t spa_Test_Store(struct device *dev, struct device_attribute *attr,
 }
 #endif
 
+
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 static void max8986_power_early_suspend(struct early_suspend *h)
 {
@@ -2123,6 +2251,7 @@ static void max8986_power_early_suspend(struct early_suspend *h)
 		pr_info("[%s] cancel delayed work \n", __func__);	
 		cancel_delayed_work_sync(&max8986_power->batt_lvl_mon_wq);
 		wake_unlock(&max8986_power->usb_charger_wl);	/* wake lock is needed only for usb */
+
 	}	
 	else
 	{
@@ -2142,6 +2271,7 @@ static void max8986_power_late_resume(struct early_suspend *h)
 			msecs_to_jiffies(500));
 	max8986_power->batt_temp_adc_avg=0;
 	max8986_get_batt_temperature(max8986_power);
+
 	pr_info("[%s]+++\n", __func__);
 }
 #else
@@ -2160,7 +2290,7 @@ static int max8986_power_resume(struct platform_device *pdev)
 	struct max8986_power *max8986_power = platform_get_drvdata(pdev);
 	if (max8986_power) {
 		schedule_delayed_work(&max8986_power->batt_lvl_mon_wq,
-				msecs_to_jiffies(500));
+				msecs_to_jiffies(2000));
 	}
 	return 0;
 }
@@ -2179,6 +2309,7 @@ static void max8986_init_charger(struct max8986_power *max8986_power)
 	struct max8986 *max8986 = max8986_power->max8986;
 	struct max8986_power_pdata *plat_data = max8986->pdata->power;
 
+//	reg_val = MAX8986_MBCCTRL1_TFCH_DISABLE;
 	reg_val = MAX8986_MBCCTRL1_TFCH_5HR;
 	max8986->write_dev(max8986, MAX8986_PM_REG_MBCCTRL1, reg_val);
 
@@ -2188,7 +2319,7 @@ static void max8986_init_charger(struct max8986_power *max8986_power)
 	max8986->write_dev(max8986, MAX8986_PM_REG_MBCCTRL3, reg_val);
 
 	/* Set 450mA as charging current bydefault */
-	reg_val = plat_data->wac_charging_cc;
+	reg_val = MAX8986_CHARGING_CURR_450MA ;
 	max8986->write_dev(max8986, MAX8986_PM_REG_MBCCTRL4, reg_val);
 
 	/* Set 60mA as EOC */
@@ -2233,9 +2364,9 @@ static void max8986_init_charger(struct max8986_power *max8986_power)
 static int __devinit max8986_power_probe(struct platform_device *pdev)
 {
 	u8 reg_val;
-	int ret = 0;
 	struct max8986_power *max8986_power;
 	struct max8986 *max8986 = dev_get_drvdata(pdev->dev.parent);
+	int ret = 0;
 	struct max8986_power_pdata *power_pdata;
 #if defined(CONFIG_BRCM_FUSE_RIL_CIB) && !defined(CONFIG_BATT_LVL_FROM_ADC)
 	unsigned long notify_id_list[] = { RIL_NOTIFY_DEVSPECIFIC_BATT_LEVEL };
@@ -2258,6 +2389,8 @@ static int __devinit max8986_power_probe(struct platform_device *pdev)
 	power_device = pdev;
 	power_pdata = max8986->pdata->power;
 
+	//g_ptr_data = max8986_power;
+	
 #ifdef CONFIG_CPU_FREQ_GOV_BCM21553
 	jig_client = cpufreq_bcm_client_get("jig_client");
 	if (!jig_client) {
@@ -2265,11 +2398,13 @@ static int __devinit max8986_power_probe(struct platform_device *pdev)
 		return -EIO;
 	}
 #endif
-
 #if defined(CONFIG_HAS_WAKELOCK)
     // Prevent the full system suspend.
 	wake_lock_init(&max8986_power->jig_on_wl, WAKE_LOCK_SUSPEND,
 						__stringify(jig_on_wl));
+#endif	
+
+#if defined(CONFIG_HAS_WAKELOCK)
 	wake_lock_init(&max8986_power->usb_charger_wl, WAKE_LOCK_SUSPEND,
 						__stringify(usb_charger_wl));
 	wake_lock_init(&max8986_power->temp_adc_wl, WAKE_LOCK_IDLE,
@@ -2277,20 +2412,17 @@ static int __devinit max8986_power_probe(struct platform_device *pdev)
 #endif
 
 	mutex_init(&max8986_power->power_mtx);
-	mutex_init(&max8986_power->eoc_mtx);
 
 	/*set voltage to 20% by default */
 	max8986_power->batt_percentage = BAT_PERCENT_INIT_VALUE;
+	//max8986_power->batt_voltage = power_pdata->batt_adc_tbl.bat_vol[2]*1000;
 	max8986_power->batt_voltage = power_pdata->batt_adc_tbl.bat_vol[power_pdata->batt_adc_tbl.num_entries-1]-1;	
 	max8986_power->batt_health = POWER_SUPPLY_HEALTH_GOOD;
-	max8986_power->averageCurrent = 0;
 	max8986_power->isFullcharged = FALSE;
-	max8986_power->is_eoc=FALSE;
 	max8986_power->is_charger_inserted= FALSE;
 	max8986_power->is_jig_inserted= FALSE;
 	max8986_power->is_timer_expired=FALSE;
 	max8986_power->is_recharge=FALSE;
-	max8986_power->is_volt_recharge=FALSE;
 	max8986_power->suspended = FALSE;
 	
 	/* init pmu */
@@ -2303,6 +2435,7 @@ static int __devinit max8986_power_probe(struct platform_device *pdev)
 	max8986_power->charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
 
 	/*register power supplies */
+	//max8986_power->wall.name = "max8986-wall";
 	max8986_power->wall.name = "battery";
 	max8986_power->wall.type = POWER_SUPPLY_TYPE_MAINS;
 	max8986_power->wall.properties = wall_props;
@@ -2351,10 +2484,14 @@ static int __devinit max8986_power_probe(struct platform_device *pdev)
 #else
 	pr_err("%s:KRIL_Register not defined\n", __func__);
 #endif
-
 	/* start the workqueue */
+#if 0
+	queue_delayed_work(max8986_power->max8986->pmu_workqueue,
+		&max8986_power->batt_lvl_mon_wq, msecs_to_jiffies(500));
+#else
 	schedule_delayed_work(&max8986_power->batt_lvl_mon_wq, msecs_to_jiffies(500));
 
+#endif
 	max8986_register_ioctl_handler(max8986, MAX8986_SUBDEV_POWER,
 	max8986_power_ioctl_handler, max8986_power);
 #if defined(CONFIG_HAS_EARLYSUSPEND)
@@ -2430,6 +2567,8 @@ static int __devexit max8986_power_remove(struct platform_device *pdev)
 #if defined(CONFIG_HAS_WAKELOCK)
 		wake_lock_destroy(&max8986_power->temp_adc_wl);
 		wake_lock_destroy(&max8986_power->usb_charger_wl);
+#endif
+#if defined(CONFIG_HAS_WAKELOCK)
 		wake_lock_destroy(&max8986_power->jig_on_wl);
 #endif
 	}

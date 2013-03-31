@@ -1,26 +1,3 @@
-  /*
- *
- * sensor api file
- *
-. COPYRIGHT (C)  SAMSUNG Electronics CO., LTD (Suwon, Korea). 2010   
- *
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
- */
-
 #if !defined(_CAMACQ_API_C_)
 #define _CAMACQ_API_C_
 
@@ -237,8 +214,6 @@ struct stCamacqSize_t g_stCamacqJpegSizes[] = {
 
     // 8
     /*5M 2592x1944*/
-#if 0
-
     {
         .uiWidth		            = 2592,
         .uiHeight 	                = 1944,
@@ -247,7 +222,6 @@ struct stCamacqSize_t g_stCamacqJpegSizes[] = {
         .pvRegs[CAMACQ_SENSOR_SUB]  = (const void*)NULL,
 #endif /* CAMACQ_SENSOR_MAX==2 */
     },
-    #endif
 };
 #define N_CAMACQ_JPEG_SIZES (ARRAY_SIZE(g_stCamacqJpegSizes))
 
@@ -513,7 +487,9 @@ void CreateCamacqSensor( struct stCamacqSensor_t* pstSensor, int uiResType )
     CamacqTraceIN();
 
     /* init memeber variable */
-    pstSensor->m_uiResType = uiResType;        if( uiResType == CAMACQ_SENSOR_MAIN )
+    pstSensor->m_uiResType = uiResType;
+    
+    if( uiResType == CAMACQ_SENSOR_MAIN )
     {
         strcpy( pstSensor->m_szName, CAMACQ_MAIN_NAME );
         pstSensor->m_iYuvOrder = CAMACQ_MAIN_YUVORDER;
@@ -882,11 +858,10 @@ S32 SensorPowerOff( struct stCamacqSensorManager_t* this, U32 uiSelectedSensor )
     {
         CamacqTraceErr( " pstSensor[%x], uiSelectedSensor[%d] ", (U32)pstSensor, uiSelectedSensor );
         iRet = -1;
-        return iRet; //aska add for prevent issue
     }
 
     // change sony sensor slave id, temp code 
-    if(!strcmp(pstSensor->m_pI2cClient->name, "isx006"))
+    if( (pstSensor->m_pI2cClient != NULL) && (!strcmp(pstSensor->m_pI2cClient->name, "isx006")) )
     {
         CamacqTraceDbg("====== change slave address 0x3D to 0x1A");
         pstSensor->m_pI2cClient->addr = 0x1A;
@@ -945,9 +920,12 @@ struct stCamacqSensor_t* SetSensor( struct stCamacqSensorManager_t* this, U32 ui
 struct stCamacqSensor_t* GetSensor( struct stCamacqSensorManager_t* this, U32 uiSelectedSensor )
 {
     struct stCamacqSensor_t* pstRet = NULL;
-CamacqTraceDbg("%s : sensorNum=%d", __FUNCTION__, uiSelectedSensor);
-
-    if( uiSelectedSensor == CAMACQ_SENSOR_MAIN )    {        pstRet = &(this->m_pstSensors[uiSelectedSensor]);    }#if (CAM_SENSOR_NUM==2)//swsw_dual (CAMACQ_SENSOR_MAX==2)
+ 
+    if( uiSelectedSensor == CAMACQ_SENSOR_MAIN )
+    {
+        pstRet = &(this->m_pstSensors[uiSelectedSensor]);
+    }
+#if (CAMACQ_SENSOR_MAX==2)
     else if( uiSelectedSensor == CAMACQ_SENSOR_SUB )
     {
         pstRet = &(this->m_pstSensors[uiSelectedSensor]);
@@ -971,7 +949,6 @@ S32 CamacqAPIDetect( struct stCamacqSensor_t* this )
 
 	// 1. power-on
 	g_pstCamacqSensorManager->SensorPowerOn( g_pstCamacqSensorManager, uiResType );
-    CamacqTraceDbg("%s : m_szName=%s (sensorNum=%d)", __FUNCTION__, this->m_szName, uiResType);
 
 	// 2. check i2c operation correctly (sensor defendency)
     if( !strcmp( this->m_szName, "isx006" ) )
@@ -1003,22 +980,11 @@ S32 CamacqAPIDetect( struct stCamacqSensor_t* this )
 		CamacqExtReadI2c( this->m_pI2cClient, usReadAddr, 2, rgucReadData, 2 );
 
 		CamacqTraceDbg( "iRet:%d, sensor : %s, id : %02x -- %02x", iRet, this->m_szName, rgucReadData[0], rgucReadData[1] ); 
-    }  //swsw_dual
-    else if( !strcmp( this->m_szName, "cami2c_main") )
-    {
-        CamacqTraceDbg("Detect cami2c_main");
-    }
-	else if( !strcmp( this->m_szName, "cami2c_sub") )
-    {
-        CamacqTraceDbg("Detect cami2c_sub");
-    }
-#if 0//swsw_dual
-
+    } 
     else if( !strcmp( this->m_szName, "cami2c") )
     {
         CamacqTraceDbg("Detect cami2c");
-    }#endif//swsw_dual
-
+    }
 	else
 	{
 		iRet = -1;
@@ -1152,7 +1118,7 @@ CAMACQ_API_OUT:
 S32 CamacqAPIEnumPixFmt( struct stCamacqSensor_t* this, struct v4l2_fmtdesc* pstV4l2FmtDesc )
 {
     S32 iRet = 0;
-    _stCamacqFmt*  pstFormat = 0;
+    _stCamacqFmt*  pstFormat;
     CamacqTraceIN( "pstV4l2FmtDesc->index : %d", pstV4l2FmtDesc->index );    
 
     if ( pstV4l2FmtDesc->index >= N_CAMACQ_FMTS )
@@ -1165,11 +1131,8 @@ S32 CamacqAPIEnumPixFmt( struct stCamacqSensor_t* this, struct v4l2_fmtdesc* pst
 
     // set pstV4l2FmtDesc
     pstV4l2FmtDesc->flags = 0;
-	if(strlen(pstFormat->pucDesc) <= strlen(pstV4l2FmtDesc->description))
-	{
-	    strcpy( pstV4l2FmtDesc->description, pstFormat->pucDesc );
-	}
-	pstV4l2FmtDesc->pixelformat = pstFormat->uiPixelFormat;
+    strcpy( pstV4l2FmtDesc->description, pstFormat->pucDesc );
+    pstV4l2FmtDesc->pixelformat = pstFormat->uiPixelFormat;
 
     CamacqTraceOUT();
     return iRet;
@@ -1178,7 +1141,7 @@ S32 CamacqAPIEnumPixFmt( struct stCamacqSensor_t* this, struct v4l2_fmtdesc* pst
 S32 CamacqAPIEnumFrameSizes( struct stCamacqSensor_t *this, struct v4l2_frmsizeenum* pstV4l2FrameSizeEnum )
 {
     S32 iRet = 0;
-    _stCamacqSize*  pstSize = 0;
+    _stCamacqSize*  pstSize;
     CamacqTraceIN( "pstV4l2FrameSizeEnum->index : %d, pstV4l2FrameSizeEnum->pixel_format : %d", 
                         pstV4l2FrameSizeEnum->index, pstV4l2FrameSizeEnum->pixel_format );
 
@@ -1206,15 +1169,13 @@ S32 CamacqAPIEnumFrameSizes( struct stCamacqSensor_t *this, struct v4l2_frmsizee
 
         pstSize = g_stCamacqJpegSizes + pstV4l2FrameSizeEnum->index;
     }    
-    if(pstSize!=0){ //aska add for prevent issue
+    
 
     // set pstV4l2FmtDesc
     pstV4l2FrameSizeEnum->type = V4L2_FRMSIZE_TYPE_DISCRETE;
     pstV4l2FrameSizeEnum->discrete.width = pstSize->uiWidth;
     pstV4l2FrameSizeEnum->discrete.height = pstSize->uiHeight;
-		}else{
-			iRet=-1;
-		}
+
     CamacqTraceOUT();
     return iRet;
 }
@@ -1321,7 +1282,10 @@ S32 CamacqAPISetFmt( struct stCamacqSensor_t* this, struct v4l2_format* pstV4l2F
         {
             CamacqExtWriteI2cLists( this->m_pI2cClient, this->m_pstExtAPIs->m_pstSensorRegs->pvJpegOutSize5M, this->m_uiResType );
         }
-        
+        else if( pstCamacqSize->uiWidth == 2560 && pstCamacqSize->uiHeight == 1920 )
+        {
+            CamacqExtWriteI2cLists( this->m_pI2cClient, this->m_pstExtAPIs->m_pstSensorRegs->pvJpegOutSize5M_2, this->m_uiResType );
+        }
         else if( pstCamacqSize->uiWidth == 2560 && pstCamacqSize->uiHeight == 1536 )
         {
             CamacqExtWriteI2cLists( this->m_pI2cClient, this->m_pstExtAPIs->m_pstSensorRegs->pvJpegOutSize4M, this->m_uiResType );
@@ -2360,34 +2324,6 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
         }
         break;
 
-       case CAMACQ_SENSORDATA_FIXEDFRAME_25:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvCamcorderPreview != NULL )
-            {
-                 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvFpsFixed_25, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvCamcorderPreview is NULL" );
-            }
-        }
-        break;
-
-       case CAMACQ_SENSORDATA_FIXEDFRAME_30:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvCamcorderPreview != NULL )
-            {
-                 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvFpsFixed_30, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvCamcorderPreview is NULL" );
-            }
-        }
-        break;
-
 
         case CAMACQ_SENSORDATA_WB_AUTO:
         {
@@ -2489,20 +2425,6 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
             }
         }
         break;
-
-        	case CAMACQ_SENSORDATA_CAPTURE_NIGHTSCENE:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvSnapshotNightsceneRegs != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSnapshotNightsceneRegs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvSnapshotNightsceneRegs  is NULL" );
-            }
-        }
-	break;
 
 		
     case CAMACQ_SENSORDATA_SCENE_NIGHT_DARK:
@@ -2851,140 +2773,6 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
 	break;
 
 
-#ifdef CONFIG_BCM_CAM_S5K4ECGX
-
-        case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_0:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_0_Regs != NULL )
-            {
-                 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_0_Regs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvBrightness_0_Regs is NULL" );
-            }
-        }
-        break;
-
-		
-        case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_1:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_1_Regs != NULL )
-            {
-                 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_1_Regs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvBrightness_1_Regs is NULL" );
-            }
-        }
-        break;
-
-        case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_2:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_2_Regs != NULL )
-            {
-                 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_2_Regs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvBrightness_2_Regs  is NULL" );
-            }
-        }
-        break;
-
-	case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_3:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_3_Regs != NULL )
-		{
-			 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_3_Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvBrightness_3_Regs is NULL" );
-		}
-	}
-	break;
-
-
-	case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_4:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_4_Regs != NULL )
-		{
-			 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_4_Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvBrightness_4_Regs is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_5:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_5_Regs != NULL )
-		{
-			 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_5_Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvBrightness_5_Regs  is NULL" );
-		}
-	}
-	break;
-
-
-	case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_6:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_6_Regs != NULL )
-		{
-			 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_6_Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvBrightness_6_Regs is NULL" );
-		}
-	}
-	break;
-
-
-	case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_7:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_7_Regs != NULL )
-		{
-			 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_7_Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvBrightness_7_Regs is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_CCD_BRIGHTNESS_8:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_8_Regs != NULL )
-		{
-			 iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCCDBrightness_8_Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvBrightness_8_Regs is NULL" );
-		}
-	}
-	break;    
-#endif
-
-
 	case CAMACQ_SENSORDATA_EFFECT_NONE:
 	{
 		if( pstExtAPIs->m_pstSensorRegs->pvEffectNoneRegs != NULL )
@@ -3259,639 +3047,6 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
 		}
 	}
 	break;
-
-#if 1
-
-#ifdef CONFIG_BCM_CAM_S5K4ECGX // for cooperve only
-	case CAMACQ_SENSORDATA_X1_25_Zoom_0 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_0, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_1 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_1, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_2 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_2, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_3 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_3, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_4 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_4, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_5 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_5, this->m_uiResType );
-		break;;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_6 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_6, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_7 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_7, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_25_Zoom_8 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_25_reg_8, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_X1_6_Zoom_0 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_0, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_1 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_1, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_2 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_2, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_3 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_3, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_4 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_4, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_5 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_5, this->m_uiResType );
-		break;;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_6 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_6, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_7 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_7, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X1_6_Zoom_8 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_1_6_reg_8, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_X2_Zoom_0 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_0, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_1 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_1, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_2 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_2, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_3 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_3, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_4 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_4, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_5 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_5, this->m_uiResType );
-		break;;
-	case CAMACQ_SENSORDATA_X2_Zoom_6 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_6, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_7 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_7, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X2_Zoom_8 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_2_reg_8, this->m_uiResType );
-		break;
-		
-	case CAMACQ_SENSORDATA_X4_Zoom_0 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_0, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_1 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_1, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_2 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_2, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_3 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_3, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_4 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_4, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_5 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_5, this->m_uiResType );
-		break;;
-	case CAMACQ_SENSORDATA_X4_Zoom_6 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_6, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_7 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_7, this->m_uiResType );
-		break;
-	case CAMACQ_SENSORDATA_X4_Zoom_8 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvZoom_4_reg_8, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_ISO_AUTO:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvISOAutoRegs!= NULL )
-		{
-			iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvISOAutoRegs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvISOAutoRegs  is NULL" );
-		}
-	}
-	break;
-	
-	case CAMACQ_SENSORDATA_ISO_50:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvISO50Regs!= NULL )
-            {
-                CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvISO50Regs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvISO50Regs  is NULL" );
-            }
-        }
-	break;
-	
-	case CAMACQ_SENSORDATA_ISO_100:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvISO100Regs!= NULL )
-		{
-			iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvISO100Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvISO100Regs  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_ISO_200:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvISO200Regs!= NULL )
-		{
-			iRet =  CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvISO200Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvISO200Regs  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_ISO_400:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvISO400Regs!= NULL )
-		{
-			iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvISO400Regs, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvISO400Regs  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_QUALITY_SF:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvJpegQualitySuperfine != NULL )
-		{
-			iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegQualitySuperfine, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvJpegQualitySuperfine  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_QUALITY_F:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvJpegQualityFine != NULL )
-		{
-			iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegQualityFine, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvJpegQualityFine  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_QUALITY_N:
-	{
-		if( pstExtAPIs->m_pstSensorRegs->pvJpegQualityNormal != NULL )
-		{
-			iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegQualityNormal, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-			CamacqTraceErr( "pvJpegQualityNormal  is NULL" );
-		}
-	}
-	break;
-	case CAMACQ_SENSORDATA_SIZE_5M:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize5M != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize5M, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize5M  is NULL" );
-            }
-        }
-        break;	
-
-	case CAMACQ_SENSORDATA_SIZE_3M:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize3M != NULL )
-		{
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize3M, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize3M  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_2M:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize2M != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize2M, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize2M  is NULL" );
-            }
-        }
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_1M:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize1M != NULL )
-		{
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize1M, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize1M  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_VGA:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeVGA != NULL )
-            {
-               iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeVGA, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSizeVGA  is NULL" );
-            }
-        }
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_QVGA:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeQVGA != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeQVGA, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSizeQVGA  is NULL" );
-            }
-        }
-	break;
-
-   case CAMACQ_SENSORDATA_PREVIEW_RETURN:
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvPreviewRetRegs, this->m_uiResType );
-		break;
-   case CAMACQ_SENSORDATA_AE_LOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAELockRegs, this->m_uiResType );
-		break;
-      
-	case CAMACQ_SENSORDATA_AE_UNLOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAEUnlockRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_AWB_LOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAWBLockRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_AWB_UNLOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAWBUnlockReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFRegs, this->m_uiResType );
-		break;
-      
-	case CAMACQ_SENSORDATA_SINGLE_AF_START :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSingleAFStartRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_OFF_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvOffAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_CHECK_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCheckAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_RESET_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvResetAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_MANUAL_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvManualAFReg, this->m_uiResType );
-		break;
-      
-	case CAMACQ_SENSORDATA_MACRO_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvMacroAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_RETURN_MANUAL_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvReturnManualAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_RETURN_MACRO_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvReturnMacroAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NLUX :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAF_NLUXRegs, this->m_uiResType );
-		break;
-      
-	case CAMACQ_SENSORDATA_SET_AF_LLUX :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAF_LLUXRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_1 :
-		iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFNormalMode1, this->m_uiResType );
-        CamacqTraceDbg( "swsw_CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_1 : %d", iRet );
-        if (iRet < 0)
-        {
-            CamacqTraceErr( "normal af 1:write failed" );            
-        }
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_2 :
-		iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFNormalMode2, this->m_uiResType );
-                CamacqTraceDbg( "swsw_CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_2 : %d", iRet );
-        if (iRet < 0)
-        {
-            CamacqTraceErr( "normal af 2:write failed" );            
-        }
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_3 :
-		iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFNormalMode3, this->m_uiResType );
-        if (iRet < 0)
-        {
-            CamacqTraceErr( "normal af 3:write failed" );            
-        }
-		break;
-      
-	case CAMACQ_SENSORDATA_SET_AF_MACRO_MODE_1 :
-		iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFMacroMode1, this->m_uiResType );
-		        if (iRet < 0)
-        {
-            CamacqTraceErr( "macro 1:write failed" );            
-        }
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_MACRO_MODE_2 :
-		iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFMacroMode2, this->m_uiResType );
-		        if (iRet < 0)
-        {
-            CamacqTraceErr( "macro 2:write failed" );            
-        }
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_MACRO_MODE_3 :
-		iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFMacroMode3, this->m_uiResType );
-		        if (iRet < 0)
-        {
-            CamacqTraceErr( "macro 3:write failed" );            
-        }
-		break;
-#endif
-
-
-
-#else
-
-
-
-    
-#ifdef CONFIG_BCM_CAM_S5K4ECGX // for cooperve only
-	case CAMACQ_SENSORDATA_ISO_AUTO:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvISOAutoRegs!= NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvISOAutoRegs, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvISOAutoRegs  is NULL" );
-            }
-        }
-	break;
-#endif
-
-#ifdef CONFIG_BCM_CAM_S5K4ECGX // for amazing AF
-   case CAMACQ_SENSORDATA_PREVIEW_RETURN:
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvPreviewRetRegs, this->m_uiResType );
-		break;
-   case CAMACQ_SENSORDATA_AE_LOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAELockRegs, this->m_uiResType );
-		break;
-      
-	case CAMACQ_SENSORDATA_AE_UNLOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAEUnlockRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_AWB_LOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAWBLockRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_AWB_UNLOCK :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvAWBUnlockReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SINGLE_AF_START :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSingleAFStartRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_OFF_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvOffAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_CHECK_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvCheckAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_RESET_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvResetAFRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_MANUAL_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvManualAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_MACRO_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvMacroAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_RETURN_MANUAL_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvReturnManualAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_RETURN_MACRO_AF :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvReturnMacroAFReg, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NLUX :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAF_NLUXRegs, this->m_uiResType );
-		break;
-      
-	case CAMACQ_SENSORDATA_SET_AF_LLUX :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAF_LLUXRegs, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_1 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFNormalMode1, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_2 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFNormalMode2, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_NORMAL_MODE_3 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFNormalMode3, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_MACRO_MODE_1 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFMacroMode1, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_MACRO_MODE_2 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFMacroMode2, this->m_uiResType );
-		break;
-
-	case CAMACQ_SENSORDATA_SET_AF_MACRO_MODE_3 :
-		CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSetAFMacroMode3, this->m_uiResType );
-		break;
-#endif
-
-
-#if defined(CONFIG_BCM_CAM_S5K4ECGX) //swsw_for amazing
-
-
-
-        
-        case CAMACQ_SENSORDATA_SIZE_5M:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize5M != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize5M, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize5M  is NULL" );
-            }
-        }
-        break;	
-
-	case CAMACQ_SENSORDATA_SIZE_3M:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize3M != NULL )
-		{
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize3M, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize3M  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_2M:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize2M != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize2M, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize2M  is NULL" );
-            }
-        }
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_1M:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSize1M != NULL )
-		{
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSize1M, this->m_uiResType );
-		}
-		else
-		{
-			iRet = -1;
-                CamacqTraceErr( "pvJpegOutSize1M  is NULL" );
-		}
-	}
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_VGA:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeVGA != NULL )
-            {
-               iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeVGA, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSizeVGA  is NULL" );
-            }
-        }
-	break;
-
-	case CAMACQ_SENSORDATA_SIZE_QVGA:
-	{
-            if( pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeQVGA != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvJpegOutSizeQVGA, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvJpegOutSizeQVGA  is NULL" );
-            }
-        }
-	break;
-
-#endif
-
-#endif  //#if 1
-
-
-
 
 #if defined(CONFIG_BCM_CAM_ISX005) 
         case CAMACQ_SENSORDATA_SIZE_5M:
@@ -4203,6 +3358,7 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
             }
         }
 	break;
+
 	case CAMACQ_SENSORDATA_ZOOM_3:
 	{
             if( pstExtAPIs->m_pstSensorRegs->pvZoom_3_reg!= NULL )
@@ -4342,7 +3498,7 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
             }
         }
 	break;
-	#elif defined(CONFIG_BCM_CAM_S5K5CCGX)||defined (CONFIG_BCM_CAM_S5K4ECGX)
+	#elif defined(CONFIG_BCM_CAM_S5K5CCGX)
 	case CAMACQ_SENSORDATA_CAPTURE_OUTDOOR:
 	{
 		if( pstExtAPIs->m_pstSensorRegs->pvSnapshotOutdoorRegs != NULL )
@@ -4369,34 +3525,20 @@ S32 CamacqAPIWriteDirectSensorData( struct stCamacqSensor_t* this, enum eCamacqS
 		}
 	}
 	break;
-	
-case CAMACQ_SENSORDATA_LOW_CAP_ON:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvFlashLowCapOn != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvFlashLowCapOn, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvFlashLowCapOn is NULL" );
-            }
-        }
-        break;
+	case CAMACQ_SENSORDATA_CAPTURE_NIGHTSCENE:
+	{
+		if( pstExtAPIs->m_pstSensorRegs->pvSnapshotNightsceneRegs != NULL )
+		{
+			iRet = CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvSnapshotNightsceneRegs, this->m_uiResType );
+		}
+		else
+		{
+			iRet = -1;
+			CamacqTraceErr( "pvSnapshotRegs is NULL" );
+		}
+	}
+	break;
 
-        case CAMACQ_SENSORDATA_LOW_CAP_OFF:
-        {
-            if( pstExtAPIs->m_pstSensorRegs->pvFlashLowCapOff != NULL )
-            {
-                iRet =CamacqExtWriteI2cLists( this->m_pI2cClient, pstExtAPIs->m_pstSensorRegs->pvFlashLowCapOff, this->m_uiResType );
-            }
-            else
-            {
-                iRet = -1;
-                CamacqTraceErr( "pvFlashLowCapOff is NULL" );
-            }
-        }
-        break;
 	#endif
         default:
         {

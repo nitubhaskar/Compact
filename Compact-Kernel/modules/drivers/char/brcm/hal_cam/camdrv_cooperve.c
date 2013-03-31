@@ -80,12 +80,6 @@ the GPL, without Broadcom's express prior written consent.
 #define CAMERA_IMAGE_INTERFACE  CSL_CAM_INTF_CPI
 #define CAMERA_PHYS_INTF_PORT   CSL_CAM_PORT_AFE_1
 
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-#define FULL_FLASH 20
-#define PRE_FLASH 7
-#define MOVIE_FLASH 7
-#define MACRO_FLASH 14
-#endif
 CAMDRV_RESOLUTION_T    sViewFinderResolution        = CAMDRV_RESOLUTION_VGA;
 CAMDRV_IMAGE_TYPE_T    sViewFinderFormat            = CAMDRV_IMAGE_YUV422;
 CAMDRV_RESOLUTION_T    sCaptureImageResolution        = CAMDRV_RESOLUTION_QSXGA;
@@ -100,9 +94,6 @@ CAMDRV_IMAGE_TYPE_T    sCaptureImageFormat            = CAMDRV_IMAGE_JPEG;
 
 extern struct stCamacqSensorManager_t* GetCamacqSensorManager(); //BYKIM_CAMACQ
 UInt8  CAMDRV_CheckEXP(UInt8 mode);
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-HAL_CAM_Result_en_t CAMDRV_SetFlash(int lux_val);
-#endif
 
 /*---------Sensor Power On */
 
@@ -454,12 +445,7 @@ static CamFrameRate_st_t SecondaryFrameRate_st =
 };
 
 //---------FLASH/TORCH State
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-static FlashLedState_t  stv0986_sys_flash_mode = Flash_Off;
-static int				stv0986_sys_flash_state = 0;	
-#else
 static FlashLedState_t  stv0986_sys_flash_state = Flash_Off;
-#endif
 static Boolean          stv0986_fm_is_on        = FALSE;    
 static Boolean          stv0986_torch_is_on     = FALSE;    
 
@@ -1428,10 +1414,6 @@ HAL_CAM_Result_en_t CAMDRV_DisableCapture(CamSensorSelect_t sensor)
     UInt8 register_value,error_value;
     HAL_CAM_Result_en_t result = HAL_CAM_SUCCESS;
 	printk(KERN_ERR"CAMDRV_DisableCapture(): Empty\r\n");
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-	if(stv0986_sys_flash_state > 0)
-		CAMDRV_SetFlash(Flash_Off);
-#endif
     return result;
 }
 
@@ -1494,18 +1476,6 @@ HAL_CAM_Result_en_t CAMDRV_CfgStillnThumbCapture(
         printk(KERN_ERR"pstSensor is NULL \r\n");
         return HAL_CAM_ERROR_OTHERS;
     }
-
-
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-	if(stv0986_sys_flash_mode != Flash_Off)
-	{
-	//use torch mode on below condition 
-	//	CAMDRV_SetFlash(MACRO_FLASH);
-		CAMDRV_SetFlash(FULL_FLASH);
-	}
-	mdelay(200);
-
-#endif
 	
 #if 0	
     // CamacqExtWriteI2cLists1(sr200pc10_capture_table, 1); // this
@@ -1556,9 +1526,8 @@ HAL_CAM_Result_en_t CAMDRV_CfgStillnThumbCapture(
     }
 #else
 	pstSensor->m_pstAPIs->WriteDirectSensorData( pstSensor, CAMACQ_SENSORDATA_CAPTURE );
-#ifndef CONFIG_BCM_CAM_S5K4ECGX 
+
     msleep(1000);
-#endif
 #endif
 }
 
@@ -1578,7 +1547,7 @@ HAL_CAM_Result_en_t CAMDRV_SetSceneMode(CamSceneMode_t scene_mode,
         struct stCamacqSensor_t* pstSensor = NULL;
 	
 	printk(KERN_ERR"CAMDRV_SetSceneMode() called, scene_mode =  0x%08x Drv_Scene= 0x%08x\r\n",scene_mode,Drv_Scene);
-#if 1 
+#if 0 
        if(scene_mode==Drv_Scene)	
        {
 		printk(KERN_ERR"Do not set scene_mode \r\n");
@@ -1694,7 +1663,7 @@ HAL_CAM_Result_en_t CAMDRV_SetWBMode(CamWB_WBMode_t wb_mode,
         struct stCamacqSensor_t* pstSensor = NULL;
 		
         printk(KERN_ERR"CAMDRV_SetWBMode() called, wb_mode = 0x%08x  Drv_WB=  0x%08x \r\n",wb_mode,Drv_WB);
-#if 1
+#if 0
        if(((gv_ForceSetSensor==NORMAL_SET)&&(wb_mode==Drv_WB))||(gv_ForceSetSensor==FORCELY_SKIP))	
        {
 		printk(KERN_ERR"Do not set wb_mode,Drv_Scene=%d  \r\n",Drv_Scene);
@@ -1837,59 +1806,6 @@ HAL_CAM_Result_en_t CAMDRV_SetAntiBanding(CamAntiBanding_t effect,
 	return result;
 }
 
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-HAL_CAM_Result_en_t CAMDRV_SetFlash(int lux_val)
-{
-	int i = 0;
-
-	printk("%s, flash set is %d\n", __func__, lux_val);
-
-	if(stv0986_sys_flash_mode == Flash_Off)
-		return 0;
-
-	 // initailize falsh IC
-	gpio_set_value(CAM_FLASH_MODE,0);
-	gpio_set_value(CAM_FLASH_EN,0);
-	mdelay(1); // to enter a shutdown mode
-	
-	// set to flash mode
-	if(lux_val>16)
-	{
-//		gpio_set_value(CAM_FLASH_EN,1);
-		gpio_set_value(CAM_FLASH_MODE,1);
-	}
-	else if(lux_val == MACRO_FLASH)
-	{
-		// set to movie mode
-		for(i=0;i<lux_val;i++)
-		{
-			udelay(1);
-			gpio_set_value(CAM_FLASH_MODE,1);
-			udelay(1);
-			gpio_set_value(CAM_FLASH_MODE,0);
-		}
-		gpio_set_value(CAM_FLASH_MODE,1); //value set
-	}
-	else if(lux_val > 0 &&  lux_val<=16)
-	{
-		/* set to movie mode */
-		for(i=0;i<lux_val;i++)
-		{
-			udelay(1);
-			gpio_set_value(CAM_FLASH_MODE,1);
-			udelay(1);
-			gpio_set_value(CAM_FLASH_MODE,0);
-		}
-		gpio_set_value(CAM_FLASH_MODE,1); //value set
-	}
-	
-	stv0986_sys_flash_state = lux_val;
-	
-	return 0;
-}
-#endif
-
-
 /****************************************************************************
 / Function Name:   HAL_CAM_Result_en_t CAMDRV_SetFlashMode(
 					FlashLedState_t effect)
@@ -1908,11 +1824,6 @@ HAL_CAM_Result_en_t CAMDRV_SetFlashMode(FlashLedState_t effect,
 		printk(KERN_INFO"CAMDRV_SetFlashMode(): Error[%d] \r\n",sCamI2cStatus);
 		result = sCamI2cStatus;
 	}
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-	stv0986_sys_flash_mode = effect;
-	printk("[CAM] Set Flash Mode : %d\n", stv0986_sys_flash_mode);
-#endif
-		
     return result;
 }
 
@@ -2734,9 +2645,6 @@ HAL_CAM_Result_en_t CAMDRV_SetSensorParams( CAM_Parm_t parm,CamSensorSelect_t se
     result =CAMDRV_SetJpegsize(parm.jpegSize,sensor);
     result =CAMDRV_SetJpegQuality(parm.quality,sensor);
     result =CAMDRV_SetZoom(parm.zoom,sensor);
-#ifdef CONFIG_BCM_CAM_S5K4ECGX 
-    result =CAMDRV_SetFlashMode(parm.flash,sensor);
-#endif
     if(gv_ForceSetSensor!=NORMAL_SET)
     {
          gv_ForceSetSensor=NORMAL_SET;

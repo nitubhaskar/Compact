@@ -10,7 +10,6 @@ Notwithstanding the above, under no circumstances may you combine this software
 in any way with any other Broadcom software provided under a license other than
 the GPL, without Broadcom's express prior written consent.
 *******************************************************************************************/
-
 /**
 *
 *   @file   audio_vdriver.h
@@ -156,8 +155,7 @@ void AUDDRV_Enable_Output (
 				AUDDRV_SPKR_Enum_t      mixer_speaker_selection,
 				Boolean                 enable_speaker,
 				AUDIO_SAMPLING_RATE_t   sample_rate,
-				AUDIO_CHANNEL_NUM_t     input_to_mixer,
-				void *                 callback
+				AUDIO_CHANNEL_NUM_t     input_to_mixer
 				);
 
 // Disable audio output path. 
@@ -175,27 +173,6 @@ void AUDDRV_Disable_Input (  AUDDRV_InOut_Enum_t  path );
 
 Boolean AUDDRV_IsVoiceCallWB(AudioMode_t audio_mode);
 Boolean AUDDRV_IsCall16K(AudioMode_t voiceMode);
-//*********************************************************************
-/**
-*   Get BTM headset NB or WB info
-
-*	@return		Boolean, TRUE for WB and FALSE for NB (8k) 
-*   @note      
-**********************************************************************/
-Boolean AUDDRV_IsBTMWB( void );
-
-
-//*********************************************************************
-/**
-*   Set BTM type 
-
-*	@param		Boolean isWB 
-*	@return		none
-*
-*	@note	isWB=TRUE for BT WB headset; =FALSE for BT NB (8k) headset.
-**********************************************************************/
-void AUDDRV_SetBTMTypeWB( Boolean isWB);
-
 Boolean AUDDRV_InVoiceCall( void );
 
 // mode and app profile related APIs
@@ -204,8 +181,6 @@ void AUDDRV_SaveAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app);
 void AUDDRV_SetAudioMode( AudioMode_t audio_mode, AudioApp_t audio_app);
 void AUDDRV_SetMusicMode ( AudioMode_t  audio_mode, AudioApp_t audio_app);
 AudioMode_t AUDDRV_GetAudioMode( void );
-AudioApp_t GetWbApp(AudioApp_t app);
-AudioApp_t GetNbApp(AudioApp_t app);
 
 
 void AUDDRV_SetVCflag( Boolean inVoiceCall );
@@ -236,6 +211,7 @@ void AUDDRV_ControlFlagFor_CustomGain( Boolean on_off );
 void AUDDRV_EC(Boolean enable, UInt32 arg);
 void AUDDRV_NS(Boolean enable);
 void AUDDRV_ECreset_NLPoff(Boolean ECenable);
+
 #ifdef __cplusplus
 }
 #endif

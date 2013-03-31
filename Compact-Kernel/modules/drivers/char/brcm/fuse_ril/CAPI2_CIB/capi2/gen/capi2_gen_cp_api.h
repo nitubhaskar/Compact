@@ -481,7 +481,7 @@ Result_t CP_CAPI2_SatkApi_SetTermProfile(CAPI2_ReqRep_t* rsp, ClientInfo_t* inCl
 Result_t CP_CAPI2_SatkApi_SendEnvelopeCmdReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt8 *data, UInt8 data_len);
 Result_t CP_CAPI2_SatkApi_SendTerminalRspReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt8 *data, UInt8 data_len);
 Result_t CP_CAPI2_StkApi_SendBrowsingStatusEvent(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt8 *status, UInt8 data_len);
-Result_t CP_CAPI2_SatkApi_SendCcSetupReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, TypeOfNumber_t ton, NumberPlanId_t npi, char* number, BearerCapability_t *bc1, Subaddress_t *subaddr_data, BearerCapability_t *bc2, UInt8 bc_repeat_ind, Boolean simtk_orig);
+Result_t CP_CAPI2_SatkApi_SendCcSetupReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, TypeOfNumber_t ton, NumberPlanId_t npi, char *number, BearerCapability_t *bc1, Subaddress_t *subaddr_data, BearerCapability_t *bc2, UInt8 bc_repeat_ind, Boolean simtk_orig);
 Result_t CP_CAPI2_SatkApi_SendCcSsReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt8 ton_npi, UInt8 ss_len, UInt8 *ss_data);
 Result_t CP_CAPI2_SatkApi_SendCcUssdReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt8 ussd_dcs, UInt8 ussd_len, UInt8 *ussd_data);
 Result_t CP_CAPI2_SatkApi_SendCcSmsReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt8 sca_toa, UInt8 sca_number_len, UInt8 *sca_number, UInt8 dest_toa, UInt8 dest_number_len, UInt8 *dest_number, Boolean simtk_orig);
@@ -560,12 +560,9 @@ Result_t CP_CAPI2_LcsApi_GetGpsCapabilities(CAPI2_ReqRep_t* rsp, ClientInfo_t* i
 Result_t CP_CAPI2_LcsApi_SetGpsCapabilities(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, UInt16 inCapMask);
 Result_t CP_CAPI2_CcApi_AbortDtmfTone(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, ApiDtmf_t *inDtmfObjPtr);
 Result_t CP_CAPI2_NetRegApi_SetSupportedRATandBandEx(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, RATSelect_t RAT_cap, BandSelect_t band_cap, RATSelect_t RAT_cap2, BandSelect_t band_cap2);
-Result_t CP_CAPI2_SimApi_ResetSIM(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, Boolean resetMode);
 Result_t CP_CAPI2_NetRegApi_SetTZUpdateMode(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr, TimeZoneUpdateMode_t mode);
 Result_t CP_CAPI2_NetRegApi_GetTZUpdateMode(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr);
-Result_t CP_CAPI2_SEC_HostToModemInd(CAPI2_ReqRep_t* rsp, UInt32 tid, UInt8 clientID, UInt8 state);
 Result_t CP_CAPI2_SimApi_GetAdData(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr);
 Result_t CP_CAPI2_SimApi_GetCurrentSimVoltage(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr);
 Result_t CP_CAPI2_MS_SetSupportedRATandBand(CAPI2_ReqRep_t* rsp, UInt32 tid, UInt8 clientID, RATSelect_t RAT_cap, BandSelect_t band_cap);
-Result_t CP_CAPI2_SecModemApi_ConfigModemReq(CAPI2_ReqRep_t* rsp, ClientInfo_t* inClientInfoPtr);
 #endif

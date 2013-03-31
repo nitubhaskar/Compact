@@ -127,7 +127,7 @@
 #include "capi2_sim_api_old.h"
 #include "capi2_phonectrl_api.h"
 #include "capi2_sms_api.h"
-//#include "capi2_sms_api_old.h"
+#include "capi2_sms_api_old.h"
 #include "capi2_cc_api.h"
 #include "capi2_cc_api_old.h"
 #include "capi2_lcs_cplane_api.h"

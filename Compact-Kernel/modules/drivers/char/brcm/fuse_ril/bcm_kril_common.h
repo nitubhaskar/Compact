@@ -36,6 +36,7 @@
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
 #endif
+#include "bcm_kril.h"
 
 #include "mobcom_types.h"
 #include "resultcode.h"
@@ -127,7 +128,7 @@
 #include "capi2_sim_api_old.h"
 #include "capi2_phonectrl_api.h"
 #include "capi2_sms_api.h"
-//#include "capi2_sms_api_old.h"
+#include "capi2_sms_api_old.h"
 #include "capi2_cc_api.h"
 #include "capi2_cc_api_old.h"
 #include "capi2_lcs_cplane_api.h"
@@ -136,6 +137,7 @@
 #include "capi2_phonebk_api.h"
 #include "capi2_phonebk_api_old.h"
 #include "capi2_cmd_resp.h"
+#include "capi2_phonectrl_api.h"
 
 #include "ipcproperties.h"
 #include "rpc_global.h"
@@ -159,7 +161,6 @@
 #include "rpc_sync_api.h"
 #include "capi2_stk_api.h"
 
-#include "bcm_kril.h"
 #include <linux/broadcom/bcm_kril_Interface.h>
 #include <linux/broadcom/bcm_fuse_net_if.h>
 
@@ -176,5 +177,8 @@
 #ifndef FALSE
 #define FALSE 0
 #endif
+
+#define MIN(x, y) ((x) > (y) ? (y) : (x))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 #endif //_BCM_KRIL_COMMON_H

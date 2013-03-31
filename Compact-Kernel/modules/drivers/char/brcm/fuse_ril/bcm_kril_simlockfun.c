@@ -35,11 +35,11 @@
 // Global variables
 //-------------------------------------------------
 
-SIMLOCK_STATE_t g_CurrentSimLockState[DUAL_SIM_SIZE];
+SIMLOCK_STATE_t g_CurrentSimLockState;
 
-extern SIMLOCK_SIM_DATA_t* GetSIMData(SimNumber_t SimId);
+extern SIMLOCK_SIM_DATA_t* GetSIMData(void);
 
-extern UInt8* ReadIMEI(SimNumber_t simid);
+extern UInt8* ReadIMEI(void);
 
 //-------------------------------------------------
 // Local defines
@@ -107,8 +107,6 @@ typedef enum
 #define SIMLOCK_NV_DATA  "/data/.simlocknvdata.bin"
 #define SIMLOCK_BASE    0x3f0000    //  SIMLOCK info
 
-#define MIN(x, y) ((x) > (y) ? (y) : (x))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 // The SIM lock data size is fixed to 2400 bytes
 #define SIM_LOCK_DATA_SIZE   2400
@@ -119,30 +117,30 @@ typedef enum
 static Boolean GetSimlockNvdata(SIMLOCK_NVDATA_t *simlock_nvdata);
 static Boolean WriteSimlockNvdata(SIMLOCK_NVDATA_t *simlock_nvdata);
 static SIMLock_CodeFile_t* GetSimlockData(void);
-static Boolean  SIMLockCheckNetworkLock(SimNumber_t SimId,UInt8* imsi);
-static Boolean  SIMLockCheckNetSubsetLock(SimNumber_t SimId,UInt8* imsi);
-static Boolean  SIMLockCheckProviderLock(SimNumber_t SimId,UInt8* imsi, UInt8* gid1);
-static Boolean  SIMLockCheckCorpLock(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8* gid2);
+static Boolean  SIMLockCheckNetworkLock(UInt8* imsi);
+static Boolean  SIMLockCheckNetSubsetLock(UInt8* imsi);
+static Boolean  SIMLockCheckProviderLock(UInt8* imsi, UInt8* gid1);
+static Boolean  SIMLockCheckCorpLock(UInt8* imsi, UInt8* gid1, UInt8* gid2);
 static SIMLock_Status_t  SIMLockUnlockOneType(SIMLockType_t lockType, UInt8* key);
-static SIMLock_Status_t  SIMLockSetLockOneType(SimNumber_t SimId, SIMLockType_t lockType, Boolean action, UInt8* key);
+static SIMLock_Status_t  SIMLockSetLockOneType(SIMLockType_t lockType, Boolean action, UInt8* key);
 
-static Boolean SIMLockCheckPHSIMLock(SimNumber_t SimId, UInt8* imsi);
-static SIMLock_Status_t SIMLockSetPHSIMLock(SimNumber_t SimId, PH_SIM_Lock_Status_t lock_setting, UInt8* imsi, UInt8* key);
+static Boolean SIMLockCheckPHSIMLock(UInt8* imsi);
+static SIMLock_Status_t SIMLockSetPHSIMLock(PH_SIM_Lock_Status_t lock_setting, UInt8* imsi, UInt8* key);
 static Boolean  IsSIMSecureEnable(void);
 
 static Boolean KRIL_simlock_Readfile(UInt8* pSIMLockInfo);
 static void KRIL_simlock_Writefile(UInt8* pSIMLockInfo);
 static void KRIL_simlock_NVdata_Init(SIMLOCK_NVDATA_t *simlock_nvdata);
-void SIMLockUpdateSIMLockState(SimNumber_t SimId);
+void SIMLockUpdateSIMLockState(void);
 
 //-------------------------------------------------
 // Local variables
 //-------------------------------------------------
-static SIMLOCK_RESULT_t Network_Lock_Status[DUAL_SIM_SIZE]={0};
-static SIMLOCK_RESULT_t Network_Subset_Lock_Status[DUAL_SIM_SIZE]={0};
-static SIMLOCK_RESULT_t Service_Provider_Lock_Status[DUAL_SIM_SIZE]={0};
-static SIMLOCK_RESULT_t Corporate_Lock_Status[DUAL_SIM_SIZE]={0};
-static SIMLOCK_RESULT_t Phone_Lock_Status[DUAL_SIM_SIZE]={0};
+static SIMLOCK_RESULT_t Network_Lock_Status = SIMLOCK_NOT_INIT;
+static SIMLOCK_RESULT_t Network_Subset_Lock_Status = SIMLOCK_NOT_INIT;
+static SIMLOCK_RESULT_t Service_Provider_Lock_Status = SIMLOCK_NOT_INIT;
+static SIMLOCK_RESULT_t Corporate_Lock_Status = SIMLOCK_NOT_INIT;
+static SIMLOCK_RESULT_t Phone_Lock_Status = SIMLOCK_NOT_INIT;
 
 /* Number of attempts to unlock after powerup: these variables are used only when 
  * the "ResetUnlockCounter" element in "SIMLock_CodeFile_t" structure
@@ -212,19 +210,18 @@ UInt16 Calculate16BitCrc(UInt16 crc, UInt8 *data, UInt32 length)
 //******************************************************************************
 //
 // Function Name: SIM_IsTestSIM
-// Input:         SimId- Sim Identifier Type
 //
 // Description: This function returns TRUE if the SIM card, if present in the mobile, is a test SIM.
 //
 // Return: TRUE if the SIM card is present and is a test SIM. FALSE otherwise.
 //
 //******************************************************************************
-Boolean SIM_IsTestSIM(SimNumber_t SimId)
+Boolean SIM_IsTestSIM(void)
 {
 		SIMLOCK_SIM_DATA_t *sim_data;
     
 		// Check if SIM data is available
-    sim_data = GetSIMData(SimId);
+    sim_data = GetSIMData();
     if (!sim_data)
     {
         return FALSE;
@@ -441,7 +438,7 @@ static void KRIL_simlock_NVdata_Init(SIMLOCK_NVDATA_t *simlock_nvdata)
     simlock_nvdata->simlock_init_flag = SIMLOCK_IND_INITIALIZED;
 
     simlock_nvdata->check_sum = Calculate16BitCrc(0, (UInt8 *) simlock_nvdata, (UInt32) &simlock_nvdata->check_sum - (UInt32) simlock_nvdata);
-    simlock_nvdata->check_sum = Calculate16BitCrc(simlock_nvdata->check_sum, ReadIMEI(SIM_DUAL_FIRST), BCD_IMEI_LEN);
+    simlock_nvdata->check_sum = Calculate16BitCrc(simlock_nvdata->check_sum, ReadIMEI(), BCD_IMEI_LEN);
 
     simlock_nvdata->phone_lock_setting = PH_SIM_LOCK_OFF;
     strcpy(simlock_nvdata->phone_lock_pwd, DEFAULT_PHSIM_LOCK_PWD);        
@@ -492,7 +489,7 @@ static Boolean GetSimlockNvdata(SIMLOCK_NVDATA_t *simlock_nvdata)
         }
         
         check_sum = Calculate16BitCrc(0, (UInt8 *) simlock_nvdata, (UInt32) &simlock_nvdata->check_sum - (UInt32) simlock_nvdata);
-        check_sum = Calculate16BitCrc(check_sum, ReadIMEI(SIM_DUAL_FIRST), BCD_IMEI_LEN);      
+        check_sum = Calculate16BitCrc(check_sum, ReadIMEI(), BCD_IMEI_LEN);      
         
         if((simlock_nvdata->simlock_init_flag != SIMLOCK_IND_INITIALIZED) ||
           (simlock_nvdata->check_sum != check_sum))
@@ -545,7 +542,7 @@ static Boolean WriteSimlockNvdata(SIMLOCK_NVDATA_t *simlock_nvdata)
 
     simlock_nvdata->simlock_init_flag = SIMLOCK_IND_INITIALIZED;
     simlock_nvdata->check_sum = Calculate16BitCrc(0, (UInt8*) simlock_nvdata, (UInt32) &simlock_nvdata->check_sum - (UInt32) simlock_nvdata);
-    simlock_nvdata->check_sum = Calculate16BitCrc(simlock_nvdata->check_sum, ReadIMEI(SIM_DUAL_FIRST), BCD_IMEI_LEN);
+    simlock_nvdata->check_sum = Calculate16BitCrc(simlock_nvdata->check_sum, ReadIMEI(), BCD_IMEI_LEN);
     
     /* Encrypt the SIMLOCK data */
     if (!EncDec((UInt8*)&temp_nvdata, (UInt8*)simlock_nvdata, sizeof(SIMLOCK_NVDATA_t), AES_OPERATION_ENCRYPT))
@@ -635,7 +632,7 @@ static SIMLock_CodeFile_t* GetSimlockData(void)
         
         chksum = Calculate16BitCrc(0, (UInt8 *) simlock_data, ((UInt32) &simlock_data->chksum) - ((UInt32) simlock_data) );
         chksum = Calculate16BitCrc(chksum, (UInt8 *)simlock_data + sizeof(SIMLock_CodeFile_t), simDataSize); 
-        chksum = Calculate16BitCrc(chksum, ReadIMEI(SIM_DUAL_FIRST), BCD_IMEI_LEN);
+        chksum = Calculate16BitCrc(chksum, ReadIMEI(), BCD_IMEI_LEN);
         
         if (chksum != simlock_data->chksum)
         {
@@ -649,7 +646,7 @@ static SIMLock_CodeFile_t* GetSimlockData(void)
 #else  //CONFIG_BRCM_CKBLOCK_READER
         
         // The readCKDataBlock function is disable.
-        KRIL_DEBUG(DBG_ERROR,"readCKDataBlock() not support. Error!!!\n");
+        KRIL_DEBUG(DBG_ERROR,"readCKDataBlock() not support . Error!!!\n");
         kernel_power_off();
         return NULL;
 #endif //CONFIG_BRCM_CKBLOCK_READER
@@ -664,8 +661,7 @@ static SIMLock_CodeFile_t* GetSimlockData(void)
 //--------------------------------------------------------------------------
 //
 // Function Name: SIMLockCheckNetworkLock()
-// Input:         SimId- Sim Identifier Type
-//                imsi - IMSI (MCC and MNC)
+// Input:       imsi - IMSI (MCC and MNC)
 // Output:        none
 // Return:        TRUE - SIM valid for the network; FALSE - invalid SIM.
 //  
@@ -675,11 +671,11 @@ static SIMLock_CodeFile_t* GetSimlockData(void)
 //                  MCC (3 Ascii digits) + MNC (2 or 3 Ascii digits). 
 //
 //----------------------------------------------------------------------------
-static Boolean  SIMLockCheckNetworkLock(SimNumber_t SimId, UInt8* imsi)
+static Boolean  SIMLockCheckNetworkLock(UInt8* imsi)
 {
     Boolean result = FALSE;
     
-    if (SIM_IsTestSIM(SimId))
+    if (SIM_IsTestSIM())
     {
         result = TRUE;
     }
@@ -728,8 +724,7 @@ static Boolean  SIMLockCheckNetworkLock(SimNumber_t SimId, UInt8* imsi)
 //--------------------------------------------------------------------------
 //
 // Function Name: SIMLockCheckNetSubsetLock()
-// Input:         SimId- Sim Identifier Type
-//                imsi - IMSI (MCC, MNC and digits 6 & 7)
+// Input:       imsi - IMSI (MCC, MNC and digits 6 & 7)
 // Output:        none
 // Return:        TRUE - SIM valid for network subset lock; 
 //          FALSE - invalid SIM.
@@ -740,11 +735,11 @@ static Boolean  SIMLockCheckNetworkLock(SimNumber_t SimId, UInt8* imsi)
 //                  MCC (3 Ascii digits) + MNC (2 or 3 Ascii digits).
 // 
 //----------------------------------------------------------------------------
-static Boolean SIMLockCheckNetSubsetLock(SimNumber_t SimId, UInt8* imsi)
+static Boolean SIMLockCheckNetSubsetLock(UInt8* imsi)
 {
     Boolean result = FALSE;
     
-    if (SIM_IsTestSIM(SimId))
+    if (SIM_IsTestSIM())
     {
         result = TRUE;
     }
@@ -791,8 +786,7 @@ static Boolean SIMLockCheckNetSubsetLock(SimNumber_t SimId, UInt8* imsi)
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockCheckProviderLock()
-// Input:       SimId- Sim Identifier Type
-//              imsi - IMSI (MCC and MNC)
+// Input:     imsi - IMSI (MCC and MNC)
 //          gid1 - GID1 file.
 // Output:      none
 // Return:      TRUE - SIM valid for provider lock; FALSE - invalid SIM.
@@ -803,11 +797,11 @@ static Boolean SIMLockCheckNetSubsetLock(SimNumber_t SimId, UInt8* imsi)
 //                  MCC (3 Ascii digits) + MNC (2 or 3 Ascii digits). 
 //
 //----------------------------------------------------------------------------
-static Boolean SIMLockCheckProviderLock(SimNumber_t SimId, UInt8* imsi, UInt8* gid1)
+static Boolean SIMLockCheckProviderLock(UInt8* imsi, UInt8* gid1)
 {
     Boolean result = FALSE;
     
-    if (SIM_IsTestSIM(SimId))
+    if (SIM_IsTestSIM())
     {
         result = TRUE;
     }
@@ -856,8 +850,7 @@ static Boolean SIMLockCheckProviderLock(SimNumber_t SimId, UInt8* imsi, UInt8* g
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockCheckCorpLock()
-// Input:   SimId- Sim Identifier Type  
-//          imsi - IMSI (MCC and MNC)
+// Input:     imsi - IMSI (MCC and MNC)
 //          gid1 - GID1 file.
 //          gid2 - GID2 file.
 //
@@ -872,11 +865,11 @@ static Boolean SIMLockCheckProviderLock(SimNumber_t SimId, UInt8* imsi, UInt8* g
 //                  MCC (3 Ascii digits) + MNC (2 or 3 Ascii digits). 
 //
 //----------------------------------------------------------------------------
-static Boolean  SIMLockCheckCorpLock(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8* gid2)
+static Boolean  SIMLockCheckCorpLock(UInt8* imsi, UInt8* gid1, UInt8* gid2)
 {
     Boolean result = FALSE;
     
-    if (SIM_IsTestSIM(SimId))
+    if (SIM_IsTestSIM())
     {
         result = TRUE;
     }
@@ -1020,7 +1013,7 @@ static SIMLock_Status_t  SIMLockUnlockOneType(SIMLockType_t lockType, UInt8* key
      */
     if (simlockFile != NULL)
     {
-        freeSimLockdata(simlockFile);
+        kfree(simlockFile);
     }
     
     return result;
@@ -1030,8 +1023,7 @@ static SIMLock_Status_t  SIMLockUnlockOneType(SIMLockType_t lockType, UInt8* key
 //--------------------------------------------------------------------------
 // Function Name: SIMLockSetLockOneType()
 //
-// Input:   SimId- Sim Identifier Type
-//          lockType - Simlock type except SIMLOCK_PHONE_LOCK
+// Input:     lockType - Simlock type except SIMLOCK_PHONE_LOCK
 //          action - TRUE to set lock on, FALSE to set lock off.
 //          key - Control key of the simlock type.
 //
@@ -1044,13 +1036,13 @@ static SIMLock_Status_t  SIMLockUnlockOneType(SIMLockType_t lockType, UInt8* key
 // Note:    
 //
 //----------------------------------------------------------------------------
-static SIMLock_Status_t  SIMLockSetLockOneType(SimNumber_t SimId, SIMLockType_t lockType, Boolean action, UInt8* key)
+static SIMLock_Status_t  SIMLockSetLockOneType(SIMLockType_t lockType, Boolean action, UInt8* key)
 {
     SIMLock_Status_t result = SIMLOCK_SUCCESS;
     UInt8 control_key[MAX_CONTROL_KEY_LENGTH + 1];
     SIMLock_CodeFile_t *simlockFile = GetSimlockData(); 
-    UInt8 *unlock_attempt = NULL;
-    Boolean *lock_ind = NULL;
+    UInt8 *unlock_attempt;
+    Boolean *lock_ind;
     SIMLOCK_NVDATA_t simlock_nvdata;
     
     if (GetSimlockNvdata(&simlock_nvdata) && (simlockFile != NULL))
@@ -1093,16 +1085,14 @@ static SIMLock_Status_t  SIMLockSetLockOneType(SimNumber_t SimId, SIMLockType_t 
         result = SIMLOCK_FAILURE;
     }
     
-    KRIL_DEBUG(DBG_INFO,"lockType:%d action:%d result:%d control_key:%s key:%s\n", 
-                         lockType, action, result, control_key, key);
-
+    KRIL_DEBUG(DBG_INFO,"lockType:%d action:%d lock_ind:%d unlock_attempt:%d result:%d\n", 
+        lockType, action, *lock_ind, *unlock_attempt, result);
+    KRIL_DEBUG(DBG_INFO,"control_key:%s key:%s\n", control_key, key);
     
     if ((result == SIMLOCK_SUCCESS) && (*lock_ind != action))
     {
         Boolean set_lock_ok = FALSE;
         
-        KRIL_DEBUG(DBG_INFO,"lock_ind:%d unlock_attempt:%d\n", *lock_ind, *unlock_attempt);
-      
         if (*unlock_attempt < simlockFile->maxUnlockAttempt)
         {
             if (strcmp((char *) control_key, (char *) key) == 0)
@@ -1136,19 +1126,19 @@ static SIMLock_Status_t  SIMLockSetLockOneType(SimNumber_t SimId, SIMLockType_t 
                 switch (lockType)
                 {
                     case SIMLOCK_NETWORK_LOCK:
-                        Network_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                        Network_Lock_Status = SIMLOCK_CLOSED;
                         break;
                     
                     case SIMLOCK_NET_SUBSET_LOCK:
-                        Network_Subset_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                        Network_Subset_Lock_Status = SIMLOCK_CLOSED;
                         break;
                     
                     case SIMLOCK_PROVIDER_LOCK:
-                        Service_Provider_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                        Service_Provider_Lock_Status = SIMLOCK_CLOSED;
                         break;
                     
                     case SIMLOCK_CORP_LOCK:
-                        Corporate_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                        Corporate_Lock_Status = SIMLOCK_CLOSED;
                         break;
                     
                     // These two case shouldn't happen, add for fixing compile warning.
@@ -1160,7 +1150,7 @@ static SIMLock_Status_t  SIMLockSetLockOneType(SimNumber_t SimId, SIMLockType_t 
                 
                 if (!SIM_NOT_PRESENT())
                 {
-                    SIMLockUpdateSIMLockState(SimId);
+                    SIMLockUpdateSIMLockState();
                 }
                 
                 result = SIMLOCK_PERMANENTLY_LOCKED;
@@ -1177,7 +1167,7 @@ static SIMLock_Status_t  SIMLockSetLockOneType(SimNumber_t SimId, SIMLockType_t 
      */
     if (simlockFile != NULL)
     {
-        freeSimLockdata(simlockFile);
+        kfree(simlockFile);
     }
     
     return result;
@@ -1212,7 +1202,7 @@ void SIMLockGetSignature(UInt8* simLockSign, UInt8 simLockSignSize)
               /* Memory of simlockFile is dynamically allocated in GetSimlockData(), must
                * deallocate the memory after we finish using it. 
                */
-              freeSimLockdata(simlockFile);
+              kfree(simlockFile);
           }
           else
           {
@@ -1230,8 +1220,7 @@ void SIMLockGetSignature(UInt8* simLockSign, UInt8 simLockSignSize)
 //--------------------------------------------------------------------------
 // Function Name: SIMLockCheckPHSIMLock()
 //
-// Input:      SimId- Sim Identifier Type 
-//             imsi - ASCII coded IMSI (null terminated)
+// Input:       imsi - ASCII coded IMSI (null terminated)
 //                                   
 // Output:        none
 //
@@ -1243,12 +1232,12 @@ void SIMLockGetSignature(UInt8* simLockSign, UInt8 simLockSignSize)
 //          is good for the PH-SIM lock settings.
 // 
 //----------------------------------------------------------------------------
-static Boolean SIMLockCheckPHSIMLock(SimNumber_t SimId, UInt8* imsi)
+static Boolean SIMLockCheckPHSIMLock(UInt8* imsi)
 {
     Boolean result;
     SIMLOCK_NVDATA_t simlock_nvdata;
     
-    if (SIM_IsTestSIM(SimId))
+    if (SIM_IsTestSIM())
     {
         return TRUE;
     }
@@ -1285,8 +1274,7 @@ static Boolean SIMLockCheckPHSIMLock(SimNumber_t SimId, UInt8* imsi)
 //--------------------------------------------------------------------------
 // Function Name: SIMLockSetPHSIMLock()
 //
-// Input:   SimId- Sim Identifier Type
-//          lock_setting - PH-SIM lock setting: one of 
+// Input:       lock_setting - PH-SIM lock setting: one of 
 //            PH_SIM_LOCK_OFF, PH_SIM_LOCK_ON & PH_SIM_FULL_LOCK_ON.
 //
 //          imsi - ASCII coded IMSI (null terminated). Pass NULL if SIM not inserted.
@@ -1302,7 +1290,7 @@ static Boolean SIMLockCheckPHSIMLock(SimNumber_t SimId, UInt8* imsi)
 // Description:   Enable/disable the PH-SIM lock feature.
 //           
 //----------------------------------------------------------------------------
-static SIMLock_Status_t SIMLockSetPHSIMLock(SimNumber_t SimId, PH_SIM_Lock_Status_t lock_setting, UInt8* imsi, UInt8* key)
+static SIMLock_Status_t SIMLockSetPHSIMLock(PH_SIM_Lock_Status_t lock_setting, UInt8* imsi, UInt8* key)
 {
     SIMLock_Status_t result;
     SIMLOCK_NVDATA_t simlock_nvdata;
@@ -1331,7 +1319,7 @@ static SIMLock_Status_t SIMLockSetPHSIMLock(SimNumber_t SimId, PH_SIM_Lock_Statu
             WriteSimlockNvdata(&simlock_nvdata);
             
             /* Make sure the PH-SIM lock is unlocked */
-            Phone_Lock_Status[SimId] = SIMLOCK_VERIFIED;
+            Phone_Lock_Status = SIMLOCK_VERIFIED;
             
             result = SIMLOCK_SUCCESS;
         }
@@ -1436,8 +1424,7 @@ Boolean SIMLockIsLockOn(SIMLockType_t lockType, Boolean *ps_full_lock_on)
 //--------------------------------------------------------------------------
 // Function Name: SIMLockCheckAllLocks()
 // 
-// Input:   SimId- Sim Identifier Type
-//          imsi - IMSI (MCC and MNC), pass NULL if SIM not inserted
+// Input:     imsi - IMSI (MCC and MNC), pass NULL if SIM not inserted
 //          gid1 - GID1 file, pass NULL if SIM not inserted
 //          gid2 - GID2 file. pass NULL if SIM not inserted
 //
@@ -1449,7 +1436,7 @@ Boolean SIMLockIsLockOn(SIMLockType_t lockType, Boolean *ps_full_lock_on)
 //                  MCC (3 Ascii digits) + MNC (2 or 3 Ascii digits). 
 //
 //----------------------------------------------------------------------------
-Boolean  SIMLockCheckAllLocks(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8* gid2)
+Boolean  SIMLockCheckAllLocks(UInt8* imsi, UInt8* gid1, UInt8* gid2)
 {
     Boolean result;
     SIMLOCK_NVDATA_t  simlock_nvdata;
@@ -1464,73 +1451,73 @@ Boolean  SIMLockCheckAllLocks(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8
          * This happens when the ME is powered up without SIM and the SIMLOCK type is unlocked, then a SIM is 
          * inserted. In this case we do not need to unlock again. Just keep the original "SIMLOCK_VERIFIED" status.
          */
-        if (Network_Lock_Status[SimId] != SIMLOCK_VERIFIED)
+        if (Network_Lock_Status != SIMLOCK_VERIFIED)
         {
             if( !simlock_nvdata.network_lock_ind || 
-              ((imsi != NULL) && SIMLockCheckNetworkLock(SimId, imsi)) )
+              ((imsi != NULL) && SIMLockCheckNetworkLock(imsi)) )
             {
-                Network_Lock_Status[SimId] = SIMLOCK_OPENED; 
+                Network_Lock_Status = SIMLOCK_OPENED; 
             }
             else
             {
-                Network_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                Network_Lock_Status = SIMLOCK_CLOSED;
                 result = FALSE; 
             }
         }
         
-        if (Network_Subset_Lock_Status[SimId] != SIMLOCK_VERIFIED)
+        if (Network_Subset_Lock_Status != SIMLOCK_VERIFIED)
         {
             if( !simlock_nvdata.network_subset_lock_ind || 
-              ((imsi != NULL) && SIMLockCheckNetSubsetLock(SimId, imsi)) ) 
+              ((imsi != NULL) && SIMLockCheckNetSubsetLock(imsi)) ) 
             {
-                Network_Subset_Lock_Status[SimId] = SIMLOCK_OPENED; 
+                Network_Subset_Lock_Status = SIMLOCK_OPENED; 
             }
             else
             {
-                Network_Subset_Lock_Status[SimId] = SIMLOCK_CLOSED; 
+                Network_Subset_Lock_Status = SIMLOCK_CLOSED; 
                 result = FALSE; 
             }
         }
         
-        if (Service_Provider_Lock_Status[SimId] != SIMLOCK_VERIFIED)
+        if (Service_Provider_Lock_Status != SIMLOCK_VERIFIED)
         {
             if( !simlock_nvdata.service_provider_lock_ind || 
-              ((imsi != NULL) && (gid1 != NULL) && SIMLockCheckProviderLock(SimId, imsi, gid1)) )
+              ((imsi != NULL) && (gid1 != NULL) && SIMLockCheckProviderLock(imsi, gid1)) )
             {
-                Service_Provider_Lock_Status[SimId] = SIMLOCK_OPENED;
+                Service_Provider_Lock_Status = SIMLOCK_OPENED;
             }
             else
             {
-                Service_Provider_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                Service_Provider_Lock_Status = SIMLOCK_CLOSED;
                 result = FALSE; 
             }
         }
         
-        if (Corporate_Lock_Status[SimId] != SIMLOCK_VERIFIED)
+        if (Corporate_Lock_Status != SIMLOCK_VERIFIED)
         {
             if( !simlock_nvdata.corporate_lock_ind || 
-              ((imsi != NULL) && (gid1 != NULL) && (gid2 != NULL) && SIMLockCheckCorpLock(SimId, imsi, gid1, gid2)) )
+              ((imsi != NULL) && (gid1 != NULL) && (gid2 != NULL) && SIMLockCheckCorpLock(imsi, gid1, gid2)) )
             {
-                Corporate_Lock_Status[SimId] = SIMLOCK_OPENED;
+                Corporate_Lock_Status = SIMLOCK_OPENED;
             }
             else
             {
-                Corporate_Lock_Status[SimId] = SIMLOCK_CLOSED;
+                Corporate_Lock_Status = SIMLOCK_CLOSED;
                 result = FALSE;
             } 
         }
     }
     
     /* Check PH-SIM lock status */
-    if (Phone_Lock_Status[SimId] != SIMLOCK_VERIFIED)
+    if (Phone_Lock_Status != SIMLOCK_VERIFIED)
     {
-        if (SIMLockCheckPHSIMLock(SimId, imsi))
+        if (SIMLockCheckPHSIMLock(imsi))
         {
-            Phone_Lock_Status[SimId] = SIMLOCK_OPENED;
+            Phone_Lock_Status = SIMLOCK_OPENED;
         }
         else
         {
-            Phone_Lock_Status[SimId] = SIMLOCK_CLOSED;
+            Phone_Lock_Status = SIMLOCK_CLOSED;
             result = FALSE;
         }
     }
@@ -1541,7 +1528,7 @@ Boolean  SIMLockCheckAllLocks(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockGetCurrentClosedLock()
-// Input:       SimId- Sim Identifier Type
+// Input:     none
 // Output:      none
 // Return:      return one of the closed lock type.
 //          
@@ -1552,29 +1539,29 @@ Boolean  SIMLockCheckAllLocks(SimNumber_t SimId, UInt8* imsi, UInt8* gid1, UInt8
 // Note:            Function SIMLockCheckAllLocks must have been called
 //                  before this function is called!!!!!!     
 //----------------------------------------------------------------------------
-SIMLockType_t SIMLockGetCurrentClosedLock(SimNumber_t SimId, Boolean *lock_blocked)
+SIMLockType_t SIMLockGetCurrentClosedLock(Boolean *lock_blocked)
 {
     SIMLockType_t lock_type;
     SIMLOCK_NVDATA_t simlock_nvdata;
     SIMLock_CodeFile_t *simlockFile = GetSimlockData(); 
     
-    if (Network_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    if (Network_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_NETWORK_LOCK;
     }
-    else if (Network_Subset_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Network_Subset_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_NET_SUBSET_LOCK;
     }
-    else if (Service_Provider_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Service_Provider_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_PROVIDER_LOCK;
     }
-    else if (Corporate_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Corporate_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_CORP_LOCK;
     }
-    else if (Phone_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Phone_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_PHONE_LOCK;
     }
@@ -1624,7 +1611,7 @@ SIMLockType_t SIMLockGetCurrentClosedLock(SimNumber_t SimId, Boolean *lock_block
      */
     if (simlockFile != NULL)
     {
-        freeSimLockdata(simlockFile);
+        kfree(simlockFile);
     }
     
     return lock_type;
@@ -1705,8 +1692,7 @@ Boolean SIMLockCheckPasswordPHSIM(UInt8 *pwd)
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockUnlockSIM()
-// Input:           SimId- Sim Identifier Type
-//                  key - control key
+// Input:           key - control key
 //                  lockType - SIM Lock type except SIMLOCK_PHONE_LOCK
 //
 // Output:          none
@@ -1716,7 +1702,7 @@ Boolean SIMLockCheckPasswordPHSIM(UInt8 *pwd)
 //
 //  Note:     This function is only allowed to try 3 time after power up.
 //----------------------------------------------------------------------------
-SIMLock_Status_t  SIMLockUnlockSIM(SimNumber_t SimId, SIMLockType_t lockType, UInt8* key)
+SIMLock_Status_t  SIMLockUnlockSIM(SIMLockType_t lockType, UInt8* key)
 {
     SIMLock_Status_t  simlockStatus = SIMLockUnlockOneType(lockType, key);
     
@@ -1726,28 +1712,23 @@ SIMLock_Status_t  SIMLockUnlockSIM(SimNumber_t SimId, SIMLockType_t lockType, UI
         switch (lockType)
         {
             case SIMLOCK_NETWORK_LOCK:
-                Network_Lock_Status[SimId] = SIMLOCK_VERIFIED;
-                g_CurrentSimLockState[SimId].network_lock = SIMLOCK_VERIFIED;
+                Network_Lock_Status = SIMLOCK_VERIFIED;
                 break;
             
             case SIMLOCK_NET_SUBSET_LOCK:
-                Network_Subset_Lock_Status[SimId] = SIMLOCK_VERIFIED;
-                g_CurrentSimLockState[SimId].network_subset_lock = SIMLOCK_VERIFIED;
+                Network_Subset_Lock_Status = SIMLOCK_VERIFIED;
                 break;
             
             case SIMLOCK_PROVIDER_LOCK:
-                Service_Provider_Lock_Status[SimId] = SIMLOCK_VERIFIED;
-                g_CurrentSimLockState[SimId].service_provider_lock = SIMLOCK_VERIFIED;
+                Service_Provider_Lock_Status = SIMLOCK_VERIFIED;
                 break;
             
             case SIMLOCK_CORP_LOCK:
-                Corporate_Lock_Status[SimId] = SIMLOCK_VERIFIED;
-                g_CurrentSimLockState[SimId].corporate_lock = SIMLOCK_VERIFIED;
+                Corporate_Lock_Status = SIMLOCK_VERIFIED;
                 break;
             
             case SIMLOCK_PHONE_LOCK:
-                Phone_Lock_Status[SimId] = SIMLOCK_VERIFIED;
-                g_CurrentSimLockState[SimId].phone_lock = SIMLOCK_VERIFIED;
+                Phone_Lock_Status = SIMLOCK_VERIFIED;
                 break;
             
             default:
@@ -1756,14 +1737,14 @@ SIMLock_Status_t  SIMLockUnlockSIM(SimNumber_t SimId, SIMLockType_t lockType, UI
         
         if (!SIM_NOT_PRESENT())
         {
-            SIMLockUpdateSIMLockState(SimId);
+            SIMLockUpdateSIMLockState();
         }
     }
     else if ((simlockStatus == SIMLOCK_PERMANENTLY_LOCKED) && !SIM_NOT_PRESENT())
     {
         if (!SIM_NOT_PRESENT())
         {
-            SIMLockUpdateSIMLockState(SimId);
+            SIMLockUpdateSIMLockState();
         }
     }
     
@@ -1774,8 +1755,7 @@ SIMLock_Status_t  SIMLockUnlockSIM(SimNumber_t SimId, SIMLockType_t lockType, UI
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockSetLock()
-// Input:   SimId- Sim Identifier Type
-//          action - 1: lock SIM; 0 = unlock SIM
+// Input:           action - 1: lock SIM; 0 = unlock SIM
 //          ph_sim_full_lock_on - whether PH-SIM full lock should be set on.
 //          lockType - SIM Lock type: network, network subset, ...
 //          key - control key
@@ -1792,25 +1772,25 @@ SIMLock_Status_t  SIMLockUnlockSIM(SimNumber_t SimId, SIMLockType_t lockType, UI
 //  Note:     This function is only allowed to try 3 time after power up.
 //----------------------------------------------------------------------------
 
-SIMLock_Status_t  SIMLockSetLock(SimNumber_t SimId, UInt8 action, Boolean ph_sim_full_lock_on, SIMLockType_t lockType,  
+SIMLock_Status_t  SIMLockSetLock(UInt8 action, Boolean ph_sim_full_lock_on, SIMLockType_t lockType,  
                  UInt8* key, UInt8* imsi, UInt8* gid1, UInt8* gid2)
 {
     if (lockType == SIMLOCK_PHONE_LOCK)
     {
-        SIMLock_Status_t result = SIMLockSetPHSIMLock(SimId, ((action == 0) ? PH_SIM_LOCK_OFF :
+        SIMLock_Status_t result = SIMLockSetPHSIMLock( ((action == 0) ? PH_SIM_LOCK_OFF :
                 (ph_sim_full_lock_on ? PH_SIM_FULL_LOCK_ON : PH_SIM_LOCK_ON)), imsi, key);
         
         /* If unlocking PH-SIM lock, we need to update the SIM PIN status */
         if ((result == SIMLOCK_SUCCESS) && !SIM_NOT_PRESENT())
         {
-            SIMLockUpdateSIMLockState(SimId);
+            SIMLockUpdateSIMLockState();
         }
         
         return result;
     }
     else
     {
-        return SIMLockSetLockOneType(SimId, lockType, action == 1, key);
+        return SIMLockSetLockOneType(lockType, action == 1, key);
     }
 }
 
@@ -1826,62 +1806,51 @@ SIMLock_Status_t  SIMLockSetLock(SimNumber_t SimId, UInt8 action, Boolean ph_sim
 //      
 //
 //----------------------------------------------------------------------------
-void SIMLockUpdateSIMLockState(SimNumber_t SimId)
+void SIMLockUpdateSIMLockState(void)
 {
     Boolean lock_blocked = FALSE;
     
-    switch (SIMLockGetCurrentClosedLock( SimId, &lock_blocked))
+    switch (SIMLockGetCurrentClosedLock(&lock_blocked))
     {
         case SIMLOCK_NETWORK_LOCK:
-            g_CurrentSimLockState[SimId].network_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
-            g_CurrentSimLockState[SimId].network_lock_enabled = TRUE;
+            g_CurrentSimLockState.network_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
             break;
         
         case SIMLOCK_NET_SUBSET_LOCK:
-            g_CurrentSimLockState[SimId].network_subset_lock = lock_blocked ? SIM_SECURITY_BLOCKED: SIM_SECURITY_LOCKED;
-            g_CurrentSimLockState[SimId].network_subset_lock_enabled = TRUE;
+            g_CurrentSimLockState.network_subset_lock = lock_blocked ? SIM_SECURITY_BLOCKED: SIM_SECURITY_LOCKED;
             break;
               
         case SIMLOCK_PROVIDER_LOCK:
-            g_CurrentSimLockState[SimId].service_provider_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
-            g_CurrentSimLockState[SimId].service_provider_lock_enabled = TRUE;
+            g_CurrentSimLockState.service_provider_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
             break;
               
         case SIMLOCK_CORP_LOCK:
-            g_CurrentSimLockState[SimId].corporate_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
-            g_CurrentSimLockState[SimId].corporate_lock_enabled = TRUE;
+            g_CurrentSimLockState.corporate_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
             break;
               
         case SIMLOCK_PHONE_LOCK:
-            g_CurrentSimLockState[SimId].phone_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
-            g_CurrentSimLockState[SimId].phone_lock_enabled = TRUE;
+            g_CurrentSimLockState.phone_lock = lock_blocked ? SIM_SECURITY_BLOCKED : SIM_SECURITY_LOCKED;
             break;
               
         case SIMLOCK_INVALID_LOCK:
         default:
-            g_CurrentSimLockState[SimId].network_lock = SIM_SECURITY_OPEN;
-            g_CurrentSimLockState[SimId].network_subset_lock = SIM_SECURITY_OPEN;
-            g_CurrentSimLockState[SimId].service_provider_lock = SIM_SECURITY_OPEN;
-            g_CurrentSimLockState[SimId].corporate_lock = SIM_SECURITY_OPEN;
-            g_CurrentSimLockState[SimId].phone_lock = SIM_SECURITY_OPEN;
-            g_CurrentSimLockState[SimId].network_lock_enabled = FALSE;
-            g_CurrentSimLockState[SimId].network_subset_lock_enabled = FALSE;
-            g_CurrentSimLockState[SimId].service_provider_lock_enabled = FALSE;
-            g_CurrentSimLockState[SimId].corporate_lock_enabled = FALSE;
-            g_CurrentSimLockState[SimId].phone_lock_enabled = FALSE;
+            g_CurrentSimLockState.network_lock = SIM_SECURITY_OPEN;
+            g_CurrentSimLockState.network_subset_lock = SIM_SECURITY_OPEN;
+            g_CurrentSimLockState.service_provider_lock = SIM_SECURITY_OPEN;
+            g_CurrentSimLockState.corporate_lock = SIM_SECURITY_OPEN;
+            g_CurrentSimLockState.phone_lock = SIM_SECURITY_OPEN;
             break;
     }
     
-    KRIL_DEBUG(DBG_INFO,"SIM%d security state PN(%d), PU(%d), PP(%d), PC(%d), PS(%d)\r\n",SimId,
-    g_CurrentSimLockState[SimId].network_lock, g_CurrentSimLockState[SimId].network_subset_lock, 
-    g_CurrentSimLockState[SimId].service_provider_lock, g_CurrentSimLockState[SimId].corporate_lock, 
-    g_CurrentSimLockState[SimId].phone_lock);
+    KRIL_DEBUG(DBG_INFO,"SIM security state PN(%d), PU(%d), PP(%d), PC(%d), PS(%d)\r\n", 
+    g_CurrentSimLockState.network_lock, g_CurrentSimLockState.network_subset_lock, 
+    g_CurrentSimLockState.service_provider_lock, g_CurrentSimLockState.corporate_lock, 
+    g_CurrentSimLockState.phone_lock);
 }
 
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockGetSIMLockState()
-// Input:   SimId- Sim Identifier Type
 //
 // Description:  Get the current SIM lock state. 
 //
@@ -1892,25 +1861,18 @@ void SIMLockUpdateSIMLockState(SimNumber_t SimId)
 // Return:  NULL 
 //
 //----------------------------------------------------------------------------
-void SIMLockGetSIMLockState(SimNumber_t SimId, SIMLOCK_STATE_t* simlock_state)
+void SIMLockGetSIMLockState(SIMLOCK_STATE_t* simlock_state)
 {
-    simlock_state->network_lock_enabled = g_CurrentSimLockState[SimId].network_lock_enabled;
-    simlock_state->network_subset_lock_enabled = g_CurrentSimLockState[SimId].network_subset_lock_enabled;
-    simlock_state->service_provider_lock_enabled = g_CurrentSimLockState[SimId].service_provider_lock_enabled;
-    simlock_state->corporate_lock_enabled = g_CurrentSimLockState[SimId].corporate_lock_enabled;
-    simlock_state->phone_lock_enabled = g_CurrentSimLockState[SimId].phone_lock_enabled;   
-
-    simlock_state->network_lock = g_CurrentSimLockState[SimId].network_lock;
-    simlock_state->network_subset_lock = g_CurrentSimLockState[SimId].network_subset_lock;
-    simlock_state->service_provider_lock = g_CurrentSimLockState[SimId].service_provider_lock;
-    simlock_state->corporate_lock = g_CurrentSimLockState[SimId].corporate_lock;
-    simlock_state->phone_lock = g_CurrentSimLockState[SimId].phone_lock;    
+    simlock_state->network_lock = g_CurrentSimLockState.network_lock;
+    simlock_state->network_subset_lock = g_CurrentSimLockState.network_subset_lock;
+    simlock_state->service_provider_lock = g_CurrentSimLockState.service_provider_lock;
+    simlock_state->corporate_lock = g_CurrentSimLockState.corporate_lock;
+    simlock_state->phone_lock = g_CurrentSimLockState.phone_lock;    
 }
 
 
 //--------------------------------------------------------------------------
 // Function Name: SIMLockGetRemainAttempt()
-// Input:   SimId- Sim Identifier Type
 //
 // Description:  Get the remain attempt. 
 //
@@ -1918,34 +1880,31 @@ void SIMLockGetSIMLockState(SimNumber_t SimId, SIMLOCK_STATE_t* simlock_state)
 //      
 //
 //----------------------------------------------------------------------------
-UInt8 SIMLockGetRemainAttempt(SimNumber_t SimId)
+UInt8 SIMLockGetRemainAttempt(void)
 {
     UInt8 remain_attempt;
     SIMLockType_t lock_type;
     UInt8 *unlock_attempt = NULL;
     SIMLOCK_NVDATA_t simlock_nvdata;
     SIMLock_CodeFile_t *simlockFile = GetSimlockData();
-    if (NULL == simlockFile)
-    { 
-        return 0;
-    }  
-    if (Network_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    
+    if (Network_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_NETWORK_LOCK;
     }
-    else if (Network_Subset_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Network_Subset_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_NET_SUBSET_LOCK;
     }
-    else if (Service_Provider_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Service_Provider_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_PROVIDER_LOCK;
     }
-    else if (Corporate_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Corporate_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_CORP_LOCK;
     }
-    else if (Phone_Lock_Status[SimId] == SIMLOCK_CLOSED)
+    else if (Phone_Lock_Status == SIMLOCK_CLOSED)
     {
         lock_type = SIMLOCK_PHONE_LOCK;
     }
@@ -1954,7 +1913,7 @@ UInt8 SIMLockGetRemainAttempt(SimNumber_t SimId)
         lock_type = SIMLOCK_INVALID_LOCK;
     }    
     
-    if (GetSimlockNvdata(&simlock_nvdata))
+    if (GetSimlockNvdata(&simlock_nvdata) && (simlockFile != NULL))
     {
         switch (lock_type)
         {
@@ -1995,7 +1954,7 @@ UInt8 SIMLockGetRemainAttempt(SimNumber_t SimId)
      */
     if (simlockFile != NULL)
     {
-        freeSimLockdata(simlockFile);
+        kfree(simlockFile);
     }
     
     return remain_attempt;

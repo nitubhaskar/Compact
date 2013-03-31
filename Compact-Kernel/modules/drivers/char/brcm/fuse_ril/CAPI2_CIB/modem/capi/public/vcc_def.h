@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   vcc_def.h
@@ -20,6 +22,13 @@ the GPL, without Broadcom's express prior written consent.
 #ifndef _VCC_DEF_H_
 #define _VCC_DEF_H_
 
+#include "timer.h"
+#include "ostimer.h"
+#include "prim.h"
+#include "taskmsgs.h"
+#include "tones_def.h"
+#include "sys_util.h"
+#include "vcc_vmc.h"
 
 #define MAX_SIG_NAME_LEN             50                   ///< Max lenth of signal name string
 #define MS_CFG_ELEM_VCC_TIMER_BASE   300                  ///< will add to ms_database later
@@ -94,8 +103,6 @@ typedef struct
 	Boolean chkClientId;				///< TRUE if we need to verify validity of client ID
 	Boolean isPowerDownCnf;				///< TRUE if Idle Ind is sent after receiving power-down detach confirmation from stack
 } CapiIdleInd_t;
-
-
 
 #endif //_VCC_DEF_H_
 

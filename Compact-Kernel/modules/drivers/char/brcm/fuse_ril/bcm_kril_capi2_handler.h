@@ -27,56 +27,34 @@
 //
 // -----------------------------------------------------------------------------
 #define BCM_AT_ProcessCmd                         0x0100
-#define BCM_SET_IMEI                              0x0101
-#define BCM_SMS_ELEM_CLIENT_HANDLE_MT_SMS         0x0102
-#define BCM_SMS_SetSmsReadStatusChangeMode        0x0103
-#define BCM_SMS_SetVMIndOnOff                     0x0104
-#define BCM_SYS_SetFilteredEventMask              0x0105
-#define BCM_SYS_SetRssiThreshold                  0x0106
-#define BCM_PMU_Low_Battery_Register              0x0107
-#define BCM_PMU_Empty_Battery_Register            0x0108
-#define BCM_PMU_LevelChange_Battery_Register      0x0109
-#define BCM_SATK_SetTermProfile                   0x010A
-#define BCM_SATK_SETUP_CALL_CTR                   0x010B
-#define BCM_SET_GPRSClassCC                       0x010C
-#define BCM_SET_GPRSClassB                        0x010D
-#define BCM_SET_SupportedRATandBand               0x010E
-#define BCM_SET_RADIO_OFF                         0x010F
-#define BCM_Demand_Attach_Always                  0x0110
-#define BCM_TIMEZONE_SetTZUpdateMode              0x0111
-#define BCM_SS_SET_ENABLE_OLD_SS_MSG              0x0112
-#define BCM_SET_BPMSetting                        0x0113
-#define BCM_AT_AUDIO_CTRL                         0x0114
-#define BCM_SATK_ICON_DISP_SUPPORTED              0x0115
-#define BCM_Demand_SIM2_Attach_Always             0x0116
-#define BCM_SS_SET_ELEM_FDN_CHECK                 0x0117
+#define BCM_SMS_ELEM_CLIENT_HANDLE_MT_SMS         0x0101
+#define BCM_SMS_SetSmsReadStatusChangeMode        0x0102
+#define BCM_SYS_SetFilteredEventMask              0x0103
+#define BCM_SYS_SetRssiThreshold                  0x0104
+#define BCM_PMU_Low_Battery_Register              0x0105
+#define BCM_PMU_Empty_Battery_Register            0x0106
+#define BCM_PMU_LevelChange_Battery_Register      0x0107
+#define BCM_SATK_SetTermProfile                   0x0108
+#define BCM_SATK_SETUP_CALL_CTR                   0x0109
+#define BCM_SET_IMEI                              0x010A
+#define BCM_SET_RADIO_OFF                         0x010B
+#define BCM_SS_SET_ENABLE_OLD_SS_MSG              0x010C
+#define BCM_SET_SupportedRATandBand               0x010D
+#define BCM_TIMEZONE_SetTZUpdateMode              0x010E
+#define BCM_SATK_ICON_DISP_SUPPORTED              0x010F
+#define BCM_SS_SET_ELEM_FDN_CHECK                 0x0110
 #ifdef OEM_RIL_ENABLE
-#define BCM_SATK_SEND_SS_CTR                 0x0118
-#define BCM_SATK_SEND_USSD_CTR               0x0119
-#define BCM_SATK_SEND_SMS_CTR                0x011A
-#define BCM_SATK_SEND_ENABLE_7BIT_CONVERSIONS	0x011B
-#define BCM_SATK_SEND_SETUP_EVENT_LIST_CTR	 0x11C
-#define BCM_CFG_SIM_LOCK_SUPPORTED		 0x011D
+#define BCM_SATK_SEND_SS_CTR                 0x0111
+#define BCM_SATK_SEND_USSD_CTR               0x0112
+#define BCM_SATK_SEND_SMS_CTR                0x0113
+#define BCM_SATK_SEND_ENABLE_7BIT_CONVERSIONS	0x116
+#define BCM_SATK_SEND_SETUP_EVENT_LIST_CTR	 0x117
+#define BCM_CFG_SIM_LOCK_SUPPORTED		 0x0118
 #endif
 
 //++ JSHAN Attach for next power on
-#define BCM_SET_AttachMode				0x011E
+#define BCM_SET_AttachMode				0x0114
 //-- JSHAN Attach for next power on
-
-#define BCM_SS_SET_ELEM_FDN_CHECK                 0x011F // CWYoon 110707::Check FDN list for SS.
-#define BCM_SET_SIM_LOCK_SUPPORTED                0x0120
-
-
-// -----------------------------------------------------------------------------
-//
-// @doc EXTERNAL
-//
-// @ Set Radio Power handler
-//
-// @comm None
-//
-// -----------------------------------------------------------------------------
-#define BCM_PowerOnOffCard                  0x0110
 
 
 // -----------------------------------------------------------------------------
@@ -124,7 +102,7 @@
 //
 // @doc EXTERNAL
 //
-// @ Hangup handler
+// @ Hungup handler
 //
 // @comm None
 //
@@ -141,7 +119,7 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_CC_AllCallIndex          0x0099 // CSP 381563
+#define BCM_CC_AllCallIndex          0x0100
 #define BCM_CC_GetCallType           0x0101
 #define BCM_CC_GetCallNumber         0x0102
 #define BCM_CC_IsMultiPartyCall      0x0103
@@ -150,14 +128,13 @@
 #define BCM_ECHO_SetDigitalTxGain    0x0106
 #define BCM_CC_SetVTCallEndCause     0x0107
 #define BCM_CC_GetVTCallEndResult    0x0108
-#define BCM_CC_GetCallState          0x0109
 
 
 // -----------------------------------------------------------------------------
 //
 // @doc EXTERNAL
 //
-// @ Hangup Waiting Or Background handler
+// @ Hungup Waiting Or Background handler
 //
 // @comm None
 //
@@ -169,7 +146,7 @@
 //
 // @doc EXTERNAL
 //
-// @ Hangup Foreground Resume Background handler
+// @ Hungup Foreground Resume Background handler
 //
 // @comm None
 //
@@ -190,11 +167,10 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_CC_GetMPTYCallIndex      0x0104
-#define BCM_CC_SwapCall              0x0105
+#define BCM_CC_GetMPTYCallIndex        0x0104
+#define BCM_CC_SwapCall                0x0105
 #define BCM_CC_HoldAnswerWaitCall      0x0106
 #define BCM_CC_HoldCallFailEndWaitCall 0x0107
-
 
 // -----------------------------------------------------------------------------
 //
@@ -226,7 +202,7 @@
 //
 // @doc EXTERNAL
 //
-// @ Registation State handler
+// @ Registation State handle
 //
 // @comm None
 //
@@ -266,11 +242,7 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_NET_QueryCurrentRAT         0x001
-#define BCM_PDP_SendPDPDeactivateReq    0x002
-#define BCM_SYS_SelectBand              0x003
-#define BCM_PDP_SendDunPDPDeactivateReq 0x004
-#define BCM_REVET_GPRSClassB            0x005
+#define BCM_SendPDPDeactivateReq   0x001
 
 
 // -----------------------------------------------------------------------------
@@ -310,7 +282,6 @@
 #define BCM_SS_SendCallBarringReq         0x0101
 
 
-//EAP-SIM
 // -----------------------------------------------------------------------------
 //
 // @doc EXTERNAL
@@ -342,24 +313,12 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_SIM_GetServiceStatus            0x0100
+#define BCM_SIM_GetServiceStatus        0x0100
 #define BCM_SIM_SIMIO_UpdateFDNRecord       0x0101
 #define BCM_SIM_PBK_UpdateFDNRecord         0x0102
 #define BCM_SIM_GetFDNInfo                  0x0103
 #define BCM_SIM_UpdateFDNRsult              0x0104
 
-
-// -----------------------------------------------------------------------------
-//
-// @doc EXTERNAL
-//
-// @ Normal SMS handler
-//
-// @comm None
-//
-// -----------------------------------------------------------------------------
-#define BCM_SMS_SET_FDN_MODE                 0x001
-#define BCM_SMS_RESPONSE_AND_RESET_FDN       0x002
 
 // -----------------------------------------------------------------------------
 //
@@ -382,8 +341,8 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_SMS_SendSMSPduReq               0x001
-#define BCM_SMS_DisableMoreMessageToSend    0x002
+#define BCM_SMS_SendSMSPduReq   0x001
+#define BCM_SMS_DisableMoreMessageToSend   0x002
 #define BCM_SMS_StartMultiSMSTransfer       0x003
 #define BCM_SMS_StopMultiSMSTransfer        0x004
 
@@ -422,7 +381,7 @@
 // @comm None
 //
 // -----------------------------------------------------------------------------
-#define BCM_PDP_SetPdpContext         0x002
+#define BCM_PDP_SetPdpContext         0x001
 
 
 // -----------------------------------------------------------------------------
@@ -495,13 +454,15 @@
 #define BCM_SIM_POWER_ON_OFF_CARD   0x102
 #define BCM_GET_HSDPA_PHY_CATEGORY 0x103
 #define BCM_GET_HSUPA_PHY_CATEGORY 0x104
+#define BCM_SET_HSDPA_PHY_CATEGORY 0x105
 
+#define BCM_MS_SetPlmnSelect			0x106
 // for Call Control
 void KRIL_GetCurrentCallHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_DialHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
-void KRIL_HangupHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
-void KRIL_HangupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
-void KRIL_HangupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
+void KRIL_HungupHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
+void KRIL_HungupWaitingOrBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
+void KRIL_HungupForegroundResumeBackgroundHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_ConferenceHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_UDUBHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
@@ -518,12 +479,10 @@ void KRIL_SetupPdpHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_DeactivatePdpHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_DataStateHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_SendDataHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
-void KRIL_SetPreferredDataHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 
 // for Network
 void KRIL_SignalStrengthHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_RegistationStateHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
-void KRIL_SetBPMModeHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 //void KRIL_GPRS_RegistationStateHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_QueryNetworkSelectionModeHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
@@ -590,6 +549,7 @@ void KRIL_SetFacilityLockHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_SimIOHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_QuerySimPinRemainingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 void KRIL_GenericSimAccessHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
+
 // BCM_EAP_SIM
 #ifdef BCM_RIL_FOR_EAP_SIM 
 void KRIL_GsmSimAuthenticationHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);

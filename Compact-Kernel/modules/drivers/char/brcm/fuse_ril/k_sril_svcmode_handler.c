@@ -43,16 +43,12 @@
 
 #include "k_sril_svcmode_handler.h"
 
-#include <linux/broadcom/bcm_fuse_sysparm_CIB.h>
+
 
 #include <asm/uaccess.h>
 
 #include <linux/syscalls.h>
 
-typedef unsigned char byte;
-/*+20110418 BCOM PATCH FOR DebugScreen*/
-#define BCM_MeasureReport 0xFFFA
-/*-20110418 BCOM PATCH FOR DebugScreen*/
 
 static void KRIL_SRIL_requestOemSvcEnterModeMessage(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp);
 
@@ -74,14 +70,6 @@ static void KRIL_SRIL_requestOemSvcGPRSAttachMode_Set(void *ril_cmd, Kril_CAPI2I
 /*+20110418 BCOM PATCH FOR DebugScreen*/
 static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rsp);
 /*-20110418 BCOM PATCH FOR DebugScreen*/
-
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-static void KRIL_SRIL_requestOemSvcTest_S(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rsp);
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-/*+20110824 HKPARK SLAVE BAND SELECTION*/	
-static void KRIL_SRIL_requestOemSvcModeTestManual_S(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rsp);
-/*-20110824 HKPARK SLAVE BAND SELECTION*/	
-
 
 /*  [Structure] pdata->ril_cmd->data				*/
 
@@ -108,22 +96,13 @@ UInt8 vGprsAttachMode = 0;
 //-- JSHAN Attach for next power on
 //-- JSHAN_GPRS_Attach_Mode
 
-/*+20110822 HKPARK FOR DebugScreen Slave*/
- bool  v_SimCheck_Slave = false;
- bool  v_SimCheck_MASTER = false;
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-
 /*+20110418 BCOM PATCH FOR DebugScreen*/
 static bool bDebugScreen;
 /*-20110418 BCOM PATCH FOR DebugScreen*/
 
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-static bool bDebugScreen2;
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-
 char                testbuffer[11][32];
 
-#define IMEI_STRING_LEN (IMEI_DIGITS+1)
+
 
 void KRIL_SRIL_requestSvcModeHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 
@@ -279,18 +258,8 @@ static void KRIL_SRIL_requestOemSvcEnterModeMessage(void *ril_cmd,  Kril_CAPI2In
 
 		    break;
 
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-		case SVC_MODE_MONITOR_S:                  /* 0x07 : Monitor screen mode S */
-			KRIL_DEBUG(DBG_ERROR,"SVC_MODE_MONITOR_S:%d !\n", modetype);
-			KRIL_SRIL_requestOemSvcTest_S(ril_cmd, capi2_rsp);
-		    break;
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-/*+20110824 HKPARK SLAVE BAND SELECTION*/
-		case SVC_MODE_TEST_MANUAL_S:
-		     KRIL_DEBUG(DBG_ERROR,"SVC_MODE_TEST_MANUAL_S:%d !\n", modetype);
-	   	     KRIL_SRIL_requestOemSvcModeTestManual_S(ril_cmd, capi2_rsp);
-                    break;
-/*-20110824 HKPARK SLAVE BAND SELECTION*/	
+
+
 		default : 
 
 			KRIL_DEBUG(DBG_ERROR,"Unsupported modetype:%d Error!!!\n", modetype);
@@ -325,9 +294,6 @@ static void KRIL_SRIL_requestOemSvcEndModeMessage(void *ril_cmd, unsigned char S
 	/*+20110418 BCOM PATCH FOR DebugScreen*/
 	bDebugScreen = 0;
 	/*-20110418 BCOM PATCH FOR DebugScreen*/
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-	bDebugScreen2 = 0;
-/*-20110822 HKPARK FOR DebugScreen Slave*/	
 	return;
 
 }
@@ -360,10 +326,6 @@ static void KRIL_SRIL_requestOemSvcProcessKeyCodeMessage(void *ril_cmd, unsigned
 		KRIL_SRIL_requestOemSvcTest(ril_cmd,  capi2_rsp);
 	}
 	/*-20110418 BCOM PATCH FOR DebugScreen*/
-	else if(  bDebugScreen2 == 1 )	//if svc window need to update 
-	{
-		KRIL_SRIL_requestOemSvcTest_S(ril_cmd,  capi2_rsp);
-	}
 
 	return;
 
@@ -372,136 +334,6 @@ static void KRIL_SRIL_requestOemSvcProcessKeyCodeMessage(void *ril_cmd, unsigned
 
 
 
-/*+20110824 HKPARK SLAVE BAND SELECTION*/	
-static void KRIL_SRIL_requestOemSvcModeTestManual_S(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rsp)
-
-{
-	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
-
-	OemSvcEnterModeMsg * pSvcEnterMsg = NULL;
-
-
-
-	pSvcEnterMsg = (OemSvcEnterModeMsg *)pdata->ril_cmd->data;
-
-
-
-	UInt8 subtype;
-
-        KrilSrilSetBand2_t tdata_band;
- 
-
-	subtype = (UInt8)pSvcEnterMsg->subType;	//subtype	
-
-
-	switch (subtype) //each func. match by subtype.
-
-	{
-
-           case TST_SET_BAND_AUTO:
-	  {
-		KRIL_DEBUG(DBG_ERROR,"TST_SET_BAND_2_AUTO:%d !!!\n", subtype);
-
-		tdata_band.curr_rat2 = GSM_ONLY; //(RATSelect_t) tdata->curr_rat, 
-		tdata_band.new_band2 = BAND_AUTO; //(BandSelect_t) tdata->new_band
-		KRIL_SRIL_SetBandHandler2(ril_cmd, capi2_rsp, &tdata_band);
-
-		if(pdata->handler_state == BCM_FinishCAPI2Cmd)
-  		{
-			sprintf(testbuffer[0], "RAT : %s", "GSM_ONLY");
-			sprintf(testbuffer[1], "BAND: %s", "BAND_AUTO");
-			
-	        	KRIL_SRIL_svc_update_screen(ril_cmd, 2, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-			
-		}
-
-	    }
-	    break;
-
-	case TST_SET_BAND_GSM_850:
-	   {
-	      KRIL_DEBUG(DBG_ERROR,"TST_SET_BAND_2_GSM_850:%d !!!\n", subtype);
-
-	      tdata_band.curr_rat2 = GSM_ONLY; //(RATSelect_t) tdata->curr_rat, 
-	      tdata_band.new_band2 = BAND_GSM850_ONLY; //(BandSelect_t) tdata->new_band
-	      KRIL_SRIL_SetBandHandler2(ril_cmd, capi2_rsp, &tdata_band);
-
-		if(pdata->handler_state == BCM_FinishCAPI2Cmd)
-		{
-			sprintf(testbuffer[0], "RAT : %s", "GSM_ONLY");
-			sprintf(testbuffer[1], "BAND: %s", "BAND_GSM850_ONLY");
-		
-			KRIL_SRIL_svc_update_screen(ril_cmd, 2, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-      		}
-	     }
-	    break;
-
-	case TST_SET_BAND_GSM_900:
-	   {
-	      KRIL_DEBUG(DBG_ERROR,"TST_SET_BAND_2_GSM_900:%d !!!\n", subtype);
-
-	      tdata_band.curr_rat2 = GSM_ONLY; //(RATSelect_t) tdata->curr_rat, 
-	      tdata_band.new_band2 = BAND_GSM900_ONLY; //(BandSelect_t) tdata->new_band
-	      KRIL_SRIL_SetBandHandler2(ril_cmd, capi2_rsp, &tdata_band);
-
-		if(pdata->handler_state == BCM_FinishCAPI2Cmd)
-		{
-			sprintf(testbuffer[0], "RAT : %s", "GSM_ONLY");
-			sprintf(testbuffer[1], "BAND: %s", "BAND_GSM900_ONLY");
-		
-			KRIL_SRIL_svc_update_screen(ril_cmd, 2, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-      		}
-	     }
-	    break;
-		
-	case TST_SET_BAND_DCS_1800:
-	   {
-	      KRIL_DEBUG(DBG_ERROR,"TST_SET_BAND_2_DCS_1800:%d !!!\n", subtype);
-
-	      tdata_band.curr_rat2 = GSM_ONLY; //(RATSelect_t) tdata->curr_rat, 
-	      tdata_band.new_band2 = BAND_DCS1800_ONLY; //(BandSelect_t) tdata->new_band
-	      KRIL_SRIL_SetBandHandler2(ril_cmd, capi2_rsp, &tdata_band);
-
-		if(pdata->handler_state == BCM_FinishCAPI2Cmd)
-		{
-			sprintf(testbuffer[0], "RAT : %s", "GSM_ONLY");
-			sprintf(testbuffer[1], "BAND: %s", "BAND_DCS1800_ONLY");
-		
-			KRIL_SRIL_svc_update_screen(ril_cmd, 2, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-      		}
-	     }
-	    break;
-
-	case TST_SET_BAND_PCS_1900:	
-	   {
-	      KRIL_DEBUG(DBG_ERROR,"TST_SET_BAND_2_PCS_1900:%d !!!\n", subtype);
-
-	      tdata_band.curr_rat2 = GSM_ONLY; //(RATSelect_t) tdata->curr_rat, 
-	      tdata_band.new_band2 = BAND_PCS1900_ONLY; //(BandSelect_t) tdata->new_band
-	      KRIL_SRIL_SetBandHandler2(ril_cmd, capi2_rsp, &tdata_band);
-
-		if(pdata->handler_state == BCM_FinishCAPI2Cmd)
-		{
-			sprintf(testbuffer[0], "RAT : %s", "GSM_ONLY");
-			sprintf(testbuffer[1], "BAND: %s", "BAND_PCS1900_ONLY");
-		
-			KRIL_SRIL_svc_update_screen(ril_cmd, 2, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-      		}
-	     }
-	    break;
-			
-      default : 
-
-       	KRIL_DEBUG(DBG_ERROR,"Unsupported subtype:%d Error!!!\n", subtype);
-		pdata->handler_state = BCM_ErrorCAPI2Cmd;
-		break;
-
-
-	}		
-
-}
-
-/*-20110824 HKPARK SLAVE BAND SELECTION*/	
 
 static void KRIL_SRIL_requestOemSvcModeTestManual(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rsp)
 
@@ -697,59 +529,47 @@ static void KRIL_SRIL_requestOemSvcModeTestManual(void *ril_cmd,  Kril_CAPI2Info
 
 			KRIL_DEBUG(DBG_ERROR,"TST_IMEI_READ_ENTER:%d !!!\n", subtype);
 
-          	        // MS database IMEI is all 0's, so retrieve IMEI from sysparms
-       		        UInt8 tmpImeiStr[IMEI_STRING_LEN];
-			UInt8 tmpImeiStr_2[IMEI_STRING_LEN];
-        		Boolean bFound;
-      		      // retrieve null terminated IMEI string
-    		        bFound = SYSPARM_GetImeiStr( SIM_DUAL_FIRST, tmpImeiStr );
-  		        if ( bFound )
-    		        {
-             			   // got it from sysparms, so copy to the response struct
-      			          KRIL_DEBUG(DBG_INFO,"Using sysparm IMEI:%s\n", tmpImeiStr );
-        	      	//	  strncpy(imei, tmpImeiStr, IMEI_STRING_LEN);
-    		        }
-  	    	        else
-        	 	{
-            		    KRIL_DEBUG(DBG_INFO,"** SYSPARM_GetImeiStr() failed\n" );
-         		 //      imei_result->result = RIL_E_GENERIC_FAILURE;
-     		  	}
 
-			bFound = SYSPARM_GetImeiStr( SIM_DUAL_SECOND, tmpImeiStr_2 );
-  		        if ( bFound )
-    		        {
-             			   // got it from sysparms, so copy to the response struct
-      			          KRIL_DEBUG(DBG_INFO,"Using sysparm IMEI:%s\n", tmpImeiStr );
-        	      	//	  strncpy(imei, tmpImeiStr, IMEI_STRING_LEN);
-    		        }
-  	    	        else
-        	 	{
-            		    KRIL_DEBUG(DBG_INFO,"** SYSPARM_GetImeiStr() failed\n" );
-         		  //  imei_result->result = RIL_E_GENERIC_FAILURE;
-     		  	}
 
-			pdata->handler_state = BCM_FinishCAPI2Cmd;
+			KRIL_GetIMEIHandler(ril_cmd, capi2_rsp);
+
+
 
 			if(pdata->handler_state == BCM_FinishCAPI2Cmd)
+
 			{
+
 				OemSvcModeRsp * pSvcRsp = NULL;
+
 				OemSvcModeRsp * pTmpRsp = NULL;
+
+
+
+				KrilImeiData_t * imei_result;
+
+
 
 				pSvcRsp =  kmalloc(sizeof(OemSvcModeRsp)*11, GFP_KERNEL);
 
-				if (!pSvcRsp)
-				 {
+			    if (!pSvcRsp)
+
+			    {
 
 			        pdata->handler_state = BCM_ErrorCAPI2Cmd;
 
 			        return;
 
-			    	}
+			    }  
+
+			    
+
 			    memset(pSvcRsp, 0, sizeof(OemSvcModeRsp)*MAX_SVCMENU_LINE);
 
 			    pTmpRsp = pSvcRsp;
 
-			//    imei_result = (KrilImeiData_t *)pdata->bcm_ril_rsp;
+			    imei_result = (KrilImeiData_t *)pdata->bcm_ril_rsp;
+
+			    
 
 				pTmpRsp->line = 0;
 
@@ -758,22 +578,15 @@ static void KRIL_SRIL_requestOemSvcModeTestManual(void *ril_cmd,  Kril_CAPI2Info
 				sprintf(pTmpRsp->string, "IMEI :");
 
 
+
 				pTmpRsp++;
 
 				pTmpRsp->line = 1;
 
 				pTmpRsp->reverse = 0;
 
-				strncpy(pTmpRsp->string, tmpImeiStr, IMEI_DIGITS + 1);
+				strncpy(pTmpRsp->string, imei_result->imei, IMEI_DIGITS + 1);
 
-			
-				pTmpRsp++;
-
-				pTmpRsp->line = 2;
-
-				pTmpRsp->reverse = 0;
-
-				strncpy(pTmpRsp->string, tmpImeiStr_2, IMEI_DIGITS + 1);
 
 
 				kfree(pdata->bcm_ril_rsp);
@@ -1204,7 +1017,7 @@ static void KRIL_SRIL_requestOemSvcModeTestManual(void *ril_cmd,  Kril_CAPI2Info
 
 
 
-			simAppType = KRIL_GetSimAppType(pdata->ril_cmd->SimId);//Card Capability / EF_category
+			simAppType = KRIL_GetSimAppType();//Card Capability / EF_category
 
 			
 
@@ -1867,22 +1680,17 @@ static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 		
 	UInt32 TimeInterval = 0;
 
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-	if( (v_SimCheck_MASTER != true)&&(v_SimCheck_Slave == true))
-	{
-             pdata->handler_state  = BCM_RESPCAPI2Cmd;
-	}
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-
 	switch (pdata->handler_state)
 	{
 		case BCM_SendCAPI2Cmd:
 		{
 			KRIL_SetInMeasureReportHandler( TRUE );
+			ClientInfo_t clientInfo;
 			UInt32 new_tid;
 			new_tid = GetNewTID();
+			CAPI2_InitClientInfo(&clientInfo, new_tid, GetClientID());
 			KRIL_SetMeasureReportTID(new_tid);
-			CAPI2_DiagApi_MeasurmentReportReq ( InitClientInfo(pdata->ril_cmd->SimId),TRUE,TimeInterval);
+			CAPI2_DiagApi_MeasurmentReportReq ( &clientInfo,TRUE,TimeInterval);
 			pdata->handler_state = BCM_MeasureReport;
 			KRIL_DEBUG(DBG_ERROR,"SendCAPI2Cmd End TID = %lu \n" , new_tid);
 		}
@@ -1949,9 +1757,10 @@ static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 						//sprintf(testbuffer[0],"WCDMA: %d", rsp->umts_param.rrc_state);
 						/*-LKWON Display RRC state -*/						
 //						sprintf(testbuffer[1],"MCC:%x  MNC:%x",rsp->umts_param.plmn_id.mcc,  rsp->umts_param.plmn_id.mnc);
+						sprintf(testbuffer[1],"MCC:%x  MNC:%x",mcc,  mnc);
 						sprintf(testbuffer[2],"Rx CH:%d , Rssi:%d",rsp->umts_param.dl_uarfcn, rsp->umts_param.rssi);
 						sprintf(testbuffer[3],"Tx CH:%d , TxPwr:%d",rsp->umts_param.ul_uarfcn, rsp->umts_param.tx_pwr);
-						sprintf(testbuffer[4],"Ecn0:%d , RSCP:%d",rsp->umts_param.cpich_ecn0, rsp->umts_param.cpich_rscp);
+						sprintf(testbuffer[4],"Ecn0:-%d , RSCP:-%d",rsp->umts_param.cpich_ecn0, rsp->umts_param.cpich_rscp); // yg7948.park@samsung.com, Attach '-' sign in  DBG Screen. 
 						sprintf(testbuffer[5],"Chanal Mode:%d",rsp->gsm_param.chan_mode);
 						sprintf(testbuffer[6],"PSC:%d , LAC:%d",rsp->umts_param.p_sc, rsp->umts_param.lac);
 					}
@@ -1995,7 +1804,9 @@ static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 					}
 
 					// get measurement data
-					CAPI2_DiagApi_MeasurmentReportReq ( InitClientInfo(capi2_rsp->SimId),FALSE,0);
+					ClientInfo_t clientInfo;
+					CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+					CAPI2_DiagApi_MeasurmentReportReq ( &clientInfo,FALSE,0);
 					//CAPI2_DIAG_ApiMeasurmentReportReq(GetNewTID(), GetClientID(), FALSE, 0);
 					pdata->handler_state = BCM_RESPCAPI2Cmd;
 					KRIL_DEBUG(DBG_ERROR,"BCM_MeasureReport End \n");
@@ -2012,19 +1823,6 @@ static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 
 		case BCM_RESPCAPI2Cmd:
 		{
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-		   if( (v_SimCheck_MASTER != true)&&(v_SimCheck_Slave == true))			 	
-                 {
-			sprintf(testbuffer[0],"NO SIM IN MASTER");
-			sprintf(testbuffer[1],"SIM is OK IN SLAVE ");
-			KRIL_DEBUG(DBG_ERROR,"NO SIM1\n");
-			KRIL_DEBUG(DBG_ERROR,"BCM_RESPCAPI2Cmd End \n");
-			KRIL_SRIL_svc_update_screen(ril_cmd, 2, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-		   }	   
-		   else
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-		   {
-			
 			if (BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW == pdata->result)
 			{
 				KRIL_DEBUG(DBG_ERROR,"DebugScreen_ERROR \n");
@@ -2037,7 +1835,6 @@ static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 				KRIL_SRIL_svc_update_screen(ril_cmd, 7, 0, (unsigned char*)testbuffer, TRUE, TRUE);
 				KRIL_SetInMeasureReportHandler( FALSE );
 			}
-		}
 		}
 		break;
 
@@ -2054,183 +1851,12 @@ static void KRIL_SRIL_requestOemSvcTest(void *ril_cmd,  Kril_CAPI2Info_t *capi2_
 }
 /*-20110418 BCOM PATCH FOR DebugScreen*/
 
-/*+20110822 HKPARK FOR DebugScreen Slave*/
-static void KRIL_SRIL_requestOemSvcTest_S(void *ril_cmd,  Kril_CAPI2Info_t *capi2_rsp)
-{
-	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
-	KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_requestOemSvcTest_S \n");
-
-	/* This is example test code for update svcmode window */	
-	bDebugScreen2 = 1;  //need update this menu.
-	/* update screen */
-		
-	UInt32 TimeInterval = 0;
-
-	if (v_SimCheck_Slave != true)
-	{
-             pdata->handler_state  = BCM_RESPCAPI2Cmd;
-	}
-
-	switch (pdata->handler_state)
-	{
-		case BCM_SendCAPI2Cmd:
-		{
-			KRIL_SetInMeasureReportHandler( TRUE );
-			UInt32 new_tid;
-			new_tid = GetNewTID();
-			KRIL_SetMeasureReportTID(new_tid);
-			CAPI2_DiagApi_MeasurmentReportReq ( InitClientInfo(SIM_DUAL_SECOND),TRUE,TimeInterval);
-			pdata->handler_state = BCM_MeasureReport;
-			KRIL_DEBUG(DBG_ERROR,"SendCAPI2Cmd End TID = %lu \n" , new_tid);
-		}
-		break;
-
-		case BCM_MeasureReport:
-		{
-			KRIL_DEBUG(DBG_ERROR,"msgType :%x \n", capi2_rsp->msgType );
-			
-			if (capi2_rsp->result != RESULT_OK)
-			{
-				pdata->handler_state = BCM_ErrorCAPI2Cmd;
-				KRIL_SetInMeasureReportHandler( FALSE );
-			}
-			else
-			{
-				if (MSG_MEASURE_REPORT_PARAM_IND == capi2_rsp->msgType)
-				{
-				    MS_RxTestParam_t *rsp = (MS_RxTestParam_t *)capi2_rsp->dataBuf;
-                                     if (0 == rsp->mm_param.rat)
-                                 {
-					sprintf(testbuffer[0],"GSM: %d", rsp->gsm_param.grr_state);
-					sprintf(testbuffer[1],"MCC:%x  MNC:%x",rsp->gsm_param.mcc,	rsp->gsm_param.mnc);
-					sprintf(testbuffer[2],"Band:%d  Arfcn:%d",rsp->gsm_param.band,	rsp->gsm_param.arfcn);
-					sprintf(testbuffer[3],"Rxlev:%d , Txlev:%d",rsp->gsm_param.rxlev, rsp->gsm_param.txpwr);
-					sprintf(testbuffer[4],"Rx Pwr:%d , Rx Qual:%d",rsp->gsm_param.rxlevfull, rsp->gsm_param.rxqualfull);
-					sprintf(testbuffer[5],"Chanal Mode:%d",rsp->gsm_param.chan_mode);
-					sprintf(testbuffer[6],"Bsic:%d , LAC:%d",rsp->gsm_param.bsic, rsp->gsm_param.lac);
-			  	      }
-/*+20111226 HKP ADD 3G PARAMETER*/
-					else if (1 == rsp->mm_param.rat)
-					{
-						UInt16 mcc, mnc;
-						
-						KRIL_DEBUG(DBG_ERROR,"RAT = 1 , PARAMETER SETTING \n");
-						KRIL_DEBUG(DBG_ERROR,"VAILD : %d \n",rsp->mm_param.rat);
-
-						// Problem : MCC = 123, MNC = 45  --display--> MCC: F321, MNC: 54 
-						mcc = ((rsp->umts_param.plmn_id.mcc & 0x000F)<<8)|(rsp->umts_param.plmn_id.mcc & 0x00F0)|((rsp->umts_param.plmn_id.mcc & 0x0F00)>>8);
-
-						if((rsp->umts_param.plmn_id.mcc & 0xF000) == 0xF000)
-						{
-							mnc = ((rsp->umts_param.plmn_id.mnc & 0x000F)<<4)|((rsp->umts_param.plmn_id.mnc & 0x00F0)>>4);
-						}
-						else
-						{
-							mnc = ((rsp->umts_param.plmn_id.mnc & 0x000F)<<8)|(rsp->umts_param.plmn_id.mnc & 0x00F0)|((rsp->umts_param.plmn_id.mcc & 0xF000)>>12);					
-						}
-					
-						/*+LKWON Display RRC state +*/
-						if(rsp->umts_param.rrc_state == 0)
-						{
-							sprintf(testbuffer[0], "CELL_DCH");
-						}else if(rsp->umts_param.rrc_state == 1)
-						{
-							sprintf(testbuffer[0], "CELL_FACH");
-						}else if(rsp->umts_param.rrc_state == 2)
-						{
-							sprintf(testbuffer[0], "CELL_PCH");
-						}else if(rsp->umts_param.rrc_state == 3)
-						{
-							sprintf(testbuffer[0], "URA_PCH");
-						}else if(rsp->umts_param.rrc_state == 4)
-						{
-							sprintf(testbuffer[0], "IDLE");
-						}else if(rsp->umts_param.rrc_state == 5)
-						{
-							sprintf(testbuffer[0], "IDLE_CCCH");
-						}else
-						{
-							sprintf(testbuffer[0], "---");
-						}
-					
-						//sprintf(testbuffer[0],"WCDMA: %d", rsp->umts_param.rrc_state);
-						/*-LKWON Display RRC state -*/						
-//						sprintf(testbuffer[1],"MCC:%x  MNC:%x",rsp->umts_param.plmn_id.mcc,  rsp->umts_param.plmn_id.mnc);
-						sprintf(testbuffer[2],"Rx CH:%d , Rssi:%d",rsp->umts_param.dl_uarfcn, rsp->umts_param.rssi);
-						sprintf(testbuffer[3],"Tx CH:%d , TxPwr:%d",rsp->umts_param.ul_uarfcn, rsp->umts_param.tx_pwr);
-						sprintf(testbuffer[4],"Ecn0:%d , RSCP:%d",rsp->umts_param.cpich_ecn0, rsp->umts_param.cpich_rscp);
-						sprintf(testbuffer[5],"Chanal Mode:%d",rsp->gsm_param.chan_mode);
-						sprintf(testbuffer[6],"PSC:%d , LAC:%d",rsp->umts_param.p_sc, rsp->umts_param.lac);
-					}
-/*-20111226 HKP ADD 3G PARAMETER*/					
-				     else
-			   	     {
-					pdata->result = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
-			             }
- 			 	// get measurement data
-				CAPI2_DiagApi_MeasurmentReportReq ( InitClientInfo(capi2_rsp->SimId),FALSE,0);
-				//CAPI2_DIAG_ApiMeasurmentReportReq(GetNewTID(), GetClientID(), FALSE, 0);
-				pdata->handler_state = BCM_RESPCAPI2Cmd;
-				KRIL_DEBUG(DBG_ERROR,"BCM_MeasureReport End \n");
-  			       }
-			       else
-			       {
-					KRIL_DEBUG(DBG_ERROR,"Go to KRIL_SetMeasureReportTID \n");
-					KRIL_SetMeasureReportTID(capi2_rsp->tid);
-			       }
-			}
-		}
-		break;
-
-		case BCM_RESPCAPI2Cmd:
-		{
-
-                 if (v_SimCheck_Slave != true)				 	
-                 {
-			sprintf(testbuffer[0]," NO SIM IN SLAVE : TRUE");
-			KRIL_DEBUG(DBG_ERROR,"NO SIM2 \n");
-			KRIL_DEBUG(DBG_ERROR,"BCM_RESPCAPI2Cmd End \n");
-			KRIL_SRIL_svc_update_screen(ril_cmd, 1, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-		   }
-		   else
-		   {
-			if (BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW == pdata->result)
-			{
-				KRIL_DEBUG(DBG_ERROR,"DebugScreen_ERROR \n");
-				pdata->handler_state = BCM_ErrorCAPI2Cmd;
-			}
-			else
-			{
-				KRIL_DEBUG(DBG_ERROR,"DebugScreen_END \n");
-				KRIL_DEBUG(DBG_ERROR,"BCM_RESPCAPI2Cmd End \n");
-				KRIL_SRIL_svc_update_screen(ril_cmd, 6, 0, (unsigned char*)testbuffer, TRUE, TRUE);
-				KRIL_SetInMeasureReportHandler( FALSE );
-			}
-		   }
-		}
-		break;
-
-		default:
-		{
-			KRIL_DEBUG(DBG_ERROR, "handler_state:%lu error...!\n", pdata->handler_state);
-			pdata->handler_state = BCM_ErrorCAPI2Cmd;
-		}
-		break;
-
-	}
-	
-	return;
-}
-/*-20110822 HKPARK FOR DebugScreen Slave*/
-
-
-
-
 
 //++ JSHAN_GPRS_Attach_Mode
 static void KRIL_SRIL_requestOemSvcGPRSAttachMode_Get(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
 	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
+	ClientInfo_t clientInfo;
 
 	KRIL_DEBUG(DBG_ERROR,"KRIL_SRIL_requestOemSvcGPRSAttachMode \n");
 
@@ -2238,7 +1864,8 @@ static void KRIL_SRIL_requestOemSvcGPRSAttachMode_Get(void *ril_cmd, Kril_CAPI2I
 	{
 		case BCM_SendCAPI2Cmd:
 		{
-	        	CAPI2_MsDbApi_GetElement ( InitClientInfo(pdata->ril_cmd->SimId), MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE);
+	        	CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+	        	CAPI2_MsDbApi_GetElement ( &clientInfo, MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE);
 	        	pdata->handler_state = BCM_RESPCAPI2Cmd;
 	        	break;
 		}
@@ -2323,6 +1950,7 @@ static void KRIL_SRIL_requestOemSvcGPRSAttachMode_Set(void *ril_cmd, Kril_CAPI2I
 {
 	KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
 	CAPI2_MS_Element_t *inElemData;
+	ClientInfo_t clientInfo;
 //++ JSHAN Attach for next power on
 	char tmpStrGPRSattch[5];
 //-- JSHAN Attach for next power on
@@ -2335,7 +1963,8 @@ static void KRIL_SRIL_requestOemSvcGPRSAttachMode_Set(void *ril_cmd, Kril_CAPI2I
 			inElemData = kmalloc(sizeof(CAPI2_MS_Element_t), GFP_KERNEL);
 	        	inElemData->inElemType = MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE;
 			inElemData->data_u.u8Data = attach_mode;
-			CAPI2_MsDbApi_SetElement ( InitClientInfo(pdata->ril_cmd->SimId),inElemData);
+			CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+			CAPI2_MsDbApi_SetElement ( &clientInfo,inElemData);
 	        	pdata->handler_state = BCM_RESPCAPI2Cmd;
 	        	break;
 		}

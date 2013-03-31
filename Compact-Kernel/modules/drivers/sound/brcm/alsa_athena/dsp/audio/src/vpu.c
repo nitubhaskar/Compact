@@ -66,7 +66,6 @@ static void VoIP_ProcessStatusMainAMRDone(StatQ_t status_msg);
 
 static struct work_struct intr_work;
 static struct workqueue_struct *intr_workqueue = NULL;
-static struct tasklet_struct voip_task;
 
 // VoIP related APIs
 
@@ -95,8 +94,8 @@ static enum hrtimer_restart hrtimer_callback( struct hrtimer *timer )
 #else
 static int gptimer_callback(void *dev_id)
 {
-    tasklet_schedule(&(voip_task));
-
+    if ( intr_workqueue )
+        queue_work(intr_workqueue, &intr_work);
     return 0;
 }
 
@@ -143,7 +142,13 @@ Boolean	     amr_if2_enable	// Select AMR IF1 (FALSE) or IF2 (TRUE) format: obso
 #else
     struct gpt_cfg gptimer_config;
 
-    tasklet_init(&(voip_task), VoIP_Task_Entry, NULL);
+    intr_workqueue = create_workqueue("vt-gpt");
+    if (!intr_workqueue)
+    {
+        return TRUE;
+    }
+
+    INIT_WORK(&intr_work, VoIP_Task_Entry);
 
     if ( gpt_request(VT_USE_GPT_INDEX) != VT_USE_GPT_INDEX )
         return TRUE;
@@ -254,10 +259,10 @@ Boolean VoIP_StopTelephony(void)
 
     Telephony_DumpVPFramesCB=NULL;
     Telephony_FillVPFramesCB=NULL;
+    flush_workqueue(intr_workqueue);
+    destroy_workqueue(intr_workqueue);
 
-   tasklet_kill(&(voip_task));
-
-   // intr_workqueue = NULL;
+    intr_workqueue = NULL;
 
 #ifdef USE_HR_TIMER
     OSTASK_Sleep( 40 );			// To make sure the timer is not running anymore

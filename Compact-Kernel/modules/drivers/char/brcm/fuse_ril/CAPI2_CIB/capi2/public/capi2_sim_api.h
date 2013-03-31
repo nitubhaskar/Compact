@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_sim_api.h
@@ -72,8 +74,7 @@ void CAPI2_SimApi_UpdateSMSCapExceededFlag(ClientInfo_t* inClientInfoPtr, Boolea
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_PARAM_REC_NUM_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SimApi_GetSmsParamRecNum_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SimApi_GetSmsParamRecNum_Rsp_t
 **/
 void CAPI2_SimApi_GetSmsParamRecNum(ClientInfo_t* inClientInfoPtr);
 
@@ -488,8 +489,7 @@ void CAPI2_SimApi_GetGID2(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_HOME_PLMN_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SimApi_GetHomePlmn_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SimApi_GetHomePlmn_Rsp_t
 **/
 void CAPI2_SimApi_GetHomePlmn(ClientInfo_t* inClientInfoPtr);
 
@@ -566,8 +566,7 @@ void CAPI2_SimApi_SendCloseSocketReq(ClientInfo_t* inClientInfoPtr, UInt8 socket
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_ATR_DATA_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_SimApi_GetAtrData_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: ::CAPI2_SimApi_GetAtrData_Rsp_t
 **/
 void CAPI2_SimApi_GetAtrData(ClientInfo_t* inClientInfoPtr);
 
@@ -964,8 +963,7 @@ void CAPI2_SimApi_GetCphsPhase(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_SMS_SCA_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SimApi_GetSmsSca_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SimApi_GetSmsSca_Rsp_t
 **/
 void CAPI2_SimApi_GetSmsSca(ClientInfo_t* inClientInfoPtr, UInt8 rec_no);
 
@@ -976,8 +974,7 @@ void CAPI2_SimApi_GetSmsSca(ClientInfo_t* inClientInfoPtr, UInt8 rec_no);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_ICCID_PARAM_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_SimApi_GetIccid_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_SimApi_GetIccid_Rsp_t
 **/
 void CAPI2_SimApi_GetIccid(ClientInfo_t* inClientInfoPtr);
 
@@ -1025,8 +1022,7 @@ void CAPI2_SimApi_SetAlsDefaultLine(ClientInfo_t* inClientInfoPtr, UInt8 line);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_CALLFWD_COND_FLAG_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: ::CAPI2_SimApi_GetCallForwardUnconditionalFlag_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: ::CAPI2_SimApi_GetCallForwardUnconditionalFlag_Rsp_t
 **/
 void CAPI2_SimApi_GetCallForwardUnconditionalFlag(ClientInfo_t* inClientInfoPtr);
 
@@ -1130,8 +1126,7 @@ void CAPI2_SimApi_SendWriteMulPLMNEntryReq(ClientInfo_t* inClientInfoPtr, SIM_PL
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_USIM_IS_APP_SUPPORTED_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_USimApi_IsApplicationSupported_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_USimApi_IsApplicationSupported_Rsp_t
 **/
 void CAPI2_USimApi_IsApplicationSupported(ClientInfo_t* inClientInfoPtr, USIM_APPLICATION_TYPE appli_type);
 
@@ -1168,8 +1163,7 @@ void CAPI2_USimApi_GetNumOfAPN(ClientInfo_t* inClientInfoPtr);
 	
 	 Responses 
 	 @n@b MsgType_t: ::MSG_USIM_GET_APN_ENTRY_RSP
-	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
-	 @n@b ResultData: CAPI2_USimApi_GetAPNEntry_Rsp_t
+	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR	 @n@b ResultData: CAPI2_USimApi_GetAPNEntry_Rsp_t
 **/
 void CAPI2_USimApi_GetAPNEntry(ClientInfo_t* inClientInfoPtr, UInt8 index);
 
@@ -1399,8 +1393,7 @@ void CAPI2_SimApi_TerminateXferApdu(ClientInfo_t* inClientInfoPtr);
 	@param		inClientInfoPtr (in) Client Information Pointer.
 	
 	 Responses 
-	 @n@b MsgType_t: ::MSG_USIM_UST_DATA_RSP
-	 Result_t :		::RESULT_OK or RESULT_ERROR
+	 @n@b MsgType_t: ::MSG_USIM_UST_DATA_RSP	 Result_t :		::RESULT_OK or RESULT_ERROR
 	 @n@b ResultData: CAPI2_USimApi_GetUstData_Rsp_t
 **/
 void CAPI2_USimApi_GetUstData(ClientInfo_t* inClientInfoPtr);
@@ -1502,25 +1495,21 @@ void CAPI2_SimApi_PerformSteeringOfRoaming(ClientInfo_t* inClientInfoPtr, SIM_MU
 	 @n@b ResultData: ::SIMAccess_t
 **/
 void CAPI2_SimApi_PowerOnOffSim(ClientInfo_t* inClientInfoPtr, Boolean power_on, SIM_POWER_ON_MODE_t mode);
-
 //***************************************************************************************
 /**
 	This function returns the EF-AD data in SIM
 	@param		inClientInfoPtr (in) Client Information Pointer.
-	@param		outAdPtr (in)  pointer to EF-AD data buffer
-	
-	 Responses 
+	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_AD_DATA_RSP
 	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR
 	 @n@b ResultData: ::CAPI2_SimApi_GetAdData_Rsp_t
 **/
 void CAPI2_SimApi_GetAdData(ClientInfo_t* inClientInfoPtr);
 
-//***************************************************************************************
-/**
+//***************************************************************************************/**
 	This function gets current SIM voltage.
 	@param		inClientInfoPtr (in) Client Information Pointer.
-	
+
 	 Responses 
 	 @n@b MsgType_t: ::MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP
 	 @n@b Result_t:		::RESULT_OK or RESULT_ERROR

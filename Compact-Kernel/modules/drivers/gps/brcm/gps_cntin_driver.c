@@ -1,4 +1,4 @@
-/*******************************************************************************************
+/******************************************************************************************* 
 Copyright 2010 Broadcom Corporation.  All rights reserved.
 
 Unless you and Broadcom execute a separate written software license agreement 
@@ -364,9 +364,9 @@ static int CNTIN_KERNEL_Release(struct inode *inode, struct file *filp)
 {
 	CNTIN_KERNEL_TRACE(( "CNTIN_KERNEL_Release\n") ) ;
 	gpio_set_value(HW_GPIO_GPS_CNTIN, 0);
-	gpio_direction_output(HW_GPIO_GPS_CNTIN, 0);
+    gpio_direction_input(HW_GPIO_GPS_CNTIN);
     bcm_gpio_pull_up(HW_GPIO_GPS_CNTIN, false);
-    bcm_gpio_pull_up_down_enable(HW_GPIO_GPS_CNTIN, true);  //these 3 lines save 600uA leakage
+    bcm_gpio_pull_up_down_enable(HW_GPIO_GPS_CNTIN, true);  //these 3 lines save 600uA leakage^M
 	gpio_free(HW_GPIO_GPS_CNTIN);
 	return 0;
 }

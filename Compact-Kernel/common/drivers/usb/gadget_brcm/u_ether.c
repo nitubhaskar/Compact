@@ -881,9 +881,10 @@ int __init gether_setup(struct usb_gadget *g, u8 ethaddr[ETH_ALEN])
 		dev_dbg(&g->dev, "register_netdev failed, %d\n", status);
 		free_netdev(net);
 	} else {
-//		INFO(dev, "MAC %pM\n", net->dev_addr);
-//		INFO(dev, "HOST MAC %pM\n", dev->host_mac);
-
+#if 0	// log delete	
+		INFO(dev, "MAC %pM\n", net->dev_addr);
+		INFO(dev, "HOST MAC %pM\n", dev->host_mac);
+#endif
 		the_dev = dev;
 	}
 
@@ -910,24 +911,6 @@ void gether_cleanup(void)
 	the_dev = NULL;
 }
 
-int set_ether_addr(u8 ethaddr[ETH_ALEN])
-{
-	struct eth_dev		*dev = the_dev;
-
-
-	if (ethaddr[0] == 0xaa) {
-		// Need to store unique MAC info.
-		memset(dev->host_mac, NULL, ETH_ALEN);
-		random_ether_addr(dev->host_mac);
-		memcpy(ethaddr, dev->host_mac, ETH_ALEN);
-	pr_info("USBD] %s: ethaddr:%02x:%02x:%02x:%02x:%02x:%02x\n",
-		__func__,
-		ethaddr[0], ethaddr[1], ethaddr[2], 
-		ethaddr[3], ethaddr[4], ethaddr[5]);
-		return 1;
-	}
-	return 0;
-}
 
 /**
  * gether_connect - notify network layer that USB link is active

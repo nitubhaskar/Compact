@@ -61,7 +61,6 @@ the GPL, without Broadcom's express prior written consent.
 #include "csl_apcmd.h"
 
 #define VOICE_CAPT_FRAME_SIZE 320
-#define LEAD_COUNT_TILL_STABLE_CAPTURE_DSP			5    //frame count
 
 //=============================================================================
 // Public Variable declarations
@@ -97,7 +96,6 @@ typedef struct AUDIO_DDRIVER_t
 static AUDIO_DDRIVER_t* audio_render_driver = NULL;
 static AUDIO_DDRIVER_t* audio_capture_driver = NULL;
 static AUDIO_DDRIVER_t* audio_voip_driver = NULL;
-static UInt32 dspframeCount = 0;
 
 //=============================================================================
 // Private function prototypes
@@ -190,7 +188,7 @@ AUDIO_DRIVER_HANDLE_t  AUDIO_DRIVER_Open(AUDIO_DRIVER_TYPE_t drv_type)
             break;
         case AUDIO_DRIVER_CAPT_HQ:
             {
-                //aud_drv->stream_id = csl_audio_capture_init (CSL_AUDVOC_DEV_CAPTURE_AUDIO,CSL_AUDVOC_DEV_NONE);
+                aud_drv->stream_id = csl_audio_capture_init (CSL_AUDVOC_DEV_CAPTURE_AUDIO,CSL_AUDVOC_DEV_NONE);
                 audio_capture_driver = aud_drv;
             }
             break;
@@ -255,7 +253,7 @@ void AUDIO_DRIVER_Close(AUDIO_DRIVER_HANDLE_t drv_handle)
             break;
         case AUDIO_DRIVER_CAPT_HQ:
             {
-                //csl_audio_capture_deinit (aud_drv->stream_id);
+                csl_audio_capture_deinit (aud_drv->stream_id);
                 audio_capture_driver = NULL;
             }
             break;
@@ -550,7 +548,6 @@ static Result_t AUDIO_DRIVER_ProcessCaptureCmd(AUDIO_DDRIVER_t* aud_drv,
                     Log_DebugPrintf(LOGID_AUDIO,"AUDIO_DRIVER_ProcessCaptureCmd::All Configuration is not set yet  \n"  );
                     return result_code;
                 }
-		aud_drv->stream_id = csl_audio_capture_init (CSL_AUDVOC_DEV_CAPTURE_AUDIO,CSL_AUDVOC_DEV_NONE);
                 /* Block size = (smaples per ms) * (number of channeles) * (bytes per sample) * (interrupt period in ms) 
                  * Number of blocks = buffer size/block size
                  *
@@ -577,7 +574,6 @@ static Result_t AUDIO_DRIVER_ProcessCaptureCmd(AUDIO_DDRIVER_t* aud_drv,
             {
                 //stop capture
                 result_code = csl_audio_capture_stop (aud_drv->stream_id);
-		csl_audio_capture_deinit (aud_drv->stream_id);
             }
             break;
         case AUDIO_DRIVER_PAUSE:
@@ -644,8 +640,7 @@ static Result_t AUDIO_DRIVER_ProcessCaptureVoiceCmd(AUDIO_DDRIVER_t* aud_drv,
                 //set the callback
                 dspif_VPU_record_set_cb (AUDIO_DRIVER_CaptureVoiceCallback);
                 
-                dspframeCount= 0;
-                
+
                 /* **CAUTION: Check if we need to hardcode number of frames and handle the interrupt period seperately
                 /* Block size = interrupt_period
                  * Number of frames/block = interrupt_period / 320 (20ms worth of 8khz data)
@@ -692,9 +687,7 @@ static Result_t AUDIO_DRIVER_ProcessCaptureVoiceCmd(AUDIO_DDRIVER_t* aud_drv,
         case AUDIO_DRIVER_STOP:
             {
                 //stop capture
-
                 result_code = dspif_VPU_record_stop ();
-                dspframeCount = 0;
             }
             break;
         case AUDIO_DRIVER_PAUSE:
@@ -1171,7 +1164,7 @@ static void AUDIO_DRIVER_CaptureVoiceCallback(UInt32 buf_index)
     num_bytes_to_copy = (aud_drv->num_frames) * (aud_drv->frame_size);
 
     
-    dspframeCount++;
+
     split = (dest_index+num_bytes_to_copy) - dst_buf_size;
 
     //Log_DebugPrintf(LOGID_AUDIO,"dest_index-%d  dst_buf_size-%d num_bytes_to_copy-%d\n",dest_index,dst_buf_size,num_bytes_to_copy);
@@ -1186,23 +1179,12 @@ static void AUDIO_DRIVER_CaptureVoiceCallback(UInt32 buf_index)
 
         end_size = dst_buf_size - dest_index;
         recv_size = dspif_VPU_record_read_PCM ( aud_drv->tmp_buffer, num_bytes_to_copy, buf_index, aud_drv->speech_mode,aud_drv->num_frames);
-        if (dspframeCount >= LEAD_COUNT_TILL_STABLE_CAPTURE_DSP)
-		{
         memcpy(pdest_buf+dest_index, aud_drv->tmp_buffer, end_size);
         memcpy(pdest_buf, aud_drv->tmp_buffer + end_size, split);
     }
     else
     {
-			memset(pdest_buf+dest_index, NULL, end_size);
-			memset(pdest_buf, NULL, split);
-		}
-    }
-    else
-    {
         recv_size = dspif_VPU_record_read_PCM ( pdest_buf+dest_index, num_bytes_to_copy, buf_index, aud_drv->speech_mode,aud_drv->num_frames);
-        if (dspframeCount < LEAD_COUNT_TILL_STABLE_CAPTURE_DSP)
-			memset(pdest_buf+dest_index, NULL, num_bytes_to_copy);
-        
     }
 
     dest_index += num_bytes_to_copy;

@@ -74,5 +74,3 @@ obj-$(CONFIG_LPC_SCH)		+= lpc_sch.o
 obj-$(CONFIG_MFD_RDC321X)	+= rdc321x-southbridge.o
 obj-$(CONFIG_MFD_JANZ_CMODIO)	+= janz-cmodio.o
 obj-$(CONFIG_MFD_MAX8986)       += max8986-core.o
-d2041-objs			:= d2041-core.o d2041-irq.o d2041-i2c.o
-obj-$(CONFIG_MFD_D2041)		+= d2041.o

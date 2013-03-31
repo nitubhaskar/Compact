@@ -71,18 +71,9 @@ the GPL, without Broadcom's express prior written consent.
 #endif
 #endif
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-
 #include "ostask.h"
 //#include "vpripcmdq.h"
 #include "csl_apcmd.h"
-
-/* DLG start */
-#ifdef CONFIG_MFD_D2041
-#include <linux/d2041/audio.h>
-#endif
-/* DLG end */
 
 extern AUDDRV_SPKR_Enum_t voiceCallSpkr;
 //extern UInt32 lp_voip_start; /* 20110715 for loopback check */
@@ -107,10 +98,6 @@ static AUDDRV_SPKR_Enum_t polySpkr1 = AUDDRV_SPKR_NONE;
 static AUDDRV_SPKR_Enum_t polySpkr2 = AUDDRV_SPKR_NONE;
 
 static AudioApp_t stAudioApp = AUDIO_APP_VOICE_CALL;
-
-// used for power on external amplifier
-static AUDCTRL_SPEAKER_t configSpeaker = AUDCTRL_SPK_UNDEFINED; // default
-static ExtSpkrUsage_en_t configUsageFlag = AudioUseExtSpkr;   // default
 
 #if !defined(NO_PMU)
 #ifndef UNDER_LINUX
@@ -150,8 +137,6 @@ static SysIndMultimediaAudioParm_t* AUDIO_GetParmMMAccessPtr(void)
 	return APSYSPARM_GetMultimediaAudioParmAccessPtr();
 #endif
 }
-
-static void AudioHWEnabledCB (void);
 
 #if 0
 static SysAudioParm_t* AudioParmAccessor(UInt32 app,UInt32 mode)
@@ -423,10 +408,6 @@ UInt16 AUDCTRL_GetTelephonySpkrVolume()
 // Description:   enable a playback path
 //
 //============================================================================
-
-
-UInt8 earPathEnabled = 0;
-UInt8 spkPathWithEar = 0;
 void AUDCTRL_EnablePlay(
 				AUDIO_HW_ID_t			src,
 				AUDIO_HW_ID_t			sink,
@@ -562,86 +543,83 @@ void AUDCTRL_EnablePlay(
 	switch  (sink)
 	{
 		case AUDIO_HW_VOICE_OUT:
-			configOnExternalAmp(spk, VoiceUseExtSpkr);
 			if (spkSel != AUDDRV_SPKR_NONE)
 			{
 				Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay: VO spkSel = %d, sr %d \n", spkSel, sr);
-				AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, spkSel, TRUE, sr, numCh, AudioHWEnabledCB);
+				AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, spkSel, TRUE, sr, numCh);
 			}
 			if (tapSpkSel != AUDDRV_SPKR_NONE && tapSpkSel != spkSel)
 			{
 				Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay: VO tapSpkSel = %d, sr %d \n", tapSpkSel, sr);
 				// just add the mixer, don't power on the speaker.
-				AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, tapSpkSel, FALSE, sr, numCh, NULL);
+				AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, tapSpkSel, FALSE, sr, numCh);
 			}
 			voiceSpkr1 = spkSel;
-			// OSTASK_Sleep( 10 );
-			// powerOnExternalAmp( spk, VoiceUseExtSpkr, TRUE );
+			OSTASK_Sleep( 10 );
+			powerOnExternalAmp( spk, VoiceUseExtSpkr, TRUE );
 			break;
 
 		case AUDIO_HW_AUDIO_OUT:
 			if ( src == AUDIO_HW_I2S_IN)  //only set I2S mode when src is I2S
 				AUDDRV_Set_I2sMuxToAudio (srcI2S);
 
-			configOnExternalAmp(spk, AudioUseExtSpkr);		
                         if ( tap == AUDIO_HW_TAP_VOICE )
                         {
                             // Music plus Voice call mixing so only add mixer don't power on Speaker
                             Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_AUDIO_OUT) spkSel = 0x%x, tapSpkSel = 0x%x BB \n", spkSel, tapSpkSel );
                             // just add the mixer, don't power on the speaker.
-				AUDDRV_Enable_Output (AUDDRV_AUDIO_OUTPUT, tapSpkSel, FALSE, sr, numCh, NULL);
+                            AUDDRV_Enable_Output (AUDDRV_AUDIO_OUTPUT, tapSpkSel, FALSE, sr, numCh);
                         }
                         else
                         {
 			    if (spkSel != AUDDRV_SPKR_NONE)
 			    {
 			    	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_AUDIO_OUT) spkSel = 0x%x, tapSpkSel = 0x%x AA \n", spkSel, tapSpkSel );
-					AUDDRV_Enable_Output (AUDDRV_AUDIO_OUTPUT, spkSel, TRUE, sr, numCh, AudioHWEnabledCB);
+			    	AUDDRV_Enable_Output (AUDDRV_AUDIO_OUTPUT, spkSel, TRUE, sr, numCh);
 			    }
 			    if (tapSpkSel != AUDDRV_SPKR_NONE && tapSpkSel != spkSel)
 			    {
 			    	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_AUDIO_OUT) spkSel = 0x%x, tapSpkSel = 0x%x BB \n", spkSel, tapSpkSel );
 			    	// just add the mixer, don't power on the speaker.
-					AUDDRV_Enable_Output (AUDDRV_AUDIO_OUTPUT, tapSpkSel, FALSE, sr, numCh, NULL);
+			    	AUDDRV_Enable_Output (AUDDRV_AUDIO_OUTPUT, tapSpkSel, FALSE, sr, numCh);
 			    }
                         }
 			audioSpkr1 = spkSel;
-			// OSTASK_Sleep( 10 );
-			// powerOnExternalAmp( spk, AudioUseExtSpkr, TRUE );
+			OSTASK_Sleep( 10 );
+			powerOnExternalAmp( spk, AudioUseExtSpkr, TRUE );
 			Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_AUDIO_OUT) spkSel = 0x%x, tapSpkSel = 0x%x, audioSpkr1 = 0x%x, polySpkr1 %d \n", spkSel, tapSpkSel, audioSpkr1, polySpkr1);
 			break;
 
 		case AUDIO_HW_PLR_OUT:
-			configOnExternalAmp(spk, PolyUseExtSpkr);
                         if ( tap == AUDIO_HW_TAP_VOICE )
                         {
                             // Music plus Voice call mixing so only add mixer don't power on Speaker
                             Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_PLR_OUT) spkSel = 0x%x, tapSpkSel = 0x%x BB \n", spkSel, tapSpkSel );
                             // just add the mixer, don't power on the speaker.
-				AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, tapSpkSel, FALSE, sr, numCh, NULL);
+                            AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, tapSpkSel, FALSE, sr, numCh);
                         }
                         else
                         {
-				if (tapSpkSel == AUDDRV_SPKR_NONE && spkSel != AUDDRV_SPKR_NONE)
+			    if (spkSel != AUDDRV_SPKR_NONE)
 			    {
 			    	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_PLR_OUT) spkSel = 0x%x, tapSpkSel = 0x%x AA \n", spkSel, tapSpkSel );
-					AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, spkSel, TRUE, sr, numCh, AudioHWEnabledCB);
+			    	AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, spkSel, TRUE, sr, numCh);
 			    }
-				if (tapSpkSel != AUDDRV_SPKR_NONE)
+			    if (tapSpkSel != AUDDRV_SPKR_NONE && tapSpkSel != spkSel)
 			    {
 			    	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_PLR_OUT) spkSel = 0x%x, tapSpkSel = 0x%x BB \n", spkSel, tapSpkSel );
 			    	// just add the mixer, don't power on the speaker.
-					AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, tapSpkSel, FALSE, sr, numCh, NULL);
+			    	AUDDRV_Enable_Output (AUDDRV_RINGTONE_OUTPUT, tapSpkSel, FALSE, sr, numCh);
 			    }
                         }
 			polySpkr1 = spkSel;
-			// // OSTASK_Sleep( 10 );
-			// powerOnExternalAmp( spk, PolyUseExtSpkr, TRUE );
+			//OSTASK_Sleep( 10 );
+			powerOnExternalAmp( spk, PolyUseExtSpkr, TRUE );
 			Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnablePlay(AUDIO_HW_PLR_OUT) spkSel = 0x%x, tapSpkSel = 0x%x, audioSpkr1 = 0x%x, polySpkr1 %d \n", spkSel, tapSpkSel, audioSpkr1, polySpkr1);
 			break;
 
 		case AUDIO_HW_MONO_BT_OUT:  // PCM I/F
-			AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, spkSel, TRUE, sr, numCh, NULL);
+			AUDDRV_Enable_Output (AUDDRV_VOICE_OUTPUT, spkSel, TRUE, sr, numCh);
 			break;
 
 		case AUDIO_HW_STEREO_BT_OUT:		
@@ -698,10 +676,6 @@ void AUDCTRL_DisablePlay(
 {
 	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_DisablePlay: end, src = 0x%x, sink = 0x%x, spk = 0x%x\n", src, sink,  spk);
 	
-
-        earPathEnabled = 0;
-        spkPathWithEar = 0;
-	
 	// don't consider src right now. only consider playback from memory.
 	switch (src)
 	{
@@ -749,7 +723,6 @@ void AUDCTRL_DisablePlay(
 			audioSpkr2 = AUDDRV_SPKR_NONE;
 			break;
 		case AUDIO_HW_PLR_OUT:
-			Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_DisablePlay: PLR_OUT sink = 0x%x\n", sink);
 			powerOnExternalAmp( spk, PolyUseExtSpkr, FALSE );
 			//OSTASK_Sleep( 10 );
 			AUDDRV_Disable_Output (AUDDRV_RINGTONE_OUTPUT);
@@ -1102,12 +1075,6 @@ void AUDCTRL_AddPlaySpk(
 				polySpkr2 = GetDrvSpk (spk);
 
 			AUDDRV_SelectSpkr( AUDDRV_RINGTONE_OUTPUT, polySpkr1, polySpkr2 );
-
-                    if( (spk == AUDCTRL_SPK_LOUDSPK) && earPathEnabled ) 
-                    {
-                        spkPathWithEar = 1;
-                    }
-    
 			//OSTASK_Sleep( 100 );
 			powerOnExternalAmp( spk, PolyUseExtSpkr, TRUE );
 			break;
@@ -1124,9 +1091,6 @@ void AUDCTRL_AddPlaySpk(
 // Description:   remove a speaker to a playback path
 //
 //============================================================================
-extern int get_headset_state(void);
-
-
 void AUDCTRL_RemovePlaySpk(
 				AUDIO_HW_ID_t			sink,
 				AUDCTRL_SPEAKER_t		spk
@@ -1134,9 +1098,6 @@ void AUDCTRL_RemovePlaySpk(
 {
 	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_RemovePlaySpk: Remove speaker, sink = 0x%x,  spk = 0x%x\n", sink, spk);
 		
-
-    int (*pget_headset_state)() = symbol_get(get_headset_state);
-       
 	switch  (sink)
 	{
 		case AUDIO_HW_VOICE_OUT:
@@ -1194,15 +1155,6 @@ void AUDCTRL_RemovePlaySpk(
 				polySpkr1 = polySpkr2;
 				polySpkr2 = AUDDRV_SPKR_NONE;
 			}
-
-                    if ( spkPathWithEar && pget_headset_state())
-                    {
-                        Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_RemovePlaySpk:OSTASK_Sleep\n");
-
-                        OSTASK_Sleep( 100 );
-                    }     
-                    
-                        
 			powerOnExternalAmp( spk, PolyUseExtSpkr, FALSE );
 			//OSTASK_Sleep( 100 );
 			AUDDRV_SelectSpkr( AUDDRV_RINGTONE_OUTPUT, polySpkr1, polySpkr2 );
@@ -1211,8 +1163,6 @@ void AUDCTRL_RemovePlaySpk(
 		default:
 			break;
 	}
-    
-        spkPathWithEar = 0; 
 }
 
 
@@ -1247,18 +1197,6 @@ void AUDCTRL_EnableRecord(
 		case AUDIO_HW_AUDIO_IN:
 			Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnableRecord: audio in, mode = %d\n", AUDDRV_GetAudioMode() );
 			AUDDRV_Enable_Input (AUDDRV_AUDIO_INPUT, micSel, sr);
-
-			// to handle exception for VoIP
-			{
-				AudioApp_t app = AUDDRV_GetAudioApp();
-
-				if (app == AUDIO_APP_VOIP || app == AUDIO_APP_VOIP_INCOMM)
-				{
-					Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnableRecord: correct AMP setting for VoIP, mode = %d\n", AUDDRV_GetAudioMode() );
-					if (configUsageFlag == PolyUseExtSpkr && polySpkr1 != AUDDRV_SPKR_NONE)
-						powerOnExternalAmp(configSpeaker, configUsageFlag, TRUE);
-				}
-			}
 			break;
 
 		case AUDIO_HW_MONO_BT_IN:
@@ -1353,7 +1291,6 @@ void AUDCTRL_EnableTap(
 	// selections of earpiece and loud speaker as the tap inputs.
     AUDDRV_SPKR_Enum_t leftIn = AUDDRV_SPKR_NONE; 
     AUDDRV_SPKR_Enum_t rightIn = AUDDRV_SPKR_NONE;  
-    Boolean btm_capability_16k = AUDCTRL_IsBTMWB();
 
 	// figure tap left input and right input.
 	if((AUDIO_HW_TAP_VOICE == tap) || (AUDIO_HW_TAP_AUDIO == tap))
@@ -1384,21 +1321,29 @@ void AUDCTRL_EnableTap(
 				break;
 		}
 	}
-    Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnableTap: audio content rate = %d, leftIn = 0x%x,  rightIn = 0x%x BTM_16k = %d\n", sr, leftIn, rightIn, btm_capability_16k);
+
+	Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnableTap: Enabled Tap, leftIn = 0x%x,  rightIn = 0x%x\n", leftIn, rightIn);
 
 	switch (tap)
 	{
 		case AUDIO_HW_TAP_VOICE:
-            // Is this required?
-            if (btm_capability_16k)
-			{
-				sr =AUDIO_SAMPLING_RATE_16000;
-			}
+			// We always configure voice TAP as 8K, and enable BTM(PCM interface)
+			//sr = AUDIO_SAMPLING_RATE_8000;
 			AUDDRV_Enable_MixerTap ( AUDDRV_MIXERTap_VB_INPUT, leftIn, rightIn, sr,
 				AUDDRV_REASON_HW_CTRL );
 			Log_DebugPrintf(LOGID_AUDIO,"AUDCTRL_EnableTap:  AUDIO_HW_TAP_VOICE sr %d \n",  sr);
 
+                        if ( AUDDRV_GetVCflag() )
+                        {
+                                Log_DebugPrintf(LOGID_AUDIO," AUDCTRL_EnableTap arg0 = 0x%x. VC, No Need to init telephony\n", 0x11d);
+                        }
+                        else
+                        {
+                                AUDDRV_Telephony_Init( AUDDRV_MIC_PCM_IF, AUDDRV_SPKR_PCM_IF );
+                                Log_DebugPrintf(LOGID_AUDIO," AUDCTRL_EnableTap arg0 = 0x%x. and init telephony\n", 0x11d);
+                        }
 
+          
 			VPRIPCMDQ_SetBTNarrowBand( 0x55d );
 
 			//bt-nb tap does not work because of this line. reason is not very clear.
@@ -1746,26 +1691,12 @@ void AUDCTRL_SetEQ(
 	AUDDRV_SetEquType( AUDDRV_TYPE_RINGTONE_OUTPUT, equType );
 }
 
+
+
+
 //=============================================================================
 // Private function definitions
 //=============================================================================
-
-//============================================================================
-//
-// Function Name: AudioHWEnabledCB
-//
-// Description:   When HW registers programming is done, it calls this function
-//                to enable external audio power amplifier
-//
-//============================================================================
-static void AudioHWEnabledCB (void)
-{
-	Log_DebugPrintf(LOGID_AUDIO,"AudioHWEnabledCB, speaker = %d, usage_flag= %d\n", configSpeaker, configUsageFlag);
-
-	if (configUsageFlag != PolyUseExtSpkr)
-		OSTASK_Sleep( 10 ); // wait for audvoc HW to finish ramp up before turning on external AMP
-	powerOnExternalAmp(configSpeaker, configUsageFlag, TRUE);
-}
 
 //============================================================================
 //
@@ -2060,251 +1991,8 @@ static PMU_IHF_Gain_t map2pmu_ihf_gain( Int16 db_gain )
 
 #endif //UNDER_LINUX
 
-//============================================================================
-//
-// Function Name: configOnExternalAmp
-//
-// Description:   save configuration variables for external amplifier driver
-//
-//============================================================================
-void configOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag )
-{
-    configSpeaker = speaker;
-    configUsageFlag = usage_flag;
-}
 
 #ifdef UNDER_LINUX
-
-#if defined(CONFIG_MFD_D2041)
-
-//#define D2041_USE_OWN_TUNING_TOOL
-
-#ifdef D2041_USE_OWN_TUNING_TOOL
-typedef struct{
-  UInt32 val1;
-  UInt32 val2;
-  UInt32 val3;
-  UInt32 val4;
-  UInt32 val5;
-  UInt32 val6;
-}arg_t;
-
-typedef enum 
-{
-	D2041_USE_CASE_HIFI=0,
-	D2041_USE_CASE_RINTONE,
-	
-	D2041_USE_CASE_VOICE_CALL,
-	D2041_USE_CASE_VT,
-
-	D2041_USE_CASE_VOIP,
-	D2041_USE_CASE_FM,
-} D2041_USE_CASE;
-
-u8	gD2041GainTable[D2041_MAX_GAIN_TABLE]={
-//hifi
-0xD,  //speaker pre amp
-0x33, //speaker vol
-0xD,  //hp pre amp
-0x39,  //hp vol
-
-//ringtone
-0xD,  //speaker pre amp
-0x33, //speaker vol
-0xD,  //hp pre amp
-0x39,  //hp vol
-
-//voice call
-0xD,  //speaker pre amp
-0x33, //speaker vol
-0xD,  //hp pre amp
-0x39,  //hp vol
-
-//VT call
-0xD,  //speaker pre amp
-0x33, //speaker vol
-0xD,  //hp pre amp
-0x39,  //hp vol
-
-//VOIP call
-0xD,  //speaker pre amp
-0x33, //speaker vol
-0xD,  //hp pre amp
-0x39,  //hp vol
-
-//FM 
-0xD,  //speaker pre amp
-0x33, //speaker vol
-0xD,  //hp pre amp
-0x39,  //hp vol
-};
-
-static u8 gD2041LastUseCase=0;
-static u8 gD2041LastHp=0;
-
-u8 d2041_get_pre_gain_from_table(u8 usecase, u8 hp)
-{
-    u8 index=0;
-    
-    switch(usecase)
-    {
-        case D2041_USE_CASE_HIFI:
-             if(hp==0)
-             	index=0;
-			 else
-			 	index=2;
-			 break;
-        case D2041_USE_CASE_RINTONE:
-			if(hp==0)
-             	index=4;
-			 else
-			 	index=6;
-			 break;
-        case D2041_USE_CASE_VOICE_CALL:
-			if(hp==0)
-             	index=8;
-			 else
-			 	index=10;
-			 break;
-        case D2041_USE_CASE_VT:
-			if(hp==0)
-             	index=12;
-			 else
-			 	index=14;
-			 break;
-        case D2041_USE_CASE_VOIP:
-			if(hp==0)
-             	index=16;
-			 else
-			 	index=18;
-			 break;
-		case D2041_USE_CASE_FM:
-			if(hp==0)
-             	index=20;
-			 else
-			 	index=22;
-			 break;
-    }
-
-	return gD2041GainTable[index];
-}
-
-u8 d2041_get_vol_gain_from_table(u8 usercase, u8 hp)
-{
-    u8 index=0;
-    
-    switch(usercase)
-    {
-        case D2041_USE_CASE_HIFI:
-             if(hp==0)
-             	index=1;
-			 else
-			 	index=3;
-			 break;
-        case D2041_USE_CASE_RINTONE:
-			if(hp==0)
-             	index=5;
-			 else
-			 	index=7;
-			 break;
-        case D2041_USE_CASE_VOICE_CALL:
-			if(hp==0)
-             	index=9;
-			 else
-			 	index=11;
-			 break;
-        case D2041_USE_CASE_VT:
-			if(hp==0)
-             	index=13;
-			 else
-			 	index=15;
-			 break;
-        case D2041_USE_CASE_VOIP:
-			if(hp==0)
-             	index=17;
-			 else
-			 	index=19;
-			 break;
-		case D2041_USE_CASE_FM:
-			if(hp==0)
-             	index=21;
-			 else
-			 	index=23;
-			 break;
-    }
-
-    gD2041LastUseCase=usercase;
-    gD2041LastHp=hp;
-	return gD2041GainTable[index];
-
-}
-
-u8 d2041_convert_use_case(AudioApp_t app)
-{
-	switch(app)
-	{
-        case AUDIO_APP_VOICE_CALL:
-    	case AUDIO_APP_VOICE_CALL_WB:            
-            return D2041_USE_CASE_VOICE_CALL;
-    	
-    	
-        case AUDIO_APP_FM:
-            return D2041_USE_CASE_FM;
-    	
-        case AUDIO_APP_VOIP:
-        case AUDIO_APP_VOIP_INCOMM:
-            return D2041_USE_CASE_VOIP;
-
-        case AUDIO_APP_MUSIC:
-        case AUDIO_APP_RECORDING:
-        case AUDIO_APP_RECORDING_GVS:
-        default:
-            return D2041_USE_CASE_HIFI;
-	}
-
-}
-
-void d2041_ctl_set_gain_now(void)
-{
-    int vol;
-    int preamp_gain;
-        
-    preamp_gain=d2041_get_pre_gain_from_table(gD2041LastUseCase,gD2041LastHp);
-    vol=d2041_get_pre_gain_from_table(gD2041LastUseCase,gD2041LastHp);
-
-    if(gD2041LastHp==1)
-    {   
-        d2041_audio_hs_preamp_gain(preamp_gain);
-        d2041_audio_hs_set_gain(D2041_OUT_HPLR, vol);
-    }
-    else
-    {
-        d2041_audio_ihf_preamp_gain(preamp_gain);
-        d2041_audio_hs_ihf_set_gain(vol);
-    }
-}
-
-void d2041_gain_control(void *d2041arg)
-{
-    u8 index,value;
-    arg_t *arg=(arg_t *)d2041arg;
-
-    switch(arg->val1)
-    {
-        case 0:
-            index=(u8)(arg->val2);
-            arg->val2=(UInt32)gD2041GainTable[index];
-            break;
-        case 10:
-            index=(u8)(arg->val2);
-            value=(u8)(arg->val3);
-            gD2041GainTable[index]=value;
-            d2041_ctl_set_gain_now();
-            break;
-    }
-}
-#endif
-#endif
 
 void setExternalPreAmpGain(Int16 gain)
 {
@@ -2317,27 +2005,13 @@ void setExternalPreAmpGain(Int16 gain)
     if(audioMode == AUDIO_MODE_HANDSET || 
        audioMode == AUDIO_MODE_SPEAKERPHONE)
     {
-/* DLG start */
-#if defined(CONFIG_MFD_D2041)
-		//d2041_audio_set_input_preamp_gain(MAX8986_INPUTB, gain);
-        d2041_audio_ihf_preamp_gain(gain);
-#elif defined(CONFIG_MFD_MAX8986)
         //max8986_set_input_preamp_gain(MAX8986_INPUTB, gain);
         max8986_set_ihf_preamp_gain(gain);
-#endif
-/* DLG end */
     }
     else if (audioMode == AUDIO_MODE_HEADSET)
     {
-/* DLG start */
-#if defined(CONFIG_MFD_D2041)
-		//d2041_audio_set_input_preamp_gain(MAX8986_INPUTA, gain);
-        d2041_audio_hs_preamp_gain(gain);
-#elif defined(CONFIG_MFD_MAX8986)
         //max8986_set_input_preamp_gain(MAX8986_INPUTA, gain);
         max8986_set_hs_preamp_gain(gain);
-#endif
-/* DLG end */
     }
 }
 
@@ -2352,75 +2026,14 @@ void setExternalAmpGain(Int16 gain)
     if(audioMode == AUDIO_MODE_HANDSET || 
        audioMode == AUDIO_MODE_SPEAKERPHONE)
     {
-/* DLG start */
-#if defined(CONFIG_MFD_D2041)
-		d2041_audio_hs_ihf_set_gain(gain);
-#elif defined(CONFIG_MFD_MAX8986)
         max8986_audio_hs_ihf_set_gain(gain);
-#endif
-/* DLG end */
-
     }
     else if (audioMode == AUDIO_MODE_HEADSET)
     {
-/* DLG start */
-#if defined(CONFIG_MFD_D2041)
-		d2041_audio_hs_set_gain(D2041_OUT_HPLR, gain);
-#elif defined(CONFIG_MFD_MAX8986)
         max8986_audio_hs_set_gain(AUDIO_HS_BOTH, gain);
-#endif
     }
 }
-void setExternalParameter(Int16 param_id,Int16 param_value)
-{
-#ifdef CONFIG_MFD_D2041
-	Int16 audioMode;
-	audioMode = AUDDRV_GetAudioMode();
-	switch(param_id)
-	{
-		case 2:
-		{
-			u16 noise_gate;
-			noise_gate = (u16)(param_value & 0x00c0); //CFG
-			noise_gate |= (u16)(param_value & 0x0038); // ATK
-			noise_gate |= (u16)(param_value & 0x0006); //DEB
-			noise_gate |= (u16)(param_value & 0x0001); // EN
-			noise_gate |= (u16)(param_value & 0x1800); // RMS
-			noise_gate |= (u16)(param_value & 0x0700); // REL
-			if(audioMode == AUDIO_MODE_HANDSET || 
-			   audioMode == AUDIO_MODE_SPEAKERPHONE)
-				d2041_set_ihf_noise_gate(noise_gate);
-			else
-				d2041_set_hs_noise_gate(noise_gate);		
 
-		}
-		break;
-		case 3:
-		{
-			u16 non_clip;
-			non_clip = (u16)(param_value & 0x0080); //zc_en
-			non_clip |= (u16)(param_value & 0x0070); // rel
-			non_clip |= (u16)(param_value & 0x000e); // atk
-			non_clip |= (u16)(param_value & 0x0001); // en
-			non_clip |= (u16)(param_value & 0xc000);// hld
-			non_clip |= (u16)(param_value & 0x3f00); // thd
-			d2041_set_ihf_none_clip(non_clip);
-		}
-		break;
-		case 4:
-		{
-			u8 spk_pwr;
-			spk_pwr = (u8)(param_value & 0x7e); // pwr
-			spk_pwr |= (u8)(param_value & 0x01); // limt_en
-			d2041_set_ihf_pwr(spk_pwr);
-		}
-		break;
-		default:
-			break;
-	}
-#endif
-	return;
-}
 
 void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag, Boolean use )
 {
@@ -2446,12 +2059,6 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 
 	static Boolean IHF_IsOn = FALSE;
 	static Boolean HS_IsOn = FALSE;
-#ifdef CONFIG_MFD_D2041
-	u16 noise_gate = 0;
-	u16 non_clip = 0;
-	u8 spk_pwr = 0;
-	Int16 param_value;
-#endif	
 
 	Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp, speaker = %d, IHF_IsOn= %d, HS_IsOn = %d, Boolean_Use=%d\n", speaker, IHF_IsOn, HS_IsOn, use);
 
@@ -2518,20 +2125,16 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 			break;
 	}
 
-	if (((telephonyUseHS==FALSE) && (voiceUseHS==FALSE) && (audioUseHS==FALSE) && (polyUseHS==FALSE))
-		|| ((telephonyUseHS==FALSE) && (voiceUseHS==FALSE) && (audioUseHS==FALSE) && ((polyUseHS==TRUE) && (telephonyUseIHF==TRUE))) // 20111216 When headset is connected there is a popcorn noise while turning on the speaker.
-	)
+	if ((telephonyUseHS==FALSE) && (voiceUseHS==FALSE) && (audioUseHS==FALSE) && (polyUseHS==FALSE))
 	{
 		if ( HS_IsOn != FALSE )
 		{
 			Log_DebugPrintf(LOGID_AUDIO,"power OFF pmu HS amp\n");
 			//power off handset            
 
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
             bcm59038_audio_hs_powerUp(FALSE);
-#elif defined (CONFIG_MFD_D2041)
-	   d2041_audio_hs_poweron(FALSE);
-#elif defined(PMU_MAX8986)
+#elif PMU_MAX8986
             max8986_audio_hs_poweron(FALSE);
 #endif
 
@@ -2548,51 +2151,18 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 		AudioMode_t mode = AUDDRV_GetAudioMode();
 		if ( mode >= AUDIO_MODE_NUMBER )
 			mode = (AudioMode_t) (mode - AUDIO_MODE_NUMBER);
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
 		hs_path = BCM59038_AUDIO_HS_BOTH;
-#elif defined(CONFIG_MFD_D2041)
-		hs_path = D2041_OUT_HPLR;
-#elif defined(PMU_MAX8986)        
+#elif PMU_MAX8986        
 		hs_path =  AUDIO_HS_BOTH;
 #endif
 		//i = AUDIO_GetParmAccessPtr()[ AUDDRV_GetAudioMode() ].ext_speaker_pga;
 		//i = AUDIOMODE_PARM_ACCESSOR(AUDDRV_GetAudioMode()).ext_speaker_pga;
 		//i= (AUDIO_GetParmAccessPtr()+app*AUDIO_MODE_NUMBER)[mode].ext_speaker_pga;
                 //if(lp_voip_start  == 1) app = 5;/* 20110715 for loopback check */
-#ifdef D2041_USE_OWN_TUNING_TOOL		
-		i=d2041_get_vol_gain_from_table(d2041_convert_use_case(app),1);
-		preamp_gain=d2041_get_pre_gain_from_table(d2041_convert_use_case(app),1);
-#else
-
-              if ( mode == AUDIO_MODE_SPEAKERPHONE )
-                mode = AUDIO_MODE_HEADSET;
-              
-                /* When ringtone is started during recording or GVS, ringtone volume is very low because audio profile is wrongly used. */
-                if(app == AUDIO_APP_RECORDING || app == AUDIO_APP_RECORDING_GVS || app == AUDIO_APP_RECORDING_NB)
-                {
-                    app = AUDIO_APP_MUSIC;
-
-                    if(mode == AUDIO_MODE_HAC)
-                    {
-                        mode = AUDIO_MODE_HEADSET;
-                    }
-                }
-              
-		i = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_pga;
-		preamp_gain = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_preamp_pga;
-#endif
-
-#ifdef CONFIG_MFD_D2041
-		param_value = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_param1;
-		noise_gate = (u16)(param_value & 0x00c0); // cfg
-		noise_gate |= (u16)(param_value & 0x0038); // atk
-		noise_gate |= (u16)(param_value & 0x0006); // deb
-		noise_gate |= (u16)(param_value & 0x0001); // en
-		noise_gate |= (u16)(param_value & 0x1800); // rms
-		noise_gate |= (u16)(param_value & 0x0700);  // rel
-
-		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (HS on), app = %d, mode= %d, ext_speaker_param1= %d \n", app, mode, param_value);
-#endif		 
+		
+		i = AUDIOMODE_PARM_ACCESSOR(app,AUDIO_MODE_HEADSET).ext_speaker_pga;
+		preamp_gain = AUDIOMODE_PARM_ACCESSOR(app,AUDIO_MODE_HEADSET).ext_speaker_preamp_pga;
 
 		//hs_gain = map2pmu_hs_gain( i );
 		hs_gain = i;
@@ -2601,42 +2171,28 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 		Log_DebugPrintf(LOGID_AUDIO,"power ON pmu HS amp, AUDDRV_GetAudioApp app %d\n",app);
         	if((speaker == AUDCTRL_SPK_LOUDSPK) && (IHF_IsOn == FALSE) && HS_IsOn && polyUseHS && polyUseIHF)
         	{
-        	    #ifdef D2041_USE_OWN_TUNING_TOOL
-                i=d2041_get_vol_gain_from_table(D2041_USE_CASE_RINTONE,1);
-                #else
 	        	hs_gain = AUDIOMODE_PARM_ACCESSOR(AUDIO_APP_MUSIC,AUDIO_MODE_TTY).ext_speaker_pga;
-                #endif
 	        	Log_DebugPrintf(LOGID_AUDIO,"power ON pmu HS amp, Ringtone case Earphone gain %d\n",hs_gain);
         	}
         	
 		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (HS on), telephonyUseHS = %d, voiceUseHS= %d, audioUseHS= %d, polyUseHS = %d\n", telephonyUseHS, voiceUseHS, audioUseHS, polyUseHS);
 
-/* DLG start */
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
 		bcm59038_audio_hs_setGain(hs_path, hs_gain);
-#elif defined(CONFIG_MFD_D2041)
-            d2041_audio_hs_set_gain(hs_path, hs_gain);
-            d2041_audio_hs_preamp_gain(preamp_gain);
-			d2041_set_hs_noise_gate(noise_gate);
-#elif defined(PMU_MAX8986)
+#elif PMU_MAX8986
             max8986_audio_hs_set_gain(hs_path, hs_gain);
             //max8986_set_input_preamp_gain(MAX8986_INPUTA, preamp_gain);
             max8986_set_hs_preamp_gain(preamp_gain);
 #endif
-/* DLG end */
 		if ( HS_IsOn != TRUE )
 		{
 			Log_DebugPrintf(LOGID_AUDIO,"power ON pmu HS amp, gain %d\n",hs_gain);
 			//power on handset           
-/* DLG start */
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
 			bcm59038_audio_hs_powerUp(TRUE);
-#elif defined(CONFIG_MFD_D2041)
-			d2041_audio_hs_poweron(TRUE);
-#elif defined(PMU_MAX8986)
+#elif PMU_MAX8986
 			max8986_audio_hs_poweron(TRUE);
 #endif
-/* DLG end */
 
 		}
 		
@@ -2649,15 +2205,12 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 		{
 			Log_DebugPrintf(LOGID_AUDIO,"power OFF pmu IHF amp\n");
 			//power down IHF
-/* DLG start */
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
 			bcm59038_audio_ihf_powerDown();
-#elif defined(CONFIG_MFD_D2041)
-			d2041_audio_hs_ihf_poweroff();
-#elif defined(PMU_MAX8986)
+#elif PMU_MAX8986
 			max8986_audio_hs_ihf_poweroff();
 #endif
-/* DLG end */
+
 		}
 		IHF_IsOn = FALSE;
 	}
@@ -2678,89 +2231,30 @@ void powerOnExternalAmp( AUDCTRL_SPEAKER_t speaker, ExtSpkrUsage_en_t usage_flag
 
 		//sysparmptr = (SysAudioParm_t**)AUDIO_GetParmAccessPtr();
                 //if(lp_voip_start  == 1) app = 5;/* 20110715 for loopback check */
-#ifdef D2041_USE_OWN_TUNING_TOOL
-		
-		i=d2041_get_vol_gain_from_table(d2041_convert_use_case(app),0);
-		preamp_gain=d2041_get_pre_gain_from_table(d2041_convert_use_case(app),0);
-#else                
-              if ( mode == AUDIO_MODE_HEADSET && app != AUDIO_APP_VOIP && app != AUDIO_APP_VOIP_INCOMM)
-                mode =  AUDIO_MODE_SPEAKERPHONE;
-              
-                /* When ringtone is started during recording or GVS, ringtone volume is very low because audio profile is wrongly used. */
-                if(app == AUDIO_APP_RECORDING || app == AUDIO_APP_RECORDING_GVS || app == AUDIO_APP_RECORDING_NB)
-                {
-                    app = AUDIO_APP_MUSIC;
-
-                    if(mode == AUDIO_MODE_RESERVE)
-                    {
-                        mode = AUDIO_MODE_SPEAKERPHONE;
-                    }
-                }
-
-		i = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_pga;
-		preamp_gain = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_preamp_pga;
-#endif
-
-#ifdef CONFIG_MFD_D2041
-		param_value = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_param1;
-		noise_gate = (u16)(param_value & 0x00c0); // cfg
-		noise_gate |= (u16)(param_value & 0x0038); // atk
-		noise_gate |= (u16)(param_value & 0x0006); // deb
-		noise_gate |= (u16)(param_value & 0x0001); // en
-		noise_gate |= (u16)(param_value & 0x1800); // rms
-		noise_gate |= (u16)(param_value & 0x0700);  // rel
-		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (IHF on), app = %d, mode= %d, ext_speaker_param1= %d \n", app, mode, param_value);
-
-		param_value = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_param2;	
-		non_clip = (u16)(param_value & 0x0080); // zc_en
-		non_clip |= (u16)(param_value & 0x0070); // rel
-		non_clip |= (u16)(param_value & 0x000e); // atk
-		non_clip |= (u16)(param_value & 0x0001); // en
-		non_clip |= (u16)(param_value & 0xc000); //hld 
-		non_clip |= (u16)(param_value & 0x3f00); // thd
-		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (IHF on), app = %d, mode= %d, ext_speaker_param2= %d \n", app, mode, param_value);
-
-		param_value = AUDIOMODE_PARM_ACCESSOR(app,mode).ext_speaker_param3;	
-		spk_pwr = (u8)(param_value & 0x7e); // pwr
-		spk_pwr |= (u8)(param_value & 0x01); // limt_en	
-		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (IHF on), app = %d, mode= %d, ext_speaker_param3= %d \n", app, mode, param_value);
-
-#endif				
+		i = AUDIOMODE_PARM_ACCESSOR(app,AUDIO_MODE_SPEAKERPHONE).ext_speaker_pga;
+		preamp_gain = AUDIOMODE_PARM_ACCESSOR(app,AUDIO_MODE_SPEAKERPHONE).ext_speaker_preamp_pga;
 
 		//i = (AUDIO_GetParmAccessPtr()+app*AUDIO_MODE_NUMBER)[mode].ext_speaker_pga;
 		//ihf_gain = map2pmu_ihf_gain( i );
 		ihf_gain = i;
-		
 		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (IHF on), app = %d, mode= %d, ihf gain= %d preamp_gain=%d \n", app, mode, ihf_gain,preamp_gain);
 		Log_DebugPrintf(LOGID_AUDIO,"powerOnExternalAmp (IHF on), telephonyUseIHF = %d, voiceUseIHF= %d, audioUseIHF= %d, polyUseIHF = %d \n", telephonyUseIHF, voiceUseIHF, audioUseIHF, polyUseIHF);
 
-/* DLG start */
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
 		bcm59038_audio_ihf_setGain(ihf_gain);
-#elif defined (CONFIG_MFD_D2041)
-			d2041_audio_hs_ihf_set_gain(ihf_gain);
-             	d2041_audio_ihf_preamp_gain(preamp_gain);
-		d2041_set_ihf_noise_gate(noise_gate);
-		d2041_set_ihf_none_clip(non_clip);
-		d2041_set_ihf_pwr(spk_pwr);   
-#elif defined (PMU_MAX8986)
+#elif PMU_MAX8986
             max8986_audio_hs_ihf_set_gain(ihf_gain);
             //max8986_set_input_preamp_gain(MAX8986_INPUTB, preamp_gain);
              max8986_set_ihf_preamp_gain(preamp_gain);
-/* DLG end */
 #endif
 		if ( IHF_IsOn != TRUE )
 		{
 			Log_DebugPrintf(LOGID_AUDIO,"power ON pmu IHF amp, gain %d\n", ihf_gain);
-/* DLG start */
-#if defined(PMU_BCM59038)
+#ifdef PMU_BCM59038
 			bcm59038_audio_ihf_powerUp();
-#elif defined(CONFIG_MFD_D2041)
-			d2041_audio_hs_ihf_poweron();
-#elif defined(PMU_MAX8986)
+#elif PMU_MAX8986
 			max8986_audio_hs_ihf_poweron();
 #endif
-/* DLG end */
 
 		}
 		

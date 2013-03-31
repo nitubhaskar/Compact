@@ -60,13 +60,6 @@ the GPL, without Broadcom's express prior written consent.
 
 #include "atc_kernel.h"
 
-//#define ATC_KERNEL_TRACE_ON
-#ifdef ATC_KERNEL_TRACE_ON
-#define ATC_KERNEL_TRACE(str) printk str
-#else
-#define ATC_KERNEL_TRACE(str) {}
-#endif
-
 /**
  * Incoming AT command queue
  */
@@ -133,7 +126,6 @@ static void ATC_Cleanup(void);
 static void ATC_ATRPCInit(void);
 static bool_t xdr_AtCmdInfo_t( XDR* xdrs, AtCmdInfo_t* data);
 static bool_t xdr_AtRegisterInfo_t( XDR* xdrs, AtRegisterInfo_t* data);
-static bool_t xdr_AtToneInfo_t( XDR* xdrs, AtToneInfo_t* data);
 static void ATC_SendRPCATCmd(UInt8 inChannel, UInt8* inCmdStr, SimNumber_t inSimID );
 static void ATC_HandleAtcEventRspCb(RPC_Msg_t* pMsg, 
                                     ResultDataBufHandle_t dataBufHandle, 
@@ -149,16 +141,6 @@ static RPC_XdrInfo_t ATC_Prim_dscrm[] = {
 	{ MSG_AT_COMMAND_REQ,"MSG_AT_COMMAND_REQ", (xdrproc_t) xdr_AtCmdInfo_t, sizeof(AtCmdInfo_t),10240},
 	{ MSG_AT_COMMAND_IND,"MSG_AT_COMMAND_IND", (xdrproc_t)xdr_AtCmdInfo_t, sizeof(AtCmdInfo_t),8000},
 	{ MSG_AT_REGISTER_REQ,"MSG_AT_REGISTER_REQ", (xdrproc_t)xdr_AtRegisterInfo_t, sizeof(AtRegisterInfo_t),0},
-	{ MSG_AT_TONE_REQ,"MSG_AT_TONE_REQ", (xdrproc_t)xdr_AtToneInfo_t, sizeof(AtToneInfo_t),0},
-	{ MSG_AT_AUDIO_REQ,"MSG_AT_AUDIO_REQ", (xdrproc_t)xdr_u_char, sizeof(Boolean),0},
-	{ MSG_AT_MICMUTE_REQ,"MSG_AT_MICMUTE_REQ", (xdrproc_t)xdr_u_char, sizeof(Boolean),0},
-	{ MSG_AT_SPEAKERMUTE_REQ,"MSG_AT_SPEAKERMUTE_REQ", (xdrproc_t)xdr_u_char, sizeof(Boolean),0},
-	{ MSG_AT_SETSPEAKER_REQ,"MSG_AT_SETSPEAKER_REQ", (xdrproc_t)xdr_u_long, sizeof(UInt32),0},
-	{ MSG_AT_GETSPEAKER_REQ,"MSG_AT_GETSPEAKER_REQ", (xdrproc_t)xdr_default_proc, 0,0},
-	{ MSG_AT_GETSPEAKER_RSP,"MSG_AT_GETSPEAKER_RSP", (xdrproc_t)xdr_u_long, sizeof(UInt32),0},
-	{ MSG_AT_SETMIC_REQ,"MSG_AT_SETMIC_REQ", (xdrproc_t)xdr_u_long, sizeof(UInt32),0},
-	{ MSG_AT_GETMIC_REQ,"MSG_AT_GETMIC_REQ", (xdrproc_t)xdr_default_proc, 0,0},
-	{ MSG_AT_GETMIC_RSP,"MSG_AT_GETMIC_RSP", (xdrproc_t)xdr_u_long, sizeof(UInt32),0},
 	{ (MsgType_t)__dontcare__, "",NULL_xdrproc_t, 0,0 } 
 };
 
@@ -176,6 +158,14 @@ static struct file_operations sFileOperations =
     .mmap       = NULL,
     .release    = ATC_KERNEL_Release,
 };
+
+
+//#define ATC_KERNEL_TRACE_ON
+#ifdef ATC_KERNEL_TRACE_ON
+#define ATC_KERNEL_TRACE(str) printk str
+#else
+#define ATC_KERNEL_TRACE(str) {}
+#endif
 
 
 //======================================File operations==================================================
@@ -228,12 +218,11 @@ static int ATC_KERNEL_Open(struct inode *inode, struct file *filp)
  *          ATC_KERNEL_SEND_AT_CMD    - arg is a pointer to type ATC_KERNEL_ATCmd_t,
  *                                which specifies the at channel and command.
  */
-
 static long ATC_KERNEL_Ioctl(struct file *filp, unsigned int cmd, UInt32 arg )
 {
- 	int retVal = 0;
-   unsigned long       irql ;
-
+    int retVal = 0;
+    unsigned long       irql ;
+    
     ATC_KERNEL_TRACE(( "ATC_KERNEL_Ioctl\n" )) ;
 
     switch( cmd )
@@ -274,13 +263,12 @@ static long ATC_KERNEL_Ioctl(struct file *filp, unsigned int cmd, UInt32 arg )
                 {
                     ATC_KERNEL_TRACE(( "ATC_KERNEL_Ioctl() - copy_from_user() had error\n" ) );
                     retVal = -1;
-					kfree(newCmdQueueItem->mATCmd.fATCmdStr);
-                    kfree(newCmdQueueItem);					
+                    kfree(newCmdQueueItem->mATCmd.fATCmdStr);
+                    kfree(newCmdQueueItem);
                     break;
                 }
 
                 newCmdQueueItem->mATCmd.fChan = inAtCmd->fChan;
-                newCmdQueueItem->mATCmd.fSimId = inAtCmd->fSimId;
 
                 //add to queue
                 spin_lock_irqsave( &sModule.mCmdLock, irql ) ;
@@ -294,19 +282,13 @@ static long ATC_KERNEL_Ioctl(struct file *filp, unsigned int cmd, UInt32 arg )
         
         case ATC_KERNEL_Get_AT_RESP:
             {
-                ATC_KERNEL_ATResp_t atRespU;
+                ATC_KERNEL_ATResp_t* atRespU = (ATC_KERNEL_ATResp_t*)arg;
                 struct list_head *entry;
                 AT_RespQueue_t *respItem = NULL;
 				UInt16 len = ATC_KERNEL_RESULT_BUFFER_LEN_MAX - 1;
                 
 				ATC_KERNEL_TRACE(("cmd - ATC_KERNEL_Get_AT_RESP\n"));
 
-
-                if (copy_from_user(&atRespU, (ATC_KERNEL_ATResp_t*)arg, sizeof(atRespU)))
-                {
-                    retVal = -1;
-                    break;
-                }
                 /* Get one resp from the queue */
                 spin_lock_irqsave( &sModule.mRespLock, irql ) ;
                 if (list_empty(&sModule.mRespQueue.mList))
@@ -320,17 +302,11 @@ static long ATC_KERNEL_Ioctl(struct file *filp, unsigned int cmd, UInt32 arg )
                 entry = sModule.mRespQueue.mList.next;
                 respItem = list_entry(entry, AT_RespQueue_t, mList);
 	
-		 		atRespU.fChan = respItem->mATResp.fChan;
-
-                if (copy_to_user(atRespU.fATRespStr, respItem->mATResp.fATRespStr, len+1) != 0)
+				if (len > strlen(respItem->mATResp.fATRespStr))
 				{
-                    ATC_KERNEL_TRACE(( "ATC_KERNEL_Ioctl() - copy_to_user() had error\n" ));
-                    spin_unlock_irqrestore(&sModule.mRespLock, irql);
-                    retVal = -1;
-                    break;
+					len = strlen(respItem->mATResp.fATRespStr);
 				}	
-
-                if (copy_to_user(arg,  &atRespU, sizeof(ATC_KERNEL_ATResp_t)) != 0)
+                if (copy_to_user(atRespU->fATRespStr, respItem->mATResp.fATRespStr, len+1) != 0)
                 {
                     ATC_KERNEL_TRACE(( "ATC_KERNEL_Ioctl() - copy_to_user() had error\n" ));
                     spin_unlock_irqrestore(&sModule.mRespLock, irql);
@@ -471,22 +447,6 @@ bool_t xdr_AtRegisterInfo_t( XDR* xdrs, AtRegisterInfo_t* data)
 			_xdr_u_char(xdrs, &data->unsolicited, "unsolicited") );
 }
 
-/**
- *  Note that this function is copied verbatim from at_rpc.c on CP side   
- */
-bool_t xdr_AtToneInfo_t( XDR* xdrs, AtToneInfo_t* data)
-{
-	XDR_LOG(xdrs,"xdr_AtToneInfo_t")
-
-
-	return (_xdr_Boolean(xdrs, &data->turn_on, "turn_on") &&
-			_xdr_u_char(xdrs, &data->tone_id, "unsolicited") &&
-			_xdr_UInt32(xdrs, &data->duration, "duration") 
-			);
-	
-}
-
-
 //***************************************************************************
 /**
  *  Initialize AT RPC interface.   
@@ -536,6 +496,7 @@ Result_t ATC_SendRpcMsg(UInt32 msgId, void *val)
     }
 
     msg.tid = 0;
+    // **FIXME** need to support chan->ID, ID->chan, like CP
     msg.clientID = 70;
     msg.msgId = (MsgType_t)msgId;
     msg.dataBuf = val;
@@ -659,7 +620,6 @@ static void ATC_AddRespToQueue(const AtCmdInfo_t* atResp)
     }
     strncpy(newRespQueueItem->mATResp.fATRespStr, atResp->buffer, atResp->len);
     newRespQueueItem->mATResp.fATRespStr[atResp->len]='\0';
-    newRespQueueItem->mATResp.fChan = atResp->channel;
 
     //add to queue
     spin_lock_irqsave( &sModule.mRespLock, irql ) ;
@@ -742,7 +702,10 @@ static void ATC_KERNEL_CommandThread(struct work_struct *inCmdWorker)
         //pass to capi2
         ATC_KERNEL_TRACE(("Sending to RPC \n"));
 
-        ATC_SendRPCATCmd(cmdEntry->mATCmd.fChan, cmdEntry->mATCmd.fATCmdStr, cmdEntry->mATCmd.fSimId);
+        // **FIXME** will need to be updated for dual SIM - IOCTL interface will
+        // need to support passing SIM ID to kernel AT driver. For now, always 
+        // specify single SIM case.
+        ATC_SendRPCATCmd(cmdEntry->mATCmd.fChan, cmdEntry->mATCmd.fATCmdStr, SIM_SINGLE  );
 
         spin_lock_irqsave( &sModule.mCmdLock, irql ) ;
         list_del(listptr);

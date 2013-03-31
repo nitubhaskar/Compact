@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   capi2_reqrep.h
@@ -329,8 +331,8 @@ typedef struct tag_CAPI2_ReqRep_t
 	CAPI2_LCS_FttCalcDeltaTime_Rsp_t   CAPI2_LCS_FttCalcDeltaTime_Rsp;
 	CAPI2_LCS_SyncResult_Rsp_t   CAPI2_LCS_SyncResult_Rsp;
 	CAPI2_NetRegApi_ForcedReadyStateReq_Req_t   CAPI2_NetRegApi_ForcedReadyStateReq_Req;
-	CAPI2_SimLockApi_GetStatus_Req_t   CAPI2_SimLockApi_GetStatus_Req;
-	CAPI2_SimLockApi_GetStatus_RSP_Rsp_t   CAPI2_SimLockApi_GetStatus_RSP_Rsp;
+	CAPI2_SIMLOCK_GetStatus_Req_t   CAPI2_SIMLOCK_GetStatus_Req;
+	CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t   CAPI2_SIMLOCK_GetStatus_RSP_Rsp;
 	CAPI2_DIALSTR_IsValidString_Req_t   CAPI2_DIALSTR_IsValidString_Req;
 	CAPI2_DIALSTR_IsValidString_Rsp_t   CAPI2_DIALSTR_IsValidString_Rsp;
 	CAPI2_UTIL_Cause2NetworkCause_Req_t   CAPI2_UTIL_Cause2NetworkCause_Req;
@@ -840,20 +842,11 @@ typedef struct tag_CAPI2_ReqRep_t
 	CAPI2_CcApi_AbortDtmfTone_Req_t   CAPI2_CcApi_AbortDtmfTone_Req;
 	CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t   CAPI2_NetRegApi_SetSupportedRATandBandEx_Req;
 	CAPI2_SmsReportInd_Rsp_t   CAPI2_SmsReportInd_Rsp;
-	CAPI2_SimApi_ResetSIM_Req_t   CAPI2_SimApi_ResetSIM_Req;
 	CAPI2_NetRegApi_SetTZUpdateMode_Req_t   CAPI2_NetRegApi_SetTZUpdateMode_Req;
 	CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t   CAPI2_NetRegApi_GetTZUpdateMode_Rsp;
-	CAPI2_SEC_HostToModemInd_Req_t   CAPI2_SEC_HostToModemInd_Req;
-	CAPI2_SEC_ModemToHostInd_Rsp_t   CAPI2_SEC_ModemToHostInd_Rsp;
-	CAPI2_SimInstanceStatusInd_Rsp_t   CAPI2_SimInstanceStatusInd_Rsp;
-	CAPI2_VccVmPwrSavingInd_Rsp_t   CAPI2_VccVmPwrSavingInd_Rsp;
 	CAPI2_SimApi_GetAdData_Rsp_t   CAPI2_SimApi_GetAdData_Rsp;
 	CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t   CAPI2_SimApi_GetCurrentSimVoltage_Rsp;
-	CAPI2_MS_SetSupportedRATandBand_Req_t   CAPI2_MS_SetSupportedRATandBand_Req;
-	CAPI2_SecModemApi_ConfigModemReq_Rsp_t   CAPI2_SecModemApi_ConfigModemReq_Rsp;
-	CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t   CAPI2_SecModemApi_SendSimlockStatusInd_Rsp;
-	CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t   CAPI2_SecModemApi_SendXSimStatusInd_Rsp;
-	CAPI2_SIM_SendPinInd_Rsp_t   CAPI2_SIM_SendPinInd_Rsp;
+	CAPI2_GPRS_DEACTIVATE_IND_Rsp_t   CAPI2_GPRS_DEACTIVATE_IND_Rsp;
 	CAPI2_DATACALL_RELEASE_CNF_Rsp_t   CAPI2_DATACALL_RELEASE_CNF_Rsp;
 	CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp;
 	CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp;
@@ -861,8 +854,8 @@ typedef struct tag_CAPI2_ReqRep_t
 	CAPI2_USSD_DATA_IND_Rsp_t   CAPI2_USSD_DATA_IND_Rsp;
 	CAPI2_USSD_CALLINDEX_IND_Rsp_t   CAPI2_USSD_CALLINDEX_IND_Rsp;
 	CAPI2_USSD_SESSION_END_IND_Rsp_t   CAPI2_USSD_SESSION_END_IND_Rsp;
+	CAPI2_MS_SetSupportedRATandBand_Req_t   CAPI2_MS_SetSupportedRATandBand_Req;
 	CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t   CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp;
-	CAPI2_GPRS_DEACTIVATE_IND_Rsp_t   CAPI2_GPRS_DEACTIVATE_IND_Rsp;
 	CAPI2_PbkReadyInd_Rsp_t   CAPI2_PbkReadyInd_Rsp;
 /*********  _CAPI2_CODE_GEN_END_ ************/
 	} req_rep_u;

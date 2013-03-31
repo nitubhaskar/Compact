@@ -12,7 +12,6 @@
  * GNU General Public License for more details.
  *
  */
-
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/delay.h>
@@ -57,12 +56,27 @@
 
 #define SILABS_TS_NAME "silabs-f760"
 
-#define YTE_MODULE_VER0F   0x0F
-#define SYN_MODULE_VER01   0x01
-#define SYN_MODULE_VER02   0x02
+#define YTE_MODULE_VER   0x02
+#define SMAC_MODULE_VER   0x03
+#define YTE_MODULE_VER_OLD   0x04
+#define YTE_MODULE_VER_NEW   0x0A
+#define SMAC_MODULE_VER_OLD    0x05
+#define SMAC_MODULE_VER_NEW   0x07
+#define FW_VER  0x03
+#define FW_VER_OLD  0x0F
+#define FW_VER_OLD_SMAC  0x14
+#define FW_VER_NEW_YTE  0x15
+#define FW_VER_NEW_SMAC 0x14
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+#define T_YTE_MODULE_VER   0x08
+#define T_YTE_MODULE_VER_NEW   0x08
+#define T_FW_VER_YTE  0x0A
+#define T_FW_VER_OLD_YTE  0x0A
+#define T_FW_VER_NEW_YTE  0x0E
 
-#define FW_VER02  0x02
-#define FW_VER05  0x05
+#define T_SMAC_MODULE_VER   0x14		//Module_ver = 20
+#define T_SMAC_FW_VER   0x0F			//FW_ver = 15
+#endif
 
 #define NUM_TX_CHANNEL 12
 #define NUM_RX_CHANNEL 9
@@ -182,7 +196,6 @@ extern int bcm_gpio_pull_up(unsigned int gpio, bool up);
 extern int bcm_gpio_pull_up_down_enable(unsigned int gpio, bool enable);
 extern int set_irq_type(unsigned int irq, unsigned int type);
 extern int tsp_charger_type_status;
-
 void TSP_forced_release_forkey(void);
 
 static struct muti_touch_info g_Mtouch_info[SILABS_MAX_TOUCH];
@@ -211,7 +224,7 @@ int tsp_reset( void )
 	touch_ctrl_regulator(0);
 
 	gpio_direction_output(30, 0);
-  gpio_direction_output(27, 0);
+      	gpio_direction_output(27, 0);
 	gpio_direction_output(26, 0);
             
 	msleep(200);
@@ -222,13 +235,13 @@ int tsp_reset( void )
       TSP_forced_release_forkey();
 
 	gpio_direction_output(30, 1);
-  gpio_direction_output(27, 1);
+      	gpio_direction_output(27, 1);
 	gpio_direction_output(26, 1);
 
 	gpio_direction_input(30);
- 	gpio_direction_input(27);
+      	gpio_direction_input(27);
 	gpio_direction_input(26);
-	
+
 	touch_ctrl_regulator(1);
 		
 	msleep(200);
@@ -456,7 +469,7 @@ void set_tsp_for_ta_detect(int state)
 {
 	
 	int ret=0;
-	uint8_t wdog_val[7] = {0x80, 0x05, 0x00, 0x02, 0x92, 0x20, 0x00};
+	uint8_t wdog_val[7] = {0x80, 0x05, 0x00, 0x02, 0x12, 0x20, 0x00};
     if((tsp_status==0)&&(testmode==1))
     {
 	if(state)
@@ -701,7 +714,124 @@ static int silabs_ts_probe(struct i2c_client *client, const struct i2c_device_id
         tsp_chheck=1;
 	}
 	printk("[TSP] silabs_ts_probe %d, %d, %d\n", buf_firmware[0], buf_firmware[1], buf_firmware[2]);
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+    if (( buf_firmware[2] == T_YTE_MODULE_VER_NEW)&&(buf_firmware[0] < T_FW_VER_NEW_YTE))
+    { 
+        TSP_MODULE_ID =  buf_firmware[2];
+        PHONE_VER = T_FW_VER_NEW_YTE;
+	    local_irq_disable();
+		ret = Firmware_Download();	
+        printk("[TSP] enable_irq : %d\n", __LINE__ );
+        printk("[TSP] totoroT taeyang 0x08 update : %d\n", __LINE__ );
+	    local_irq_enable();
 
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	} 
+	else if(( buf_firmware[2] == T_SMAC_MODULE_VER)&&((buf_firmware[0] < T_SMAC_FW_VER)))
+    { 
+        TSP_MODULE_ID =  buf_firmware[2];
+        PHONE_VER = T_SMAC_FW_VER;
+	    local_irq_disable();
+		ret = Firmware_Download();	
+        printk("[TSP] enable_irq : %d\n", __LINE__ );
+        printk("[TSP] totoroT SMAC 0x14 update : %d\n", __LINE__ );
+	    local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	} 
+	else	
+	
+#endif
+    if ((( buf_firmware[2] == YTE_MODULE_VER)||( buf_firmware[2] == SMAC_MODULE_VER))&&(buf_firmware[0] < FW_VER))
+    { 
+        TSP_MODULE_ID =  buf_firmware[2];
+        PHONE_VER = FW_VER;
+	    local_irq_disable();
+		ret = Firmware_Download();	
+        printk("[TSP] enable_irq : %d\n", __LINE__ );
+	    local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	}
+    else if (( buf_firmware[2] == YTE_MODULE_VER_OLD)&&(buf_firmware[0] < FW_VER_OLD))
+    { 
+        TSP_MODULE_ID =  buf_firmware[2];
+        PHONE_VER = FW_VER_OLD;
+	    local_irq_disable();
+		ret = Firmware_Download();	
+        printk("[TSP] enable_irq : %d\n", __LINE__ );
+	    local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	}
+	else if (( buf_firmware[2] == SMAC_MODULE_VER_OLD)&&(buf_firmware[0] < FW_VER_OLD_SMAC))
+    { 
+        TSP_MODULE_ID =  buf_firmware[2];
+        PHONE_VER = FW_VER_OLD_SMAC;
+	    local_irq_disable();
+		ret = Firmware_Download();	
+        printk("[TSP] enable_irq : %d\n", __LINE__ );
+	    local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	}
+    else if (( buf_firmware[2] == YTE_MODULE_VER_NEW)&&(buf_firmware[0] < FW_VER_NEW_YTE))
+    { 
+         TSP_MODULE_ID =  buf_firmware[2];
+         PHONE_VER = FW_VER_NEW_YTE;
+	     local_irq_disable();
+		 ret = Firmware_Download();	
+         printk("[TSP] enable_irq : %d\n", __LINE__ );
+	     local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	}
+    else if (( buf_firmware[2] == SMAC_MODULE_VER_NEW)&&(buf_firmware[0] < FW_VER_NEW_SMAC))
+    { 
+         TSP_MODULE_ID =  buf_firmware[2];
+         PHONE_VER = FW_VER_NEW_SMAC;
+	     local_irq_disable();
+		 ret = Firmware_Download();	
+         printk("[TSP] enable_irq : %d\n", __LINE__ );
+	     local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	}
+
+	else if (( buf_firmware[2] == 0xFF) || (ret<0))
+    { 
+        TSP_MODULE_ID =  buf_firmware[2];
+	    local_irq_disable();
+		ret = Firmware_Download();	
+        printk("[TSP] enable_irq : %d\n", __LINE__ );
+	    local_irq_enable();
+
+		if(ret == 0)
+		{
+			printk(KERN_ERR "SET Download Fail - error code [%d]\n", ret);			
+		}
+	}	
 
        hrtimer_start(&ts->timer, ktime_set(2, 0), HRTIMER_MODE_REL);
 }
@@ -736,45 +866,37 @@ static int silabs_ts_suspend(struct i2c_client *client, pm_message_t mesg)
     	int ret;
 	struct silabs_ts_data *ts = i2c_get_clientdata(client);
 
-	printk("[TSP] %s+\n", __func__);
+	printk("[TSP] %s, %d\n", __func__, __LINE__ );
         tsp_status=1;
 	if( touch_present )
 	{
-		if (tsp_irq)
-			disable_irq(tsp_irq);
-
+	if (tsp_irq)
+	{
+		disable_irq(tsp_irq);
+	}
         ret = cancel_work_sync(&ts->work_timer);
-        if (ret <0)
-	    {
-			printk("[TSP] cancel_work_sync for work timer error.\n", __func__ );
-	    }
 
+	    ret = cancel_work_sync(&ts->work);
+        	if (ret && tsp_irq) /* if work was pending disable-count is now 2 */
+	    {
+		    enable_irq(tsp_irq);
+	    }
+            
         if(tsp_chheck==0)
 	    hrtimer_cancel(&ts->timer);
 
 	    touch_ctrl_regulator(TOUCH_OFF);
 
-	    gpio_direction_output(30, 0);
-    	    gpio_direction_output(27, 0);
+        gpio_direction_output(30, 0);
+      	gpio_direction_output(27, 0);
 	    gpio_direction_output(26, 0);
-
-	    bcm_gpio_pull_up(30, false);
-	    bcm_gpio_pull_up_down_enable(30, true);
-	    bcm_gpio_pull_up(27, false);
-	    bcm_gpio_pull_up_down_enable(27, true);
-	    bcm_gpio_pull_up(26, false);
-            bcm_gpio_pull_up_down_enable(26, true);
-
-            gpio_direction_input(30);
-      	    gpio_direction_input(27);
-	    gpio_direction_input(26);
 
 	    msleep(400);    
 	}
-    else
+    	else
 		printk("[TSP] TSP isn't present.\n", __func__ );
 
-    TSP_forced_release_forkey();
+        TSP_forced_release_forkey();
 
 	printk("[TSP] %s-\n", __func__ );
 	return 0;
@@ -785,12 +907,16 @@ static int silabs_ts_resume(struct i2c_client *client)
 	int retry_count, key;
 	struct silabs_ts_data *ts = i2c_get_clientdata(client);
 
-	printk("[TSP] %s+\n", __func__ );
-	
-	if( touch_present )
-	{ 
+	printk("[TSP] %s, %d\n", __func__, __LINE__ );
 
-		board_sysconfig(SYSCFG_TOUCH, SYSCFG_INIT);
+      //enable_irq(client->irq); // scl wave
+
+	printk("[TSP] %s+\n", __func__ );
+	if( touch_present )
+	{       
+		gpio_direction_output(30, 1);
+    	gpio_direction_output(27, 1);
+		gpio_direction_output(26, 1);
 
 		gpio_direction_input(30);
     	gpio_direction_input(27);
@@ -810,7 +936,14 @@ static int silabs_ts_resume(struct i2c_client *client)
 		set_tsp_for_ta_detect(tsp_charger_type_status);
 	}
     
-     if(tsp_chheck==0)
+    #if 0	
+	if( tsp_proximity_irq_status == 1)
+	{
+		set_tsp_for_prox_enable(tsp_proximity_irq_status);
+	}
+    #endif
+    
+    if(tsp_chheck==0)
 	hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 
 	enable_irq(tsp_irq);
@@ -819,7 +952,7 @@ static int silabs_ts_resume(struct i2c_client *client)
 		printk("[TSP] TSP isn't present.\n", __func__ );
 
 	printk("[TSP] %s-\n", __func__ );
-    tsp_status=0; 
+        tsp_status=0; 
 	return 0;
 }
 
@@ -862,7 +995,7 @@ static struct i2c_driver silabs_ts_driver = {
 static int __devinit silabs_ts_init(void)
 {
 
-    check_ic_wq = create_singlethread_workqueue("check_ic_wq");	
+    	check_ic_wq = create_singlethread_workqueue("check_ic_wq");	
 	if (!check_ic_wq)
 		return -ENOMEM;
 
@@ -914,15 +1047,6 @@ static ssize_t raw_disable_silabs(struct device *dev, struct device_attribute *a
     return sprintf(buf, "1") ;
 }
 
-#define NUM_TX_CHANNEL 12
-#define NUM_RX_CHANNEL 9
-#define JIG_MODE_COMMAND 0xA0
-#define RAWDATA_ADDRESS          0x003A
-#define BASELINE_ADDRESS         0x0112
-#define  QUICKSENSE_OVERHEAD     6 
-#define I2CMAP_BUTTON_ADDRESS    (0x0212 + 0x22)
-#define  NUM_MTRBUTTONS             2
-
 int silabs_quicksense ( int address, int size, char* buff )
 {
 	uint8_t buf1[7]={0x78, 0x05, 0x00, 0, 0, 0, 0};
@@ -953,16 +1077,27 @@ int silabs_quicksense ( int address, int size, char* buff )
 
 static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attribute *attr, char *buf)
 {
+#if 0//raw data check delete	
 	int Tx_Channel = NUM_TX_CHANNEL;
 	int Rx_Channel = NUM_RX_CHANNEL;
 	uint8_t buffer1[NUM_TX_CHANNEL*NUM_RX_CHANNEL*2+QUICKSENSE_OVERHEAD]={0,};
     uint8_t buffer2[NUM_TX_CHANNEL*NUM_RX_CHANNEL*2+QUICKSENSE_OVERHEAD]={0,};
 	uint16_t rawdata[NUM_TX_CHANNEL][NUM_RX_CHANNEL]={{0,},};
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)   
+	uint16_t TYE_RAWDATA_MAX[108] = {14250,14370,14370,14390,14320,14290,14265,14175,13915,13515,13660,13665,13700,13620,13590,13555,13460,13195,13470,13615,13615,13650,13585,13550,13515,13415,13145,13470,13600,13590,13625,13565,13530,13500,13405,13130,13455,13590,13600,13630,13555,13515,13485,13300,13110,13410,13555,13590,13620,13520,13485,13460,13360,13080,13245,13490,13555,13600,13505,13490,13475,13415,13410,13230,13470,13540,13600,13520,13480,13460,13400,13280,13215,13445,13505,13565,13500,13460,13430,13375,13235,13215,13430,13480,13535,13480,13455,13430,13350,13195,13380,13415,13445,13495,13440,13415,13395,13320,13160,13935,14110,14130,14190,14110,14090,14060,14000,13825};
+	uint16_t TYE_RAWDATA_MIN[108] = {10750,10840,10840,10860,10800,10780,10760,10695,10500,10195,10305,10310,10335,10275,10250,10225,10155, 9955,10165,10270,10270,10295,10250,10220,10195,10120, 9920,10160,10260,10255,10280,10235,10210,10185,10110, 9905,10150,10250,10260,10285,10225,10195,10175,10100, 9890,10120,10225,10255,10280,10200,10175,10155,10080, 9870, 9990,10175,10225,10260,10190,10175,10165,10120,10115, 9980,10160,10215,10260,10200,10170,10155,10110,10020, 9970,10140,10190,10235,10185,10155,10130,10090, 9985, 9970,10130,10170,10210,10170,10150,10130,10075, 9955,10095,10120,10145,10180,10140,10120,10105,10050, 9930,10510,10645,10660,10705,10645,10630,10610,10560,10430};
 
-	uint16_t RAWDATA_MAX[108] = {14350,14510,14560,14610,14710,14680,14780,14780,14440,13720,13990,14080,14150,14190,14190,14260,14250,13910,13650,13940,14040,14110,14150,14150,14210,14200,13870,13610,13890,14000,14080,14120,14120,14200,14170,13840,13570,13870,13960,14040,14080,14080,14160,14150,13820,13560,13830,13920,13990,14020,14020,14110,14120,13790,13540,13800,13900,13960,14000,14000,14090,14100,13770,13400,13760,13900,13980,14030,14040,14150,14200,14270,13380,13750,13890,13980,14020,14040,14140,14160,14050,13370,13730,13870,13960,14010,14010,14100,14130,13980,13440,13720,13860,13960,14000,14000,14100,14130,14180,14150,14560,14730,14830,14870,14870,14960,15000,15010};
-	uint16_t RAWDATA_MIN[108] = {10610,10720,10770,10800,10870,10850,10930,10920,10680,10140,10340,10410,10460,10490,10480,10540,10530,10280,10090,10300,10370,10430,10460,10460,10500,10500,10250,10060,10270,10340,10410,10440,10440,10490,10470,10230,10030,10250,10320,10380,10400,10410,10460,10460,10210,10020,10220,10290,10340,10360,10360,10430,10440,10190,10010,10200,10270,10320,10350,10350,10410,10420,10180,9900,10170,10270,10330,10370,10380,10460,10500,10540,9890,10160,10270,10330,10360,10370,10450,10470,10390,9880,10150,10250,10320,10350,10360,10420,10440,10330,9930,10140,10250,10310,10350,10350,10420,10450,10480,10460,10760,10880,10960,10990,10990,11060,11090,11100};
-  
+	uint16_t SMAC_RAWDATA_MAX[108] = {15075,15183,15165,15194,15106,15077,15054,14971,14698,14692,14844,14859,14902,14801,14755,14720,14627,14346,14668,14814,14828,14880,14792,14741,14700,14606,14327,14660,14788,14792,14847,14768,14713,14667,14571,14298,14622,14749,14771,14821,14733,14682,14637,14539,14260,14566,14704,14737,14784,14686,14644,14608,14518,14240,14415,14654,14700,14755,14658,14636,14612,14558,14606,14401,14638,14686,14745,14653,14613,14590,14537,14453,14387,14628,14675,14735,14644,14589,14575,14527,14403,14367,14603,14650,14698,14619,14568,14557,14493,14339,14536,14583,14619,14668,14599,14549,14533,14459,14298,14799,14982,15011,15075,15003,14955,14917,14852,14696 };
+	uint16_t SMAC_RAWDATA_MIN[108] = {11143,11223,11209,11230,11166,11144,11127,11065,10864,10860,10972,10983,11014,10940,10906,10880,10811,10604,10842,10950,10960,10998,10934,10895,10866,10796,10589,10836,10930,10934,10974,10916,10875,10841,10770,10568,10808,10901,10917,10955,10889,10852,10819,10747,10540,10766,10868,10893,10928,10855,10824,10798,10730,10526,10655,10832,10866,10906,10834,10818,10800,10760,10796,10645,10820,10855,10899,10831,10801,10784,10745,10683,10634,10812,10847,10891,10824,10783,10773,10737,10645,10619,10793,10828,10864,10805,10768,10759,10713,10599,10744,10779,10805,10842,10791,10753,10741,10687,10568,10939,11074,11095,11143,11089,11053,11025,10978,10862};
 
+#else
+	uint16_t SMAC_RAWDATA_MAX[108] = {15000,15200,15300,15300,15500,15400,15400,15400,15000,14600,14900,15000,15000,15100,15000,15100,15100,14700,14500,14800,14900,14900,15000,15000,15100,15000,14600,14500,14700,14900,14900,14900,14900,15000,15000,14600,14400,14700,14900,14900,15000,14900,15000,14900,14500,14400,14600,14800,14900,14900,14900,15000,14900,14500,14400,14600,14800,15000,14900,14900,14900,14900,14600,14200,14600,14700,14900,14900,14900,15000,15000,14900,14200,14500,14700,14900,14900,14900,14900,15000,17800,14200,14500,14700,14800,14800,14800,14900,14900,14700,14300,14500,14600,14800,14800,14800,14800,14900,15000,15200,15500,15700,15800,15900,15800,15900,15900,15900};
+	uint16_t SMAC_RAWDATA_MIN[108] = {11300,11500,11500,11500,11500,11600,11700,11700,11500,10600,10900,11000,11000,11000,11100,11200,11200,11000,10600,10900,11000,11100,11100,11100,11100,11200,11000,10600,10900,10900,11000,11000,11100,11200,11200,10900,10500,10900,10800,11000,11000,11100,11100,11200,10900,10500,10800,10800,10900,10900,11000,11100,11200,10900,10500,10800,10800,10800,10900,11000,11100,11100,10800,10400,10800,10900,10900,10900,11100,11100,11200,11300,10400,10800,10900,10900,10900,11000,11200,11100,11000,10300,10800,10800,10900,11000,11000,11100,11200,11100,10400,10700,10800,10900,10900,11000,11100,11200,11200,10600,11100,11200,11300,11300,11400,11500,11600,11700};
+
+	uint16_t TYE_RAWDATA_MAX[108] = {14350,14510,14560,14610,14710,14680,14780,14780,14440,13720,13990,14080,14150,14190,14190,14260,14250,13910,13650,13940,14040,14110,14150,14150,14210,14200,13870,13610,13890,14000,14080,14120,14120,14200,14170,13840,13570,13870,13960,14040,14080,14080,14160,14150,13820,13560,13830,13920,13990,14020,14020,14110,14120,13790,13540,13800,13900,13960,14000,14000,14090,14100,13770,13400,13760,13900,13980,14030,14040,14150,14200,14270,13380,13750,13890,13980,14020,14040,14140,14160,14050,13370,13730,13870,13960,14010,14010,14100,14130,13980,13440,13720,13860,13960,14000,14000,14100,14130,14180,14150,14560,14730,14830,14870,14870,14960,15000,15010};
+	uint16_t TYE_RAWDATA_MIN[108] = {10610,10720,10770,10800,10870,10850,10930,10920,10680,10140,10340,10410,10460,10490,10480,10540,10530,10280,10090,10300,10370,10430,10460,10460,10500,10500,10250,10060,10270,10340,10410,10440,10440,10490,10470,10230,10030,10250,10320,10380,10400,10410,10460,10460,10210,10020,10220,10290,10340,10360,10360,10430,10440,10190,10010,10200,10270,10320,10350,10350,10410,10420,10180,9900,10170,10270,10330,10370,10380,10460,10500,10540,9890,10160,10270,10330,10360,10370,10450,10470,10390,9880,10150,10250,10320,10350,10360,10420,10440,10330,9930,10140,10250,10310,10350,10350,10420,10450,10480,10460,10760,10880,10960,10990,10990,11060,11090,11100};
+#endif  
+#endif//raw data check delete	
 	uint8_t buf_firmware_show[3];
 
     int i, j, ret;
@@ -971,8 +1106,37 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 
 	if(testmode==1) return sprintf(buf, "-1");   
 
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+
+	printk("[TSP] rawdata_pass_fail_silabs at AU Version Read Test \n");
+
+	buf_firmware_show[0] = ESCAPE_ADDR;
+	buf_firmware_show[1] = TS_READ_VERSION_ADDR;
+	ret = i2c_master_send(ts_global->client, &buf_firmware_show, 2);
+	if(ret < 0)
+	{
+		printk(KERN_ERR "silabs_ts_work_func : i2c_master_send [%d]\n", ret);			
+	}
+
+	ret = i2c_master_recv(ts_global->client, &buf_firmware_show, 3);
+	if(ret < 0)
+	{
+		printk(KERN_ERR "silabs_ts_work_func : i2c_master_recv [%d]\n", ret);			
+	}
+
+	printk("[TSP][rawdata_pass_fail_silabs] ver tsp=0x%x, HW=0x%x, SW=0x%x\n", buf_firmware_show[1], buf_firmware_show[2], buf_firmware_show[0]);
+
+	if(buf_firmware_show[2] == T_YTE_MODULE_VER_NEW)	//TYE Module
+		TSP_MODULE_ID = T_YTE_MODULE_VER_NEW;
+
+	else if(buf_firmware_show[2] == T_SMAC_MODULE_VER)	//TYE Module
+		TSP_MODULE_ID = T_SMAC_MODULE_VER;
+
+	printk("[TSP][rawdata_pass_fail_silabs] TSP_MODULE_ID = 0x%x \n", TSP_MODULE_ID);	
+#endif
+
+#if 0//raw data check delete	
 	mdelay(300); 
-#if 0//temp
 
 	buffer1[0] = ESCAPE_ADDR;
 	buffer1[1] = JIG_MODE_COMMAND;
@@ -994,37 +1158,96 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 	//
 	//	quicksense format for reading rawdata
 	//
-
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)   
+	ret = silabs_quicksense(RAWDATA_ADDRESS,NUM_TX_CHANNEL*NUM_RX_CHANNEL*2, buffer2);
+#else
 	ret = silabs_quicksense(RAWDATA_ADDRESS,NUM_RX_CHANNEL*2, buffer2);
-
+#endif
 	if (ret != 0)
 	{
 		printk("[TSP] silabs_quicksense fail! %s : %d, \n", __func__,__LINE__);
 		return sprintf(buf, "-1");
 	}
 
-	for (i = 0; i < 1; i++)
-
-    {
+	#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)   
+	for (i = 0; i < Tx_Channel; i++)
+	{
 		for(j = 0 ; j < Rx_Channel; j++)
-      {
-      
+		{
 			rawdata[i][j] = (buffer2[(i*Rx_Channel+j)*2 + QUICKSENSE_OVERHEAD -1] <<8) + buffer2[(i*Rx_Channel+j)*2+QUICKSENSE_OVERHEAD];
-			printk("[TSP] rawdata_pass_fail_silabs rawdata[%d][%d] : %d, \n",i,j,rawdata[i][j]);
-			if( RAWDATA_MAX[i*Rx_Channel+j] < rawdata[i][j])
-         {
-         	printk("[TSP] %s max_fail. line : %d, \n", __func__,__LINE__);
-            return sprintf(buf, "0"); // fail
+
+
+			if(TSP_MODULE_ID == T_YTE_MODULE_VER_NEW)
+			{
+				if( TYE_RAWDATA_MAX[i*Rx_Channel+j] < rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MAX rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
+
+				if( TYE_RAWDATA_MIN[i*Rx_Channel+j] > rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MIN rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
 			}
-			if( RAWDATA_MIN[i*Rx_Channel+j] > rawdata[i][j])
-         {
-            printk("[TSP] %s min_fail. line : %d, \n", __func__,__LINE__);
-            return sprintf(buf, "0"); // fail
+			else if(TSP_MODULE_ID == T_SMAC_MODULE_VER)
+			{
+				if( SMAC_RAWDATA_MAX[i*Rx_Channel+j] < rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MAX rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
+
+				if( SMAC_RAWDATA_MIN[i*Rx_Channel+j] > rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MIN rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
 			}
 		}
-    }
+	}
+	#else
+		for (i = 0; i < Tx_Channel; i++)
+	{
+		for(j = 0 ; j < Rx_Channel; j++)
+		{
+			rawdata[i][j] = (buffer2[(i*Rx_Channel+j)*2 + QUICKSENSE_OVERHEAD -1] <<8) + buffer2[(i*Rx_Channel+j)*2+QUICKSENSE_OVERHEAD];
 
-#endif
+
+			if((TSP_MODULE_ID == YTE_MODULE_VER_NEW)||(TSP_MODULE_ID == YTE_MODULE_VER_OLD))
+			{
+				if( TYE_RAWDATA_MAX[i*Rx_Channel+j] < rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MAX rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
+
+				if( TYE_RAWDATA_MIN[i*Rx_Channel+j] > rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MIN rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
+			}
+			else if((TSP_MODULE_ID == SMAC_MODULE_VER_NEW)||(TSP_MODULE_ID == SMAC_MODULE_VER_OLD))
+			{
+				if( SMAC_RAWDATA_MAX[i*Rx_Channel+j] < rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MAX rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
+
+				if( SMAC_RAWDATA_MIN[i*Rx_Channel+j] > rawdata[i][j])
+				{
+					printk("[TSP] rawdata_pass_fail_silabs MIN rawdata[%d][%d] = %d \n", i,j,rawdata[i][j]);			
+					return sprintf(buf, "0"); // fail
+				}
+			}
+		}
+	}
+	#endif
+#endif//raw data check delete	
+
 	buf_firmware_show[0] = ESCAPE_ADDR;
 	buf_firmware_show[1] = TS_READ_VERSION_ADDR;
 	ret = i2c_master_send(ts_global->client, &buf_firmware_show, 2);
@@ -1039,13 +1262,32 @@ static ssize_t rawdata_pass_fail_silabs(struct device *dev, struct device_attrib
 		printk(KERN_ERR "silabs_ts_work_func : i2c_master_recv [%d]\n", ret);			
 	}
 	printk("[TSP] ver tsp=%x, HW=%x, SW=%x\n", buf_firmware_show[1], buf_firmware_show[2], buf_firmware_show[0]);
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+	if (buf_firmware_show[2] == T_YTE_MODULE_VER_NEW)
+		PHONE_VER = T_FW_VER_NEW_YTE;
+	
+	else if (buf_firmware_show[2] == T_SMAC_MODULE_VER)
+		PHONE_VER = T_SMAC_FW_VER;
+	
+	else
+#endif
 
-     if ( buf_firmware_show[2] == YTE_MODULE_VER0F)
-             PHONE_VER = FW_VER05;
-     else if ( buf_firmware_show[2] == SYN_MODULE_VER01)
-             PHONE_VER = FW_VER02;
-     else if ( buf_firmware_show[2] == SYN_MODULE_VER02)
-             PHONE_VER = FW_VER05;
+    if (( buf_firmware_show[2] == YTE_MODULE_VER)||( buf_firmware_show[2] == SMAC_MODULE_VER))
+             PHONE_VER = FW_VER;
+
+    else if ( buf_firmware_show[2] == YTE_MODULE_VER_OLD)
+             PHONE_VER = FW_VER_OLD;
+
+    else if ( buf_firmware_show[2] == SMAC_MODULE_VER_OLD)
+			PHONE_VER = FW_VER_OLD_SMAC;
+
+    else if ( buf_firmware_show[2] == YTE_MODULE_VER_NEW)
+            PHONE_VER = FW_VER_NEW_YTE;
+
+    else if (buf_firmware_show[2] == SMAC_MODULE_VER_NEW)
+			PHONE_VER = FW_VER_NEW_SMAC;
+
+	printk("[TSP][rawdata_pass_fail_silabs] PHONE_VER = %x \n", PHONE_VER);	
 
 	if(buf_firmware_show[0]!=PHONE_VER)
 		return sprintf(buf, "0");
@@ -1277,7 +1519,13 @@ static ssize_t firmware_show(struct device *dev, struct device_attribute *attr, 
 {
        uint8_t buf_firmware_show[3];
        int ret;
-       
+
+/*
+ buf = [1][2][3][4][5][6][7][8] :   [1] - Don't care 
+                                    [2][3] - module version 
+                                    [4][5] - TSP part vesion
+                                    [6][7] - TSP part vesion
+*/
 	printk("[TSP] %s\n",__func__);
 
 	buf_firmware_show[0] = ESCAPE_ADDR;
@@ -1294,30 +1542,63 @@ static ssize_t firmware_show(struct device *dev, struct device_attribute *attr, 
 		printk(KERN_ERR "silabs_ts_work_func : i2c_master_recv [%d]\n", ret);			
 	}
 	printk("[TSP] ver tsp=%x, HW=%x, SW=%x\n", buf_firmware_show[1], buf_firmware_show[2], buf_firmware_show[0]);
-#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
-     if (buf_firmware[2] == T_YTE_MODULE_VER_NEW)
-            PHONE_VER = T_FW_VER_NEW_YTE;
-     else
-#endif
 
-     if ( buf_firmware_show[2] == YTE_MODULE_VER0F)
-     {
-       	PHONE_VER = FW_VER05;
-	   	sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
-     }
-	 else if ( buf_firmware_show[2] == SYN_MODULE_VER01)
-	 {
-	 	PHONE_VER = FW_VER02;
-    	sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
-	 }	
-	 else if ( buf_firmware_show[2] == SYN_MODULE_VER02)
-	 {
-	 	PHONE_VER = FW_VER05;
-    	sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
-	 }
-	 
-       printk("[TSP] %s\n", buf);
-       
+    if (( buf_firmware_show[2] == YTE_MODULE_VER)||( buf_firmware_show[2] == SMAC_MODULE_VER))
+    {
+        PHONE_VER = FW_VER;
+    }
+    else if ( buf_firmware_show[2] == YTE_MODULE_VER_OLD)
+    {
+        PHONE_VER = FW_VER_OLD;
+    }
+    else if ( buf_firmware_show[2] == SMAC_MODULE_VER_OLD)
+    {
+        PHONE_VER = FW_VER_OLD_SMAC;
+        sprintf(buf, "10%x%x%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+        printk("[TSP] %s\n", buf);
+			   
+		return sprintf(buf, "%s", buf );
+    }
+
+    else if ( buf_firmware_show[2] == YTE_MODULE_VER_NEW)
+    {
+        PHONE_VER = FW_VER_NEW_YTE;
+        sprintf(buf, "10%x%x%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+        printk("[TSP] %s\n", buf);
+		   
+		return sprintf(buf, "%s", buf );
+    }
+    else if (buf_firmware_show[2] == SMAC_MODULE_VER_NEW)
+    {
+        PHONE_VER = FW_VER_NEW_SMAC;
+        sprintf(buf, "10%x%x%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+        printk("[TSP] %s\n", buf);
+			   
+		return sprintf(buf, "%s", buf );
+    }
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)    
+    else if (buf_firmware_show[2] == T_YTE_MODULE_VER_NEW)
+    {
+        PHONE_VER = T_FW_VER_NEW_YTE;
+        sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+        printk("[TSP] %s\n", buf);
+		
+		return sprintf(buf, "%s", buf );
+
+    }
+    else if (buf_firmware_show[2] == T_SMAC_MODULE_VER)
+    {
+        PHONE_VER = T_SMAC_FW_VER;
+        sprintf(buf, "1%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+        printk("[TSP] %s\n", buf);
+		
+		return sprintf(buf, "%s", buf );
+
+    }        
+#endif    
+        sprintf(buf, "10%x0%x0%x\n", buf_firmware_show[2], buf_firmware_show[0], PHONE_VER);
+        printk("[TSP] %s\n", buf);
+    
 	return sprintf(buf, "%s", buf );
 }
 
@@ -1408,7 +1689,7 @@ static ssize_t read_node(struct device *dev, struct device_attribute *attr, char
     {
     	for(i = 0 ; i < Tx_Channel; i++)
 		{
-			written_bytes += sprintf(buf+written_bytes, ",%5d", baseline_node[i][j]) ;
+			written_bytes += sprintf(buf+written_bytes, ",%d", baseline_node[i][j]) ;
     	}
 	}
 

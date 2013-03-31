@@ -16,15 +16,10 @@
 #ifndef _BMEM_WRAPPER_H_
 #define _BMEM_WRAPPER_H_
 
-// #define BMEM_CHECK_OVERRUN
-#define BMEM_CRASH_ON_OVERRUN
-
 #if defined (CONFIG_BRCM_V3D_OPT)
-	#if defined (CONFIG_BCM_LCD_NT35582) || defined (CONFIG_HVGA_BIGRAM)
-		#define BMEM_SIZE  (1024*1024*80)
-#else
 #define BMEM_SIZE  (1024*1024*60)
-	#endif
+#else
+#define BMEM_SIZE  (1024*1024*24)
 #endif
 
 typedef void *BMEM_HDL;
@@ -73,11 +68,7 @@ struct bmem_logic {
 	int (*open)(BMEM_HDL *hdlp);
 	int (*release)(BMEM_HDL hdl);
 	int (*mmap)(unsigned long size, unsigned long pgoff);
-#ifdef BMEM_CHECK_OVERRUN
-	int (*init)(unsigned int memory_size, unsigned int phy_start_address, void *virt_start_address);
-#else
 	int (*init)(unsigned int memory_size, unsigned int phy_start_address);
-#endif
 	int (*cleanup)(void);
 	int (*GetStatus)(bmem_status_t *p_bmem_status);
 	int (*SetStatus)(bmem_set_status_t *p_bmem_set_status);

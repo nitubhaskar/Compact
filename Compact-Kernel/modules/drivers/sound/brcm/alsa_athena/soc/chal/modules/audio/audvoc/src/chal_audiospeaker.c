@@ -97,11 +97,11 @@ CHAL_HANDLE chal_audiospeaker_Init(
 		//*(volatile UInt32 *)0x08880084 = 0x180; 	// ANACR1, mask for DAC power up signal
 
 		   // *(volatile UInt32 *)0x08880084 = 0x180;	 // ANACR1[7], power mask
-
+		   
 		//Disable dithering:
 		BRCM_WRITE_REG_FIELD(sSpeaker.dsp_audio_base, DSP_AUDIO_SDMDTHER_R, LDEN, 0);
-		BRCM_WRITE_REG_FIELD(sSpeaker.dsp_audio_base, DSP_AUDIO_SDMDTHER_R, RDEN, 0);
-
+		BRCM_WRITE_REG_FIELD(sSpeaker.dsp_audio_base, DSP_AUDIO_SDMDTHER_R, RDEN, 0);		   
+		   
 #if !( defined(_ATHENA_) && (CHIP_REVISION==20) )        // These bits don't exist in Athena B0
 		BRCM_WRITE_REG_FIELD(sSpeaker.syscfg_base, SYSCFG_ANACR1, IHF_PWD_MASK, 1);
 		BRCM_WRITE_REG_FIELD(sSpeaker.syscfg_base, SYSCFG_ANACR1, HIFI_DAC_FORCE_PWRUP_DISABLE, 1);

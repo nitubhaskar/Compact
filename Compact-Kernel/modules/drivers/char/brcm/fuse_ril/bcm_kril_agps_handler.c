@@ -38,7 +38,7 @@ void KRIL_AgpsSendUpLinkHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			ClientInfo_t lcsClientInfo;
 			CAPI2_InitClientInfo(&lcsClientInfo, GetNewTID(), GetClientID());
             
-            if ((NULL != tdata) && (tdata->cPlaneDataLen))
+            if ((tdata->cPlaneData) && (tdata->cPlaneDataLen))
             {
 				//KRIL_DEBUG(DBG_ERROR,"AGPS DATA: pro=%d, len=%d, data 0x%lx, 0x%1x, 0x%1x, 0x%1x\n", tdata->protocol, tdata->cPlaneDataLen, tdata->cPlaneData[0], tdata->cPlaneData[1], tdata->cPlaneData[2], tdata->cPlaneData[3]);
 				KRIL_DEBUG(DBG_ERROR,"AGPS DATA: pro=%d, len=%d, data 0x%lx\n", tdata->protocol, tdata->cPlaneDataLen, tdata->cPlaneData[0]);

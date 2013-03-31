@@ -301,8 +301,6 @@ if(backlight_mode==BACKLIGHT_RESUME)
     if(real_level == 0)
     {
 	mdelay(200);
-	//msleep(200);
-	//msleep(600);
     }
     
     if(tune_level<=0)
@@ -358,7 +356,7 @@ static void aat1401_backlight_earlysuspend(struct early_suspend *desc)
 	getnstimeofday(&ts);
 	rtc_time_to_tm(ts.tv_sec, &tm);
 
-        printk("[%02d:%02d:%02d.%03lu][BACKLIGHT] earlysuspend\n", tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
+    printk("[%02d:%02d:%02d.%03lu][BACKLIGHT] earlysuspend\n", tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
 }
 
 static void aat1401_backlight_earlyresume(struct early_suspend *desc)
@@ -481,7 +479,7 @@ static int aat1401_backlight_remove(struct platform_device *pdev)
 
 static struct platform_driver aat1401_backlight_driver = {
 	.driver		= {
-		.name	= "sec-backlight",
+		.name	= "aat1401-backlight",
 		.owner	= THIS_MODULE,
 	},
 	.probe		= aat1401_backlight_probe,

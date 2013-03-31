@@ -8,10 +8,16 @@
 #include <asm/io.h>
 
 #include "bootloader.h"
-#include "SILABS_S6102_TYE015_BL006_APP005.h"
-#include "SILABS_S6102_SYN001_BL006_APP002.h"
-#include "SILABS_S6102_SYN002_BL006_APP005.h"
-
+#include "SMAC_APP3.h"
+#include "TYE_APP3.h"
+#include "SILABS_S5360_BL006_TYE004_APP005.h"
+#include "SILABS_S5360_SMAC005_BL006_APP020.h"
+#include "SILABS_S5360_SMAC007_BL006_APP020.h"
+#include "SILABS_S5360_TYE010_BL006_APP021.h"
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+#include "SILABS_S5360T_TYE008_BL006_APP014.h"
+#include "SILABS_S5360T_SMAC020_BL006_APP015.h"
+#endif
 unsigned int Running_CRC;
 int APP_END_ADDR;
 int ERASE_ADDR;
@@ -189,12 +195,24 @@ int WriteBytes (unsigned int addr, unsigned int num)
    SMB_DATA_OUT[6] = num&0xFF;
    SMB_DATA_OUT[7] = ((num>>8)&0xFF);
    SMB_DATA_OUT[8] = 0; // dummy
-   if(TSP_MODULE_ID==0x0F)
-   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_MOD15_APP05_Binary[addr+i]; 
-   else if(TSP_MODULE_ID==0x01)
-   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SYN_MOD01_APP02_Binary[addr+i];
-   else if(TSP_MODULE_ID==0x02)
-   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SYN_MOD02_APP05_Binary[addr+i];
+   if(TSP_MODULE_ID==0x02)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP03_Binary[addr+i]; 
+   else if(TSP_MODULE_ID==0x03)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SMAC_APP03_Binary[addr+i];
+   else if(TSP_MODULE_ID==0x04)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP05_Binary[addr+i];
+   else if(TSP_MODULE_ID==0x05)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SMAC_APP20_Binary_REV05[addr+i];  
+   else if(TSP_MODULE_ID==0x07)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SMAC_APP20_Binary[addr+i];
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+   else if(TSP_MODULE_ID==0x08)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP14_Binary[addr+i];
+   else if(TSP_MODULE_ID==0x14)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SMAC_APP15_Binary[addr+i];
+#endif
+   else if(TSP_MODULE_ID==0x0A)
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP21_Binary[addr+i];
    
    SMB_Write(SMB_DATA_OUT,num+9);
    mdelay(10);
@@ -275,13 +293,25 @@ int GetPageCRC (unsigned int addr)
    
    for (i = 0; i < 0x200 ; i++) // Page size = 0x200
    {
-		if(TSP_MODULE_ID==0x0F)
-			write_data = TYE_MOD15_APP05_Binary[addr+i]; 
-		else if(TSP_MODULE_ID==0x01)
-			write_data = SYN_MOD01_APP02_Binary[addr+i];
-		else if(TSP_MODULE_ID==0x02)
-			write_data = SYN_MOD02_APP05_Binary[addr+i];
-		
+		if(TSP_MODULE_ID==0x02)
+			write_data = TYE_APP03_Binary[addr+i]; 
+		else if(TSP_MODULE_ID==0x03)
+			write_data = SMAC_APP03_Binary[addr+i];
+		else if(TSP_MODULE_ID==0x04)
+			write_data = TYE_APP05_Binary[addr+i];
+		else if(TSP_MODULE_ID==0x05)
+			write_data = SMAC_APP20_Binary_REV05[addr+i];  
+		else if(TSP_MODULE_ID==0x07)
+			write_data = SMAC_APP20_Binary[addr+i];
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+		else if(TSP_MODULE_ID==0x08)
+			write_data = TYE_APP14_Binary[addr+i];
+		else if(TSP_MODULE_ID==0x14)
+			write_data = SMAC_APP15_Binary[addr+i];
+#endif
+        else if(TSP_MODULE_ID==0x0A)
+			write_data = TYE_APP21_Binary[addr+i];   
+      
 		Update_CRC (write_data);
    }
    
@@ -324,8 +354,9 @@ int Firmware_Download ()
    //
        
    EnterBootMode (0);
-   mdelay(10);	 
-
+#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
+   mdelay(30);   
+#endif
    //
    // EnterBootMode - response
    //
@@ -350,6 +381,9 @@ int Firmware_Download ()
    // EraseFlashPage - need to erase signature flash page, 0x7E00
    //
 
+   if((TSP_MODULE_ID == 2) ||(TSP_MODULE_ID == 3) )
+    ERASE_ADDR = 0x7C00;
+   else
      ERASE_ADDR = 0x7A00;  
 
    res = EraseFlashPage ( ERASE_ADDR );
@@ -363,6 +397,9 @@ int Firmware_Download ()
    //
    printk("TSP_MOUDLE_ID : %x\n", TSP_MODULE_ID);
 
+   if((TSP_MODULE_ID == 2) ||(TSP_MODULE_ID == 3) )
+    APP_END_ADDR = APP_END_ADDR_OLD;
+   else
      APP_END_ADDR = APP_END_ADDR_NEW;  
    
    for(addr = APP_START_ADDR ; addr <= APP_END_ADDR ; addr+=32)

@@ -1,15 +1,16 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/*********************************************************************
+*
+* Copyright 2010 Broadcom Corporation.  All rights reserved.
+*
+* Unless you and Broadcom execute a separate written software license agreement
+* governing use of this software, this software is licensed to you under the
+* terms of the GNU General Public License version 2, available at
+* http://www.gnu.org/copyleft/gpl.html (the "GPL").
+*
+* Notwithstanding the above, under no circumstances may you combine this
+* software in any way with any other Broadcom software provided under a license
+* other than the GPL, without Broadcom's express prior written consent.
+***************************************************************************/
 /**
 *
 *   @file   logapi.h
@@ -133,7 +134,6 @@ FTDI driver needed).
 #include "mobcom_types.h"
 #ifndef UNDER_LINUX
 #include "string.h"
-#include "log_sig_code.h"
 #endif
 
 /**
@@ -298,27 +298,29 @@ FTDI driver needed).
 
 #define	LOGID_LTE_GROUP1						401
 // ...
-#define	LOGID_LTE_GROUP199						599
+#define	LOGID_LTE_GROUP99						499
 
-#define	LOGID_RTOS								666
+#define	LOGID_CRASH_LOG_DETAIL					512
+
+#define	LOGID_RTOS				666
 
 // This logging ID is used when it is needed to log only one kind of messages
 // No logging code should use this ID unconditionally, because it would void above purpose.
 // The logging code using this ID should be turned on/off by, e.g., an AT command (default off)
 // Hui Luo, 6/18/09
-#define	LOGID_EXCLUSIVE							777
+#define	LOGID_EXCLUSIVE			777
 
-#define	LOGID_PROFILING							888
+#define	LOGID_PROFILING			888
 
 /// last logging id that would be used by Broadcom platform
 /// the numbers after this are all for MMI/application use
-#define LAST_RESERVED_ID						1023
+#define LAST_RESERVED_ID		1023
 
-#define	PSEUDO_LOGID_OUTPUT						0xFFFF
-#define	PSEUDO_LOGID_CUSTOMER					0xFFFE
-#define	PSEUDO_LOGID_CP							0xFFFD
-#define	PSEUDO_LOGID_AP							0xFFFC
-#define	PSEUDO_LOGID_LOGCTRL					0xFFFB
+#define	PSEUDO_LOGID_OUTPUT		0xFFFF
+#define	PSEUDO_LOGID_CUSTOMER	0xFFFE
+#define	PSEUDO_LOGID_CP			0xFFFD
+#define	PSEUDO_LOGID_AP			0xFFFC
+#define	PSEUDO_LOGID_LOGCTRL	0xFFFB
 	
 //#ifdef WIN32
 //#else
@@ -610,33 +612,6 @@ int	Log_DebugPrintf(UInt16 logID, char* fmt, ...);
 
 //***************************************************************************************
 /**
-    Function to log a binary logging message
-	@param		log_id (in) logic id controlling whether this binary logging is generated
-	@param		sig_code (in) binary logging code
-	@param		*ptr (in) starting address of the binary logging content
-	@param		*ptr_size (in) size of the binary logging content, in number of bytes
-	@note
-**/	
-
-void Log_BinaryLogging(UInt16 log_id, UInt32 sig_code, void *ptr, UInt32 ptr_size);
-void Log_BinaryLoggingUncompressed(UInt16 log_id, UInt32 sig_code, void *ptr, UInt32 ptr_size);
-
-//***************************************************************************************
-/**
-    Function to log a binary logging message described by a link list
-	@param		sig_code (in) binary logging code
-	@param		*link_list (in) starting address of a link list
-	@param		list_size_size (in) size of the link list, in number of list items
-	@note
-	This function is provided to assist Log_BinaryLogging() in case the binary logging is
-	assembled from different memories, where a link list can avoid unnecessary memcpy.
-**/	
-
-void Log_BinaryBlocks(UInt16 log_id, UInt32 sig_code, log_link_list_t* link_list, UInt32 list_size_size);
-void Log_BinaryBlocksUncompressed(UInt16 log_id, UInt32 sig_code, log_link_list_t* link_list, UInt32 list_size_size);
-
-//***************************************************************************************
-/**
     Function to log a binary signal
 	@param		sig_code (in) binary signal code, the high 16 bits are logging ID/receiver
 	@param		*ptr (in) starting address of the binary signal content
@@ -700,71 +675,6 @@ void Log_DebugSignalUncompressed(UInt32 sig_code, void *ptr, UInt32 ptr_size, UI
 
 void Log_DebugLinkList(UInt32 sig_code, log_link_list_t* link_list, UInt32 list_size_size, UInt16 state, UInt16 sender);
 void Log_DebugLinkListUncompressed(UInt32 sig_code, log_link_list_t* link_list, UInt32 list_size_size, UInt16 state, UInt16 sender);
-
-//***************************************************************************************
-/**
-    Function to log a low-level logging message in a binary signal
-	@note
-	This group of functions are provided to assist Log_DebugSignal() in case it is needed
-	to group many low-level, simple "Tag = Value/Array" logging messages inside a binary
-	signal in order to reduce MTT framing overhead.
-
-	In the group, a "Tag=Value/Array" logging message is packed as one of the following formats
-		TagType(4 bit) + TagID(11-12 bit) + Value(size determined by TagType)
-		TagType(4 bit) + TagTypeExt(4 bit) + TagID(15-16 bit) + Value/Array(size determined by TagTypeExt)
-
-	In details, the following TagType and TagTypeExt are supported
-		0001 + TagID(11 bit) + 1-bit Value							// carried out by Log_Grouped1bitValue()
-		0010 + TagID(12 bit) + 8-bit Value							// carried out by Log_Grouped8bitValue()
-		0100 + TagID(12 bit) + 16-bit Value							// carried out by Log_Grouped16bitValue()
-		1000 + TagID(12 bit) + 32-bit Value							// carried out by Log_Grouped32bitValue()
-		0011 + 0001 + TagID(15 bit) + 1-bit Value					// carried out by Log_Grouped1bitValue()
-		0011 + 0010 + TagID(16 bit) + 8-bit Value					// carried out by Log_Grouped8bitValue()
-		0011 + 0100 + TagID(16 bit) + 16-bit Value					// carried out by Log_Grouped16bitValue()
-		0011 + 1000 + TagID(16 bit) + 32-bit Value					// carried out by Log_Grouped32bitValue()
-		0011 + 0011 + TagID(16 bit) + Length(8 bit) + 8-bit Array	// carried out by Log_Grouped8bitArray()
-		0011 + 0101 + TagID(16 bit) + Length(8 bit) + 16-bit Array	// carried out by Log_Grouped16bitArray()
-		0011 + 1001 + TagID(16 bit) + Length(8 bit) + 32-bit Array	// carried out by Log_Grouped32bitArray()
-		0011 + 0111 + TagID(16 bit) + ASCIIZ string					// carried out by Log_GroupedString()
-
-	The accumulated logging messages are sent to logging circular buffer using Log_BinaryLogging() when any of
-	the following conditions is met
-	(1)	The accumulated size of "Tag=Value" logging messages exceeds 1kB
-	(2) The time threshold is no longer met (default 0, meaning time stamps must be identical, i.e., within 1ms)
-	(3) By Log_FlushGroup().
-**/	
-
-#define		LLG_LOG_TAG_TYPE_1BIT_VALUE			1
-#define		LLG_LOG_TAG_TYPE_8BIT_VALUE			2
-#define		LLG_LOG_TAG_TYPE_16BIT_VALUE		4
-#define		LLG_LOG_TAG_TYPE_32BIT_VALUE		8
-
-#define		LLG_LOG_TAG_TYPE_EXT_1BIT_VALUE		0x31
-#define		LLG_LOG_TAG_TYPE_EXT_8BIT_VALUE		0x32
-#define		LLG_LOG_TAG_TYPE_EXT_16BIT_VALUE	0x34
-#define		LLG_LOG_TAG_TYPE_EXT_32BIT_VALUE	0x38
-#define		LLG_LOG_TAG_TYPE_EXT_8BIT_ARRAY		0x33
-#define		LLG_LOG_TAG_TYPE_EXT_16BIT_ARRAY	0x35
-#define		LLG_LOG_TAG_TYPE_EXT_32BIT_ARRAY	0x39
-#define		LLG_LOG_TAG_TYPE_EXT_ASCIIZ			0x37
-
-#define		LLG_LOG_TAG_TIMESTAMP				0	// reserved tag ID for 32bit time stamp as first LLG log in a grouped binary logging
-
-void Log_Grouped1bitValue	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt8 value);
-void Log_Grouped8bitValue	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt8 value);
-void Log_Grouped16bitValue	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt16 value);
-void Log_Grouped32bitValue	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt32 value);
-void Log_Grouped8bitArray	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt8* array, UInt8 size);
-void Log_Grouped16bitArray	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt16* array, UInt8 size);
-void Log_Grouped32bitArray	(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, UInt32* array, UInt8 size);
-void Log_GroupedString		(UInt16 log_id, UInt32 sig_code, UInt32 tag_id, char* asciiz);
-
-void Log_FlushGroup(UInt32 sig_code);
-void Log_SetGroupTimeThreshold(UInt32 sig_code, UInt32 time_threshold);
-UInt32 Log_GetGroupTimeThreshold(UInt32 sig_code);
-void Log_SetGroupSizeThreshold(UInt32 sig_code, UInt32 size_threshold);
-UInt32 Log_GetGroupSizeThreshold(UInt32 sig_code);
-
 
 //***************************************************************************************
 /**

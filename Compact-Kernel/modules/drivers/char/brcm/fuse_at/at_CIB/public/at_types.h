@@ -133,13 +133,6 @@ typedef struct
     UInt8           simID;          ///< SIM ID
 }AtCmdInfo_t;
 
-typedef struct
-{
-	Boolean 		turn_on;		///< on/off
-	UInt8		tone_id;			///< tone ID
-	UInt32		duration;		///< duration
-}AtToneInfo_t;
-
 ///  @} 
 
 #endif // _AT_TYPES_H_

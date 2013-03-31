@@ -69,7 +69,6 @@
 #define BCM_AUXADC_MAJOR      244
 #define BCM_PMU_MAJOR         245
 #define BCM_CAM_MAJOR         246
-#define BCM_CAM2_MAJOR        152  /*for secondary camera */
 #define BCM_COMCTL_MAJOR      247
 #define BCM_PKLOG_MAJOR       248
 #define BCM_RELTIME_MAJOR     249

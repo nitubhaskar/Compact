@@ -103,8 +103,7 @@ typedef struct
 typedef struct
 {
 	RATSelect_t  RAT_cap;
-	BandSelect_t  band_cap;
-	RATSelect_t  RAT_cap2;
+	BandSelect_t  band_cap;	RATSelect_t  RAT_cap2;
 	BandSelect_t  band_cap2;
 }CAPI2_NetRegApi_SetSupportedRATandBand_Req_t;
 
@@ -1580,12 +1579,12 @@ typedef struct
 {
 	SIMLOCK_SIM_DATA_t  *sim_data;
 	Boolean  is_testsim;
-}CAPI2_SimLockApi_GetStatus_Req_t;
+}CAPI2_SIMLOCK_GetStatus_Req_t;
 
 typedef struct
 {
 	SIMLOCK_STATE_t  simlock_state;
-}CAPI2_SimLockApi_GetStatus_RSP_Rsp_t;
+}CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t;
 
 typedef struct
 {
@@ -4027,8 +4026,7 @@ typedef struct
 }CAPI2_CcApi_GetCNAPName_Req_t;
 
 typedef struct
-{
-	CcCnapName_t	val;
+{	CcCnapName_t	val;
 }CAPI2_CcApi_GetCNAPName_Rsp_t;
 
 typedef struct
@@ -4376,12 +4374,6 @@ typedef struct
 {
 	SmsSimMsg_t	*val;
 }CAPI2_SmsReportInd_Rsp_t;
-
-typedef struct
-{
-	Boolean  resetMode;
-}CAPI2_SimApi_ResetSIM_Req_t;
-
 typedef struct
 {
 	TimeZoneUpdateMode_t  mode;
@@ -4391,68 +4383,24 @@ typedef struct
 {
 	TimeZoneUpdateMode_t	val;
 }CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t;
-
-typedef struct
-{
-	UInt8  state;
-}CAPI2_SEC_HostToModemInd_Req_t;
-
-typedef struct
-{
-	UInt8	*val;
-}CAPI2_SEC_ModemToHostInd_Rsp_t;
-
-typedef struct
-{
-	SIM_INSTANCE_STATUS_t	*val;
-}CAPI2_SimInstanceStatusInd_Rsp_t;
-
-typedef struct
-{
-	Boolean	*val;
-}CAPI2_VccVmPwrSavingInd_Rsp_t;
-
 typedef struct
 {
 	AD_DATA_t  outAdPtr;
 }CAPI2_SimApi_GetAdData_Rsp_t;
-
-typedef struct
+typedef struct
 {
 	SimVoltage_t	val;
 }CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t;
 
 typedef struct
 {
-	RATSelect_t  RAT_cap;
-	BandSelect_t  band_cap;
-}CAPI2_MS_SetSupportedRATandBand_Req_t;
-
-typedef struct
-{
-	UInt8	*val;
-}CAPI2_SecModemApi_ConfigModemReq_Rsp_t;
-
-typedef struct
-{
-	UInt8	*val;
-}CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t;
-
-typedef struct
-{
-	UInt8	*val;
-}CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t;
-
-typedef struct
-{
-	SimPinInd_t	*val;
-}CAPI2_SIM_SendPinInd_Rsp_t;
+	GPRSDeactInd_t	*val;
+}CAPI2_GPRS_DEACTIVATE_IND_Rsp_t;
 
 typedef struct
 {
 	DataCallReleaseMsg_t	*val;
 }CAPI2_DATACALL_RELEASE_CNF_Rsp_t;
-
 typedef struct
 {
 	CallForwardStatus_t	*val;
@@ -4462,26 +4410,28 @@ typedef struct
 {
 	CallBarringStatus_t	*val;
 }CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp_t;
-
 typedef struct
 {
 	SS_ActivationStatus_t	*val;
 }CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t;
-
-typedef struct
+typedef struct
 {
 	USSDataInfo_t	*val;
 }CAPI2_USSD_DATA_IND_Rsp_t;
 
-typedef struct
-{
+typedef struct{
 	StkReportCallStatus_t	*val;
 }CAPI2_USSD_CALLINDEX_IND_Rsp_t;
 
 typedef struct
-{
-	CallIndex_t	*val;
+{	CallIndex_t	*val;
 }CAPI2_USSD_SESSION_END_IND_Rsp_t;
+
+typedef struct
+{
+	RATSelect_t  RAT_cap;
+	BandSelect_t  band_cap;
+}CAPI2_MS_SetSupportedRATandBand_Req_t;
 
 typedef struct
 {
@@ -4490,15 +4440,8 @@ typedef struct
 
 typedef struct
 {
-	GPRSDeactInd_t	*val;
-}CAPI2_GPRS_DEACTIVATE_IND_Rsp_t;
-
-typedef struct
-{
 	PBK_ENTRY_DATA_RSP_t	*val;
 }CAPI2_PbkReadyInd_Rsp_t;
-
-
 bool_t xdr_CAPI2_MS_IsGSMRegistered_Rsp_t(void* xdrs, CAPI2_MS_IsGSMRegistered_Rsp_t *rsp);
 bool_t xdr_CAPI2_MS_IsGPRSRegistered_Rsp_t(void* xdrs, CAPI2_MS_IsGPRSRegistered_Rsp_t *rsp);
 bool_t xdr_CAPI2_MS_GetGSMRegCause_Rsp_t(void* xdrs, CAPI2_MS_GetGSMRegCause_Rsp_t *rsp);
@@ -4770,8 +4713,8 @@ bool_t xdr_CAPI2_LCS_FttCalcDeltaTime_Req_t(void* xdrs, CAPI2_LCS_FttCalcDeltaTi
 bool_t xdr_CAPI2_LCS_FttCalcDeltaTime_Rsp_t(void* xdrs, CAPI2_LCS_FttCalcDeltaTime_Rsp_t *rsp);
 bool_t xdr_CAPI2_LCS_SyncResult_Rsp_t(void* xdrs, CAPI2_LCS_SyncResult_Rsp_t *rsp);
 bool_t xdr_CAPI2_NetRegApi_ForcedReadyStateReq_Req_t(void* xdrs, CAPI2_NetRegApi_ForcedReadyStateReq_Req_t *rsp);
-bool_t xdr_CAPI2_SimLockApi_GetStatus_Req_t(void* xdrs, CAPI2_SimLockApi_GetStatus_Req_t *rsp);
-bool_t xdr_CAPI2_SimLockApi_GetStatus_RSP_Rsp_t(void* xdrs, CAPI2_SimLockApi_GetStatus_RSP_Rsp_t *rsp);
+bool_t xdr_CAPI2_SIMLOCK_GetStatus_Req_t(void* xdrs, CAPI2_SIMLOCK_GetStatus_Req_t *rsp);
+bool_t xdr_CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t(void* xdrs, CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t *rsp);
 bool_t xdr_CAPI2_DIALSTR_IsValidString_Req_t(void* xdrs, CAPI2_DIALSTR_IsValidString_Req_t *rsp);
 bool_t xdr_CAPI2_DIALSTR_IsValidString_Rsp_t(void* xdrs, CAPI2_DIALSTR_IsValidString_Rsp_t *rsp);
 bool_t xdr_CAPI2_UTIL_Cause2NetworkCause_Req_t(void* xdrs, CAPI2_UTIL_Cause2NetworkCause_Req_t *rsp);
@@ -5280,29 +5223,16 @@ bool_t xdr_CAPI2_LcsApi_GetGpsCapabilities_Rsp_t(void* xdrs, CAPI2_LcsApi_GetGps
 bool_t xdr_CAPI2_LcsApi_SetGpsCapabilities_Req_t(void* xdrs, CAPI2_LcsApi_SetGpsCapabilities_Req_t *rsp);
 bool_t xdr_CAPI2_CcApi_AbortDtmfTone_Req_t(void* xdrs, CAPI2_CcApi_AbortDtmfTone_Req_t *rsp);
 bool_t xdr_CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t(void* xdrs, CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t *rsp);
-bool_t xdr_CAPI2_SmsReportInd_Rsp_t(void* xdrs, CAPI2_SmsReportInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_SimApi_ResetSIM_Req_t(void* xdrs, CAPI2_SimApi_ResetSIM_Req_t *rsp);
-bool_t xdr_CAPI2_NetRegApi_SetTZUpdateMode_Req_t(void* xdrs, CAPI2_NetRegApi_SetTZUpdateMode_Req_t *rsp);
-bool_t xdr_CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t(void* xdrs, CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t *rsp);
-bool_t xdr_CAPI2_SEC_HostToModemInd_Req_t(void* xdrs, CAPI2_SEC_HostToModemInd_Req_t *rsp);
-bool_t xdr_CAPI2_SEC_ModemToHostInd_Rsp_t(void* xdrs, CAPI2_SEC_ModemToHostInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_SimInstanceStatusInd_Rsp_t(void* xdrs, CAPI2_SimInstanceStatusInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_VccVmPwrSavingInd_Rsp_t(void* xdrs, CAPI2_VccVmPwrSavingInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_SimApi_GetAdData_Rsp_t(void* xdrs, CAPI2_SimApi_GetAdData_Rsp_t *rsp);
+bool_t xdr_CAPI2_SmsReportInd_Rsp_t(void* xdrs, CAPI2_SmsReportInd_Rsp_t *rsp);bool_t xdr_CAPI2_NetRegApi_SetTZUpdateMode_Req_t(void* xdrs, CAPI2_NetRegApi_SetTZUpdateMode_Req_t *rsp);
+bool_t xdr_CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t(void* xdrs, CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t *rsp);bool_t xdr_CAPI2_SimApi_GetAdData_Rsp_t(void* xdrs, CAPI2_SimApi_GetAdData_Rsp_t *rsp);
 bool_t xdr_CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t(void* xdrs, CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t *rsp);
-bool_t xdr_CAPI2_MS_SetSupportedRATandBand_Req_t(void* xdrs, CAPI2_MS_SetSupportedRATandBand_Req_t *rsp);
-bool_t xdr_CAPI2_SecModemApi_ConfigModemReq_Rsp_t(void* xdrs, CAPI2_SecModemApi_ConfigModemReq_Rsp_t *rsp);
-bool_t xdr_CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t(void* xdrs, CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t(void* xdrs, CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_SIM_SendPinInd_Rsp_t(void* xdrs, CAPI2_SIM_SendPinInd_Rsp_t *rsp);
-bool_t xdr_CAPI2_DATACALL_RELEASE_CNF_Rsp_t(void* xdrs, CAPI2_DATACALL_RELEASE_CNF_Rsp_t *rsp);
-bool_t xdr_CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t(void* xdrs, CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t *rsp);
+bool_t xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t(void* xdrs, CAPI2_GPRS_DEACTIVATE_IND_Rsp_t *rsp);
+bool_t xdr_CAPI2_DATACALL_RELEASE_CNF_Rsp_t(void* xdrs, CAPI2_DATACALL_RELEASE_CNF_Rsp_t *rsp);bool_t xdr_CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t(void* xdrs, CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t *rsp);
 bool_t xdr_CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp_t(void* xdrs, CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp_t *rsp);
-bool_t xdr_CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t(void* xdrs, CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t *rsp);
-bool_t xdr_CAPI2_USSD_DATA_IND_Rsp_t(void* xdrs, CAPI2_USSD_DATA_IND_Rsp_t *rsp);
+bool_t xdr_CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t(void* xdrs, CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t *rsp);bool_t xdr_CAPI2_USSD_DATA_IND_Rsp_t(void* xdrs, CAPI2_USSD_DATA_IND_Rsp_t *rsp);
 bool_t xdr_CAPI2_USSD_CALLINDEX_IND_Rsp_t(void* xdrs, CAPI2_USSD_CALLINDEX_IND_Rsp_t *rsp);
 bool_t xdr_CAPI2_USSD_SESSION_END_IND_Rsp_t(void* xdrs, CAPI2_USSD_SESSION_END_IND_Rsp_t *rsp);
+bool_t xdr_CAPI2_MS_SetSupportedRATandBand_Req_t(void* xdrs, CAPI2_MS_SetSupportedRATandBand_Req_t *rsp);
 bool_t xdr_CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t(void* xdrs, CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t *rsp);
-bool_t xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t(void* xdrs, CAPI2_GPRS_DEACTIVATE_IND_Rsp_t *rsp);
 bool_t xdr_CAPI2_PbkReadyInd_Rsp_t(void* xdrs, CAPI2_PbkReadyInd_Rsp_t *rsp);
 #endif

@@ -326,13 +326,7 @@ config TOUCHSCREEN_TAT200A
 	help
 	  This enables support for Synaptics RMI over I2C based touchscreens.
 
-config TOUCHSCREEN_TAT200A_LUISADS
-	tristate "Synaptics i2c tat200a touchscreen"
-	depends on I2C
-	help
-	  This enables support for Synaptics RMI over I2C based touchscreens.	  
-
-config TOUCHSCREEN_TMA140
+config TOUCHSCREEN_TMA340
 	tristate "Synaptics i2c touchscreen"
 	depends on I2C
 	help
@@ -348,13 +342,13 @@ config TOUCHSCREEN_MMS128
 	tristate "Melfas touchscreen"
 	depends on I2C
 	help
-	  This enables support for Melfas MMS128 touchscreens.
+	  This enables support for Synaptics RMI over I2C based touchscreens.
 
 config TOUCHSCREEN_MMS128_REV04
 	tristate "Melfas touchscreen"
 	depends on I2C
 	help
-	  This enables support for Melfas MMS128 touchscreens.
+	  This enables support for Synaptics RMI over I2C based touchscreens.
 
 config TOUCHSCREEN_TOUCHRIGHT
 	tristate "Touchright serial touchscreen"
@@ -729,28 +723,11 @@ config TOUCHSCREEN_F760
 	  To compile this driver as a module, choose M here: the
 	  module will be called tsc2017.
 
-config TOUCHSCREEN_MMS128_TASSVE
-	tristate "Melfas touchscreen"
-	depends on I2C
-	help
-	  This enables support for Melfas MMS128 touchscreens.(CooperVE Only)
-
-config TOUCHSCREEN_MMS128_COOPERVE
-	tristate "Melfas touchscreen"
-	depends on I2C
-	help
-	  This enables support for Melfas MMS128 touchscreens.(TassVE Only)
-
+	  
 config TOUCHSCREEN_MMS128_TASSCOOPER
 	tristate "Melfas touchscreen"
 	depends on I2C
 	help
-	  This enables support for Melfas MMS128 touchscreens(TassVE&CooperVE Common).
-
-config TOUCHSCREEN_BT403
-	tristate "Zinitix touchscreen"
-	depends on I2C
-	help
-	  This enables support for Zinitix BT403 touchscreens(Zanin).	  
+	  This enables support for Synaptics RMI over I2C based touchscreens.
 
 endif

@@ -1,15 +1,20 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
+//
+/****************************************************************************
+*
+*     Copyright (c) 2009 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
 
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
 /**
 *
 *   @file   rpc_sync.c
@@ -22,6 +27,11 @@ the GPL, without Broadcom's express prior written consent.
 //******************************************************************************
 //	 			include block
 //******************************************************************************
+#ifndef UNDER_LINUX
+#include <stdio.h>
+#include "string.h"
+#endif
+
 #ifdef WIN32
 #define _WINSOCKAPI_
 #endif
@@ -122,7 +132,7 @@ typedef struct {
 	void* dataBufHandle;		// handle to response data buffer
 }TaskRequestMap_t; 
 
-static TaskRequestMap_t sTaskRequestMap[MAX_TASKS_NUM]={0};
+static TaskRequestMap_t sTaskRequestMap[MAX_TASKS_NUM];
 
 // -------------------------------------------------------------------------------
 
@@ -223,30 +233,16 @@ TaskRequestMap_t* RPC_SyncInitTaskMap()
 		taskMap = GetNewMapForCurrentTask();
 		assert(taskMap);
 		// fill in struct (task field is already filled in by GetNewMapForCurrentTask() call)
-
-		if(taskMap->ackSema)
-		{
-			OSSEMAPHORE_ResetCnt(taskMap->ackSema);
-		}
-		else
-		{
 		taskMap->ackSema = OSSEMAPHORE_Create( 1, OSSUSPEND_PRIORITY );
 		assert(taskMap->ackSema);
 		// start in signalled state
 		OSSEMAPHORE_Obtain( taskMap->ackSema, TICKS_FOREVER );
-		}
 
-		if(taskMap->rspSema)
-		{
-			OSSEMAPHORE_ResetCnt(taskMap->rspSema);
-		}
-		else
-		{
 		taskMap->rspSema = OSSEMAPHORE_Create( 1, OSSUSPEND_PRIORITY );
 		assert(taskMap->rspSema);
 		// start in signalled state
 		OSSEMAPHORE_Obtain( taskMap->rspSema, TICKS_FOREVER );
-		}
+
 	}
 
 	taskMap->tid = 0;
@@ -387,90 +383,6 @@ Result_t RPC_SyncWaitForResponse( UInt32 tid, UInt8 cid, RPC_ACK_Result_t* ack, 
 	}
 
 	_DBG_(RPC_TRACE("RPC_SyncWaitForResponse tid=%d cid=%d msg=%d ack=%d pend=%d sz=%d rs=%d task=0x%x \r\n", 
-																						tid, cid, taskMap->msgType,
-																						taskMap->ack, taskMap->isResultPending,
-																						taskMap->rspSize, result,
-																						(UInt32)OSTASK_GetCurrentTask() ));
-
-	return result;
-}
-
-//**************************************************************************************
-/**
-	Retrieve the response from a RPC function call. Note that this includes the ack result as well.
-	@param		tid (in) Transaction id for request.
-	@param		cid (in) Client id for request
-	@param		ack (out) Ack result for request
-	@param		msgType (out) Message type of response.
-	@param		dataSize (out) Actual data size copied to response data buffer
-	@param		timeout (in) timer value
-	
-	@return Result code of response.
-	
-**/
-Result_t RPC_SyncWaitForResponseTimer( UInt32 tid, UInt8 cid, RPC_ACK_Result_t* ack, MsgType_t* msgType, UInt32* dataSize, UInt32 timeout)
-{
-	OSStatus_t semaStatus;
-	Result_t result = RESULT_OK;
-	TaskRequestMap_t* taskMap = GetMapForCurrentTask();
-	assert(taskMap);
-
-	// wait to be signalled that request has been ack'd
-	semaStatus = OSSEMAPHORE_Obtain( taskMap->ackSema, (Ticks_t) timeout );
-	//If you see this assert then likely remote processor does not free the buffers.
-	//- Likely cause is CAPI2 Task on remote processor is stuck waiting on a Queue.
-	//- or Watchdog issue where CAPI2 Task does not get chance to run.
-	//- or Remote processor is completely DEAD
-
-	if(semaStatus == OSSTATUS_TIMEOUT)
-		return RESULT_TIMER_EXPIRED;
-	else if (semaStatus != OSSTATUS_SUCCESS)
-		return RESULT_ERROR;
-	
-	
-	*ack = taskMap->ack;
-
-	// request ack'd by comm proc?
-
-	if ( ACK_SUCCESS == taskMap->ack )
-	{
-		// synchronous response or error response from async api?
-		if ( !taskMap->isResultPending )
-		{
-			// yes, so wait to be signalled that response is ready
-			semaStatus = OSSEMAPHORE_Obtain( taskMap->rspSema, (Ticks_t) timeout );
-			//If you see this assert then likely remote processor does not free the buffers.
-			//- Likely cause is CAPI2 Task on remote processor is stuck waiting on a Queue.
-			//- or Watchdog issue where CAPI2 Task does not get chance to run.
-			//- or Remote processor is completely DEAD
-			if(semaStatus == OSSTATUS_TIMEOUT)
-				return RESULT_TIMER_EXPIRED;
-			else if (semaStatus != OSSTATUS_SUCCESS)
-				return RESULT_ERROR;
-
-			if ( msgType )
-			{
-				*msgType = taskMap->msgType;
-			}
-
-			if ( dataSize )
-			{
-				*dataSize = taskMap->rspSize;
-			}
-			
-			result = taskMap->result;
-		}
-		else
-		{
-			
-		}
-	}
-	else
-	{
-		return RESULT_ERROR;
-	}
-
-	_DBG_(RPC_TRACE("RPC_SyncWaitForResponseTimer tid=%d cid=%d msg=%d ack=%d pend=%d sz=%d rs=%d task=0x%x \r\n", 
 																						tid, cid, taskMap->msgType,
 																						taskMap->ack, taskMap->isResultPending,
 																						taskMap->rspSize, result,
@@ -734,7 +646,6 @@ TaskRequestMap_t* GetNewMapForCurrentTask()
 
 			if  (FALSE == OSTASK_IsValidTask((sTaskRequestMap+i)->task)) 
 			{
-				_DBG_(RPC_TRACE("GetNewMapForCurrentTask Reuse deleted task %x index = %d, ackSem=%x rspSem=%x\r\n", (UInt32)((sTaskRequestMap+i)->task), i,  (UInt32)((sTaskRequestMap+i)->ackSema),(UInt32)((sTaskRequestMap+i)->rspSema)));
 				(sTaskRequestMap+i)->task = OSTASK_GetCurrentTask();
 				taskMap = (sTaskRequestMap+i);
 				break;

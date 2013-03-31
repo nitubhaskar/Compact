@@ -524,26 +524,13 @@ static int cam_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 			}
 			break;
 		}
-
-     case CAM_IOCTL_CANCEL_AUTOFOCUS:
-        {
-            if (cam_g->sens[sensor].sens_m->DRV_CancelAF(sensor) != HAL_CAM_SUCCESS) {
-	    			rc = -EFAULT;
-		    		printk(KERN_INFO"CAM_IOCTL_CANCEL_AUTOFOCUS: CAM_IOCTL_CANCEL_AUTOFOCUS(): ERROR: \r\n");
-			    }
-              else
-                printk(KERN_INFO"CAM_IOCTL_CANCEL_AUTOFOCUS: SUCCESS \r\n");
-		
-	    	break;
-        }
-        
-    
 	case CAM_IOCTL_DISABLE_AUTOFOCUS:
 		{
-			if (cam_g->sens[sensor].sens_m->DRV_TurnOffAF(sensor) != HAL_CAM_SUCCESS) {
+			if (cam_g->sens[sensor].sens_m->
+			    DRV_TurnOffAF(sensor) != HAL_CAM_SUCCESS) {
 				rc = -EFAULT;
 				pr_debug
-				    ("CAM_IOCTL_DISABLE_AUTOFOCUS: CAM_IOCTL_DISABLE_AUTOFOCUS(): ERROR: \r\n");
+				    ("CAM_IOCTL_DISABLE_AUTOFOCUS: CAMDRV_TurnOffAF(): ERROR: \r\n");
 			}
 			break;
 		}
@@ -1376,7 +1363,6 @@ static int cam_open(struct inode *inode, struct file *file)
 		cam_g->sens[CamSensorPrimary].sens_m = CAMDRV_primary_get();
 	} else {
 		cam_g->curr = CamSensorSecondary;
-		cam_g->sens[CamSensorSecondary].sens_m = CAMDRV_secondary_get();
 	}
 	c = &cam_g->sens[cam_g->curr];
 	spin_lock_init(&c->c_lock);

@@ -34,6 +34,9 @@
 #include "ms_database_def.h"
 #include "common_sim.h"
 #include "sim_def.h"
+#ifndef UNDER_LINUX
+#include <string.h>
+#endif
 #include "assert.h"
 #include "sysparm.h"
 #include "engmode_api.h"
@@ -141,7 +144,9 @@
 #include "capi2_msnu.h"
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
-#include "capi2_ss_msg.h"#include "capi2_cp_msg.h"
+#include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
+#include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
 #include "capi2_phonectrl_api.h"
@@ -1411,7 +1416,7 @@ void GenGetPayloadInfo(void* dataBuf, MsgType_t msgType, void** ppBuf, UInt32* l
 	}
 	case MSG_SIMLOCK_GET_STATUS_RSP:
 	{
-		CAPI2_SimLockApi_GetStatus_RSP_Rsp_t* pVal = (CAPI2_SimLockApi_GetStatus_RSP_Rsp_t*)dataBuf;
+		CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t* pVal = (CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t*)dataBuf;
 		*ppBuf = (void*)pVal;
 		break;
 	}
@@ -3658,13 +3663,7 @@ void GenGetPayloadInfo(void* dataBuf, MsgType_t msgType, void** ppBuf, UInt32* l
 	case MSG_SMSSR_REPORT_IND:
 	{
 		CAPI2_SmsReportInd_Rsp_t* pVal = (CAPI2_SmsReportInd_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_SIM_RESET_SIM_RSP:
-	{
-		*ppBuf = NULL;
-		break;
+		*ppBuf = (void*)(pVal->val);		break;
 	}
 	case MSG_TIMEZONE_SET_UPDATE_MODE_RSP:
 	{
@@ -3676,68 +3675,9 @@ void GenGetPayloadInfo(void* dataBuf, MsgType_t msgType, void** ppBuf, UInt32* l
 		CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t* pVal = (CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t*)dataBuf;
 		*ppBuf = (void*)&(pVal->val);
 		break;
-	}
-	case MSG_SEC_HOST_TO_MODEM_RSP:
+	}	case MSG_SIM_AD_DATA_RSP:	{		CAPI2_SimApi_GetAdData_Rsp_t* pVal = (CAPI2_SimApi_GetAdData_Rsp_t*)dataBuf;		*ppBuf = (void*)pVal;		break;	}	case MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP:	{		CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t* pVal = (CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t*)dataBuf;		*ppBuf = (void*)&(pVal->val);		break;	}	case MSG_GPRS_DEACTIVATE_IND:
 	{
-		*ppBuf = NULL;
-		break;
-	}
-	case MSG_SEC_MODEM_TO_HOST_IND:
-	{
-		CAPI2_SEC_ModemToHostInd_Rsp_t* pVal = (CAPI2_SEC_ModemToHostInd_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_SIM_INSTANCE_STATUS_IND:
-	{
-		CAPI2_SimInstanceStatusInd_Rsp_t* pVal = (CAPI2_SimInstanceStatusInd_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_VCC_VM_PWR_SAVING_IND:
-	{
-		CAPI2_VccVmPwrSavingInd_Rsp_t* pVal = (CAPI2_VccVmPwrSavingInd_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_SIM_AD_DATA_RSP:
-	{
-		CAPI2_SimApi_GetAdData_Rsp_t* pVal = (CAPI2_SimApi_GetAdData_Rsp_t*)dataBuf;
-		*ppBuf = (void*)pVal;
-		break;
-	}
-	case MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP:
-	{
-		CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t* pVal = (CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t*)dataBuf;
-		*ppBuf = (void*)&(pVal->val);
-		break;
-	}
-	case MSG_MS_SET_RAT_AND_BAND_RSP:
-	{
-		*ppBuf = NULL;
-		break;
-	}
-	case MSG_SECMODEM_CONFIG_MODEM_RSP:
-	{
-		CAPI2_SecModemApi_ConfigModemReq_Rsp_t* pVal = (CAPI2_SecModemApi_ConfigModemReq_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_SECMODEM_SIMLOCK_STATUS_IND:
-	{
-		CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t* pVal = (CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_SECMODEM_XSIM_STATUS_IND:
-	{
-		CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t* pVal = (CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_SIM_PIN_IND:
-	{
-		CAPI2_SIM_SendPinInd_Rsp_t* pVal = (CAPI2_SIM_SendPinInd_Rsp_t*)dataBuf;
+		CAPI2_GPRS_DEACTIVATE_IND_Rsp_t* pVal = (CAPI2_GPRS_DEACTIVATE_IND_Rsp_t*)dataBuf;
 		*ppBuf = (void*)(pVal->val);
 		break;
 	}
@@ -3746,8 +3686,7 @@ void GenGetPayloadInfo(void* dataBuf, MsgType_t msgType, void** ppBuf, UInt32* l
 		CAPI2_DATACALL_RELEASE_CNF_Rsp_t* pVal = (CAPI2_DATACALL_RELEASE_CNF_Rsp_t*)dataBuf;
 		*ppBuf = (void*)(pVal->val);
 		break;
-	}
-	case MSG_SS_CALL_FORWARD_STATUS_RSP:
+	}	case MSG_SS_CALL_FORWARD_STATUS_RSP:
 	{
 		CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t* pVal = (CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t*)dataBuf;
 		*ppBuf = (void*)(pVal->val);
@@ -3764,38 +3703,7 @@ void GenGetPayloadInfo(void* dataBuf, MsgType_t msgType, void** ppBuf, UInt32* l
 		CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t* pVal = (CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t*)dataBuf;
 		*ppBuf = (void*)(pVal->val);
 		break;
-	}
-	case MSG_USSD_DATA_IND:
-	{
-		CAPI2_USSD_DATA_IND_Rsp_t* pVal = (CAPI2_USSD_DATA_IND_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_USSD_CALLINDEX_IND:
-	{
-		CAPI2_USSD_CALLINDEX_IND_Rsp_t* pVal = (CAPI2_USSD_CALLINDEX_IND_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_USSD_SESSION_END_IND:
-	{
-		CAPI2_USSD_SESSION_END_IND_Rsp_t* pVal = (CAPI2_USSD_SESSION_END_IND_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_MNCC_CLIENT_FACILITY_IND:
-	{
-		CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t* pVal = (CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_GPRS_DEACTIVATE_IND:
-	{
-		CAPI2_GPRS_DEACTIVATE_IND_Rsp_t* pVal = (CAPI2_GPRS_DEACTIVATE_IND_Rsp_t*)dataBuf;
-		*ppBuf = (void*)(pVal->val);
-		break;
-	}
-	case MSG_PBK_READY_IND:
+	}	case MSG_USSD_DATA_IND:	{		CAPI2_USSD_DATA_IND_Rsp_t* pVal = (CAPI2_USSD_DATA_IND_Rsp_t*)dataBuf;		*ppBuf = (void*)(pVal->val);		break;	}	case MSG_USSD_CALLINDEX_IND:	{		CAPI2_USSD_CALLINDEX_IND_Rsp_t* pVal = (CAPI2_USSD_CALLINDEX_IND_Rsp_t*)dataBuf;		*ppBuf = (void*)(pVal->val);		break;	}	case MSG_USSD_SESSION_END_IND:	{		CAPI2_USSD_SESSION_END_IND_Rsp_t* pVal = (CAPI2_USSD_SESSION_END_IND_Rsp_t*)dataBuf;		*ppBuf = (void*)(pVal->val);		break;	}	case MSG_MS_SET_RAT_AND_BAND_RSP:	{		*ppBuf = NULL;		break;	}	case MSG_MNCC_CLIENT_FACILITY_IND:	{		CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t* pVal = (CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t*)dataBuf;		*ppBuf = (void*)(pVal->val);		break;	}	case MSG_PBK_READY_IND:
 	{
 		CAPI2_PbkReadyInd_Rsp_t* pVal = (CAPI2_PbkReadyInd_Rsp_t*)dataBuf;
 		*ppBuf = (void*)(pVal->val);

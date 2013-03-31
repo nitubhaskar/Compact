@@ -62,10 +62,6 @@
 #include <asm/io.h>
 #include <asm/irq.h>
 
-#if defined(CONFIG_BOARD_ACAR)
-#include <plat/syscfg.h>
-#endif
-
 #include "8250.h"
 
 #ifdef CONFIG_SPARC
@@ -1473,6 +1469,7 @@ static inline void __stop_tx(struct uart_8250_port *p)
 static void serial8250_stop_tx(struct uart_port *port)
 {
 	struct uart_8250_port *up = (struct uart_8250_port *)port;
+
 	__stop_tx(up);
 
 	/*
@@ -1491,6 +1488,7 @@ static void transmit_chars(struct uart_8250_port *up);
 static void serial8250_start_tx(struct uart_port *port)
 {
 	struct uart_8250_port *up = (struct uart_8250_port *)port;
+
 	if (!(up->ier & UART_IER_THRI)) {
 		unsigned char lsr1;
 		lsr1 = serial_in(up, UART_LSR);
@@ -1529,6 +1527,7 @@ static void serial8250_start_tx(struct uart_port *port)
 static void serial8250_stop_rx(struct uart_port *port)
 {
 	struct uart_8250_port *up = (struct uart_8250_port *)port;
+
 	up->ier &= ~UART_IER_RLSI;
 	up->port.read_status_mask &= ~UART_LSR_DR;
 	serial_out(up, UART_IER, up->ier);
@@ -2128,15 +2127,6 @@ static int serial8250_startup(struct uart_port *port)
 #endif
 	int retval;
 
-#if defined(CONFIG_BOARD_ACAR)
-	if(port->irq == IRQ_UARTC)
-	{
-		pr_info("serial8250_startup is called");	
-		board_sysconfig(SYSCFG_SERIAL, SYSCFG_ENABLE);
-	}
-#endif
-
-
 	clk_enable(up->clk);
 	serial_ucr_pden(up, 0);
 	up->capabilities = uart_config[up->port.type].flags;
@@ -2435,16 +2425,6 @@ static void serial8250_shutdown(struct uart_port *port)
 		udelay(2);
 	} while ((serial_ucr_pdstate(up)));
 	clk_disable(up->clk);
-
-#if defined(CONFIG_BOARD_ACAR)	
-	if(port->irq == IRQ_UARTC)
-	{
-		pr_info("serial8250_shutdown uart c is called!");
-		board_sysconfig(SYSCFG_SERIAL, SYSCFG_DISABLE);
-	}
-#endif
-
-	
 }
 
 static unsigned int serial8250_get_divisor(struct uart_port *port, unsigned int baud)
@@ -2583,10 +2563,6 @@ serial8250_set_termios(struct uart_port *port, struct ktermios *termios,
 			fcr = UART_FCR_ENABLE_FIFO | UART_FCR_TRIGGER_1;
 		else
 			fcr = uart_config[up->port.type].fcr;
-	}
-
-	if (up->port.line == 2) {
-		serial_outp(up, UART_FCR, UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10);
 	}
 
 	/*
@@ -3328,9 +3304,7 @@ static int __devinit serial8250_probe(struct platform_device *dev)
 				p->iobase, (unsigned long long)p->mapbase,
 				p->irq, ret);
 		}
-
 	}
-	
 	if (dev->id >= 0) {
 		up = &serial8250_ports[dev->id];
 		clk_enable(up->clk);
@@ -3465,8 +3439,6 @@ int serial8250_register_port(struct uart_port *port)
 	struct uart_8250_port *uart;
 	int ret = -ENOSPC;
 
-	if (port == NULL)
-		return -ENODEV;
 	if (port->uartclk == 0)
 		return -EINVAL;
 
@@ -3476,7 +3448,7 @@ int serial8250_register_port(struct uart_port *port)
 	if (uart) {
 		uart_remove_one_port(&serial8250_reg, &uart->port);
 
-		uart->clk = clk_get(NULL, dev_name(port->dev));
+		uart->clk = clk_get(uart->port.dev, dev_name(port->dev));
 		if (IS_ERR(uart->clk))
 			return PTR_ERR(uart->clk);
 		clk_set_rate(uart->clk, port->uartclk);

@@ -74,7 +74,6 @@
 #define NT35582_HFP                 0x3B05
 #define NT35582_SET_TEAR_LINE_MSB   0x4400
 #define NT35582_SET_TEAR_LINE_LSB   0x4401
-#define NT35582_SET_VPA             0xB100
 #define NT35582_SD_OP_SET_0         0xB600
 #define NT35582_SD_OP_SET_1         0xB601
 #define NT35582_SD_OP_SET_2         0xB602
@@ -233,7 +232,7 @@
 #endif
 
 #define LCD_BITS_PER_PIXEL      16
-#define TEAR_LINE 800
+#define TEAR_LINE 500
 
 #define LCD_CMD(x) (x)
 #define LCD_DATA(x) (x)
@@ -400,7 +399,6 @@ Lcd_init_t power_on_seq[] = {
 	{WR_CMND, NT35582_SET_TEAR_ON, 0},
 	{WR_CMND_DATA, NT35582_SET_TEAR_LINE_MSB, TEAR_LINE >> 8},
 	{WR_CMND_DATA, NT35582_SET_TEAR_LINE_LSB, TEAR_LINE & 0xFF},
-	{WR_CMND_DATA, NT35582_SET_VPA, 70},
 	{SLEEP_MS, 0, 120},
 	{WR_CMND, NT35582_DISPLAY_ON, 0},
 	{CTRL_END, 0, 0}

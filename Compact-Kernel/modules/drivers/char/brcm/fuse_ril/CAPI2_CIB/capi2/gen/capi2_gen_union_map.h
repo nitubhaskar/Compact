@@ -460,8 +460,8 @@
 	{ MSG_MS_FORCEDREADYSTATE_RSP,_T("MSG_MS_FORCEDREADYSTATE_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
 	{ MSG_SS_RESETSSALSFLAG_REQ,_T("MSG_SS_RESETSSALSFLAG_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
 	{ MSG_SS_RESETSSALSFLAG_RSP,_T("MSG_SS_RESETSSALSFLAG_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
-	{ MSG_SIMLOCK_GET_STATUS_REQ,_T("MSG_SIMLOCK_GET_STATUS_REQ"), (xdrproc_t) xdr_CAPI2_SimLockApi_GetStatus_Req_t, 0, 0},
-	{ MSG_SIMLOCK_GET_STATUS_RSP,_T("MSG_SIMLOCK_GET_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SimLockApi_GetStatus_RSP_Rsp_t, sizeof( CAPI2_SimLockApi_GetStatus_RSP_Rsp_t ), 0 },
+	{ MSG_SIMLOCK_GET_STATUS_REQ,_T("MSG_SIMLOCK_GET_STATUS_REQ"), (xdrproc_t) xdr_CAPI2_SIMLOCK_GetStatus_Req_t, 0, 0},
+	{ MSG_SIMLOCK_GET_STATUS_RSP,_T("MSG_SIMLOCK_GET_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t, sizeof( CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t ), 0 },
 	{ MSG_DIALSTR_IS_VALID_REQ,_T("MSG_DIALSTR_IS_VALID_REQ"), (xdrproc_t) xdr_CAPI2_DIALSTR_IsValidString_Req_t, 0, 0},
 	{ MSG_DIALSTR_IS_VALID_RSP,_T("MSG_DIALSTR_IS_VALID_RSP"), (xdrproc_t)xdr_CAPI2_DIALSTR_IsValidString_Rsp_t, sizeof( Boolean ), 0 },
 	{ MSG_UTIL_CONVERT_NTWK_CAUSE_REQ,_T("MSG_UTIL_CONVERT_NTWK_CAUSE_REQ"), (xdrproc_t) xdr_CAPI2_UTIL_Cause2NetworkCause_Req_t, 0, 0},
@@ -753,15 +753,13 @@
 	{ MSG_PBK_ISEMERGENCYCALLNUMBER_REQ,_T("MSG_PBK_ISEMERGENCYCALLNUMBER_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_IsEmergencyCallNumber_Req_t, 0, 0},
 	{ MSG_PBK_ISEMERGENCYCALLNUMBER_RSP,_T("MSG_PBK_ISEMERGENCYCALLNUMBER_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_IsEmergencyCallNumber_Rsp_t, sizeof( Boolean ), 0 },
 	{ MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_REQ,_T("MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_IsPartialEmergencyCallNumber_Req_t, 0, 0},
-	{ MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_RSP,_T("MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_IsPartialEmergencyCallNumber_Rsp_t, sizeof( Boolean ), 0 },
-	{ MSG_PBK_SENDINFOREQ_REQ,_T("MSG_PBK_SENDINFOREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendInfoReq_Req_t, 0, 65000},
+	{ MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_RSP,_T("MSG_PBK_ISPARTIALEMERGENCYCALLNUMBER_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_IsPartialEmergencyCallNumber_Rsp_t, sizeof( Boolean ), 0 },	{ MSG_PBK_SENDINFOREQ_REQ,_T("MSG_PBK_SENDINFOREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendInfoReq_Req_t, 0, 65000},
 	{ MSG_GET_PBK_INFO_RSP,_T("MSG_GET_PBK_INFO_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_SendInfoReq_Rsp_t, sizeof( PBK_INFO_RSP_t ), 65000 },
 	{ MSG_SENDFINDALPHAMATCHMULTIPLEREQ_REQ,_T("MSG_SENDFINDALPHAMATCHMULTIPLEREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendFindAlphaMatchMultipleReq_Req_t, 0, 65000},
 	{ MSG_PBK_ENTRY_DATA_RSP,_T("MSG_PBK_ENTRY_DATA_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_SendFindAlphaMatchMultipleReq_Rsp_t, sizeof( PBK_ENTRY_DATA_RSP_t ), 65000 },
 	{ MSG_SENDFINDALPHAMATCHONEREQ_REQ,_T("MSG_SENDFINDALPHAMATCHONEREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendFindAlphaMatchOneReq_Req_t, 0, 65000},
 	{ MSG_PBK_ISREADY_REQ,_T("MSG_PBK_ISREADY_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
-	{ MSG_PBK_ISREADY_RSP,_T("MSG_PBK_ISREADY_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_IsReady_Rsp_t, sizeof( Boolean ), 0 },
-	{ MSG_SENDREADENTRYREQ_REQ,_T("MSG_SENDREADENTRYREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendReadEntryReq_Req_t, 0, 65000},
+	{ MSG_PBK_ISREADY_RSP,_T("MSG_PBK_ISREADY_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_IsReady_Rsp_t, sizeof( Boolean ), 0 },	{ MSG_SENDREADENTRYREQ_REQ,_T("MSG_SENDREADENTRYREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendReadEntryReq_Req_t, 0, 65000},
 	{ MSG_PBK_SENDWRITEENTRYREQ_REQ,_T("MSG_PBK_SENDWRITEENTRYREQ_REQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendWriteEntryReq_Req_t, 0, 65000},
 	{ MSG_WRT_PBK_ENTRY_RSP,_T("MSG_WRT_PBK_ENTRY_RSP"), (xdrproc_t)xdr_CAPI2_PbkApi_SendWriteEntryReq_Rsp_t, sizeof( PBK_WRITE_ENTRY_RSP_t ), 65000 },
 	{ MSG_PBK_SENDUPDATEENTRYREQ,_T("MSG_PBK_SENDUPDATEENTRYREQ"), (xdrproc_t) xdr_CAPI2_PbkApi_SendUpdateEntryReq_Req_t, 0, 65000},
@@ -1093,8 +1091,7 @@
 	{ MSG_MNSS_SATK_SS_SRV_RSP,_T("MSG_MNSS_SATK_SS_SRV_RSP"), (xdrproc_t)xdr_CAPI2_MNSS_SATK_SS_SRV_RSP_Rsp_t, sizeof( STK_SsSrvRel_t ), 0 },
 	{ MSG_VM_WAITING_IND,_T("MSG_VM_WAITING_IND"), (xdrproc_t)xdr_CAPI2_SmsVoicemailInd_Rsp_t, sizeof( SmsVoicemailInd_t ), 0 },
 	{ MSG_SIM_SMS_DATA_RSP,_T("MSG_SIM_SMS_DATA_RSP"), (xdrproc_t)xdr_CAPI2_SIM_SMS_DATA_RSP_Rsp_t, sizeof( SmsSimMsg_t ), 0 },
-	{ MSG_CC_GETCNAPNAME_REQ,_T("MSG_CC_GETCNAPNAME_REQ"), (xdrproc_t) xdr_CAPI2_CcApi_GetCNAPName_Req_t, 0, 0},
-	{ MSG_CC_GETCNAPNAME_RSP,_T("MSG_CC_GETCNAPNAME_RSP"), (xdrproc_t)xdr_CAPI2_CcApi_GetCNAPName_Rsp_t, sizeof( CcCnapName_t ), 0 },
+	{ MSG_CC_GETCNAPNAME_REQ,_T("MSG_CC_GETCNAPNAME_REQ"), (xdrproc_t) xdr_CAPI2_CcApi_GetCNAPName_Req_t, 0, 0},	{ MSG_CC_GETCNAPNAME_RSP,_T("MSG_CC_GETCNAPNAME_RSP"), (xdrproc_t)xdr_CAPI2_CcApi_GetCNAPName_Rsp_t, sizeof( CcCnapName_t ), 0 },
 	{ MSG_SYSPARM_GET_HSUPA_SUPPORTED_REQ,_T("MSG_SYSPARM_GET_HSUPA_SUPPORTED_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
 	{ MSG_SYSPARM_GET_HSUPA_SUPPORTED_RSP,_T("MSG_SYSPARM_GET_HSUPA_SUPPORTED_RSP"), (xdrproc_t)xdr_CAPI2_SYSPARM_GetHSUPASupported_Rsp_t, sizeof( Boolean ), 0 },
 	{ MSG_SYSPARM_GET_HSDPA_SUPPORTED_REQ,_T("MSG_SYSPARM_GET_HSDPA_SUPPORTED_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
@@ -1190,38 +1187,22 @@
 	{ MSG_CCAPI_ABORTDTMF_TONE_RSP,_T("MSG_CCAPI_ABORTDTMF_TONE_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
 	{ MSG_MS_SET_RAT_BAND_EX_REQ,_T("MSG_MS_SET_RAT_BAND_EX_REQ"), (xdrproc_t) xdr_CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t, 0, 0},
 	{ MSG_MS_SET_RAT_BAND_EX_RSP,_T("MSG_MS_SET_RAT_BAND_EX_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
-	{ MSG_SMSSR_REPORT_IND,_T("MSG_SMSSR_REPORT_IND"), (xdrproc_t)xdr_CAPI2_SmsReportInd_Rsp_t, sizeof( SmsSimMsg_t ), 0 },
-	{ MSG_SIM_RESET_SIM_REQ,_T("MSG_SIM_RESET_SIM_REQ"), (xdrproc_t) xdr_CAPI2_SimApi_ResetSIM_Req_t, 0, 0},
-	{ MSG_SIM_RESET_SIM_RSP,_T("MSG_SIM_RESET_SIM_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
-	{ MSG_TIMEZONE_SET_UPDATE_MODE_REQ,_T("MSG_TIMEZONE_SET_UPDATE_MODE_REQ"), (xdrproc_t) xdr_CAPI2_NetRegApi_SetTZUpdateMode_Req_t, 0, 0},
+	{ MSG_SMSSR_REPORT_IND,_T("MSG_SMSSR_REPORT_IND"), (xdrproc_t)xdr_CAPI2_SmsReportInd_Rsp_t, sizeof( SmsSimMsg_t ), 0 },	{ MSG_TIMEZONE_SET_UPDATE_MODE_REQ,_T("MSG_TIMEZONE_SET_UPDATE_MODE_REQ"), (xdrproc_t) xdr_CAPI2_NetRegApi_SetTZUpdateMode_Req_t, 0, 0},
 	{ MSG_TIMEZONE_SET_UPDATE_MODE_RSP,_T("MSG_TIMEZONE_SET_UPDATE_MODE_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
 	{ MSG_TIMEZONE_GET_UPDATE_MODE_REQ,_T("MSG_TIMEZONE_GET_UPDATE_MODE_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
-	{ MSG_TIMEZONE_GET_UPDATE_MODE_RSP,_T("MSG_TIMEZONE_GET_UPDATE_MODE_RSP"), (xdrproc_t)xdr_CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t, sizeof( TimeZoneUpdateMode_t ), 0 },
-	{ MSG_SEC_HOST_TO_MODEM_REQ,_T("MSG_SEC_HOST_TO_MODEM_REQ"), (xdrproc_t) xdr_CAPI2_SEC_HostToModemInd_Req_t, 0, 0},
-	{ MSG_SEC_HOST_TO_MODEM_RSP,_T("MSG_SEC_HOST_TO_MODEM_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
-	{ MSG_SEC_MODEM_TO_HOST_IND,_T("MSG_SEC_MODEM_TO_HOST_IND"), (xdrproc_t)xdr_CAPI2_SEC_ModemToHostInd_Rsp_t, sizeof( UInt8 ), 0 },
-	{ MSG_SIM_INSTANCE_STATUS_IND,_T("MSG_SIM_INSTANCE_STATUS_IND"), (xdrproc_t)xdr_CAPI2_SimInstanceStatusInd_Rsp_t, sizeof( SIM_INSTANCE_STATUS_t ), 0 },
-	{ MSG_VCC_VM_PWR_SAVING_IND,_T("MSG_VCC_VM_PWR_SAVING_IND"), (xdrproc_t)xdr_CAPI2_VccVmPwrSavingInd_Rsp_t, sizeof( Boolean ), 0 },
-	{ MSG_SIM_AD_DATA_REQ,_T("MSG_SIM_AD_DATA_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
+	{ MSG_TIMEZONE_GET_UPDATE_MODE_RSP,_T("MSG_TIMEZONE_GET_UPDATE_MODE_RSP"), (xdrproc_t)xdr_CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t, sizeof( TimeZoneUpdateMode_t ), 0 },	{ MSG_SIM_AD_DATA_REQ,_T("MSG_SIM_AD_DATA_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
 	{ MSG_SIM_AD_DATA_RSP,_T("MSG_SIM_AD_DATA_RSP"), (xdrproc_t)xdr_CAPI2_SimApi_GetAdData_Rsp_t, sizeof( CAPI2_SimApi_GetAdData_Rsp_t ), 0 },
 	{ MSG_SIM_GET_CURRENT_SIM_VOLTAGE_REQ,_T("MSG_SIM_GET_CURRENT_SIM_VOLTAGE_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
 	{ MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP,_T("MSG_SIM_GET_CURRENT_SIM_VOLTAGE_RSP"), (xdrproc_t)xdr_CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t, sizeof( SimVoltage_t ), 0 },
-	{ MSG_MS_SET_RAT_AND_BAND_REQ,_T("MSG_MS_SET_RAT_AND_BAND_REQ"), (xdrproc_t) xdr_CAPI2_MS_SetSupportedRATandBand_Req_t, 0, 0},
-	{ MSG_MS_SET_RAT_AND_BAND_RSP,_T("MSG_MS_SET_RAT_AND_BAND_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
-	{ MSG_SECMODEM_CONFIG_MODEM_REQ,_T("MSG_SECMODEM_CONFIG_MODEM_REQ"), (xdrproc_t) xdr_default_proc, 0, 0},
-	{ MSG_SECMODEM_CONFIG_MODEM_RSP,_T("MSG_SECMODEM_CONFIG_MODEM_RSP"), (xdrproc_t)xdr_CAPI2_SecModemApi_ConfigModemReq_Rsp_t, sizeof( UInt8 ), 0 },
-	{ MSG_SECMODEM_SIMLOCK_STATUS_IND,_T("MSG_SECMODEM_SIMLOCK_STATUS_IND"), (xdrproc_t)xdr_CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t, sizeof( UInt8 ), 0 },
-	{ MSG_SECMODEM_XSIM_STATUS_IND,_T("MSG_SECMODEM_XSIM_STATUS_IND"), (xdrproc_t)xdr_CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t, sizeof( UInt8 ), 0 },
-	{ MSG_SIM_PIN_IND,_T("MSG_SIM_PIN_IND"), (xdrproc_t)xdr_CAPI2_SIM_SendPinInd_Rsp_t, sizeof( SimPinInd_t ), 0 },
-	{ MSG_DATACALL_RELEASE_CNF,_T("MSG_DATACALL_RELEASE_CNF"), (xdrproc_t)xdr_CAPI2_DATACALL_RELEASE_CNF_Rsp_t, sizeof( DataCallReleaseMsg_t ), 0 },
-	{ MSG_SS_CALL_FORWARD_STATUS_RSP,_T("MSG_SS_CALL_FORWARD_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t, sizeof( CallForwardStatus_t ), 0 },
+	{ MSG_GPRS_DEACTIVATE_IND,_T("MSG_GPRS_DEACTIVATE_IND"), (xdrproc_t)xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t, sizeof( GPRSDeactInd_t ), 0 },
+	{ MSG_DATACALL_RELEASE_CNF, _T("MSG_DATACALL_RELEASE_CNF"), (xdrproc_t)xdr_CAPI2_DATACALL_RELEASE_CNF_Rsp_t, sizeof( DataCallReleaseMsg_t ), 0 },	{ MSG_SS_CALL_FORWARD_STATUS_RSP,_T("MSG_SS_CALL_FORWARD_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t, sizeof( CallForwardStatus_t ), 0 },
 	{ MSG_SS_CALL_BARRING_STATUS_RSP,_T("MSG_SS_CALL_BARRING_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp_t, sizeof( CallBarringStatus_t ), 0 },
-	{ MSG_SS_CALL_WAITING_STATUS_RSP,_T("MSG_SS_CALL_WAITING_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t, sizeof( SS_ActivationStatus_t ), 0 },
-	{ MSG_USSD_DATA_IND,_T("MSG_USSD_DATA_IND"), (xdrproc_t)xdr_CAPI2_USSD_DATA_IND_Rsp_t, sizeof( USSDataInfo_t ), 0 },
+	{ MSG_SS_CALL_WAITING_STATUS_RSP,_T("MSG_SS_CALL_WAITING_STATUS_RSP"), (xdrproc_t)xdr_CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t, sizeof( SS_ActivationStatus_t ), 0 },	{ MSG_USSD_DATA_IND,_T("MSG_USSD_DATA_IND"), (xdrproc_t)xdr_CAPI2_USSD_DATA_IND_Rsp_t, sizeof( USSDataInfo_t ), 0 },
 	{ MSG_USSD_CALLINDEX_IND,_T("MSG_USSD_CALLINDEX_IND"), (xdrproc_t)xdr_CAPI2_USSD_CALLINDEX_IND_Rsp_t, sizeof( StkReportCallStatus_t ), 0 },
 	{ MSG_USSD_SESSION_END_IND,_T("MSG_USSD_SESSION_END_IND"), (xdrproc_t)xdr_CAPI2_USSD_SESSION_END_IND_Rsp_t, sizeof( CallIndex_t ), 0 },
+	{ MSG_MS_SET_RAT_AND_BAND_REQ,_T("MSG_MS_SET_RAT_AND_BAND_REQ"), (xdrproc_t) xdr_CAPI2_MS_SetSupportedRATandBand_Req_t, 0, 0},
+	{ MSG_MS_SET_RAT_AND_BAND_RSP,_T("MSG_MS_SET_RAT_AND_BAND_RSP"), (xdrproc_t) xdr_default_proc, 0, 0 },
 	{ MSG_MNCC_CLIENT_FACILITY_IND,_T("MSG_MNCC_CLIENT_FACILITY_IND"), (xdrproc_t)xdr_CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t, sizeof( CC_FacilityInd_t ), 0 },
-	{ MSG_GPRS_DEACTIVATE_IND,_T("MSG_GPRS_DEACTIVATE_IND"), (xdrproc_t)xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t, sizeof( GPRSDeactInd_t ), 0 },
 	{ MSG_PBK_READY_IND,_T("MSG_PBK_READY_IND"), (xdrproc_t)xdr_CAPI2_PbkReadyInd_Rsp_t, sizeof( PBK_ENTRY_DATA_RSP_t ), 0 },
 #endif //DEVELOPMENT_CAPI2_XDR_UNION_MAPPING
 
@@ -1500,8 +1481,8 @@
 	CAPI2_LCS_FttCalcDeltaTime_Rsp_t   CAPI2_LCS_FttCalcDeltaTime_Rsp;
 	CAPI2_LCS_SyncResult_Rsp_t   CAPI2_LCS_SyncResult_Rsp;
 	CAPI2_NetRegApi_ForcedReadyStateReq_Req_t   CAPI2_NetRegApi_ForcedReadyStateReq_Req;
-	CAPI2_SimLockApi_GetStatus_Req_t   CAPI2_SimLockApi_GetStatus_Req;
-	CAPI2_SimLockApi_GetStatus_RSP_Rsp_t   CAPI2_SimLockApi_GetStatus_RSP_Rsp;
+	CAPI2_SIMLOCK_GetStatus_Req_t   CAPI2_SIMLOCK_GetStatus_Req;
+	CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t   CAPI2_SIMLOCK_GetStatus_RSP_Rsp;
 	CAPI2_DIALSTR_IsValidString_Req_t   CAPI2_DIALSTR_IsValidString_Req;
 	CAPI2_DIALSTR_IsValidString_Rsp_t   CAPI2_DIALSTR_IsValidString_Rsp;
 	CAPI2_UTIL_Cause2NetworkCause_Req_t   CAPI2_UTIL_Cause2NetworkCause_Req;
@@ -2010,30 +1991,17 @@
 	CAPI2_LcsApi_SetGpsCapabilities_Req_t   CAPI2_LcsApi_SetGpsCapabilities_Req;
 	CAPI2_CcApi_AbortDtmfTone_Req_t   CAPI2_CcApi_AbortDtmfTone_Req;
 	CAPI2_NetRegApi_SetSupportedRATandBandEx_Req_t   CAPI2_NetRegApi_SetSupportedRATandBandEx_Req;
-	CAPI2_SmsReportInd_Rsp_t   CAPI2_SmsReportInd_Rsp;
-	CAPI2_SimApi_ResetSIM_Req_t   CAPI2_SimApi_ResetSIM_Req;
-	CAPI2_NetRegApi_SetTZUpdateMode_Req_t   CAPI2_NetRegApi_SetTZUpdateMode_Req;
-	CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t   CAPI2_NetRegApi_GetTZUpdateMode_Rsp;
-	CAPI2_SEC_HostToModemInd_Req_t   CAPI2_SEC_HostToModemInd_Req;
-	CAPI2_SEC_ModemToHostInd_Rsp_t   CAPI2_SEC_ModemToHostInd_Rsp;
-	CAPI2_SimInstanceStatusInd_Rsp_t   CAPI2_SimInstanceStatusInd_Rsp;
-	CAPI2_VccVmPwrSavingInd_Rsp_t   CAPI2_VccVmPwrSavingInd_Rsp;
-	CAPI2_SimApi_GetAdData_Rsp_t   CAPI2_SimApi_GetAdData_Rsp;
+	CAPI2_SmsReportInd_Rsp_t   CAPI2_SmsReportInd_Rsp;	CAPI2_NetRegApi_SetTZUpdateMode_Req_t   CAPI2_NetRegApi_SetTZUpdateMode_Req;
+	CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t   CAPI2_NetRegApi_GetTZUpdateMode_Rsp;	CAPI2_SimApi_GetAdData_Rsp_t   CAPI2_SimApi_GetAdData_Rsp;
 	CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t   CAPI2_SimApi_GetCurrentSimVoltage_Rsp;
-	CAPI2_MS_SetSupportedRATandBand_Req_t   CAPI2_MS_SetSupportedRATandBand_Req;
-	CAPI2_SecModemApi_ConfigModemReq_Rsp_t   CAPI2_SecModemApi_ConfigModemReq_Rsp;
-	CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t   CAPI2_SecModemApi_SendSimlockStatusInd_Rsp;
-	CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t   CAPI2_SecModemApi_SendXSimStatusInd_Rsp;
-	CAPI2_SIM_SendPinInd_Rsp_t   CAPI2_SIM_SendPinInd_Rsp;
-	CAPI2_DATACALL_RELEASE_CNF_Rsp_t   CAPI2_DATACALL_RELEASE_CNF_Rsp;
-	CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp;
+	CAPI2_GPRS_DEACTIVATE_IND_Rsp_t   CAPI2_GPRS_DEACTIVATE_IND_Rsp;
+	CAPI2_DATACALL_RELEASE_CNF_Rsp_t   CAPI2_DATACALL_RELEASE_CNF_Rsp;	CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_FORWARD_STATUS_RSP_Rsp;
 	CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_BARRING_STATUS_RSP_Rsp;
-	CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp;
-	CAPI2_USSD_DATA_IND_Rsp_t   CAPI2_USSD_DATA_IND_Rsp;
+	CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp_t   CAPI2_SS_CALL_WAITING_STATUS_RSP_Rsp;	CAPI2_USSD_DATA_IND_Rsp_t   CAPI2_USSD_DATA_IND_Rsp;
 	CAPI2_USSD_CALLINDEX_IND_Rsp_t   CAPI2_USSD_CALLINDEX_IND_Rsp;
 	CAPI2_USSD_SESSION_END_IND_Rsp_t   CAPI2_USSD_SESSION_END_IND_Rsp;
+	CAPI2_MS_SetSupportedRATandBand_Req_t   CAPI2_MS_SetSupportedRATandBand_Req;
 	CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t   CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp;
-	CAPI2_GPRS_DEACTIVATE_IND_Rsp_t   CAPI2_GPRS_DEACTIVATE_IND_Rsp;
 	CAPI2_PbkReadyInd_Rsp_t   CAPI2_PbkReadyInd_Rsp;
 #endif //DEVELOPMENT_CAPI2_XDR_UNION_DECLARE
 

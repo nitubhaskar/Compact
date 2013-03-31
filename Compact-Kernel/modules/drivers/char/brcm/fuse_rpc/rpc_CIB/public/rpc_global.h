@@ -54,7 +54,7 @@ extern UInt32 g_dwLogLEVEL;
 #elif UNDER_LINUX
 extern int RpcLog_DebugPrintf(char *fmt, ...);
 #define RPC_TRACE RpcLog_DebugPrintf
-#define RPC_TRACE_DETAIL RpcLog_DebugPrintf
+#define RPC_TRACE_DETAIL(a) RpcLog_DebugPrintf( "%s", a)
 #define RPC_TRACE_INFO RpcLog_DebugPrintf
 #define RPC_TRACE_DATA_DETAIL RpcLog_DebugPrintf
 

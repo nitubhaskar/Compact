@@ -26,7 +26,6 @@ typedef struct {
 	int				runlog_dev ;
 	int				cp_crashdump_dev ;
 	unsigned long	id_enable[ 1 + BCMLOG_MAX_LOG_ID / BITS_PER_LONG ] ;
-	int				sd_file_max;
 }	BCMLOG_Config_t ;
 
 /**

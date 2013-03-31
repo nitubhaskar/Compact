@@ -74,7 +74,9 @@ start_readmac:
 		/* Reading the MAC Address from .nvmac.info file( the existed file or just created file)*/
 		ret = kernel_read(fpnv, 0, buf, 18);
 		buf[17] ='\0';   // to prevent abnormal string display when mac address is displayed on the screen. 
+#ifdef BRCM_SECURITY_LOG
 		DHD_ERROR(("Read MAC : [%s] [%d] \r\n" , buf, strncmp(buf , "00:00:00:00:00:00" , 17)));
+#endif		
 		if(strncmp(buf , "00:00:00:00:00:00" , 17) == 0) {
 			filp_close(fpnv, NULL);
 			goto start_readmac;
@@ -290,7 +292,9 @@ int CheckRDWR_Macaddr(	struct dhd_info *dhd, dhd_pub_t *dhdp, struct ether_addr 
 		/* Reading the MAC Address from .nvmac.info file( the existed file or just created file)*/
 		ret = kernel_read(fp_nvm, 0, buf, 18);
 		buf[17] ='\0';   // to prevent abnormal string display when mac address is displayed on the screen. 
+#ifdef BRCM_SECURITY_LOG
 		DHD_ERROR(("Read MAC : [%s] [%d] \r\n" , buf, strncmp(buf , "00:00:00:00:00:00" , 17)));
+#endif
 		if(strncmp(buf , "00:00:00:00:00:00" , 17) == 0) {
 			fp_mac = filp_open(filepath, O_RDONLY, 0);
 			if(!IS_ERR(fp_mac)) {  //file is exist

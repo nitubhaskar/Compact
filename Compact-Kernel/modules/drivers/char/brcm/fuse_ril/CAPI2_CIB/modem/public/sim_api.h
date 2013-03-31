@@ -1,15 +1,17 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+/****************************************************************************
+*
+*     Copyright (c) 2007-2008 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license
+*   agreement governing use of this software, this software is licensed to you
+*   under the terms of the GNU General Public License version 2, available
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL").
+*
+*   Notwithstanding the above, under no circumstances may you combine this
+*   software in any way with any other Broadcom software provided under a license
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   sim_api.h
@@ -1523,17 +1525,6 @@ Boolean SimApi_IsPbkAccessAllowed(ClientInfo_t* inClientInfoPtr, SIMPBK_ID_t id)
 **/
 SIMAccess_t SimApi_GetAtrData(ClientInfo_t* inClientInfoPtr, APDU_t *atr_data);
 
-
-//***************************************************************************************
-/**
-    This function performs cold/warm SIM reset
-    @param inClientInfoPtr	(in) pointer to clientInfo of the calling client
-    @param resetMode		(in) reset mode (cold/warm: 0/1)
-
-	@return TRUE if reset allowed; FALSE otherwise
-**/	
-Result_t SimApi_ResetSIM(ClientInfo_t* inClientInfoPtr, Boolean resetMode);
-
 //******************************************************************************
 /**
 
@@ -1542,15 +1533,6 @@ Result_t SimApi_ResetSIM(ClientInfo_t* inClientInfoPtr, Boolean resetMode);
     @return SimVoltage_t  Current SIM voltage
 **/
 SimVoltage_t SimApi_GetCurrentSimVoltage(ClientInfo_t* inClientInfoPtr);
-
-//***************************************************************************************
-/**
-	This function returns the pointer to the raw EF-IMSI data
-
-	@param		inClientInfoPtr (in) pointer to the client Info
-	@return		Pointer to the raw EF-IMSI data
-**/
-UInt8* SimApi_GetIMSIRaw(ClientInfo_t* inClientInfoPtr);
 
 /** @} */
 

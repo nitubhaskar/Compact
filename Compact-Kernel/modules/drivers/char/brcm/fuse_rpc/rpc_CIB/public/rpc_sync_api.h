@@ -1,15 +1,18 @@
-/*******************************************************************************************
-Copyright 2010 Broadcom Corporation.  All rights reserved.
-
-Unless you and Broadcom execute a separate written software license agreement
-governing use of this software, this software is licensed to you under the
-terms of the GNU General Public License version 2, available at
-http://www.gnu.org/copyleft/gpl.html (the "GPL").
-
-Notwithstanding the above, under no circumstances may you combine this software
-in any way with any other Broadcom software provided under a license other than
-the GPL, without Broadcom's express prior written consent.
-*******************************************************************************************/
+//
+/****************************************************************************
+*
+*     Copyright (c) 2009 Broadcom Corporation
+*
+*   Unless you and Broadcom execute a separate written software license 
+*   agreement governing use of this software, this software is licensed to you 
+*   under the terms of the GNU General Public License version 2, available 
+*    at http://www.gnu.org/licenses/old-licenses/gpl-2.0.html (the "GPL"). 
+*
+*   Notwithstanding the above, under no circumstances may you combine this 
+*   software in any way with any other Broadcom software provided under a license 
+*   other than the GPL, without Broadcom's express prior written consent.
+*
+****************************************************************************/
 /**
 *
 *   @file   rpc_sync_api.h
@@ -141,20 +144,6 @@ UInt32 RPC_SyncCreateTID( void* data, Int32 size );
 **/
 Result_t RPC_SyncWaitForResponse( UInt32 tid, UInt8 cid, RPC_ACK_Result_t* ack, MsgType_t* msgType, UInt32* dataSize );
 
-//**************************************************************************************
-/**
-	Retrieve the response from a RPC function call. Note that this includes the ack result as well.
-	@param		tid (in) Transaction id for request.
-	@param		cid (in) Client id for request
-	@param		ack (out) Ack result for request
-	@param		msgType (out) Message type of response.
-	@param		dataSize (out) Actual data size copied to response data buffer
-	@param		timeout (in) timer value
-	
-	@return Result code of response.
-	
-**/
-Result_t RPC_SyncWaitForResponseTimer( UInt32 tid, UInt8 cid, RPC_ACK_Result_t* ack, MsgType_t* msgType, UInt32* dataSize, UInt32 timeout);
 
 //**************************************************************************************
 /**

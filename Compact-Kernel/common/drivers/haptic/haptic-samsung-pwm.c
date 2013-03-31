@@ -300,12 +300,9 @@ static int samsung_pwm_haptic_probe(struct platform_device *pdev)
 
         if (haptic->pdata->regl_id) {
                 /* Fetch a regulator */
-                ret = haptic->vcc = regulator_get(NULL, haptic->pdata->regl_id);
-                        if (IS_ERR(haptic->vcc)){
-				dev_err(&pdev->dev, "Can't fetch a regulator!\n");
+                haptic->vcc = regulator_get(NULL, haptic->pdata->regl_id);
+                        if (IS_ERR(haptic->vcc))
                                 haptic->vcc = NULL;
-				goto error_reg_fetch;
-			}
         }
         if (regulator_is_enabled(haptic->vcc))
                 regl_enable = 1;
@@ -354,7 +351,6 @@ err_pwm:
 	pwm_free(haptic->pwm);
 error_classdev:
 	haptic_classdev_unregister(&haptic->cdev);
-error_reg_fetch:
 	kfree(haptic);
 	return ret;
 }

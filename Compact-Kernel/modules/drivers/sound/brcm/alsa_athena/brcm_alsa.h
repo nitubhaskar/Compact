@@ -65,9 +65,7 @@ typedef enum
 	BRCM_CTL_BTHeadset_Mute,
 	
 	BRCM_CTL_ROUTE,
-    BRCM_CTL_BT_WB_MODE,
-    BRCM_CTL_VT_CALL_MODE,
-	BRCM_CTL_HAC_MODE,
+	
 	BRCM_CTL_TOTAL,
 	BRCM_CTL_RESERVED
 
@@ -118,13 +116,11 @@ typedef struct brcm_alsa_chip
 	snd_pcm_uframes_t last_pcm_rdptr[PCM_TYPE_TOTAL];	
 	int    xrun_occured[PCM_TYPE_TOTAL];
 	
-	
 	/* workqueue */
 	struct work_struct work_play;
     struct work_struct work_capt;
 
 
-	
 	
 } brcm_alsa_chip_t;
 

@@ -322,7 +322,7 @@ static unsigned long get_from_virt_list(unsigned long virtualaddress)
 		curr = curr->nextAddress;
 	}
 
-	KLOG_V("Item not found");
+	KLOG_E("Item not found");
 	return 0;
 }
 
@@ -386,29 +386,28 @@ static void bmem_print_status(void)
 	}
 
 	down(&bmem_status_sem);
-	KLOG_E("Free space[%d], Biggest Free Buffer Avl[%d]", bmem_status.total_free_space, bmem_status.biggest_chunk_avlbl);
-	KLOG_V("\n  %-30s: ", "Current Usage Info");
-	KLOG_V("\t%-30s: %d ", "Used space in bytes", bmem_status.total_used_space);
-	KLOG_V("\t%-30s: %d ", "Free space in bytes", bmem_status.total_free_space);
-	KLOG_V("\t%-30s: %d ", "Num Buffers in Use", bmem_status.num_buf_used);
+	KLOG_E("\n  %-30s: ", "Current Usage Info");
+	KLOG_E("\t%-30s: %d ", "Used space in bytes", bmem_status.total_used_space);
+	KLOG_E("\t%-30s: %d ", "Free space in bytes", bmem_status.total_free_space);
+	KLOG_E("\t%-30s: %d ", "Num Buffers in Use", bmem_status.num_buf_used);
 
-	KLOG_V("  %-30s: ", "Statistics");
-	KLOG_V("\t%-30s: %d ", "Maximum Memory usage", bmem_status.max_used_space);
-	KLOG_V("\t%-30s: %d ", "Biggest Buffer Requested", bmem_status.biggest_buf_request);
-	KLOG_V("\t%-30s: %d ", "Smallest Buffer Requested", bmem_status.smallest_buf_request);
-	KLOG_V("\t%-30s: %d ", "Allocate Success Count", bmem_status.alloc_pass_cnt);
-	KLOG_V("\t%-30s: %d ", "Mem Free Success Count", bmem_status.free_pass_cnt);
+	KLOG_E("  %-30s: ", "Statistics");
+	KLOG_E("\t%-30s: %d ", "Maximum Memory usage", bmem_status.max_used_space);
+	KLOG_E("\t%-30s: %d ", "Biggest Buffer Requested", bmem_status.biggest_buf_request);
+	KLOG_E("\t%-30s: %d ", "Smallest Buffer Requested", bmem_status.smallest_buf_request);
+	KLOG_E("\t%-30s: %d ", "Allocate Success Count", bmem_status.alloc_pass_cnt);
+	KLOG_E("\t%-30s: %d ", "Mem Free Success Count", bmem_status.free_pass_cnt);
 
-	KLOG_V("  %-30s: ", "Fragmentation Info");
-	KLOG_V("\t%-30s: %d ", "Num Buffers Free", bmem_status.num_buf_free);
-	KLOG_V("\t%-30s: %d ", "Biggest Buffer Available", bmem_status.biggest_chunk_avlbl);
-	KLOG_V("\t%-30s: %d ", "Smallest Buffer Available", bmem_status.smallest_chunk_avlbl);
-	KLOG_V("\t%-30s: %d ", "Max Num Holes occured", bmem_status.max_num_buf_free);
-	KLOG_V("\t%-30s: %d ", "Max Fragmented", bmem_status.max_fragmented_size);
+	KLOG_E("  %-30s: ", "Fragmentation Info");
+	KLOG_E("\t%-30s: %d ", "Num Buffers Free", bmem_status.num_buf_free);
+	KLOG_E("\t%-30s: %d ", "Biggest Buffer Available", bmem_status.biggest_chunk_avlbl);
+	KLOG_E("\t%-30s: %d ", "Smallest Buffer Available", bmem_status.smallest_chunk_avlbl);
+	KLOG_E("\t%-30s: %d ", "Max Num Holes occured", bmem_status.max_num_buf_free);
+	KLOG_E("\t%-30s: %d ", "Max Fragmented", bmem_status.max_fragmented_size);
 
-	KLOG_V("  %-30s: ", "Error Info");
-	KLOG_V("\t%-30s: %d ", "Allocate Failures", bmem_status.alloc_fail_cnt);
-	KLOG_V("\t%-30s: %d \n", "Mem Free Failures", bmem_status.free_fail_cnt);
+	KLOG_E("  %-30s: ", "Error Info");
+	KLOG_E("\t%-30s: %d ", "Allocate Failures", bmem_status.alloc_fail_cnt);
+	KLOG_E("\t%-30s: %d \n", "Mem Free Failures", bmem_status.free_fail_cnt);
 
 	up(&bmem_status_sem);
 
@@ -1037,7 +1036,7 @@ static int bmem_wrapper_ioctl(struct inode *inode, struct file *filp,
 	case HANTRO_DMA_COPY:
 		{
 			DmaStruct dma_buffers;
-			int tries = 0;
+                        int tries = 0;
 			int ret = 0;
 			ret = copy_from_user(&dma_buffers, (const void *)arg,
 					 sizeof(dma_buffers));
@@ -1257,7 +1256,7 @@ static int bmem_wrapper_mmap(struct file *file,
 				KLOG_E("Zero size alloction requested");
 				busAddress = 0;
 				return -EFAULT;
-			}
+			}			
 			if (logic.AllocMemory != NULL) {
 				down(&bmem_sem);
 				r = logic.AllocMemory(p_data->bmem_handle, &busAddress, page_aligned_size);
@@ -1330,11 +1329,7 @@ int register_bmem_wrapper(struct bmem_logic *bmem_fops)
 	}
 
 	if (logic.init != NULL) {
-#ifdef BMEM_CHECK_OVERRUN
-		return logic.init(BMEM_SIZE, dma_cohr_start_addr, bmem_mempool_base);
-#else
 		return logic.init(BMEM_SIZE, dma_cohr_start_addr);
-#endif
 	} else {
 		KLOG_E("init() is NULL");
 		return -1;
@@ -1374,7 +1369,7 @@ int __init bmem_wrapper_init(void)
 	} else if (result != 0) {	/* this is for dynamic major */
 		bmem_major = result;
 	}
-	KLOG_D("BMEM_SIZE = [%d]MB",BMEM_SIZE/1024/1024);
+
 	init_completion(&dma_complete);
 
 	if (bmem_mempool_base == NULL) {

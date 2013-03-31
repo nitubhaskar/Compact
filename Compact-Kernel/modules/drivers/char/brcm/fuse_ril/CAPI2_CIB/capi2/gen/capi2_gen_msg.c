@@ -88,6 +88,7 @@
 #include "ss_api_old.h"
 #include "ss_lcs_def.h"
 #include "capi2_ss_msg.h"
+#include "capi2_cp_socket.h"
 #include "capi2_cp_msg.h"
 #include "capi2_pch_msg.h"
 #include "capi2_sms_msg.h"
@@ -3316,7 +3317,7 @@ bool_t xdr_MS_MN_CB_MSG_IDS(void* xdrs, MS_MN_CB_MSG_IDS *rsp)
 	XDR_LOG(xdrs,"MS_MN_CB_MSG_IDS")
 
 	if(
-		xdr_Int32(xdrs, &rsp->nbr_of_msg_id_ranges) &&
+		_xdr_UInt8(xdrs, &rsp->nbr_of_msg_id_ranges,"nbr_of_msg_id_ranges") &&
 		xdr_MS_MN_CB_MSG_ID_RANGE_LIST(xdrs, &rsp->msg_id_range_list) &&
 	1)
 		return TRUE;
@@ -3329,7 +3330,7 @@ bool_t xdr_MS_MN_CB_LANGUAGE_LIST(void* xdrs, MS_MN_CB_LANGUAGE_LIST *rsp)
 	XDR_LOG(xdrs,"MS_MN_CB_LANGUAGE_LIST")
 
 	if(
-		xdr_opaque(xdrs, (caddr_t)(void*)rsp->A,13 ) &&
+		xdr_vector(xdrs, (caddr_t)(void*)rsp->A,13, sizeof(UInt16 ), xdr_UInt16 ) &&
 	1)
 		return TRUE;
 	else
@@ -3341,7 +3342,7 @@ bool_t xdr_MS_MN_CB_LANGUAGES(void* xdrs, MS_MN_CB_LANGUAGES *rsp)
 	XDR_LOG(xdrs,"MS_MN_CB_LANGUAGES")
 
 	if(
-		xdr_Int32(xdrs, &rsp->nbr_of_languages) &&
+		_xdr_UInt8(xdrs, &rsp->nbr_of_languages,"nbr_of_languages") &&
 		xdr_MS_MN_CB_LANGUAGE_LIST(xdrs, &rsp->language_list) &&
 	1)
 		return TRUE;
@@ -3675,9 +3676,9 @@ bool_t xdr_CAPI2_NetRegApi_ForcedReadyStateReq_Req_t(void* xdrs, CAPI2_NetRegApi
 		return FALSE;
 }
 
-bool_t xdr_CAPI2_SimLockApi_GetStatus_Req_t(void* xdrs, CAPI2_SimLockApi_GetStatus_Req_t *rsp)
+bool_t xdr_CAPI2_SIMLOCK_GetStatus_Req_t(void* xdrs, CAPI2_SIMLOCK_GetStatus_Req_t *rsp)
 {
-	XDR_LOG(xdrs,"CAPI2_SimLockApi_GetStatus_Req_t")
+	XDR_LOG(xdrs,"CAPI2_SIMLOCK_GetStatus_Req_t")
 
 	if(
 		xdr_pointer(xdrs, (char**)(void*)&rsp->sim_data,sizeof( SIMLOCK_SIM_DATA_t ), xdr_SIMLOCK_SIM_DATA_t) &&
@@ -3688,9 +3689,9 @@ bool_t xdr_CAPI2_SimLockApi_GetStatus_Req_t(void* xdrs, CAPI2_SimLockApi_GetStat
 		return FALSE;
 }
 
-bool_t xdr_CAPI2_SimLockApi_GetStatus_RSP_Rsp_t(void* xdrs, CAPI2_SimLockApi_GetStatus_RSP_Rsp_t *rsp)
+bool_t xdr_CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t(void* xdrs, CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t *rsp)
 {
-	XDR_LOG(xdrs,"CAPI2_SimLockApi_GetStatus_RSP_Rsp_t")
+	XDR_LOG(xdrs,"CAPI2_SIMLOCK_GetStatus_RSP_Rsp_t")
 
 	if(
 		xdr_SIMLOCK_STATE_t(xdrs, &rsp->simlock_state) &&
@@ -9885,12 +9886,7 @@ static const struct xdr_discrim CAPI2_CcApi_ElementPtr_union_dscrm[] = {
 
 static const struct xdr_discrim CAPI2_CcApi_CompareObjPtr_union_dscrm[] = {
 	{ (int)CC_ELEM_AUTO_REJECT_SWITCH,_T("CC_ELEM_AUTO_REJECT_SWITCH"),		(xdrproc_t)xdr_Boolean,sizeof( Boolean ), NULL_capi2_proc_t, (xdrproc_t)xdr_Boolean,0 },
-	{ (int)CC_ELEM_TEXT_TELEPHONY_SWITCH,_T("CC_ELEM_TEXT_TELEPHONY_SWITCH"),		(xdrproc_t)xdr_void, 0 , NULL_capi2_proc_t, (xdrproc_t)xdr_void,0 },
-	{ (int)CC_ELEM_MT_CALL_HANDLING,_T("CC_ELEM_MT_CALL_HANDLING"),		(xdrproc_t)xdr_void, 0 , NULL_capi2_proc_t, (xdrproc_t)xdr_void,0 },
 	{ (int)CC_ELEM_END_CALL_CAUSE,_T("CC_ELEM_END_CALL_CAUSE"),		(xdrproc_t)xdr_UInt8,sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_UInt8,0 },
-	{ (int)CC_ELEM_SPEECH_CODEC,_T("CC_ELEM_SPEECH_CODEC"),		(xdrproc_t)xdr_void, 0 , NULL_capi2_proc_t, (xdrproc_t)xdr_void,0 },
-	{ (int)CC_ELEM_CHANNEL_MODE,_T("CC_ELEM_CHANNEL_MODE"),		(xdrproc_t)xdr_void, 0 , NULL_capi2_proc_t, (xdrproc_t)xdr_void,0 },
-	{ (int)CC_ELEM_UMTS_WB_AMR,_T("CC_ELEM_UMTS_WB_AMR"),		(xdrproc_t)xdr_void, 0 , NULL_capi2_proc_t, (xdrproc_t)xdr_void,0 },
 	{ __dontcare__, _T(""), NULL_xdrproc_t ,0,0,0,0} 
 };
 
@@ -10209,18 +10205,6 @@ bool_t xdr_CAPI2_SmsReportInd_Rsp_t(void* xdrs, CAPI2_SmsReportInd_Rsp_t *rsp)
 		return FALSE;
 }
 
-bool_t xdr_CAPI2_SimApi_ResetSIM_Req_t(void* xdrs, CAPI2_SimApi_ResetSIM_Req_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SimApi_ResetSIM_Req_t")
-
-	if(
-		_xdr_Boolean(xdrs, &rsp->resetMode,"resetMode") &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
 bool_t xdr_CAPI2_NetRegApi_SetTZUpdateMode_Req_t(void* xdrs, CAPI2_NetRegApi_SetTZUpdateMode_Req_t *rsp)
 {
 	XDR_LOG(xdrs,"CAPI2_NetRegApi_SetTZUpdateMode_Req_t")
@@ -10239,54 +10223,6 @@ bool_t xdr_CAPI2_NetRegApi_GetTZUpdateMode_Rsp_t(void* xdrs, CAPI2_NetRegApi_Get
 
 	if(
 		 xdr_TimeZoneUpdateMode_t(xdrs, &rsp->val) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SEC_HostToModemInd_Req_t(void* xdrs, CAPI2_SEC_HostToModemInd_Req_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SEC_HostToModemInd_Req_t")
-
-	if(
-		_xdr_UInt8(xdrs, &rsp->state,"state") &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SEC_ModemToHostInd_Rsp_t(void* xdrs, CAPI2_SEC_ModemToHostInd_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SEC_ModemToHostInd_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( UInt8 ), xdr_UInt8) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SimInstanceStatusInd_Rsp_t(void* xdrs, CAPI2_SimInstanceStatusInd_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SimInstanceStatusInd_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( SIM_INSTANCE_STATUS_t ), xdr_SIM_INSTANCE_STATUS_t) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_VccVmPwrSavingInd_Rsp_t(void* xdrs, CAPI2_VccVmPwrSavingInd_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_VccVmPwrSavingInd_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( Boolean ), xdr_Boolean) &&
 	1)
 		return TRUE;
 	else
@@ -10317,61 +10253,13 @@ bool_t xdr_CAPI2_SimApi_GetCurrentSimVoltage_Rsp_t(void* xdrs, CAPI2_SimApi_GetC
 		return FALSE;
 }
 
-bool_t xdr_CAPI2_MS_SetSupportedRATandBand_Req_t(void* xdrs, CAPI2_MS_SetSupportedRATandBand_Req_t *rsp)
+
+bool_t xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t(void* xdrs, CAPI2_GPRS_DEACTIVATE_IND_Rsp_t *rsp)
 {
-	XDR_LOG(xdrs,"CAPI2_MS_SetSupportedRATandBand_Req_t")
+	XDR_LOG(xdrs,"CAPI2_GPRS_DEACTIVATE_IND_Rsp_t")
 
 	if(
-		xdr_RATSelect_t(xdrs, &rsp->RAT_cap) &&
-		xdr_BandSelect_t(xdrs, &rsp->band_cap) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SecModemApi_ConfigModemReq_Rsp_t(void* xdrs, CAPI2_SecModemApi_ConfigModemReq_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SecModemApi_ConfigModemReq_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( UInt8 ), xdr_UInt8) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t(void* xdrs, CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SecModemApi_SendSimlockStatusInd_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( UInt8 ), xdr_UInt8) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t(void* xdrs, CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SecModemApi_SendXSimStatusInd_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( UInt8 ), xdr_UInt8) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-bool_t xdr_CAPI2_SIM_SendPinInd_Rsp_t(void* xdrs, CAPI2_SIM_SendPinInd_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_SIM_SendPinInd_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( SimPinInd_t ), xdr_SimPinInd_t) &&
+		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( GPRSDeactInd_t ), xdr_GPRSDeactInd_t) &&
 	1)
 		return TRUE;
 	else
@@ -10462,6 +10350,19 @@ bool_t xdr_CAPI2_USSD_SESSION_END_IND_Rsp_t(void* xdrs, CAPI2_USSD_SESSION_END_I
 		return FALSE;
 }
 
+bool_t xdr_CAPI2_MS_SetSupportedRATandBand_Req_t(void* xdrs, CAPI2_MS_SetSupportedRATandBand_Req_t *rsp)
+{
+	XDR_LOG(xdrs,"CAPI2_MS_SetSupportedRATandBand_Req_t")
+
+	if(
+		xdr_RATSelect_t(xdrs, &rsp->RAT_cap) &&
+		xdr_BandSelect_t(xdrs, &rsp->band_cap) &&
+	1)
+		return TRUE;
+	else
+		return FALSE;
+}
+
 bool_t xdr_CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t(void* xdrs, CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t *rsp)
 {
 	XDR_LOG(xdrs,"CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t")
@@ -10473,19 +10374,6 @@ bool_t xdr_CAPI2_MNCC_CLIENT_FACILITY_IND_Rsp_t(void* xdrs, CAPI2_MNCC_CLIENT_FA
 	else
 		return FALSE;
 }
-
-bool_t xdr_CAPI2_GPRS_DEACTIVATE_IND_Rsp_t(void* xdrs, CAPI2_GPRS_DEACTIVATE_IND_Rsp_t *rsp)
-{
-	XDR_LOG(xdrs,"CAPI2_GPRS_DEACTIVATE_IND_Rsp_t")
-
-	if(
-		 xdr_pointer(xdrs, (char**)(void*)&rsp->val, sizeof( GPRSDeactInd_t ), xdr_GPRSDeactInd_t) &&
-	1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
 bool_t xdr_CAPI2_PbkReadyInd_Rsp_t(void* xdrs, CAPI2_PbkReadyInd_Rsp_t *rsp)
 {
 	XDR_LOG(xdrs,"CAPI2_PbkReadyInd_Rsp_t")

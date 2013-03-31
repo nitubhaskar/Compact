@@ -769,16 +769,16 @@ static int dwc_otg_pcd_ep_queue(struct usb_ep *_ep,
 	}
 
 	/* Coverity check */
-		++pcd->request_pending;
-		DWC_DEBUGPL(DBG_PCD, "%s ep%d-%s: Request Pending: %d\n", __func__, ep->dwc_ep.num, _ep->name, pcd->request_pending );
-		list_add_tail(&req->queue, &ep->queue);
-		if (ep->dwc_ep.is_in && ep->stopped && !(GET_CORE_IF(pcd)->dma_enable)) 
-		{
-			/** @todo NGS Create a function for this. */
-			diepmsk_data_t diepmsk = { .d32 = 0};
-			diepmsk.b.intktxfemp = 1;
-			dwc_modify_reg32( &GET_CORE_IF(pcd)->dev_if->dev_global_regs->diepmsk, 0, diepmsk.d32 );
-		}
+	++pcd->request_pending;
+	DWC_DEBUGPL(DBG_PCD, "%s ep%d-%s: Request Pending: %d\n", __func__, ep->dwc_ep.num, _ep->name, pcd->request_pending );
+	list_add_tail(&req->queue, &ep->queue);
+	if (ep->dwc_ep.is_in && ep->stopped && !(GET_CORE_IF(pcd)->dma_enable)) 
+	{
+		/** @todo NGS Create a function for this. */
+		diepmsk_data_t diepmsk = { .d32 = 0};
+		diepmsk.b.intktxfemp = 1;
+		dwc_modify_reg32( &GET_CORE_IF(pcd)->dev_if->dev_global_regs->diepmsk, 0, diepmsk.d32 );
+	}
 		
 	SPIN_UNLOCK_IRQRESTORE(&pcd->lock, flags);
 	return 0;
@@ -897,16 +897,11 @@ static int dwc_otg_pcd_ep_set_halt(struct usb_ep *_ep, int _value)
 
 	ep = container_of(_ep, dwc_otg_pcd_ep_t, ep);
 
-	if ( ep == &ep->pcd->ep0 ) { /* changed for Prevent */
-		DWC_WARN("%s, bad ep(=ep0) and ep0 can't be stalled\n", __func__);
-		return -EINVAL;
-	}
-
-	if ( ep->desc == NULL ) { /* added for Prevent */
+	if ( (!ep->desc && ep != &ep->pcd->ep0) ) { /*Coverity check*/
 		DWC_WARN("%s, bad ep\n", __func__);
 		return -EINVAL;
 	}
-		
+
 	if (ep->desc->bmAttributes == USB_ENDPOINT_XFER_ISOC) { /*Coverity check*/
 		DWC_WARN("%s, bad ep: bmAttributes\n", __func__);
 		return -EINVAL;
