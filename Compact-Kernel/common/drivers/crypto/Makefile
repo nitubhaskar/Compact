@@ -1,7 +1,3 @@
-ifeq ($(CONFIG_ARCH_BCM215XX), y)
-EXTRA_CFLAGS += -D_ATHENA_
-endif
-
 obj-$(CONFIG_CRYPTO_DEV_PADLOCK_AES) += padlock-aes.o
 obj-$(CONFIG_CRYPTO_DEV_PADLOCK_SHA) += padlock-sha.o
 obj-$(CONFIG_CRYPTO_DEV_GEODE) += geode-aes.o
@@ -12,6 +8,6 @@ obj-$(CONFIG_CRYPTO_DEV_MV_CESA) += mv_cesa.o
 obj-$(CONFIG_CRYPTO_DEV_TALITOS) += talitos.o
 obj-$(CONFIG_CRYPTO_DEV_IXP4XX) += ixp4xx_crypto.o
 obj-$(CONFIG_CRYPTO_DEV_PPC4XX) += amcc/
+obj-$(CONFIG_CRYPTO_DEV_QCE) += msm/
 obj-$(CONFIG_CRYPTO_DEV_OMAP_SHAM) += omap-sham.o
-obj-$(CONFIG_CRYPTO_DEV_BRCM_BLKCRYPTO) += brcm_blkcrypto.o
 

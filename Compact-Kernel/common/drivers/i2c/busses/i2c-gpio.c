@@ -217,12 +217,7 @@ static void __exit i2c_gpio_exit(void)
 {
 	platform_driver_unregister(&i2c_gpio_driver);
 }
-/* As MAX8986 uses i2c-gpio we need this early */
-//#ifdef CONFIG_MAX8986_WORKAROUND
-//arch_initcall(i2c_gpio_init);
-//#else
 module_exit(i2c_gpio_exit);
-//#endif
 
 MODULE_AUTHOR("Haavard Skinnemoen <hskinnemoen@atmel.com>");
 MODULE_DESCRIPTION("Platform-independent bitbanging I2C driver");

@@ -27,13 +27,6 @@ config LCD_CLASS_DEVICE
 
 if LCD_CLASS_DEVICE
 
-config BACKLIGHT_LCDFB
-        tristate "Broadcom LCD FrameBuffer Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-        default y
-        help
-          Support for the LCD backlight on the Broadcom reference phone.
-
 config LCD_CORGI
 	tristate "LCD Panel support for SHARP corgi/spitz model"
 	depends on SPI_MASTER && PXA_SHARPSL
@@ -236,75 +229,12 @@ config BACKLIGHT_DA903X
 	  If you have a LCD backlight connected to the WLED output of DA9030
 	  or DA9034 WLED output, say Y here to enable this driver.
 
-config BACKLIGHT_AAT1401
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.
-
-config BACKLIGHT_LUISA
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.
-
-config BACKLIGHT_TOTORO
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.	  
-	  
-config BACKLIGHT_TASSVE
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.
-
-config BACKLIGHT_COOPERVE
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.
-	  
-config BACKLIGHT_TORINO
-	tristate "Generic cat4253 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.	
-	  
-config BACKLIGHT_CORI
-	tristate "Generic aat1401 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by AAT1401 wire, say Y to enable
-	  this driver.	
-	    
-config BACKLIGHT_AMAZING
-	tristate "Generic ktd253b wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by KTD253B wire, say Y to enable
-	  this driver.	
-	  	  
 config BACKLIGHT_MAX8925
 	tristate "Backlight driver for MAX8925"
 	depends on MFD_MAX8925
 	help
 	  If you have a LCD backlight connected to the WLED output of MAX8925
 	  WLED output, say Y here to enable this driver.
-
-config BACKLIGHT_S2C
-	tristate "Generic S2C wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  If you have a LCD backlight adjustable by S2C wire, say Y to enable
-	  this driver.
 
 config BACKLIGHT_MBP_NVIDIA
        tristate "MacBook Pro Nvidia Backlight Driver"
@@ -377,39 +307,6 @@ config BACKLIGHT_PCF50633
 	  If you have a backlight driven by a NXP PCF50633 MFD, say Y here to
 	  enable its driver.
 
-config BACKLIGHT_CAT3648
-	tristate "Generic CAT3648 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	If you have a LCD backlight adjustable by CAT3648 wire, say Y to enable
-	this driver.
-
-config BACKLIGHT_CAT4253
-	tristate "Generic CAT4253 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	If you have a LCD backlight adjustable by CAT4253 wire, say Y to enable
-	this driver.
-	
-config BACKLIGHT_KTD253B
-	tristate "Generic CAT4253 wire based Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	If you have a LCD backlight adjustable by CAT4253 wire, say Y to enable
-	this driver.	
-	
-config BACKLIGHT_BCM_PWM_KEYPAD
-	tristate "Broadcom PWM based Keypad Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE && HAVE_PWM && BCM_PWM_CORE
-	help
-	  Say Y to enable Broadcom PWM based keypad backlight driver.
-
-config KEYPAD_BACKLIGHT
-	tristate "Keypad Backlight Driver"
-	depends on BACKLIGHT_CLASS_DEVICE
-	help
-	  Say Y to enable keypad backlight driver.
-	  
 endif # BACKLIGHT_CLASS_DEVICE
 
 endif # BACKLIGHT_LCD_SUPPORT

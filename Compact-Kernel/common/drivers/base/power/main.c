@@ -645,10 +645,6 @@ static void dpm_resume(pm_message_t state)
 	pm_transition = state;
 
 	list_for_each_entry(dev, &dpm_list, power.entry) {
-		if (dev->init_name)
-			printk("r: %s: ", dev->init_name);
-		if (dev->driver && dev->driver->name)
-			printk("dr: %s", dev->driver->name);
 		if (dev->power.status < DPM_OFF)
 			continue;
 
@@ -664,10 +660,7 @@ static void dpm_resume(pm_message_t state)
 		get_device(dev);
 		if (dev->power.status >= DPM_OFF && !is_async(dev)) {
 			int error;
-			if (dev->init_name)
-				printk("r: %s: ", dev->init_name);
-			if (dev->driver && dev->driver->name)
-				printk("dr: %s", dev->driver->name);
+
 			mutex_unlock(&dpm_list_mtx);
 
 			error = device_resume(dev, state, false);
@@ -841,10 +834,6 @@ int dpm_suspend_noirq(pm_message_t state)
 	suspend_device_irqs();
 	mutex_lock(&dpm_list_mtx);
 	list_for_each_entry_reverse(dev, &dpm_list, power.entry) {
-		if (dev->init_name)
-			printk("s: %s: ", dev->init_name);
-		if (dev->driver && dev->driver->name)
-			printk("dr: %s", dev->driver->name);
 		error = device_suspend_noirq(dev, state);
 		if (error) {
 			pm_dev_err(dev, state, " late", error);
@@ -986,11 +975,6 @@ static int dpm_suspend(pm_message_t state)
 	while (!list_empty(&dpm_list)) {
 		struct device *dev = to_device(dpm_list.prev);
 
-		if (dev->init_name)
-			printk("s: %s: ", dev->init_name);
-		if (dev->driver && dev->driver->name)
-			printk("dr: %s", dev->driver->name);
-		
 		get_device(dev);
 		mutex_unlock(&dpm_list_mtx);
 

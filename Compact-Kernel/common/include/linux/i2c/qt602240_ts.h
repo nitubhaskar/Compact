@@ -13,8 +13,6 @@
 #ifndef __LINUX_QT602240_TS_H
 #define __LINUX_QT602240_TS_H
 
-#include <plat/bcm_i2c.h>
-
 /* Orient */
 #define QT602240_NORMAL			0x0
 #define QT602240_DIAGONAL		0x1
@@ -27,21 +25,14 @@
 
 /* The platform data for the AT42QT602240/ATMXT224 touchscreen driver */
 struct qt602240_platform_data {
-	struct i2c_slave_platform_data i2c_pdata;
 	unsigned int x_line;
 	unsigned int y_line;
 	unsigned int x_size;
 	unsigned int y_size;
-	unsigned int x_min;
-	unsigned int y_min;
-	unsigned int x_max;
-	unsigned int y_max;
-	unsigned int max_area;
 	unsigned int blen;
 	unsigned int threshold;
 	unsigned int voltage;
 	unsigned char orient;
-	int (*platform_init) (void);
 };
 
 #endif /* __LINUX_QT602240_TS_H */

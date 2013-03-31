@@ -24,6 +24,8 @@
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/kdev_t.h>
 
 #include <linux/usb/composite.h>
 
@@ -306,6 +308,7 @@ static int config_buf(struct usb_configuration *config,
 	struct usb_function		*f;
 	int				status;
 	int				interfaceCount = 0;
+	int				intf_n =0;
 	u8 *dest;
 
 	/* write the config descriptor */
@@ -332,6 +335,7 @@ static int config_buf(struct usb_configuration *config,
 	list_for_each_entry(f, &config->functions, list) {
 		struct usb_descriptor_header **descriptors;
 		struct usb_descriptor_header *descriptor;
+		int redesc = 0;
 
 		if (speed == USB_SPEED_HIGH)
 			descriptors = f->hs_descriptors;
@@ -354,13 +358,30 @@ static int config_buf(struct usb_configuration *config,
 					intf->bInterfaceNumber = interfaceCount++;
 				else
 					intf->bInterfaceNumber = interfaceCount - 1;
+				config->interface[intf->bInterfaceNumber] = f; //interface numer dynamically setting
+				if(f->intf_num_set)
+					redesc = f->intf_num_set(config, f, intf->bInterfaceNumber);
+				printk("[%s]  [%d] %s\n", __func__,__LINE__, f->name);
 			}
 			dest += intf->bLength;
+		}
+
+		if(redesc){
+			if (speed == USB_SPEED_HIGH)
+				descriptors = f->hs_descriptors;
+			else
+				descriptors = f->descriptors;
+			status = usb_descriptor_fillbuf(next, len,
+				(const struct usb_descriptor_header **) descriptors);
+			if (status < 0)
+				return status;
 		}
 
 		len -= status;
 		next += status;
 	}
+	for(intf_n = interfaceCount; intf_n < MAX_CONFIG_INTERFACES; intf_n++)
+		config->interface[intf_n] =0;
 
 	len = next - buf;
 	c->wTotalLength = cpu_to_le16(len);
@@ -542,7 +563,8 @@ static int set_config(struct usb_composite_dev *cdev,
 		if (result < 0) {
 			DBG(cdev, "interface %d (%s/%p) alt 0 --> %d\n",
 					tmp, f->name, f, result);
-
+			printk("interface %d (%s/%p) alt 0 --> %d\n",
+					tmp, f->name, f, result);
 			reset_config(cdev);
 			goto done;
 		}
@@ -807,6 +829,9 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	u16				w_length = le16_to_cpu(ctrl->wLength);
 	struct usb_function		*f = NULL;
 	u8				endp;
+	int tmp = intf;
+	int id = 0;
+
 
 	/* partial re-init of the response message; the function or the
 	 * gadget might need to intercept e.g. a control-OUT completion
@@ -855,9 +880,9 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			 * This is required for MTP.
 			 */
 			if (value < 0) {
-				struct usb_configuration        *cfg;
+				struct usb_configuration        *cfg = NULL;
 				list_for_each_entry(cfg, &cdev->configs, list) {
-					if (cfg && cfg->setup) {
+					if (cfg != NULL && cfg->setup) {
 						value = cfg->setup(cfg, ctrl);
 						if (value >= 0)
 							break;
@@ -890,11 +915,11 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	case USB_REQ_GET_CONFIGURATION:
 		if (ctrl->bRequestType != USB_DIR_IN)
 			goto unknown;
-		if (cdev->config) {
+		if (cdev->config)
 			*(u8 *)req->buf = cdev->config->bConfigurationValue;
-			value = min(w_length, (u16) 1);
-		} else
+		else
 			*(u8 *)req->buf = 0;
+		value = min(w_length, (u16) 1);
 		break;
 
 	/* function drivers must handle get/set altsetting; if there's
@@ -942,11 +967,11 @@ unknown:
 		 * take such requests too, if that's ever needed:  to work
 		 * in config 0, etc.
 		 */
+
 		switch (ctrl->bRequestType & USB_RECIP_MASK) {
 		case USB_RECIP_INTERFACE:
 			if (cdev->config == NULL)
 				return value;
-
 			f = cdev->config->interface[intf];
 			break;
 
@@ -1007,6 +1032,8 @@ unknown:
 
 done:
 	/* device either stalls (value < 0) or reports success */
+	if (cdev->mute_switch)
+		cdev->mute_switch = 0;
 	return value;
 }
 
@@ -1014,6 +1041,10 @@ static void composite_disconnect(struct usb_gadget *gadget)
 {
 	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
 	unsigned long			flags;
+	
+#ifdef CONFIG_USB_SAMSUNG_VBUS_CHECK
+	int b_session=0;
+#endif
 
 	/* REVISIT:  should we have config and device level
 	 * disconnect callbacks?
@@ -1022,10 +1053,24 @@ static void composite_disconnect(struct usb_gadget *gadget)
 	if (cdev->config)
 		reset_config(cdev);
 
+/* mute switch bug fix  */	
+#ifdef CONFIG_USB_SAMSUNG_VBUS_CHECK
+	b_session= gadget->ops->get_vbus_state(gadget);
+
+	if (b_session && cdev->mute_switch)
+		cdev->mute_switch = 0;
+	else
+	{		
+		if ( cdev->mute_switch )
+			cdev->mute_switch=0;
+		schedule_work(&cdev->switch_work);
+	}
+#else
 	if (cdev->mute_switch)
 		cdev->mute_switch = 0;
 	else
 		schedule_work(&cdev->switch_work);
+#endif
 	spin_unlock_irqrestore(&cdev->lock, flags);
 }
 
@@ -1066,12 +1111,16 @@ composite_unbind(struct usb_gadget *gadget)
 			f = list_first_entry(&c->functions,
 					struct usb_function, list);
 			list_del(&f->list);
+			device_remove_file(f->dev, &dev_attr_enable);
+			device_destroy(cdev->driver->class,
+						f->dev->devt);
 			if (f->unbind) {
 				DBG(cdev, "unbind function '%s'/%p\n",
 						f->name, f);
-				f->unbind(c, f);
 				/* may free memory for "f" */
+				f->unbind(c, f);
 			}
+			atomic_dec(&cdev->driver->function_count);
 		}
 		list_del(&c->list);
 		if (c->unbind) {
@@ -1343,4 +1392,6 @@ void usb_composite_unregister(struct usb_composite_driver *driver)
 	if (composite != driver)
 		return;
 	usb_gadget_unregister_driver(&composite_driver);
+	class_destroy(driver->class);
+	driver->class = NULL;
 }

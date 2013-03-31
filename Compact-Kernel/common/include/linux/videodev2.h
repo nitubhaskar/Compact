@@ -631,109 +631,6 @@ struct v4l2_crop {
 	struct v4l2_rect        c;
 };
 
-//BYKIM_CAMACQ
-//#ifdef CONFIG_MACH_GFORCE
-/*
- *	F L A S H   L I G H T   M A N A G E M E N T
- */
-enum v4l2_flash_mode { V4L2_FLASH_DISABLED = 0 ,V4L2_FLASH_FORCED ,V4L2_FLASH_AUTO ,V4L2_PRE_FLASH ,V4L2_FLASH_NOT_AVAIL, NB_FLASH_MODE };
-struct v4l2_flash
-{
-	enum v4l2_flash_mode flash_mode;
-};
-
-/*
- *	M U L T I    C A M E R A    S U P P O R T
- */
-enum v4l2_camera_type { CAPTURE_CAM = 0 , VIDEOTEL_CAM };
-enum v4l2_camera_orientation { PORTRAIT_MODE = 0 , LANDSCAPE_MODE };
-
-struct v4l2_camera_status
-{
-	__u8 nb_camera;
-	enum v4l2_camera_type running_camera;
-	//enum v4l2_camera_orientation camera_orientation;
-};
-
-/* QUERY CAM*/
-struct v4l2_camcap
-{
-  __u8  cam_index;
-  __u32 max_width;
-  __u32 max_height;
-
-};
-
-
-#define MAX_EFX_NAME_LENGTH 12
-#define MAX_EFX_NUMBER 15
-
-struct v4l2_efx
-{
-  char efx_name[MAX_EFX_NAME_LENGTH];
-};
-
-struct v4l2_query_efx
-{
-  __u32		    index;
-  struct v4l2_efx efx;
-};
-
-
-/* About various white balance preset available */
-#define MAX_WB_NAME_LENGTH 20
-#define MAX_WB_NUMBER 15
-struct v4l2_wb_mode
-{
-  char wb_mode_name[MAX_WB_NAME_LENGTH+1]; /*+ SAMSUNG chulspro 20091216 We added carrige return data */
-};
-
-struct v4l2_query_wb_mode
-{
-  __u32		          index;
-  struct v4l2_wb_mode wb_mode;
-};
-
-
-enum v4l2_ctrl_sensitivity {
-	V4L2_CTRL_ISO_AUTO	     = 0,
-    V4L2_CTRL_ISO_50	     = 1,
-	V4L2_CTRL_ISO_100	     = 2,
-	V4L2_CTRL_ISO_200	     = 3,
-	V4L2_CTRL_ISO_400	     = 4,
-	V4L2_CTRL_ISO_800        = 5,
-	V4L2_CTRL_ISO_1600       = 6,
-	V4L2_CTRL_ISO_3200       = 7,
-	V4L2_CTRL_ISO_HJR        = 8,
-};
-
-enum v4l2_ctrl_metering_exposure {
-	V4L2_CTRL_MET_EXP_MATRIX	     = 0,
-	V4L2_CTRL_MET_EXP_CENTERWEIGHTED = 1,
-	V4L2_CTRL_MET_EXP_SPOT  	     = 2,
-};
-
-enum v4l2_ctrl_scene {
-	V4L2_CTRL_SCENE_AUTO = 0,
-	V4L2_CTRL_SCENE_NIGHT,
-	V4L2_CTRL_SCENE_LANDSCAPE,
-	V4L2_CTRL_SCENE_SUNSET ,
-	V4L2_CTRL_SCENE_PORTRAIT,
-	V4L2_CTRL_SCENE_PARTY,
-	V4L2_CTRL_SCENE_SUNRISE,
-	V4L2_CTRL_SCENE_INDOOR,
-	V4L2_CTRL_SCENE_SPORTS,
-	V4L2_CTRL_SCENE_BEACH,
-	V4L2_CTRL_SCENE_SNOW,
-	V4L2_CTRL_SCENE_FALLCOLOR,
-	V4L2_CTRL_SCENE_FIREWORKS,
-	V4L2_CTRL_SCENE_CANDLELIGHT,
-	V4L2_CTRL_SCENE_AGAINSTLIGHT,
-	V4L2_CTRL_SCENE_TEXT,
-	V4L2_CTRL_SCENE_DUSKDAWN,
-};
-//#endif /*MACH_GFORCE*/
-
 /*
  *      A N A L O G   V I D E O   S T A N D A R D
  */
@@ -1000,15 +897,6 @@ struct v4l2_output {
 #define V4L2_OUT_CAP_CUSTOM_TIMINGS	0x00000002 /* Supports S_DV_TIMINGS */
 #define V4L2_OUT_CAP_STD		0x00000004 /* Supports S_STD */
 
-//BYKIM_CAMACQ
-// #ifdef CONFIG_MACH_GFORCE
-#define V4L2_CID_MET_EXP            (V4L2_CID_PRIVATE_BASE+0) /*sensor specific*/
-#define V4L2_CID_SENSITIVITY        (V4L2_CID_PRIVATE_BASE+1) /*sensor specific*/
-#define V4L2_CID_SCENE              (V4L2_CID_PRIVATE_BASE+2) /*sensor specific*/
-#define V4L2_CID_ATFCS_MODE         (V4L2_CID_PRIVATE_BASE+3) /*sensor specific*/
-#define V4L2_CID_PRIVATE_CTRL_MODE  (V4L2_CID_PRIVATE_BASE+4) /*sensor specific*/
-// #endif /*MACH_GFORCE*/
-
 /*
  *	C O N T R O L S
  */
@@ -1128,10 +1016,6 @@ enum v4l2_power_line_frequency {
 	V4L2_CID_POWER_LINE_FREQUENCY_DISABLED	= 0,
 	V4L2_CID_POWER_LINE_FREQUENCY_50HZ	= 1,
 	V4L2_CID_POWER_LINE_FREQUENCY_60HZ	= 2,
-//BYKIM_CAMACQ
-// #ifdef CONFIG_MACH_GFORCE
-	V4L2_CID_POWER_LINE_FREQUENCY_AUTO  = 3,
-// #endif /*MACH_GFORCE*/
 };
 #define V4L2_CID_HUE_AUTO			(V4L2_CID_BASE+25)
 #define V4L2_CID_WHITE_BALANCE_TEMPERATURE	(V4L2_CID_BASE+26)
@@ -1140,14 +1024,6 @@ enum v4l2_power_line_frequency {
 #define V4L2_CID_CHROMA_AGC                     (V4L2_CID_BASE+29)
 #define V4L2_CID_COLOR_KILLER                   (V4L2_CID_BASE+30)
 #define V4L2_CID_COLORFX			(V4L2_CID_BASE+31)
-//BYKIM_CAMACQ
-// #ifdef CONFIG_MACH_GFORCE
-#define V4L2_CID_ROTATE (V4L2_CID_BASE+32)
-#define V4L2_CID_BG_COLOR (V4L2_CID_BASE+33)
-#define V4L2_CID_CHROMA_GAIN (V4L2_CID_BASE+34)
-#define V4L2_CID_EXP_COMPENSATION (V4L2_CID_BASE+35)
-// #endif /*MACH_GFORCE*/
-
 enum v4l2_colorfx {
 	V4L2_COLORFX_NONE	= 0,
 	V4L2_COLORFX_BW		= 1,
@@ -1160,17 +1036,6 @@ enum v4l2_colorfx {
 	V4L2_COLORFX_SKIN_WHITEN = 8,
 	V4L2_COLORFX_VIVID = 9,
 };
-//BYKIM_CAMACQ
-#if  1 //CONFIG_MACH_GFORCE
-#define V4L2_CID_AUTOBRIGHTNESS			(V4L2_CID_BASE+36)
-#define V4L2_CID_BAND_STOP_FILTER		(V4L2_CID_BASE+37)
-
-#define V4L2_CID_AF_FIRMWARE_DOWNLOAD	(V4L2_CID_BASE+38)
-/* last CID + 1 */
-#define V4L2_CID_LASTP1                         (V4L2_CID_BASE+39)
-
-#else /*MACH_GFORCE*/
-
 #define V4L2_CID_AUTOBRIGHTNESS			(V4L2_CID_BASE+32)
 #define V4L2_CID_BAND_STOP_FILTER		(V4L2_CID_BASE+33)
 
@@ -1181,9 +1046,6 @@ enum v4l2_colorfx {
 
 /* last CID + 1 */
 #define V4L2_CID_LASTP1                         (V4L2_CID_BASE+37)
-
-#define V4L2_CID_AF_FIRMWARE_DOWNLOAD	(V4L2_CID_BASE+38)
-#endif /*MACH_GFORCE*/
 
 /*  MPEG-class control IDs defined by V4L2 */
 #define V4L2_CID_MPEG_BASE 			(V4L2_CTRL_CLASS_MPEG | 0x900)
@@ -1464,53 +1326,6 @@ enum v4l2_preemphasis {
 };
 #define V4L2_CID_TUNE_POWER_LEVEL		(V4L2_CID_FM_TX_CLASS_BASE + 113)
 #define V4L2_CID_TUNE_ANTENNA_CAPACITOR		(V4L2_CID_FM_TX_CLASS_BASE + 114)
-//BYKIM_CAMACQ
-// #ifdef CONFIG_MACH_GFORCE
-enum  v4l2_autofocus_ctrl {
-	V4L2_ATFCS_CTRL_OFF = 0,
-	V4L2_ATFCS_CTRL_SINGLE = 1,
-	V4L2_ATFCS_CTRL_CONTINOUS = 2,
-	V4L2_ATFCS_CTRL_INIT = 3,
-	V4L2_ATFSC_CTRL_MAX,
-	V4L2_ATFCS_CTRL_ENUM = 0x7FFFFFFF
-};
-
-enum  v4l2_autofocus_state {
-	V4L2_ATFCS_STT_SEARCHING = V4L2_ATFSC_CTRL_MAX,
-	V4L2_ATFCS_STT_FOCUSED,
-	V4L2_ATFCS_STT_NOT_FOCUSED,
-	V4L2_ATFCS_STT_NOT_SUPPORT,
-	V4L2_ATFCS_STT_ENUM = 0x7FFFFFFF
-};
-
-enum v4l2_autofocus_mode {
-    V4L2_ATFCS_MODE_AUTO = 0,
-    V4L2_ATFCS_MODE_NORMAL = 1,
-    V4L2_ATFCS_MODE_MACRO = 2,
-    V4L2_ATFCS_MODE_INFINITY = 3,
-    V4L2_ATFCS_MODE_FIXED = 4,
-    V4L2_ATFCS_MODE_EDOF = 5,
-
-    V4L2_ATFCS_MODE_RET_AUTO = 100,
-    V4L2_ATFCS_MODE_RET_MACRO = 101,
-
-    V4L2_ATFCS_MODE_ENUM = 0x7FFFFFF
-};
-
-enum  v4l2_flicker_mode {
-	V4L2_FLR_50HZ = 0,
-	V4L2_FLR_60HZ = 1,
-	V4L2_FLR_AUTO = 2,
-	V4L2_FLR_ENUM = 0x7FFFFFFF
-};
-
-enum  v4l2_private_ctrl_mode {
-	V4L2_PRIVATE_CTRL_RETURN_PREVIEW = 0,
-
-    
-	V4L2_PRIVATE_CTRL_ENUM = 0x7FFFFFFF
-};
-// #endif /*MACH_GFORCE*/
 
 /*
  *	T U N I N G

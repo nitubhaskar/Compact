@@ -19,14 +19,15 @@
 #include <linux/seq_file.h>
 #include <linux/screen_info.h>
 #include <linux/init.h>
-#include <linux/kexec.h>
-#include <linux/crash_dump.h>
 #include <linux/root_dev.h>
 #include <linux/cpu.h>
 #include <linux/interrupt.h>
 #include <linux/smp.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
+#ifdef CONFIG_MEMORY_HOTPLUG
+#include <linux/memory_hotplug.h>
+#endif
 
 #include <asm/unified.h>
 #include <asm/cpu.h>
@@ -90,6 +91,8 @@ EXPORT_SYMBOL(system_serial_high);
 unsigned int elf_hwcap;
 EXPORT_SYMBOL(elf_hwcap);
 
+unsigned int boot_reason;
+EXPORT_SYMBOL(boot_reason);
 
 #ifdef MULTI_CPU
 struct processor processor;
@@ -448,6 +451,62 @@ static int __init early_mem(char *p)
 }
 early_param("mem", early_mem);
 
+#ifdef CONFIG_MEMORY_HOTPLUG
+static void __init early_mem_reserved(char **p)
+{
+	unsigned int start;
+	unsigned int size;
+	unsigned int end;
+	unsigned int h_end;
+
+	start = PHYS_OFFSET;
+	size  = memparse(*p, p);
+	if (**p == '@')
+		start = memparse(*p + 1, p);
+
+	if (movable_reserved_start) {
+		end = start + size;
+		h_end = movable_reserved_start + movable_reserved_size;
+		end = max(end, h_end);
+		movable_reserved_start = min(movable_reserved_start,
+			(unsigned long)start);
+		movable_reserved_size = end - movable_reserved_start;
+	} else {
+		movable_reserved_start = start;
+		movable_reserved_size = size;
+	}
+}
+__early_param("mem_reserved=", early_mem_reserved);
+
+static void __init early_mem_low_power(char **p)
+{
+	unsigned int start;
+	unsigned int size;
+	unsigned int end;
+	unsigned int h_end;
+
+	start = PHYS_OFFSET;
+	size  = memparse(*p, p);
+	if (**p == '@')
+		start = memparse(*p + 1, p);
+
+	if (low_power_memory_start) {
+		end = start + size;
+		h_end = low_power_memory_start + low_power_memory_size;
+		end = max(end, h_end);
+		low_power_memory_start = min(low_power_memory_start,
+			(unsigned long)start);
+		low_power_memory_size = end - low_power_memory_start;
+	} else {
+		low_power_memory_start = start;
+		low_power_memory_size = size;
+	}
+
+	arm_add_memory(start, size);
+}
+__early_param("mem_low_power=", early_mem_low_power);
+#endif
+
 static void __init
 setup_ramdisk(int doload, int prompt, int image_start, unsigned int rd_sz)
 {
@@ -540,6 +599,66 @@ static int __init parse_tag_mem32(const struct tag *tag)
 }
 
 __tagtable(ATAG_MEM, parse_tag_mem32);
+
+#ifdef CONFIG_MEMORY_HOTPLUG
+static int __init parse_tag_mem32_reserved(const struct tag *tag)
+{
+	unsigned int start;
+	unsigned int size;
+	unsigned int end;
+	unsigned int h_end;
+
+	start = tag->u.mem.start;
+	size = tag->u.mem.size;
+
+	if (movable_reserved_start) {
+		end = start + size;
+		h_end = movable_reserved_start + movable_reserved_size;
+		end = max(end, h_end);
+		movable_reserved_start = min(movable_reserved_start,
+			(unsigned long)start);
+		movable_reserved_size = end - movable_reserved_start;
+	} else {
+		movable_reserved_start = tag->u.mem.start;
+		movable_reserved_size = tag->u.mem.size;
+	}
+	printk(KERN_ALERT "reserved %lx at %lx for hotplug\n",
+		movable_reserved_size, movable_reserved_start);
+
+	return 0;
+}
+
+__tagtable(ATAG_MEM_RESERVED, parse_tag_mem32_reserved);
+
+static int __init parse_tag_mem32_low_power(const struct tag *tag)
+{
+	unsigned int start;
+	unsigned int size;
+	unsigned int end;
+	unsigned int h_end;
+
+	start = tag->u.mem.start;
+	size = tag->u.mem.size;
+
+	if (low_power_memory_start) {
+		end = start + size;
+		h_end = low_power_memory_start + low_power_memory_size;
+		end = max(end, h_end);
+		low_power_memory_start = min(low_power_memory_start,
+			(unsigned long)start);
+		low_power_memory_size = end - low_power_memory_start;
+	} else {
+		low_power_memory_start = tag->u.mem.start;
+		low_power_memory_size = tag->u.mem.size;
+	}
+	printk(KERN_ALERT "low power memory %lx at %lx\n",
+		low_power_memory_size, low_power_memory_start);
+
+	return arm_add_memory(tag->u.mem.start, tag->u.mem.size);
+}
+
+__tagtable(ATAG_MEM_LOW_POWER, parse_tag_mem32_low_power);
+#endif
 
 #if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
 struct screen_info screen_info = {
@@ -665,79 +784,6 @@ static int __init customize_machine(void)
 }
 arch_initcall(customize_machine);
 
-#ifdef CONFIG_KEXEC
-static inline unsigned long long get_total_mem(void)
-{
-	unsigned long total;
-
-	total = max_low_pfn - min_low_pfn;
-	return total << PAGE_SHIFT;
-}
-
-/**
- * reserve_crashkernel() - reserves memory are for crash kernel
- *
- * This function reserves memory area given in "crashkernel=" kernel command
- * line parameter. The memory reserved is used by a dump capture kernel when
- * primary kernel is crashing.
- */
-static void __init reserve_crashkernel(void)
-{
-	unsigned long long crash_size, crash_base;
-	unsigned long long total_mem;
-	int ret;
-
-	total_mem = get_total_mem();
-	ret = parse_crashkernel(boot_command_line, total_mem,
-				&crash_size, &crash_base);
-	if (ret)
-		return;
-
-	ret = reserve_bootmem(crash_base, crash_size, BOOTMEM_EXCLUSIVE);
-	if (ret < 0) {
-		printk(KERN_WARNING "crashkernel reservation failed - "
-		       "memory is in use (0x%lx)\n", (unsigned long)crash_base);
-		return;
-	}
-
-	printk(KERN_INFO "Reserving %ldMB of memory at %ldMB "
-	       "for crashkernel (System RAM: %ldMB)\n",
-	       (unsigned long)(crash_size >> 20),
-	       (unsigned long)(crash_base >> 20),
-	       (unsigned long)(total_mem >> 20));
-
-	crashk_res.start = crash_base;
-	crashk_res.end = crash_base + crash_size - 1;
-	insert_resource(&iomem_resource, &crashk_res);
-}
-#else
-static inline void reserve_crashkernel(void) {}
-#endif /* CONFIG_KEXEC */
-
-/*
- * Note: elfcorehdr_addr is not just limited to vmcore. It is also used by
- * is_kdump_kernel() to determine if we are booting after a panic. Hence
- * ifdef it under CONFIG_CRASH_DUMP and not CONFIG_PROC_VMCORE.
- */
-
-#ifdef CONFIG_CRASH_DUMP
-/*
- * elfcorehdr= specifies the location of elf core header stored by the crashed
- * kernel. This option will be passed by kexec loader to the capture kernel.
- */
-static int __init setup_elfcorehdr(char *arg)
-{
-	char *end;
-
-	if (!arg)
-		return -EINVAL;
-
-	elfcorehdr_addr = memparse(arg, &end);
-	return end > arg ? 0 : -EINVAL;
-}
-early_param("elfcorehdr", setup_elfcorehdr);
-#endif /* CONFIG_CRASH_DUMP */
-
 void __init setup_arch(char **cmdline_p)
 {
 	struct tag *tags = (struct tag *)&init_tags;
@@ -797,7 +843,6 @@ void __init setup_arch(char **cmdline_p)
 #ifdef CONFIG_SMP
 	smp_init_cpus();
 #endif
-	reserve_crashkernel();
 
 	cpu_init();
 	tcm_init();

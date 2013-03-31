@@ -20,33 +20,21 @@
  *  published by the Free Software Foundation.
  */
 
-/*******************************************************************************
-* Copyright 2010 Broadcom Corporation.  All rights reserved.
-*
-* 	@file	drivers/input/touchscreen/tsc2007.c
-*
-* Unless you and Broadcom execute a separate written software license agreement
-* governing use of this software, this software is licensed to you under the
-* terms of the GNU General Public License version 2, available at
-* http://www.gnu.org/copyleft/gpl.html (the "GPL").
-*
-* Notwithstanding the above, under no circumstances may you combine this
-* software in any way with any other Broadcom software provided under a license
-* other than the GPL, without Broadcom's express prior written consent.
-*******************************************************************************/
-
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/i2c.h>
 #include <linux/i2c/tsc2007.h>
+#include <linux/pm.h>
+
+#if defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
+#define TSC2007_SUSPEND_LEVEL 1
+#endif
 
-#include <linux/time.h>
-
-#define TS_POLL_DELAY			1	/* ms delay between samples */
-#define TS_POLL_PERIOD			20	/* ms delay between samples */
+#define TS_POLL_DELAY			1 /* ms delay between samples */
+#define TS_POLL_PERIOD			1 /* ms delay between samples */
 
 #define TSC2007_MEASURE_TEMP0		(0x0 << 4)
 #define TSC2007_MEASURE_AUX		(0x2 << 4)
@@ -79,44 +67,36 @@
 #define PWRDOWN		(TSC2007_12BIT | TSC2007_POWER_OFF_IRQ_EN)
 
 struct ts_event {
-	u16 x;
-	u16 y;
-	u16 z1, z2;
+	u16	x;
+	u16	y;
+	u16	z1, z2;
 };
 
 struct tsc2007 {
-	struct tsc2007_platform_data *pdata;
-	struct input_dev *input;
-	char phys[32];
-	struct delayed_work work;
+	struct input_dev	*input;
+	char			phys[32];
+	struct delayed_work	work;
 
-	struct i2c_client *client;
-	struct early_suspend early_suspend;
+	struct i2c_client	*client;
 
-	u16 model;
-	u16 x_plate_ohms;
+	u16			model;
+	u16			x_plate_ohms;
 
-	bool pendown;
-	int irq;
+	bool			pendown;
+	int			irq;
 
-	int (*get_pendown_state) (void);
-	void (*clear_penirq) (void);
-};
+	bool			invert_x;
+	bool			invert_y;
+	bool			invert_z1;
+	bool			invert_z2;
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void tsc2007_early_suspend(struct early_suspend *h);
-static void tsc2007_late_resume(struct early_suspend *h);
+	int			(*get_pendown_state)(void);
+	void			(*clear_penirq)(void);
+	int			(*power_shutdown)(bool);
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+	struct early_suspend	early_suspend;
 #endif
-
-/* #undef BCM_TS_EVENT_REGULATION */
-#define BCM_TS_EVENT_REGULATION
-
-#ifdef BCM_TS_EVENT_REGULATION
-/* regulate event report rate */
-#define TS_EVENT_RATE	12	/* maximum number of touch screen event per second */
-#define TS_EVENT_REGULATE_WINDOW (HZ / TS_EVENT_RATE)	/* minimum jiffies between two reported touch screen events */
-static uint32_t ts_last_time;
-#endif /* BCM_TS_EVENT_REGULATION */
+};
 
 static inline int tsc2007_xfer(struct tsc2007 *tsc, u8 cmd)
 {
@@ -142,15 +122,27 @@ static inline int tsc2007_xfer(struct tsc2007 *tsc, u8 cmd)
 
 static void tsc2007_read_values(struct tsc2007 *tsc, struct ts_event *tc)
 {
-	/* y- still on; turn on only y + (and ADC) */
+	/* y- still on; turn on only y+ (and ADC) */
 	tc->y = tsc2007_xfer(tsc, READ_Y);
 
-	/* turn y- off, x + on, then leave in lowpower */
+	/* turn y- off, x+ on, then leave in lowpower */
 	tc->x = tsc2007_xfer(tsc, READ_X);
 
-	/* turn y + off, x- on; we'll use formula #1 */
+	/* turn y+ off, x- on; we'll use formula #1 */
 	tc->z1 = tsc2007_xfer(tsc, READ_Z1);
 	tc->z2 = tsc2007_xfer(tsc, READ_Z2);
+
+	if (tsc->invert_x == true)
+		tc->x = MAX_12BIT - tc->x;
+
+	if (tsc->invert_y == true)
+		tc->y = MAX_12BIT - tc->y;
+
+	if (tsc->invert_z1 == true)
+		tc->z1 = MAX_12BIT - tc->z1;
+
+	if (tsc->invert_z2 == true)
+		tc->z2 = MAX_12BIT - tc->z2;
 
 	/* Prepare for next touch reading - power down ADC, enable PENIRQ */
 	tsc2007_xfer(tsc, PWRDOWN);
@@ -187,20 +179,13 @@ static void tsc2007_send_up_event(struct tsc2007 *tsc)
 	input_sync(input);
 }
 
-#define to_delayed_work(_work) container_of(_work, struct delayed_work, work)
-
-#define REPORT_X	(ts->pdata->get_x_value(ts->pdata, tc.x, MAX_12BIT))
-#define REPORT_Y	(ts->pdata->get_y_value(ts->pdata, tc.y, MAX_12BIT))
-
 static void tsc2007_work(struct work_struct *work)
 {
 	struct tsc2007 *ts =
-	    container_of(to_delayed_work(work), struct tsc2007, work);
+		container_of(to_delayed_work(work), struct tsc2007, work);
 	struct ts_event tc;
 	u32 rt;
-#ifdef BCM_TS_EVENT_REGULATION
-	uint32_t ts_this_time;
-#endif
+
 	/*
 	 * NOTE: We can't rely on the pressure to determine the pen down
 	 * state, even though this controller has a pressure sensor.
@@ -238,7 +223,6 @@ static void tsc2007_work(struct work_struct *work)
 	}
 
 	if (rt) {
-/*              static int ts_counter = 0; */
 		struct input_dev *input = ts->input;
 
 		if (!ts->pendown) {
@@ -247,37 +231,16 @@ static void tsc2007_work(struct work_struct *work)
 			input_report_key(input, BTN_TOUCH, 1);
 			ts->pendown = true;
 		}
-#ifdef BCM_TS_EVENT_REGULATION
-		ts_this_time = jiffies;
-		if (ts_last_time == 0)
-			ts_last_time = ts_this_time - TS_EVENT_REGULATE_WINDOW;
 
-		if (ts_this_time - ts_last_time >= TS_EVENT_REGULATE_WINDOW) {
-			ts_last_time = ts_this_time;
-
-			input_report_abs(input, ABS_X, REPORT_X);
-			input_report_abs(input, ABS_Y, REPORT_Y);
-			input_report_abs(input, ABS_PRESSURE, rt);
-			input_sync(input);
-
-			dev_dbg(&ts->client->dev,
-				"point(%4d,%4d), pressure (%4u)\n", REPORT_X,
-				REPORT_Y, rt);
-
-			/* pr_info("ts#=%d ts_this_time=%u\n",
-			   ts_counter++, ts_this_time); */
-			pr_info("TS point(%4d,%4d), pressure (%4u)\n",
-				REPORT_X, REPORT_Y, rt);
-		}
-#else /* BCM_TS_EVENT_REGULATION */
-		input_report_abs(input, ABS_X, REPORT_X);
-		input_report_abs(input, ABS_Y, REPORT_Y);
+		input_report_abs(input, ABS_X, tc.x);
+		input_report_abs(input, ABS_Y, tc.y);
 		input_report_abs(input, ABS_PRESSURE, rt);
+
 		input_sync(input);
 
 		dev_dbg(&ts->client->dev, "point(%4d,%4d), pressure (%4u)\n",
-			REPORT_X, REPORT_Y, rt);
-#endif
+			tc.x, tc.y, rt);
+
 	} else if (!ts->get_pendown_state && ts->pendown) {
 		/*
 		 * We don't have callback to check pendown state, so we
@@ -288,7 +251,7 @@ static void tsc2007_work(struct work_struct *work)
 		ts->pendown = false;
 	}
 
-      out:
+ out:
 	if (ts->pendown)
 		schedule_delayed_work(&ts->work,
 				      msecs_to_jiffies(TS_POLL_PERIOD));
@@ -325,40 +288,70 @@ static void tsc2007_free_irq(struct tsc2007 *ts)
 	}
 }
 
-static int tsc2007_suspend(struct i2c_client *client, pm_message_t mesg)
+#ifdef CONFIG_PM
+static int tsc2007_suspend(struct device *dev)
 {
-	struct tsc2007 *ts;
+	int rc;
+	struct tsc2007	*ts = dev_get_drvdata(dev);
 
-	ts = i2c_get_clientdata(client);
-	cancel_work_sync(&ts->work.work);
 	disable_irq(ts->irq);
-	return 0;
 
+	if (cancel_delayed_work_sync(&ts->work))
+		enable_irq(ts->irq);
+
+	if (ts->power_shutdown) {
+		rc = ts->power_shutdown(true);
+		if (rc) {
+			pr_err("%s: Power off failed, suspend failed (%d)\n",
+							__func__, rc);
+			return rc;
+		}
+	}
+
+	return 0;
 }
 
-static int tsc2007_resume(struct i2c_client *client)
+static int tsc2007_resume(struct device *dev)
 {
-	struct tsc2007 *ts;
+	int rc;
+	struct tsc2007	*ts = dev_get_drvdata(dev);
 
-	ts = i2c_get_clientdata(client);
+	if (ts->power_shutdown) {
+		rc = ts->power_shutdown(false);
+		if (rc) {
+			pr_err("%s: Power on failed, resume failed (%d)\n",
+							 __func__, rc);
+			return rc;
+		}
+	}
+
 	enable_irq(ts->irq);
+
 	return 0;
 }
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void tsc2007_early_suspend(struct early_suspend *h)
 {
-	struct tsc2007 *ts;
-	ts = container_of(h, struct tsc2007, early_suspend);
-	tsc2007_suspend(ts->client, PMSG_SUSPEND);
+	struct tsc2007 *ts = container_of(h, struct tsc2007, early_suspend);
+
+	tsc2007_suspend(&ts->client->dev);
 }
 
 static void tsc2007_late_resume(struct early_suspend *h)
 {
-	struct tsc2007 *ts;
-	ts = container_of(h, struct tsc2007, early_suspend);
-	tsc2007_resume(ts->client);
+	struct tsc2007 *ts = container_of(h, struct tsc2007, early_suspend);
+
+	tsc2007_resume(&ts->client->dev);
 }
+#endif
+
+static const struct dev_pm_ops tsc2007_pm_ops = {
+#ifndef CONFIG_HAS_EARLYSUSPEND
+	.suspend	= tsc2007_suspend,
+	.resume		= tsc2007_resume,
+#endif
+};
 #endif
 
 static int __devinit tsc2007_probe(struct i2c_client *client,
@@ -369,7 +362,6 @@ static int __devinit tsc2007_probe(struct i2c_client *client,
 	struct input_dev *input_dev;
 	int err;
 
-	pr_info("tsc2007_probe\n");
 	if (!pdata) {
 		dev_err(&client->dev, "platform data is required!\n");
 		return -EINVAL;
@@ -386,16 +378,20 @@ static int __devinit tsc2007_probe(struct i2c_client *client,
 		goto err_free_mem;
 	}
 
-	ts->pdata = pdata;
 	ts->client = client;
 	ts->irq = client->irq;
 	ts->input = input_dev;
 	INIT_DELAYED_WORK(&ts->work, tsc2007_work);
 
-	ts->model = pdata->model;
-	ts->x_plate_ohms = pdata->x_plate_ohms;
+	ts->model             = pdata->model;
+	ts->x_plate_ohms      = pdata->x_plate_ohms;
 	ts->get_pendown_state = pdata->get_pendown_state;
-	ts->clear_penirq = pdata->clear_penirq;
+	ts->clear_penirq      = pdata->clear_penirq;
+	ts->invert_x	      = pdata->invert_x;
+	ts->invert_y	      = pdata->invert_y;
+	ts->invert_z1	      = pdata->invert_z1;
+	ts->invert_z2	      = pdata->invert_z2;
+	ts->power_shutdown    = pdata->power_shutdown;
 
 	snprintf(ts->phys, sizeof(ts->phys),
 		 "%s/input0", dev_name(&client->dev));
@@ -414,8 +410,8 @@ static int __devinit tsc2007_probe(struct i2c_client *client,
 	if (pdata->init_platform_hw)
 		pdata->init_platform_hw();
 
-	err = request_irq(ts->irq, tsc2007_irq, 0,
-			  client->dev.driver->name, ts);
+	err = request_irq(ts->irq, tsc2007_irq, pdata->irq_flags,
+			client->dev.driver->name, ts);
 	if (err < 0) {
 		dev_err(&client->dev, "irq %d busy?\n", ts->irq);
 		goto err_free_mem;
@@ -430,22 +426,23 @@ static int __devinit tsc2007_probe(struct i2c_client *client,
 	if (err)
 		goto err_free_irq;
 
-	i2c_set_clientdata(client, ts);
-
 #ifdef CONFIG_HAS_EARLYSUSPEND
-	ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
+	ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN +
+						TSC2007_SUSPEND_LEVEL;
 	ts->early_suspend.suspend = tsc2007_early_suspend;
 	ts->early_suspend.resume = tsc2007_late_resume;
 	register_early_suspend(&ts->early_suspend);
 #endif
 
+	i2c_set_clientdata(client, ts);
+
 	return 0;
 
-      err_free_irq:
+ err_free_irq:
 	tsc2007_free_irq(ts);
 	if (pdata->exit_platform_hw)
 		pdata->exit_platform_hw();
-      err_free_mem:
+ err_free_mem:
 	input_free_device(input_dev);
 	kfree(ts);
 	return err;
@@ -453,7 +450,7 @@ static int __devinit tsc2007_probe(struct i2c_client *client,
 
 static int __devexit tsc2007_remove(struct i2c_client *client)
 {
-	struct tsc2007 *ts = i2c_get_clientdata(client);
+	struct tsc2007	*ts = i2c_get_clientdata(client);
 	struct tsc2007_platform_data *pdata = client->dev.platform_data;
 
 	tsc2007_free_irq(ts);
@@ -461,6 +458,9 @@ static int __devexit tsc2007_remove(struct i2c_client *client)
 	if (pdata->exit_platform_hw)
 		pdata->exit_platform_hw();
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
+	unregister_early_suspend(&ts->early_suspend);
+#endif
 	input_unregister_device(ts->input);
 	kfree(ts);
 
@@ -468,24 +468,23 @@ static int __devexit tsc2007_remove(struct i2c_client *client)
 }
 
 static const struct i2c_device_id tsc2007_idtable[] = {
-	{"tsc2007", 0},
-	{}
+	{ "tsc2007", 0 },
+	{ }
 };
 
 MODULE_DEVICE_TABLE(i2c, tsc2007_idtable);
 
 static struct i2c_driver tsc2007_driver = {
 	.driver = {
-		   .owner = THIS_MODULE,
-		   .name = "tsc2007"},
-	.id_table = tsc2007_idtable,
-	.probe = tsc2007_probe,
-	.remove = __devexit_p(tsc2007_remove),
-#ifndef CONFIG_HAS_EARLYSUSPEND
-	.suspend = tsc2007_suspend,
-	.resume = tsc2007_resume,
+		.owner	= THIS_MODULE,
+		.name	= "tsc2007",
+#ifdef CONFIG_PM
+		.pm = &tsc2007_pm_ops,
 #endif
-
+	},
+	.id_table	= tsc2007_idtable,
+	.probe		= tsc2007_probe,
+	.remove		= __devexit_p(tsc2007_remove),
 };
 
 static int __init tsc2007_init(void)

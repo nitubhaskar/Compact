@@ -122,34 +122,20 @@ done:
 /* --- other auxiliary functions --------------------------------------	*/
 static void i2c_start(struct i2c_algo_bit_data *adap)
 {
-#ifdef CONFIG_MAX8986_WORKAROUND
-	sclhi(adap);
-	sdahi(adap);
-	sdalo(adap);
-	scllo(adap);
-#else
 	/* assert: scl, sda are high */
 	setsda(adap, 0);
 	udelay(adap->udelay);
 	scllo(adap);
-#endif
 }
 
 static void i2c_repstart(struct i2c_algo_bit_data *adap)
 {
-#ifdef CONFIG_MAX8986_WORKAROUND
-	scllo(adap);
-	sdalo(adap);
-	sclhi(adap);
-	sdahi(adap);
-#else
 	/* assert: scl is low */
 	sdahi(adap);
 	sclhi(adap);
 	setsda(adap, 0);
 	udelay(adap->udelay);
 	scllo(adap);
-#endif
 }
 
 

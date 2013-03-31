@@ -27,10 +27,5 @@ int pwm_enable(struct pwm_device *pwm);
  * pwm_disable - stop a PWM output toggling
  */
 void pwm_disable(struct pwm_device *pwm);
-/*
- * pwm_setmode - configure channel to device specific mode. the mode
- * parameter value is implementation specific.
- */
-int pwm_setmode(struct pwm_device *dev, int mode);
 
 #endif /* __LINUX_PWM_H */

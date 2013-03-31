@@ -27,12 +27,26 @@
 #include <linux/smp_lock.h>
 #include "input-compat.h"
 
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+#include <mach/gpio.h>
+#include <linux/irq.h>
+#endif
+
+#ifdef CONFIG_KERNEL_DEBUG_SEC
+#include <asm/cacheflush.h>
+#endif
+
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@suse.cz>");
 MODULE_DESCRIPTION("Input core");
 MODULE_LICENSE("GPL");
 
 #define INPUT_DEVICES	256
 
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+extern unsigned int Volume_Up_irq;
+extern unsigned int Volume_Down_irq;
+static unsigned int Suspend_Resume = 1;
+#endif
 /*
  * EV_ABS events which should not be cached are listed here.
  */
@@ -64,8 +78,6 @@ static LIST_HEAD(input_handler_list);
 static DEFINE_MUTEX(input_mutex);
 
 static struct input_handler *input_table[8];
-
-extern int debug_level;
 
 static inline int is_event_supported(unsigned int code,
 				     unsigned long *bm, unsigned int max)
@@ -331,46 +343,36 @@ void input_event(struct input_dev *dev,
 {
 	unsigned long flags;
 
-	// forced ramdump 
-	static unsigned int bcm_forcedramdump = 0 ;
+#ifdef CONFIG_KERNEL_DEBUG_SEC
+/*
+ *  Forced upload mode key string
+ *  dependency : input.h
+ */
 
-	if(value)
-	{
-		#if defined(CONFIG_TOUCHSCREEN_MMS128_REV04)
-			if((strcmp(dev->name,"max8986_ponkey")==0) && (code == KEY_POWER))
-		#else
-			if((strcmp(dev->name,"sec_keypad")==0) && (code == KEY_HOME))
-		#endif
-				bcm_forcedramdump = 0x01;
+       static bool first=0, second=0, third = 0;
 
-			if((strcmp(dev->name,"sec_keypad")==0) && (code == KEY_VOLUMEUP))
-				bcm_forcedramdump += 0x02;				
+       if(value)
+       {
+            if(code==KERNEL_SEC_FORCED_UPLOAD_1ST_KEY)
+            {
+                first =1;
+            }
+            if(first==1 && code==KERNEL_SEC_FORCED_UPLOAD_2ND_KEY)
+            {
+				flush_cache_all();
+				panic("Reboot to RAMDUMP Mode");
+            }
+       }
+       else
+       {
+            if(code==KERNEL_SEC_FORCED_UPLOAD_1ST_KEY)
+            {
+                first = 0;
+            }
+       }
 
-		#if defined(CONFIG_TOUCHSCREEN_MMS128_REV04)		
-			if((strcmp(dev->name,"sec_keypad")==0) && (code == KEY_VOLUMEDOWN))
-				bcm_forcedramdump += 0x04;
-		#endif
+#endif // CONFIG_KERNEL_DEBUG_SEC
 
-		#if defined(CONFIG_TOUCHSCREEN_MMS128_REV04)
-			if(bcm_forcedramdump == 0x07) 
-		#else
-			if(bcm_forcedramdump == 0x03) 
-		#endif
-			{
-				if(debug_level==2||debug_level==1)
-				{
-					bcm_forcedramdump = 0;
-					panic("Forced Ramdump !!\n");
-				}
-			}
-	}
-		
-	if((bcm_forcedramdump > 0) && (code != 0) && (value == 0))
-	{
-			bcm_forcedramdump = 0;
-	}
-	// forced ramdump 
-	
 	if (is_event_supported(type, dev->evbit, EV_MAX)) {
 
 		spin_lock_irqsave(&dev->event_lock, flags);
@@ -821,6 +823,16 @@ static int input_attach_handler(struct input_dev *dev, struct input_handler *han
 	id = input_match_device(handler, dev);
 	if (!id)
 		return -ENODEV;
+
+	if(strcmp(dev->name,"accelerometer_sensor")==0 && strcmp(handler->name,"cpufreq_ond")==0)
+	 {
+	 	return -ENODEV;
+	 }
+
+	if(strcmp(dev->name,"accel")==0 && strcmp(handler->name,"cpufreq_ond")==0)
+	 {
+	 	return -ENODEV;
+	 }
 
 	error = handler->connect(handler, dev, id);
 	if (error && error != -ENODEV)
@@ -1464,6 +1476,14 @@ static int input_dev_suspend(struct device *dev)
 
 	mutex_lock(&input_dev->mutex);
 	input_dev_reset(input_dev, false);
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+	if(Suspend_Resume)
+	{
+		set_irq_type(Volume_Up_irq, IRQ_TYPE_EDGE_RISING);
+		set_irq_type(Volume_Down_irq, IRQ_TYPE_EDGE_RISING);
+	}
+	Suspend_Resume = 0;
+#endif
 	mutex_unlock(&input_dev->mutex);
 
 	return 0;
@@ -1475,6 +1495,14 @@ static int input_dev_resume(struct device *dev)
 
 	mutex_lock(&input_dev->mutex);
 	input_dev_reset(input_dev, true);
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+	if(!Suspend_Resume)
+	{
+		set_irq_type(Volume_Up_irq, IRQ_TYPE_LEVEL_LOW);
+		set_irq_type(Volume_Down_irq, IRQ_TYPE_LEVEL_LOW);
+	}
+	Suspend_Resume = 1;
+#endif
 	mutex_unlock(&input_dev->mutex);
 
 	return 0;
@@ -1979,6 +2007,9 @@ static void __init input_init_abs_bypass(void)
 static int __init input_init(void)
 {
 	int err;
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+	Suspend_Resume = 1;
+#endif
 
 	input_init_abs_bypass();
 

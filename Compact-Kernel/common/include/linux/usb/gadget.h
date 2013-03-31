@@ -112,18 +112,6 @@ struct usb_ep_ops {
 		gfp_t gfp_flags);
 	void (*free_request) (struct usb_ep *ep, struct usb_request *req);
 
-#ifdef CONFIG_USB_GADGET_USE_LOWLEVEL_ALLOC_BUFFER
-	void *(*alloc_buffer) (struct usb_ep *ep, unsigned bytes,
-		dma_addr_t *dma, int gfp_flags);
-	void (*free_buffer) (struct usb_ep *ep, void *buf, dma_addr_t dma,
-		unsigned bytes);
-#endif
-
-#ifdef CONFIG_USB_GADGET_USE_DMA_MAP
-	int (*queue_dma) (struct usb_ep *ep, struct usb_request *req,
-		gfp_t gfp_flags);
-#endif
-
 	int (*queue) (struct usb_ep *ep, struct usb_request *req,
 		gfp_t gfp_flags);
 	int (*dequeue) (struct usb_ep *ep, struct usb_request *req);
@@ -133,7 +121,6 @@ struct usb_ep_ops {
 
 	int (*fifo_status) (struct usb_ep *ep);
 	void (*fifo_flush) (struct usb_ep *ep);
-	void (*setup_in_status_phase) (struct usb_ep *ep, struct usb_request *req);
 };
 
 /**
@@ -243,51 +230,6 @@ static inline void usb_ep_free_request(struct usb_ep *ep,
 	ep->ops->free_request(ep, req);
 }
 
-#ifdef CONFIG_USB_GADGET_USE_LOWLEVEL_ALLOC_BUFFER
-
-/**
- * usb_ep_alloc_buffer - allocate an I/O buffer
- * @param ep the endpoint associated with the buffer
- * @param len:length of the desired buffer
- * @param dma:pointer to the buffer's DMA address; must be valid
- * @param gfp_flags:GFP_* flags to use
- *
- * Returns a new buffer, or null if one could not be allocated.
- * The buffer is suitably aligned for dma, if that endpoint uses DMA,
- * and the caller won't have to care about dma-inconsistency
- * or any hidden "bounce buffer" mechanism.  No additional per-request
- * DMA mapping will be required for such buffers.
- * Free it later with usb_ep_free_buffer().
- *
- * You don't need to use this call to allocate I/O buffers unless you
- * want to make sure drivers don't incur costs for such "bounce buffer"
- * copies or per-request DMA mappings.
- */
-static inline void *
-usb_ep_alloc_buffer (struct usb_ep *ep, unsigned len, dma_addr_t *dma,
-	int gfp_flags)
-{
-	return ep->ops->alloc_buffer (ep, len, dma, gfp_flags);
-}
-
-/**
- * usb_ep_free_buffer - frees an i/o buffer
- * @param ep the endpoint associated with the buffer
- * @param buf CPU view address of the buffer
- * @param dma the buffer's DMA address
- * @param len length of the buffer
- *
- * reverses the effect of usb_ep_alloc_buffer().
- * caller guarantees the buffer will no longer be accessed
- */
-static inline void
-usb_ep_free_buffer (struct usb_ep *ep, void *buf, dma_addr_t dma, unsigned len)
-{
-	ep->ops->free_buffer (ep, buf, dma, len);
-}
-
-#endif
-
 /**
  * usb_ep_queue - queues (submits) an I/O request to an endpoint.
  * @ep:the endpoint associated with the request
@@ -350,14 +292,6 @@ static inline int usb_ep_queue(struct usb_ep *ep,
 {
 	return ep->ops->queue(ep, req, gfp_flags);
 }
-
-#ifdef CONFIG_USB_GADGET_USE_DMA_MAP
-static inline int
-usb_ep_queue_dma (struct usb_ep *ep, struct usb_request *req, gfp_t gfp_flags)
-{
-	return ep->ops->queue_dma (ep, req, gfp_flags);
-}
-#endif
 
 /**
  * usb_ep_dequeue - dequeues (cancels, unlinks) an I/O request from an endpoint
@@ -495,7 +429,10 @@ struct usb_gadget_ops {
 	int	(*vbus_draw) (struct usb_gadget *, unsigned mA);
 	int	(*pullup) (struct usb_gadget *, int is_on);
 	int	(*ioctl)(struct usb_gadget *,
-				unsigned code, unsigned long param);
+	unsigned code, unsigned long param);
+#ifdef CONFIG_USB_SAMSUNG_VBUS_CHECK
+	int    (*get_vbus_state)(struct usb_gadget *);
+#endif 
 };
 
 /**
@@ -552,6 +489,7 @@ struct usb_gadget {
 	unsigned			b_hnp_enable:1;
 	unsigned			a_hnp_support:1;
 	unsigned			a_alt_hnp_support:1;
+	unsigned			host_request:1;
 	const char			*name;
 	struct device			dev;
 };

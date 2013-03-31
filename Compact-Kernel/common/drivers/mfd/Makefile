@@ -31,11 +31,25 @@ obj-$(CONFIG_MFD_WM8994)	+= wm8994-core.o wm8994-irq.o
 
 obj-$(CONFIG_TPS65010)		+= tps65010.o
 obj-$(CONFIG_TPS6507X)		+= tps6507x.o
+obj-$(CONFIG_MARIMBA_CODEC)     += marimba-codec.o
 obj-$(CONFIG_MENELAUS)		+= menelaus.o
 
 obj-$(CONFIG_TWL4030_CORE)	+= twl-core.o twl4030-irq.o twl6030-irq.o
 obj-$(CONFIG_TWL4030_POWER)    += twl4030-power.o
 obj-$(CONFIG_TWL4030_CODEC)	+= twl4030-codec.o
+
+obj-$(CONFIG_MARIMBA_CORE)	+= marimba-core.o
+obj-$(CONFIG_MARIMBA_TSADC)	+= marimba-tsadc.o
+obj-$(CONFIG_BAHAMA_CORE)	+= bahama-core.o
+obj-$(CONFIG_TPS65023)		+= tps65023.o
+
+obj-$(CONFIG_TIMPANI_CODEC)	+= timpani-codec.o
+
+ifdef CONFIG_TIMPANI_CODEC
+obj-$(CONFIG_TIMPANI_CODEC) += msm-adie-codec.o
+else ifdef CONFIG_MARIMBA_CODEC
+obj-$(CONFIG_MARIMBA_CODEC) += msm-adie-codec.o
+endif
 
 obj-$(CONFIG_MFD_MC13783)	+= mc13783-core.o
 
@@ -64,8 +78,6 @@ obj-$(CONFIG_PCF50633_GPIO)	+= pcf50633-gpio.o
 obj-$(CONFIG_ABX500_CORE)	+= abx500-core.o
 obj-$(CONFIG_AB3100_CORE)	+= ab3100-core.o
 obj-$(CONFIG_AB3100_OTP)	+= ab3100-otp.o
-obj-$(CONFIG_MFD_BCM59035)      += bcm59035-core.o
-obj-$(CONFIG_MFD_BCM59038)      += bcm59038-core.o
 obj-$(CONFIG_AB3550_CORE)	+= ab3550-core.o
 obj-$(CONFIG_AB8500_CORE)	+= ab8500-core.o ab8500-spi.o
 obj-$(CONFIG_MFD_TIMBERDALE)    += timberdale.o
@@ -73,6 +85,5 @@ obj-$(CONFIG_PMIC_ADP5520)	+= adp5520.o
 obj-$(CONFIG_LPC_SCH)		+= lpc_sch.o
 obj-$(CONFIG_MFD_RDC321X)	+= rdc321x-southbridge.o
 obj-$(CONFIG_MFD_JANZ_CMODIO)	+= janz-cmodio.o
-obj-$(CONFIG_MFD_MAX8986)       += max8986-core.o
-d2041-objs			:= d2041-core.o d2041-irq.o d2041-i2c.o
-obj-$(CONFIG_MFD_D2041)		+= d2041.o
+obj-$(CONFIG_PMIC8058)		+= pmic8058.o
+obj-$(CONFIG_PMIC8901)		+= pmic8901.o

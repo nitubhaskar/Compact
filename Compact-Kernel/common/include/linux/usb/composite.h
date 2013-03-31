@@ -38,14 +38,6 @@
 #include <linux/usb/gadget.h>
 #include <linux/switch.h>
 
-/*
- * USB function drivers should return USB_GADGET_DELAYED_STATUS if they
- * wish to delay the data/status stages of the control transfer till they
- * are ready. The control transfer will then be kept from completing till
- * all the function drivers that requested for USB_GADGET_DELAYED_STAUS
- * invoke usb_composite_setup_continue().
- */
-#define USB_GADGET_DELAYED_STATUS       0x7fff	/* Impossibly large value */
 
 struct usb_composite_dev;
 struct usb_configuration;
@@ -113,6 +105,7 @@ struct usb_function {
 
 	/* disabled is zero if the function is enabled */
 	int				disabled;
+	int			(*intf_num_set)(struct usb_configuration *, struct usb_function *, int intf_id);
 
 	/* REVISIT:  bind() functions can be marked __init, which
 	 * makes trouble for section mismatch analysis.  See if
@@ -153,10 +146,6 @@ int usb_interface_id(struct usb_configuration *, struct usb_function *);
 
 void usb_function_set_enabled(struct usb_function *, int);
 void usb_composite_force_reset(struct usb_composite_dev *);
-
-void set_usb_interface(struct usb_function *function, unsigned id, bool is_on);
-void set_current_usb_config(unsigned char is_android);
-extern void usb_composite_setup_continue(struct usb_composite_dev *cdev);
 
 /**
  * ep_choose - select descriptor endpoint at current device speed
@@ -363,21 +352,12 @@ struct usb_composite_dev {
 	 */
 	unsigned			deactivations;
 
-	/* the composite driver won't complete the control transfer's
-	 * data/status stages till delayed_status is zero.
-	 */
-	int				delayed_status;
-
-	/* protects deactivations and delayed_status counts*/
+	/* protects at least deactivation count */
 	spinlock_t			lock;
 
-	/* switch indicating connected/disconnected state */
-       struct switch_dev               sw_connected;
-        /* switch indicating current configuration */
-        struct switch_dev               sw_config;
-        /* current connected state for sw_connected */
-        bool                            connected;
- 
+	struct switch_dev sdev;
+	/* used by usb_composite_force_reset to avoid signalling switch changes */
+	bool				mute_switch;
 	struct work_struct switch_work;
 };
 

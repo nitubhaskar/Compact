@@ -195,35 +195,24 @@ config REGULATOR_TPS6507X
 	  three step-down converters and two general-purpose LDO voltage regulators.
 	  It supports TI's software based Class-2 SmartReflex implementation.
 
-config REGULATOR_BCM59035
-        tristate "Broadcom BCM59035 PMU regulator driver"
-        depends on MFD_BCM59035
-        help
-          Say y here to support Broadcom BCM59035 PMU regulator driver
-
-config REGULATOR_BCM59038
-        tristate "Broadcom BCM59038 PMU regulator driver"
-        depends on MFD_BCM59038
-        help
-          Say y here to support Broadcom BCM59038 PMU regulator driver
-
 config REGULATOR_88PM8607
 	bool "Marvell 88PM8607 Power regulators"
 	depends on MFD_88PM860X=y
 	help
 	  This driver supports 88PM8607 voltage regulator chips.
 
-config REGULATOR_MAX8986
-        tristate "Maxim Max8986 PMU regulator driver"
-        depends on MFD_MAX8986
+config REGULATOR_PMIC8058
+        tristate "PMIC8058 regulator driver"
+        depends on PMIC8058 && ARCH_MSM8X60
+        default y if PMIC8058 && ARCH_MSM8X60
         help
-          Say y here to support Maxim MAX8986 PMU regulator driver
+         Say Y here to support the voltage regulators on PMIC8058
 
-config REGULATOR_D2041
-	tristate "Dialog D2041 PMU regulator driver"
-	depends on MFD_D2041
-	help
-	  Supprot for Dialog D2041 PMU regulator driver
+config REGULATOR_PMIC8901
+        tristate "PMIC8901 regulator driver"
+        depends on PMIC8901 && ARCH_MSM8X60
+        default y if PMIC8901 && ARCH_MSM8X60
+        help
+         Say Y here to support the voltage regulators on PMIC8901
 
 endif
-

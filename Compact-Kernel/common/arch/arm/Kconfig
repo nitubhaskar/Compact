@@ -13,7 +13,7 @@ config ARM
 	select RTC_LIB
 	select SYS_SUPPORTS_APM_EMULATION
 	select GENERIC_ATOMIC64 if (!CPU_32v6K)
-	select HAVE_OPROFILE
+	select HAVE_OPROFILE if (HAVE_PERF_EVENTS)
 	select HAVE_ARCH_KGDB
 	select HAVE_KPROBES if (!XIP_KERNEL)
 	select HAVE_KRETPROBES if (HAVE_KPROBES)
@@ -36,6 +36,9 @@ config HAVE_PWM
 	bool
 
 config SYS_SUPPORTS_APM_EMULATION
+	bool
+
+config HAVE_SCHED_CLOCK
 	bool
 
 config GENERIC_GPIO
@@ -129,10 +132,9 @@ config GENERIC_LOCKBREAK
 
 config RWSEM_GENERIC_SPINLOCK
 	bool
-	default y
 
 config RWSEM_XCHGADD_ALGORITHM
-	bool
+	def_bool y
 
 config ARCH_HAS_ILOG2_U32
 	bool
@@ -146,6 +148,9 @@ config ARCH_HAS_CPUFREQ
 	  Internal node to signify that the ARCH has CPUFREQ support
 	  and that the relevant menu configurations are displayed for
 	  it.
+
+config ARCH_HAS_CPU_IDLE_WAIT
+	bool
 
 config GENERIC_HWEIGHT
 	bool
@@ -180,28 +185,6 @@ config ARM_L1_CACHE_SHIFT_6
 	bool
 	help
 	  Setting ARM L1 cache line size to 64 Bytes.
-
-if OPROFILE
-
-config OPROFILE_ARMV6
-	def_bool y
-	depends on CPU_V6 && !SMP
-	select OPROFILE_ARM11_CORE
-
-config OPROFILE_MPCORE
-	def_bool y
-	depends on CPU_V6 && SMP
-	select OPROFILE_ARM11_CORE
-
-config OPROFILE_ARM11_CORE
-	bool
-
-config OPROFILE_ARMV7
-	def_bool y
-	depends on CPU_V7 && !SMP
-	bool
-
-endif
 
 config VECTORS_BASE
 	hex
@@ -310,15 +293,6 @@ config ARCH_BCMRING
 	select ARCH_WANT_OPTIONAL_GPIOLIB
 	help
 	  Support for Broadcom's BCMRing platform.
-
-config PLAT_BCMAP
-    bool "BROADCOM family of ARM based processors"
-    select GENERIC_TIME
-    select GENERIC_CLOCKEVENTS
-    select GENERIC_GPIO
-    select ARCH_REQUIRE_GPIOLIB
-    help
-      Support for Broadcom family of ARM based application processors
 
 config ARCH_CLPS711X
 	bool "Cirrus Logic CLPS711x/EP721x-based"
@@ -614,14 +588,19 @@ config ARCH_PXA
 	  Support for Intel/Marvell's PXA2xx/PXA3xx processor line.
 
 config ARCH_MSM
-	bool "Qualcomm MSM"
-	select HAVE_CLK
+	bool "Qualcomm MSM/QSD"
+	select ARCH_HAS_CPUFREQ
+	select GENERIC_GPIO
+	select GENERIC_TIME
 	select GENERIC_CLOCKEVENTS
+	select ARCH_WANT_OPTIONAL_GPIOLIB
+	select COMMON_CLKDEV
+	select HAVE_SCHED_CLOCK
 	help
 	  Support for Qualcomm MSM/QSD based systems.  This runs on the
-	  apps processor of the MSM/QSD and depends on a shared memory
-	  interface to the modem processor which runs the baseband
-	  stack and controls some vital subsystems
+	  ARM11/Scorpion apps processor of the MSM/QSD and depends on a
+	  shared memory interface to the ARM9 modem processor which
+	  runs the baseband stack and controls some vital subsystems
 	  (clock and power control, etc).
 
 config ARCH_SHMOBILE
@@ -836,13 +815,7 @@ source "arch/arm/mach-aaec2000/Kconfig"
 
 source "arch/arm/mach-at91/Kconfig"
 
-source "arch/arm/plat-bcmap/Kconfig"
-
 source "arch/arm/mach-bcmring/Kconfig"
-
-source "arch/arm/mach-bcm116x/Kconfig"
-
-source "arch/arm/mach-bcm215xx/Kconfig"
 
 source "arch/arm/mach-clps711x/Kconfig"
 
@@ -977,6 +950,19 @@ config ARM_TIMER_SP804
 
 source arch/arm/mm/Kconfig
 
+config DONT_RESERVE_FROM_MOVABLE_ZONE
+	def_bool y
+	depends on MEMORY_HOTPLUG
+
+config RESERVE_FIRST_PAGE
+	bool
+	default n
+	help
+	  Reserve the first page at PHYS_OFFSET. The first
+	  physical page is used by many platforms for warm
+	  boot operations. Reserve this page so that it is
+	  not allocated by the kernel.
+
 config IWMMXT
 	bool "Enable iWMMXt support"
 	depends on CPU_XSCALE || CPU_XSC3 || CPU_MOHAWK
@@ -1076,6 +1062,19 @@ config ARM_ERRATA_720789
 	  invalidated are not, resulting in an incoherency in the system page
 	  tables. The workaround changes the TLB flushing routines to invalidate
 	  entries regardless of the ASID.
+
+config KSAPI
+        tristate "KSAPI support (EXPERIMENTAL)"
+	depends on ARCH_MSM_SCORPION || ARCH_MSM_SCORPIONMP
+        default n
+        help
+          KSAPI: Performance monitoring tool for linux.
+          KSAPI records performance statistics for Snapdragon linux platform.
+          It uses the /proc FS as a means to exchange configuration data and
+          counter statistics. It can monitor the counter statistics for
+          Scorpion processor supported hardware performance counters on a per
+          thread basis or AXI counters on an overall system basis.
+
 endmenu
 
 source "arch/arm/common/Kconfig"
@@ -1141,6 +1140,25 @@ source "drivers/pcmcia/Kconfig"
 
 endmenu
 
+#menu "Samsung Kernel Debug Features"
+
+#choice
+#        prompt "Enable Samsung Kernel Debug Features"
+#        default KERNEL_DEBUG_SEC
+
+config KERNEL_DEBUG_SEC
+        bool "KERNEL_DEBUG_SEC"
+        default n
+
+config KERNEL_SEC_MMICHECK
+        bool "KERNEL_SEC_MMICHECK"
+        default n
+
+#endchoice
+
+#endmenu
+
+
 menu "Kernel Features"
 
 source "kernel/time/Kconfig"
@@ -1149,7 +1167,7 @@ config SMP
 	bool "Symmetric Multi-Processing (EXPERIMENTAL)"
 	depends on EXPERIMENTAL && (REALVIEW_EB_ARM11MP || REALVIEW_EB_A9MP ||\
 		 MACH_REALVIEW_PB11MP || MACH_REALVIEW_PBX || ARCH_OMAP4 ||\
-		 ARCH_U8500 || ARCH_VEXPRESS_CA9X4)
+		 ARCH_U8500 || ARCH_VEXPRESS_CA9X4 || ARCH_MSM_SCORPIONMP)
 	depends on GENERIC_CLOCKEVENTS
 	select USE_GENERIC_SMP_HELPERS
 	select HAVE_ARM_SCU if (ARCH_REALVIEW || ARCH_OMAP4 || ARCH_U8500 || ARCH_VEXPRESS_CA9X4)
@@ -1221,7 +1239,8 @@ config HOTPLUG_CPU
 config LOCAL_TIMERS
 	bool "Use local timer interrupts"
 	depends on SMP && (REALVIEW_EB_ARM11MP || MACH_REALVIEW_PB11MP || \
-		REALVIEW_EB_A9MP || MACH_REALVIEW_PBX || ARCH_OMAP4 || ARCH_U8500)
+		REALVIEW_EB_A9MP || MACH_REALVIEW_PBX || ARCH_OMAP4 || ARCH_U8500 || \
+		ARCH_MSM_SCORPIONMP)
 	default y
 	select HAVE_ARM_TWD if (ARCH_REALVIEW || ARCH_OMAP4 || ARCH_U8500)
 	help
@@ -1234,7 +1253,7 @@ source kernel/Kconfig.preempt
 
 config HZ
 	int
-	default 128 if ARCH_L7200 || ARCH_BCM116X || ARCH_BCM215XX
+	default 128 if ARCH_L7200
 	default 200 if ARCH_EBSA110 || ARCH_S3C2410 || ARCH_S5P6440 || ARCH_S5P6442 || ARCH_S5PV210
 	default OMAP_32K_TIMER_HZ if ARCH_OMAP && OMAP_32K_TIMER
 	default AT91_TIMER_HZ if ARCH_AT91
@@ -1333,13 +1352,31 @@ config HIGHPTE
 
 config HW_PERF_EVENTS
 	bool "Enable hardware performance counter support for perf events"
-	depends on PERF_EVENTS && CPU_HAS_PMU && (CPU_V6 || CPU_V7)
+	depends on PERF_EVENTS && CPU_HAS_PMU
 	default y
 	help
 	  Enable hardware performance counter support for perf events. If
 	  disabled, perf events will use software events only.
 
+config VMALLOC_RESERVE
+	hex "Reserved vmalloc space"
+	default 0x08000000
+	depends on MMU
+	help
+	  Reserved vmalloc space if not specified on the kernel commandline.
+
 source "mm/Kconfig"
+
+config ARCH_MEMORY_PROBE
+	def_bool n
+	depends on MEMORY_HOTPLUG
+
+config ARCH_MEMORY_REMOVE
+	def_bool n
+	depends on MEMORY_HOTPLUG
+
+config DONT_RESERVE_FROM_MOVABLE_ZONE
+	def_bool n
 
 config LEDS
 	bool "Timer and CPU usage LEDs"
@@ -1423,6 +1460,17 @@ config UACCESS_WITH_MEMCPY
 
 	  However, if the CPU data cache is using a write-allocate mode,
 	  this option is unlikely to provide any performance gain.
+
+config CP_ACCESS
+	tristate "CP register access tool"
+	default m
+	help
+	  Provide support for Coprocessor register access using /sys
+	  interface. Read and write to CP registers from userspace
+	  through sysfs interface. A sys file (cp_rw) will be created under
+	  /sys/devices/system/cpaccess/cpaccess0.
+
+	  If unsure, say N.
 
 endmenu
 
@@ -1534,18 +1582,6 @@ config ATAGS_PROC
 	  Should the atags used to boot the kernel be exported in an "atags"
 	  file in procfs. Useful with kexec.
 
-config CRASH_DUMP
-	bool "Build kdump crash kernel (EXPERIMENTAL)"
-	depends on EXPERIMENTAL
-	help
-	  Build a kernel suitable for use as kdump capture kernel. This should
-	  be set only on dump capture kernels. Note that dump capture kernel
-	  must be loaded into different physical address than the primary kernel
-	  (e.g set PHYS_OFFSET and related mach/Makefile.boot parameters
-	  to match value given in 'crashkernel=size@start').
-
-	  For more details see Documentation/kdump/kdump.txt
-
 endmenu
 
 menu "CPU Power Management"
@@ -1632,6 +1668,14 @@ endif
 source "drivers/cpuidle/Kconfig"
 
 endmenu
+
+config CPU_FREQ_MSM
+        bool
+        depends on CPU_FREQ && ARCH_MSM
+        default y
+        help
+          This enables the CPUFreq driver for Qualcomm CPUs.
+          If in doubt, say Y.
 
 menu "Floating point emulation"
 

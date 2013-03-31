@@ -238,24 +238,6 @@ config MTD_NAND_S3C2410_CLKSTOP
 	  when the is NAND chip selected or released, but will save
 	  approximately 5mA of power when there is nothing happening.
 
-config MTD_NAND_BRCM_UMI
-	tristate "NAND Flash support for BCM116X Boards"
-	depends on (ARCH_BCM116X || ARCH_BCM215XX)
-	help
-	  This enables the NAND flash controller on the BCM UMI block.
-
-	  No board specfic support is done by this driver, each board
-	  must advertise a platform_device for the driver to attach.
-
-config MTD_NAND_BRCM_NVSRAM
-	tristate "NVSRAM Controller (ARM PrimeCell PL353) NAND Flash driver for BCM21553 Boards"
-	depends on ARCH_BCM215XX
-	help
-	  This enables the NVSRAM Controller (ARM PrimeCell PL353) for NAND flash.
-
-	  No board specfic support is done by this driver, each board
-	  must advertise a platform_device for the driver to attach.
-
 config MTD_NAND_BCM_UMI
 	tristate "NAND Flash support for BCM Reference Boards"
 	depends on ARCH_BCMRING && MTD_NAND
@@ -547,12 +529,5 @@ config MTD_NAND_NUC900
 	help
 	  This enables the driver for the NAND Flash on evaluation board based
 	  on w90p910 / NUC9xx.
-
-config BRCM_NAND_OTP
-	bool "OTP support for NAND flash"
-	depends on MTD_NAND
-	help
-	  Enables read/write support to flash OTP through standard MTD
-          interface.
 
 endif # MTD_NAND

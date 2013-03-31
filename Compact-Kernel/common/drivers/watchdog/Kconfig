@@ -87,16 +87,6 @@ config AT91SAM9X_WATCHDOG
 	  Watchdog timer embedded into AT91SAM9X and AT91CAP9 chips. This will
 	  reboot your system when the timeout is reached.
 
-config BCM_WATCHDOG
-         tristate "BCM watchdog"
-         depends on (WATCHDOG) && (ARCH_BCM116X || ARCH_BCM215XX)
-         help
-           Watchdog timer embedded into BCM chips. This will
-           reboot your system when timeout is reached.
-
-           To compile this driver as a module, choose M here: the
-           module will be called bcm_wdt.
-
 config 21285_WATCHDOG
 	tristate "DC21285 watchdog"
 	depends on FOOTBRIDGE
@@ -241,15 +231,6 @@ config IOP_WATCHDOG
 	  and/or ATUe configuration registers will remain intact, but if
 	  operating as an Root Complex and/or Central Resource, the PCI-X
 	  and/or PCIe busses will also be reset.  THIS IS A VERY BIG HAMMER.
-
-# BCM59038 Watchdog
-#
-config BCM59038_WATCHDOG
-         tristate "BCM59038 Watchdog"
-         depends on (WATCHDOG) && (MFD_BCM59038) && (!BCM_WATCHDOG)
-         help
-         Say Y here if to include support for the watchdog timer
-         in the BCM2157 soc.
 
 config DAVINCI_WATCHDOG
 	tristate "DaVinci watchdog"

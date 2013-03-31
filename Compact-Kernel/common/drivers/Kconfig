@@ -6,6 +6,12 @@ source "drivers/connector/Kconfig"
 
 source "drivers/mtd/Kconfig"
 
+# for FSR
+#@source "drivers/fsr/Kconfig"
+  
+# for TINY_FSR
+source "drivers/tfsr/Kconfig"
+
 source "drivers/of/Kconfig"
 
 source "drivers/parport/Kconfig"
@@ -59,8 +65,6 @@ source "drivers/w1/Kconfig"
 source "drivers/power/Kconfig"
 
 source "drivers/hwmon/Kconfig"
-
-source "drivers/haptic/Kconfig"
 
 source "drivers/thermal/Kconfig"
 
@@ -116,5 +120,7 @@ source "drivers/staging/Kconfig"
 
 source "drivers/platform/Kconfig"
 
-source "../modules/Kconfig"
+source "drivers/dpram/Kconfig"
+
+#@source "drivers/param/Kconfig"
 endmenu

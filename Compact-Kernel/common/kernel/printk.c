@@ -143,6 +143,8 @@ EXPORT_SYMBOL(console_set_on_cmdline);
 /* Flag: console code may call schedule() */
 static int console_may_schedule;
 
+#define MAX_CHARS_PER_RELEASE_LOOP 128
+
 #ifdef CONFIG_PRINTK
 
 static char __log_buf[__LOG_BUF_LEN];
@@ -150,6 +152,29 @@ static char *log_buf = __log_buf;
 static int log_buf_len = __LOG_BUF_LEN;
 static unsigned logged_chars; /* Number of chars produced since last read+clear operation */
 static int saved_console_loglevel = -1;
+
+/* Mark for GetLog */
+
+struct struct_kernel_log_mark {
+	u32 special_mark_1;
+	u32 special_mark_2;
+	u32 special_mark_3;
+	u32 special_mark_4;
+	void *p__log_buf;
+};
+
+static struct struct_kernel_log_mark kernel_log_mark = {
+	.special_mark_1 = (('*' << 24) | ('^' << 16) | ('^' << 8) | ('*' << 0)),
+	.special_mark_2 = (('I' << 24) | ('n' << 16) | ('f' << 8) | ('o' << 0)),
+	.special_mark_3 = (('H' << 24) | ('e' << 16) | ('r' << 8) | ('e' << 0)),
+	.special_mark_4 = (('k' << 24) | ('l' << 16) | ('o' << 8) | ('g' << 0)),
+#if defined(CONFIG_MACH_EUROPA)
+	.p__log_buf = __log_buf+0x200000,
+#endif	// CONFIG_MACH_EUROPA
+#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+	.p__log_buf = __log_buf,
+#endif	// CONFIG_MACH_CALLISTO
+};
 
 #ifdef CONFIG_KEXEC
 /*
@@ -168,24 +193,6 @@ void log_buf_kexec_setup(void)
 	VMCOREINFO_SYMBOL(logged_chars);
 }
 #endif
-//{{ Mark for GetLog - 1/2
-struct struct_kernel_log_mark {
-u32 special_mark_1;
-u32 special_mark_2;
-u32 special_mark_3;
-u32 special_mark_4;
-void *p__log_buf;
-};
-
-static struct struct_kernel_log_mark kernel_log_mark = {
-       .special_mark_1 = (('*' << 24) | ('^' << 16) | ('^' << 8) | ('*' << 0)),
-       .special_mark_2 = (('I' << 24) | ('n' << 16) | ('f' << 8) | ('o' << 0)),
-       .special_mark_3 = (('H' << 24) | ('e' << 16) | ('r' << 8) | ('e' << 0)),
-       .special_mark_4 = (('k' << 24) | ('l' << 16) | ('o' << 8) | ('g' << 0)),
-       .p__log_buf = __log_buf, 
-};
-//}} Mark for GetLog - 1/2
-
 
 static int __init log_buf_len_setup(char *str)
 {
@@ -223,11 +230,13 @@ static int __init log_buf_len_setup(char *str)
 		printk(KERN_NOTICE "log_buf_len: %d\n", log_buf_len);
 	}
 out:
-	
-	//{{ Mark for GetLog - 2/2
+	/* Mark for GetLog */
+#if defined(CONFIG_MACH_EUROPA)
+	kernel_log_mark.p__log_buf = __log_buf+0x200000;
+#endif	// CONFIG_MACH_EUROPA
+#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
 	kernel_log_mark.p__log_buf = __log_buf;
-	//}} Mark for GetLog - 2/2
-
+#endif	// CONFIG_MACH_CALLISTO
 	return 1;
 }
 
@@ -776,11 +785,6 @@ static inline void printk_delay(void)
 	}
 }
 
-#ifdef CONFIG_BRCM_UNIFIED_LOGGING
-/* Unified logging */
-#include "brcm_ulogging_printk.h"
-#endif
-
 asmlinkage int vprintk(const char *fmt, va_list args)
 {
 	int printed_len = 0;
@@ -855,9 +859,6 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 		}
 	}
 
-#ifdef CONFIG_BRCM_UNIFIED_LOGGING
-#include "brcm_ulogging_printkmtt.h"
-#endif
 	/*
 	 * Copy the output into log_buf.  If the caller didn't provide
 	 * appropriate log level tags, we insert them here
@@ -871,7 +872,7 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 			printed_len += 3;
 			new_text_line = 0;
 
-			if(printk_time){
+			if (printk_time) {
 				/* Follow the token with the time */
 				char tbuf[50], *tp;
 				unsigned tlen;
@@ -1176,8 +1177,9 @@ void release_console_sem(void)
 		if (con_start == log_end)
 			break;			/* Nothing to print */
 		_con_start = con_start;
-		_log_end = log_end;
-		con_start = log_end;		/* Flush */
+		_log_end = (con_start + MAX_CHARS_PER_RELEASE_LOOP < log_end) ?
+			con_start + MAX_CHARS_PER_RELEASE_LOOP : log_end;
+		con_start = _log_end;		/* Flush */
 		spin_unlock(&logbuf_lock);
 		stop_critical_timings();	/* don't trace print latency */
 		call_console_drivers(_con_start, _log_end);

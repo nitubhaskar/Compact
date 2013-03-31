@@ -2,6 +2,7 @@
  * arch/arm/mm/cache-l2x0.c - L210/L220 cache controller support
  *
  * Copyright (C) 2007 ARM Limited
+ * Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -19,60 +20,23 @@
 #include <linux/init.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>
-#include <linux/delay.h>
 
 #include <asm/cacheflush.h>
 #include <asm/hardware/cache-l2x0.h>
 
 #define CACHE_LINE_SIZE		32
-#if defined(CONFIG_ARCH_BCM215XX)
-#define L2CACHE_READREG_OFFSET    0x1000
-#else
-#define L2CACHE_READREG_OFFSET    0x0;
-#endif
 
 static void __iomem *l2x0_base;
+static uint32_t aux_ctrl_save;
 static DEFINE_SPINLOCK(l2x0_lock);
 static uint32_t l2x0_way_mask;	/* Bitmask of active ways */
-static uint32_t l2x0_size;
-#ifdef CONFIG_BCM21553_L2_EVCT
-extern u32 l2_evt_virt_buf;
-#endif
 
-static int l2_flushall_after_boot = 0;
-static int ways;
-void __init l2x0_late_init (void)
-{
-       l2_flushall_after_boot = 1;
-}
-late_initcall(l2x0_late_init);
-
-static inline void cache_wait_way(void __iomem *reg, unsigned long mask)
-{
-	/* wait for cache operation by line or way to complete */
-	while (readl_relaxed(L2CACHE_READREG_OFFSET + reg) & mask)
-		;
-}
-
-#ifdef CONFIG_CACHE_PL310
 static inline void cache_wait(void __iomem *reg, unsigned long mask)
 {
-	/* cache operations by line are atomic on PL310 */
+	/* wait for the operation to complete */
+	while (readl_relaxed(reg) & mask)
+		;
 }
-#else
-#define cache_wait	cache_wait_way
-#endif
-
-#ifdef CONFIG_BCM21553_L2_EVCT
-static inline void cache_l2_evct(void)
-{
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	writel_relaxed(0x0, l2_evt_virt_buf);
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	readl_relaxed(l2_evt_virt_buf);
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-}
-#endif
 
 static inline void cache_sync(void)
 {
@@ -132,114 +96,49 @@ static inline void l2x0_flush_line(unsigned long addr)
 }
 #endif
 
-static inline void l2x0_flush_way(unsigned long way_index)
+void l2x0_cache_sync(void)
 {
-	writel_relaxed(way_index, l2x0_base + L2X0_CLEAN_INV_WAY);
-	cache_wait_way(l2x0_base + L2X0_CLEAN_INV_WAY, way_index);
+	cache_sync();
 }
 
-static inline void l2x0_clean_way(unsigned long way_index)
-{
-	writel_relaxed(way_index, l2x0_base + L2X0_CLEAN_WAY);
-	cache_wait_way(l2x0_base + L2X0_CLEAN_WAY, way_index);
-}
-
-static void l2x0_cache_sync(void)
-{
-	unsigned long flags;
-
-	spin_lock_irqsave(&l2x0_lock, flags);
-	cache_sync();
-	spin_unlock_irqrestore(&l2x0_lock, flags);
-}
-
-static void l2x0_flush_all(void)
-{
-	unsigned long flags;
-	int i;
-
-	/* clean all ways */
-	spin_lock_irqsave(&l2x0_lock, flags);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	cache_sync();
-	readl_relaxed(l2_evt_virt_buf);
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	for (i = 0; i < ways; ++i) {
-		l2x0_flush_way(1 << i);
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	cache_sync();
-	cache_l2_evct();
-	}
-#else
-	writel_relaxed(l2x0_way_mask, l2x0_base + L2X0_CLEAN_INV_WAY);
-	cache_wait_way(l2x0_base + L2X0_CLEAN_INV_WAY, l2x0_way_mask);
-	cache_sync();
-#endif
-	spin_unlock_irqrestore(&l2x0_lock, flags);
-}
-
-static void l2x0_clean_all(void)
-{
-	unsigned long flags;
-	int i;
-
-	/* clean all ways */
-	spin_lock_irqsave(&l2x0_lock, flags);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	cache_sync();
-	readl_relaxed(l2_evt_virt_buf);
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	for (i = 0; i < ways; ++i) {
-		l2x0_clean_way(1 << i);
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-	cache_sync();
-	cache_l2_evct();
-	}
-#else
-	writel_relaxed(l2x0_way_mask, l2x0_base + L2X0_CLEAN_WAY);
-	cache_wait_way(l2x0_base + L2X0_CLEAN_WAY, l2x0_way_mask);
-	cache_sync();
-#endif
-	spin_unlock_irqrestore(&l2x0_lock, flags);
-}
-
-static void l2x0_inv_all(void)
+static inline void l2x0_inv_all(void)
 {
 	unsigned long flags;
 
 	/* invalidate all ways */
 	spin_lock_irqsave(&l2x0_lock, flags);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
-	/* Invalidating when L2 is enabled is a nono */
-	BUG_ON(readl(L2CACHE_READREG_OFFSET + l2x0_base + L2X0_CTRL) & 1);
 	writel_relaxed(l2x0_way_mask, l2x0_base + L2X0_INV_WAY);
-	cache_wait_way(l2x0_base + L2X0_INV_WAY, l2x0_way_mask);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
+	cache_wait(l2x0_base + L2X0_INV_WAY, l2x0_way_mask);
 	cache_sync();
-#ifdef CONFIG_BCM21553_L2_EVCT
-	cache_l2_evct();
-#endif
 	spin_unlock_irqrestore(&l2x0_lock, flags);
+}
+
+static inline void sync_writel(unsigned long val, unsigned  long reg,
+				unsigned long complete_mask)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&l2x0_lock, flags);
+	writel_relaxed(val, l2x0_base + reg);
+	/* wait for the operation to complete */
+	while (readl_relaxed(l2x0_base + reg) & complete_mask)
+		;
+	spin_unlock_irqrestore(&l2x0_lock, flags);
+}
+
+static inline void l2x0_flush_all(void)
+{
+	/* clean and invalidate all ways */
+	sync_writel(0xff, L2X0_CLEAN_INV_WAY, 0xff);
+	cache_sync();
 }
 
 static void l2x0_inv_range(unsigned long start, unsigned long end)
 {
 	void __iomem *base = l2x0_base;
-	unsigned long flags, flush_required =
-		((start & (CACHE_LINE_SIZE - 1)) || (end & (CACHE_LINE_SIZE - 1)));
+	unsigned long flags;
 
 	spin_lock_irqsave(&l2x0_lock, flags);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	if (flush_required)
-		asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
-	/* Invalidating when L2 is enabled is a nono */
 	if (start & (CACHE_LINE_SIZE - 1)) {
 		start &= ~(CACHE_LINE_SIZE - 1);
 		debug_writel(0x03);
@@ -269,17 +168,29 @@ static void l2x0_inv_range(unsigned long start, unsigned long end)
 		}
 	}
 	cache_wait(base + L2X0_INV_LINE_PA, 1);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	if (flush_required)
-		asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
-	/* Invalidating when L2 is enabled is a nono */
 	cache_sync();
-#ifdef CONFIG_BCM21553_L2_EVCT
-	if (flush_required)
-	cache_l2_evct();
-#endif
 	spin_unlock_irqrestore(&l2x0_lock, flags);
+}
+
+static void l2x0_inv_range_atomic(unsigned long start, unsigned long end)
+{
+	unsigned long addr;
+
+	if (start & (CACHE_LINE_SIZE - 1)) {
+		start &= ~(CACHE_LINE_SIZE - 1);
+		writel_relaxed(start, l2x0_base + L2X0_CLEAN_INV_LINE_PA);
+		start += CACHE_LINE_SIZE;
+	}
+
+	if (end & (CACHE_LINE_SIZE - 1)) {
+		end &= ~(CACHE_LINE_SIZE - 1);
+		writel_relaxed(end, l2x0_base + L2X0_CLEAN_INV_LINE_PA);
+	}
+
+	for (addr = start; addr < end; addr += CACHE_LINE_SIZE)
+		writel_relaxed(addr, l2x0_base + L2X0_INV_LINE_PA);
+
+	mb();
 }
 
 static void l2x0_clean_range(unsigned long start, unsigned long end)
@@ -287,15 +198,7 @@ static void l2x0_clean_range(unsigned long start, unsigned long end)
 	void __iomem *base = l2x0_base;
 	unsigned long flags;
 
-	if ((end - start) >= l2x0_size) {
-		l2x0_clean_all();
-		return;
-	}
-
 	spin_lock_irqsave(&l2x0_lock, flags);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
 	start &= ~(CACHE_LINE_SIZE - 1);
 	while (start < end) {
 		unsigned long blk_end = start + min(end - start, 4096UL);
@@ -311,14 +214,19 @@ static void l2x0_clean_range(unsigned long start, unsigned long end)
 		}
 	}
 	cache_wait(base + L2X0_CLEAN_LINE_PA, 1);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
 	cache_sync();
-#ifdef CONFIG_BCM21553_L2_EVCT
-	cache_l2_evct();
-#endif
 	spin_unlock_irqrestore(&l2x0_lock, flags);
+}
+
+static void l2x0_clean_range_atomic(unsigned long start, unsigned long end)
+{
+	unsigned long addr;
+
+	start &= ~(CACHE_LINE_SIZE - 1);
+	for (addr = start; addr < end; addr += CACHE_LINE_SIZE)
+		writel_relaxed(addr, l2x0_base + L2X0_CLEAN_LINE_PA);
+
+	mb();
 }
 
 static void l2x0_flush_range(unsigned long start, unsigned long end)
@@ -326,15 +234,7 @@ static void l2x0_flush_range(unsigned long start, unsigned long end)
 	void __iomem *base = l2x0_base;
 	unsigned long flags;
 
-	if (l2_flushall_after_boot && ((end - start) >= l2x0_size)) {
-		l2x0_flush_all();
-		return;
-	}
-
 	spin_lock_irqsave(&l2x0_lock, flags);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
 	start &= ~(CACHE_LINE_SIZE - 1);
 	while (start < end) {
 		unsigned long blk_end = start + min(end - start, 4096UL);
@@ -352,36 +252,36 @@ static void l2x0_flush_range(unsigned long start, unsigned long end)
 		}
 	}
 	cache_wait(base + L2X0_CLEAN_INV_LINE_PA, 1);
-#ifdef CONFIG_BCM21553_L2_EVCT
-	asm("mcr p15, 0, %0, c7, c10, 4"::"r"(0));
-#endif
 	cache_sync();
-#ifdef CONFIG_BCM21553_L2_EVCT
-	cache_l2_evct();
-#endif
 	spin_unlock_irqrestore(&l2x0_lock, flags);
 }
 
-static void l2x0_disable(void)
+void l2x0_flush_range_atomic(unsigned long start, unsigned long end)
 {
-	unsigned long flags;
+	unsigned long addr;
 
-	spin_lock_irqsave(&l2x0_lock, flags);
-	writel(0, l2x0_base + L2X0_CTRL);
-	spin_unlock_irqrestore(&l2x0_lock, flags);
+	start &= ~(CACHE_LINE_SIZE - 1);
+	for (addr = start; addr < end; addr += CACHE_LINE_SIZE)
+		writel_relaxed(addr, l2x0_base + L2X0_CLEAN_INV_LINE_PA);
+
+	mb();
 }
 
 void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 {
-	__u32 aux;
+	__u32 aux, bits;
 	__u32 cache_id;
-	__u32 way_size = 0;
+	int ways;
 	const char *type;
 
 	l2x0_base = base;
+	cache_id = readl_relaxed(l2x0_base + L2X0_CACHE_ID);
 
-	cache_id = readl_relaxed(L2CACHE_READREG_OFFSET + l2x0_base + L2X0_CACHE_ID);
-	aux = readl_relaxed(L2CACHE_READREG_OFFSET + l2x0_base + L2X0_AUX_CTRL);
+	bits = readl_relaxed(l2x0_base + L2X0_CTRL);
+	bits &= ~0x01; /* clear bit 0 */
+	writel_relaxed(bits, l2x0_base + L2X0_CTRL);
+
+	aux = readl_relaxed(l2x0_base + L2X0_AUX_CTRL);
 
 	aux &= aux_mask;
 	aux |= aux_val;
@@ -405,41 +305,64 @@ void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 		type = "L2x0 series";
 		break;
 	}
-
+	writel_relaxed(aux, l2x0_base + L2X0_AUX_CTRL);
 	l2x0_way_mask = (1 << ways) - 1;
+	l2x0_inv_all();
 
-	/*
-	 * L2 cache Size =  Way size * Number of ways
-	 */
-	way_size = (aux & L2X0_AUX_CTRL_WAY_SIZE_MASK) >> 17;
-	way_size = 1 << (way_size + 3);
-	l2x0_size = ways * way_size * SZ_1K;
+	/* enable L2X0 */
+	bits = readl_relaxed(l2x0_base + L2X0_CTRL);
+	bits |= 0x01;	/* set bit 0 */
+	writel_relaxed(bits, l2x0_base + L2X0_CTRL);
 
-	/*
-	 * Check if l2x0 controller is already enabled.
-	 * If you are booting from non-secure mode
-	 * accessing the below registers will fault.
-	 */
-	if (!(readl_relaxed(L2CACHE_READREG_OFFSET + l2x0_base + L2X0_CTRL) & 1)) {
+	bits = readl_relaxed(l2x0_base + L2X0_CACHE_ID);
+	bits >>= 6;	/* part no, bit 6 to 9 */
+	bits &= 0x0f;	/* 4 bits */
 
-		/* l2x0 controller is disabled */
-		writel_relaxed(aux, l2x0_base + L2X0_AUX_CTRL);
-
-		l2x0_inv_all();
-
-		/* enable L2X0 */
-		writel_relaxed(1, l2x0_base + L2X0_CTRL);
+	if (bits == 2) {	/* L220 */
+		outer_cache.inv_range = l2x0_inv_range;
+		outer_cache.clean_range = l2x0_clean_range;
+		outer_cache.flush_range = l2x0_flush_range;
+		printk(KERN_INFO "L220 cache controller enabled\n");
+	} else {		/* L210 */
+		outer_cache.inv_range = l2x0_inv_range_atomic;
+		outer_cache.clean_range = l2x0_clean_range_atomic;
+		outer_cache.flush_range = l2x0_flush_range_atomic;
+		printk(KERN_INFO "L210 cache controller enabled\n");
 	}
 
-	outer_cache.inv_range = l2x0_inv_range;
-	outer_cache.clean_range = l2x0_clean_range;
-	outer_cache.flush_range = l2x0_flush_range;
 	outer_cache.sync = l2x0_cache_sync;
-	outer_cache.flush_all = l2x0_flush_all;
-	outer_cache.inv_all = l2x0_inv_all;
-	outer_cache.disable = l2x0_disable;
 
-	printk(KERN_INFO "%s cache controller enabled\n", type);
-	printk(KERN_INFO "l2x0: %d ways, CACHE_ID 0x%08x, AUX_CTRL 0x%08x, Cache size: %d B\n",
-			ways, cache_id, aux, l2x0_size);
+	mb();
+}
+
+void l2x0_suspend(void)
+{
+	/* Save aux control register value */
+	aux_ctrl_save = readl_relaxed(l2x0_base + L2X0_AUX_CTRL);
+	/* Flush all cache */
+	l2x0_flush_all();
+	/* Disable the cache */
+	writel_relaxed(0, l2x0_base + L2X0_CTRL);
+
+	/* Memory barrier */
+	dmb();
+}
+
+void l2x0_resume(int collapsed)
+{
+	if (collapsed) {
+		/* Disable the cache */
+		writel_relaxed(0, l2x0_base + L2X0_CTRL);
+
+		/* Restore aux control register value */
+		writel_relaxed(aux_ctrl_save, l2x0_base + L2X0_AUX_CTRL);
+
+		/* Invalidate the cache */
+		l2x0_inv_all();
+	}
+
+	/* Enable the cache */
+	writel_relaxed(1, l2x0_base + L2X0_CTRL);
+
+	mb();
 }

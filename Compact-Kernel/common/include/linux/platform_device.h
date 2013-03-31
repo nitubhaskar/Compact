@@ -17,7 +17,6 @@
 struct platform_device {
 	const char	* name;
 	int		id;
-	int 		voltage;
 	struct device	dev;
 	u32		num_resources;
 	struct resource	* resource;

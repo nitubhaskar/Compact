@@ -11,7 +11,6 @@ obj-$(CONFIG_LOGO_MAC_CLUT224)		+= logo_mac_clut224.o
 obj-$(CONFIG_LOGO_PARISC_CLUT224)	+= logo_parisc_clut224.o
 obj-$(CONFIG_LOGO_SGI_CLUT224)		+= logo_sgi_clut224.o
 obj-$(CONFIG_LOGO_SUN_CLUT224)		+= logo_sun_clut224.o
-obj-$(CONFIG_LOGO_LINUX_BCM2157)	+= logo_bcm2157_clut224.o
 obj-$(CONFIG_LOGO_SUPERH_MONO)		+= logo_superh_mono.o
 obj-$(CONFIG_LOGO_SUPERH_VGA16)		+= logo_superh_vga16.o
 obj-$(CONFIG_LOGO_SUPERH_CLUT224)	+= logo_superh_clut224.o

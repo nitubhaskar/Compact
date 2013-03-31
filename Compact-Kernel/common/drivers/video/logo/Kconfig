@@ -37,11 +37,6 @@ config LOGO_BLACKFIN_CLUT224
 	depends on BLACKFIN
 	default y
 
-config LOGO_LINUX_BCM2157
-	bool "Broadcom BCM2157 224-color Linux logo"
-	depends on LOGO
-	default n
-
 config LOGO_DEC_CLUT224
 	bool "224-color Digital Equipment Corporation Linux logo"
 	depends on MACH_DECSTATION || ALPHA

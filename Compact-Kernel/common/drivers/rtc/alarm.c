@@ -109,15 +109,12 @@ static void alarm_enqueue_locked(struct alarm *alarm)
 	struct rb_node *parent = NULL;
 	struct alarm *entry;
 	int leftmost = 1;
-	bool was_first = false;
 
 	pr_alarm(FLOW, "added alarm, type %d, func %pF at %lld\n",
 		alarm->type, alarm->function, ktime_to_ns(alarm->expires));
 
-	if (base->first == &alarm->node) {
+	if (base->first == &alarm->node)
 		base->first = rb_next(&alarm->node);
-		was_first = true;
-	}
 	if (!RB_EMPTY_NODE(&alarm->node)) {
 		rb_erase(&alarm->node, &base->alarms);
 		RB_CLEAR_NODE(&alarm->node);
@@ -137,10 +134,10 @@ static void alarm_enqueue_locked(struct alarm *alarm)
 			leftmost = 0;
 		}
 	}
-	if (leftmost)
+	if (leftmost) {
 		base->first = &alarm->node;
-	if (leftmost || was_first)
-		update_timer_locked(base, was_first);
+		update_timer_locked(base, false);
+	}
 
 	rb_link_node(&alarm->node, parent, link);
 	rb_insert_color(&alarm->node, &base->alarms);
@@ -297,6 +294,30 @@ err:
 	wake_unlock(&alarm_rtc_wake_lock);
 	mutex_unlock(&alarm_setrtc_mutex);
 	return ret;
+}
+
+
+void
+alarm_update_timedelta(struct timespec tmp_time, struct timespec new_time)
+{
+	int i;
+	unsigned long flags;
+
+	spin_lock_irqsave(&alarm_slock, flags);
+	for (i = 0; i < ANDROID_ALARM_SYSTEMTIME; i++) {
+		hrtimer_try_to_cancel(&alarms[i].timer);
+		alarms[i].stopped = true;
+		alarms[i].stopped_time = timespec_to_ktime(tmp_time);
+	}
+	alarms[ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP].delta =
+		alarms[ANDROID_ALARM_ELAPSED_REALTIME].delta =
+		ktime_sub(alarms[ANDROID_ALARM_ELAPSED_REALTIME].delta,
+			timespec_to_ktime(timespec_sub(tmp_time, new_time)));
+	for (i = 0; i < ANDROID_ALARM_SYSTEMTIME; i++) {
+		alarms[i].stopped = false;
+		update_timer_locked(&alarms[i], false);
+	}
+	spin_unlock_irqrestore(&alarm_slock, flags);
 }
 
 /**

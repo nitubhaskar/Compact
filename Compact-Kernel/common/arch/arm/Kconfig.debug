@@ -128,38 +128,4 @@ config DEBUG_S3C_UART
 	  The uncompressor code port configuration is now handled
 	  by CONFIG_S3C_LOWLEVEL_UART_PORT.
 
-config BRCM_CP_CRASH_DUMP
-       bool "Broadcom Communication Processor Crash Dump Support"
-       help
-       If you say Y here, a crash dump from CP will be available
-       on the SD card when kernel crashes.
-
-config BRCM_LOGDRV_DEBUG
-       bool "Broadcom Log Driver Debugging"
-        help
-        Say Y here if you want to enable Log Driver debugging.
-
-config BRCM_UNIFIED_LOGGING
-       bool "Broadcom Unified Logging"
-       help
-       Say Y here if you want to redirect printk to MTT.
-       
-config BRCM_KPANIC_UI_IND
-       bool "Broadcom Kernel Panic Crash Dump UI Indication Support"
-       help
-        If you say Y here, a UI indication for crash dump will be shown
-	on the display.
-
-config BRCM_AP_PANIC_ON_CPCRASH
-       bool "Support for rebooting AP when CP crashes"
-       help
-        If you say Y here, AP will panic when CP has crashed. 
-	Debug tool can be used to extract CP dump later.
-
-config SEC_DEBUG
-	bool "Enable SEC DEBUG"
-	
-config SEC_DEBUG_USER
-	bool "Enable SEC USER FAULT DEBUG"
-	
 endmenu

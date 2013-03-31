@@ -11,11 +11,6 @@
  *
  */
 
-/* #define DEBUG */
-#include <linux/device.h>
-
-#define DEBUG_PEN_STATUS
-
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>
@@ -25,9 +20,6 @@
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
-#endif
 
 /* Version */
 #define QT602240_VER_20			20
@@ -287,47 +279,27 @@ static const u8 init_vals_ver_21[] = {
 static const u8 init_vals_ver_22[] = {
 	/* QT602240_GEN_COMMAND(6) */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	/* [SPT_USERDATA_T38 INSTANCE 0] */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	/* QT602240_GEN_POWER(7) */
-	/*
-	 * IDLEACQINT (Idle Acquisition Interval) - 60ms
-	 * ACTVACQINT (Active Acquisition Interval) - 37ms
-	 * ACTV2IDLETO (Active to Idle time out) - 60ms
-	 *
-	 * Configuring the ACTVACQINT to 50ms in conjunction with
-	 * making the controller operate on Mode1 (QT602240_SPT_COMMSCONFIG)
-	 * brought down the number of interrupts sent to the Host.
-	 * This value seems optimal with respect to sytem load when multi-touch
-	 * is enabled.
-	 */
-	0x3C, 0x1B, 0x3C,
+	0x20, 0xff, 0x32,
 	/* QT602240_GEN_ACQUIRE(8) */
 	0x0a, 0x00, 0x05, 0x00, 0x00, 0x00, 0x09, 0x23,
 	/* QT602240_TOUCH_MULTI(9) */
-	/*
-	 * Touch Threshold TCHTHR - 30 (typical 30 to 80)
-	 * Lower the Threshold value the more sensitive the touch is.
-	 * Programming the least value recommended in the Data sheet
-	 */
-	0x83, 0x00, 0x00, 0x0f, 0x0b, 0x00, 0x21, 0x46, 0x02, 0x07,
-	0x00, 0x01, 0x01, 0x00, 0x0a, 0x0a, 0x0a, 0x0a, 0xFF, 0x03,
-	0xFF, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x13, 0x0b, 0x00, 0x00, 0x00, 0x02, 0x00,
+	0x00, 0x01, 0x01, 0x0e, 0x0a, 0x0a, 0x0a, 0x0a, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00,
 	/* QT602240_TOUCH_KEYARRAY(15) */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00,
-	/* QT602240_SPT_COMMSCONFIG(18) */
-	0x01, 0x00,
 	/* QT602240_SPT_GPIOPWM(19) */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	/* QT602240_PROCI_GRIPFACE(20) */
-	0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x28, 0x04,
+	0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x28, 0x04,
 	0x0f, 0x0a,
 	/* QT602240_PROCG_NOISE(22) */
-	0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x2d, 0x00,
-	0x00, 0x05, 0x0f, 0x19, 0x23, 0x2b, 0x03,
+	0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x23, 0x00,
+	0x00, 0x05, 0x0f, 0x19, 0x23, 0x2d, 0x03,
 	/* QT602240_TOUCH_PROXIMITY(23) */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00,
@@ -340,7 +312,7 @@ static const u8 init_vals_ver_22[] = {
 	/* QT602240_PROCI_TWOTOUCH(27) */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	/* QT602240_SPT_CTECONFIG(28) */
-	0x00, 0x00, 0x00, 0x10, 0x20, 0x3c,
+	0x00, 0x00, 0x00, 0x08, 0x10, 0x00,
 };
 
 struct qt602240_info {
@@ -386,13 +358,6 @@ struct qt602240_data {
 	struct qt602240_info info;
 	struct qt602240_finger finger[QT602240_MAX_FINGER];
 	unsigned int irq;
-	int pen_down;
-	struct early_suspend suspend_desc;
-
-#ifdef USE_BRCM_WORK_QUEUE
-	struct delayed_work work;
-#endif
-
 };
 
 static bool qt602240_object_readable(unsigned int type)
@@ -433,11 +398,9 @@ static bool qt602240_object_writable(unsigned int type)
 	case QT602240_PROCG_NOISE:
 	case QT602240_PROCI_ONETOUCH:
 	case QT602240_PROCI_TWOTOUCH:
-	case QT602240_SPT_COMMSCONFIG:
 	case QT602240_SPT_GPIOPWM:
 	case QT602240_SPT_SELFTEST:
 	case QT602240_SPT_CTECONFIG:
-	case QT602240_SPT_USERDATA:
 		return true;
 	default:
 		return false;
@@ -506,7 +469,7 @@ static int qt602240_unlock_bootloader(struct i2c_client *client)
 }
 
 static int qt602240_fw_write(struct i2c_client *client,
-			     const u8 * data, unsigned int frame_size)
+			     const u8 *data, unsigned int frame_size)
 {
 	if (i2c_master_send(client, data, frame_size) != frame_size) {
 		dev_err(&client->dev, "%s: i2c send failed\n", __func__);
@@ -545,7 +508,7 @@ static int __qt602240_read_reg(struct i2c_client *client,
 	return 0;
 }
 
-static int qt602240_read_reg(struct i2c_client *client, u16 reg, u8 * val)
+static int qt602240_read_reg(struct i2c_client *client, u16 reg, u8 *val)
 {
 	return __qt602240_read_reg(client, reg, 1, val);
 }
@@ -567,14 +530,14 @@ static int qt602240_write_reg(struct i2c_client *client, u16 reg, u8 val)
 }
 
 static int qt602240_read_object_table(struct i2c_client *client,
-				      u16 reg, u8 * object_buf)
+				      u16 reg, u8 *object_buf)
 {
 	return __qt602240_read_reg(client, reg, QT602240_OBJECT_SIZE,
 				   object_buf);
 }
 
-static struct qt602240_object *qt602240_get_object(struct qt602240_data *data,
-						   u8 type)
+static struct qt602240_object *
+qt602240_get_object(struct qt602240_data *data, u8 type)
 {
 	struct qt602240_object *object;
 	int i;
@@ -601,11 +564,11 @@ static int qt602240_read_message(struct qt602240_data *data,
 
 	reg = object->start_address;
 	return __qt602240_read_reg(data->client, reg,
-				   sizeof(struct qt602240_message), message);
+			sizeof(struct qt602240_message), message);
 }
 
 static int qt602240_read_object(struct qt602240_data *data,
-				u8 type, u8 offset, u8 * val)
+				u8 type, u8 offset, u8 *val)
 {
 	struct qt602240_object *object;
 	u16 reg;
@@ -640,15 +603,17 @@ static void qt602240_input_report(struct qt602240_data *data, int single_id)
 	int finger_num = 0;
 	int id;
 
-#if defined (CONFIG_TOUCHSCREEN_QT602240_MULTITOUCH)
 	for (id = 0; id < QT602240_MAX_FINGER; id++) {
 		if (!finger[id].status)
 			continue;
+
 		input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR,
-				 finger[id].status != QT602240_RELEASE ?
-				 finger[id].area : 0);
-		input_report_abs(input_dev, ABS_MT_POSITION_X, finger[id].x);
-		input_report_abs(input_dev, ABS_MT_POSITION_Y, finger[id].y);
+				finger[id].status != QT602240_RELEASE ?
+				finger[id].area : 0);
+		input_report_abs(input_dev, ABS_MT_POSITION_X,
+				finger[id].x);
+		input_report_abs(input_dev, ABS_MT_POSITION_Y,
+				finger[id].y);
 		input_mt_sync(input_dev);
 
 		if (finger[id].status == QT602240_RELEASE)
@@ -657,18 +622,11 @@ static void qt602240_input_report(struct qt602240_data *data, int single_id)
 			finger_num++;
 	}
 
-#else
-	if (status != QT602240_RELEASE)
-		finger_num = 1;
-#endif
 	input_report_key(input_dev, BTN_TOUCH, finger_num > 0);
 
 	if (status != QT602240_RELEASE) {
-		data->pen_down = 1;
 		input_report_abs(input_dev, ABS_X, finger[single_id].x);
 		input_report_abs(input_dev, ABS_Y, finger[single_id].y);
-	} else {
-		data->pen_down = 0;
 	}
 
 	input_sync(input_dev);
@@ -704,41 +662,18 @@ static void qt602240_input_touchevent(struct qt602240_data *data,
 	area = message->message[4];
 
 	dev_dbg(dev, "[%d] %s x: %d, y: %d, area: %d\n", id,
-		status & QT602240_MOVE ? "moved" : "pressed", x, y, area);
+		status & QT602240_MOVE ? "moved" : "pressed",
+		x, y, area);
 
 	finger[id].status = status & QT602240_MOVE ?
-	    QT602240_MOVE : QT602240_PRESS;
-
-#if defined(CONFIG_ENABLE_HVGA) && defined(CONFIG_BCM_LCD_NT35582)
-	/*HVGA on WVGA panel*/
-	finger[id].x = (x - 40 - 1024 * (480 - 320) / 2 / 480) * 480 / 320;
-	finger[id].y = (y - 40 - 1024 * (800 - 480) / 2 / 800) * 800 / 480;
-#elif defined(CONFIG_ENABLE_QVGA)
-#if defined(CONFIG_BCM_LCD_R61581)
-	/* QVGA on HVGA panel*/
-	finger[id].x = (x - 40 - 1024 * (320 - 240) / 2 / 320) * 320 / 240;
-	finger[id].y = (y - 40 - 1024 * (480 - 320) / 2 / 480) * 480 / 320;
-#elif defined(CONFIG_BCM_LCD_NT35582)
-	/*QVGA on HVGA panel*/
-	finger[id].x = (x - 40 - 1024 * (480 - 240) / 2 / 480) * 480 / 240;
-	finger[id].y = (y - 40 - 1024 * (800 - 320) / 2 / 800) * 800 / 320;
-#endif
-#else
-	#if defined (CONFIG_TOUCHSCREEN_QT602240_MULTITOUCH)
-
-		finger[id].x = (x - 10 ) * 1024 / (1024 - 10);
-		finger[id].y = (y - 50) * 1024 / (1024 - 50);
-	#else
-		finger[id].x = (x + 50) * 1024 / (1024 + 50);
-		finger[id].y = (y + 50) * 1024 / (1024 + 50);
-	#endif
-#endif
+				QT602240_MOVE : QT602240_PRESS;
+	finger[id].x = x;
+	finger[id].y = y;
 	finger[id].area = area;
 
 	qt602240_input_report(data, id);
 }
 
-#ifndef USE_BRCM_WORK_QUEUE
 static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
 {
 	struct qt602240_data *data = dev_id;
@@ -776,84 +711,6 @@ static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
 end:
 	return IRQ_HANDLED;
 }
-#endif
-
-#ifdef USE_BRCM_WORK_QUEUE
-
-#define TS_POLL_DELAY	(0)	/* ms delay between irq & sample */
-#define to_delayed_work(_work) container_of(_work, struct delayed_work, work)
-
-static void qt602240_read_input(struct qt602240_data *data);
-
-static void qt602240_touch_work(struct work_struct *work)
-{
-	struct qt602240_data *p_data =
-	    container_of(to_delayed_work(work), struct qt602240_data, work);
-
-	/* Peform the actual read and send the events to input sub-system */
-	qt602240_read_input(p_data);
-
-	/* Re-enable the interrupts from the device */
-	enable_irq(p_data->irq);
-}
-
-static void qt602240_read_input(struct qt602240_data *data)
-{
-	/* Implement what is implemented in the threaded IRQ implementation of the original driver */
-	struct qt602240_message message;
-	struct qt602240_object *object;
-	struct device *dev = &data->client->dev;
-	int id;
-	u8 reportid;
-	u8 max_reportid;
-	u8 min_reportid;
-
-	do {
-		if (qt602240_read_message(data, &message)) {
-			dev_err(dev, "Failed to read message\n");
-			goto end;
-		}
-		reportid = message.reportid;
-
-		/* whether reportid is thing of QT602240_TOUCH_MULTI */
-		object = qt602240_get_object(data, QT602240_TOUCH_MULTI);
-		if (!object)
-			goto end;
-
-		max_reportid = object->max_reportid;
-		min_reportid = max_reportid - object->num_report_ids + 1;
-		id = reportid - min_reportid;
-
-		if (reportid >= min_reportid && reportid <= max_reportid)
-			qt602240_input_touchevent(data, &message, id);
-		else {
-			qt602240_dump_message(dev, &message);
-		}
-	} while (reportid != 0xff);
-end:
-	return;
-}
-
-static irqreturn_t qt602240_touch_interrupt(int irq, void *dev_id)
-{
-	struct qt602240_data *p_data = dev_id;
-
-	/*
-	 * Disable further interrupts from the device
-	 * Note that, we assume that the device is configured
-	 * to operate in  Mode1 where the interrupt line is
-	 * pulled low until the last available valid message is
-	 * read from the device. Since the irq is configured as
-	 * edge sensitive for falling edge, we explicitly disable
-	 * further interrupts from the device until we finish
-	 * processing all the messages from the bottom half and
-	 * re-enable it from the bottom half.
-	 */
-	disable_irq_nosync(p_data->irq);
-	schedule_delayed_work(&p_data->work, msecs_to_jiffies(TS_POLL_DELAY));
-	return IRQ_HANDLED;
-}
-#endif
 
 static int qt602240_check_reg_init(struct qt602240_data *data)
 {
@@ -866,13 +723,13 @@ static int qt602240_check_reg_init(struct qt602240_data *data)
 
 	switch (version) {
 	case QT602240_VER_20:
-		init_vals = (u8 *) init_vals_ver_20;
+		init_vals = (u8 *)init_vals_ver_20;
 		break;
 	case QT602240_VER_21:
-		init_vals = (u8 *) init_vals_ver_21;
+		init_vals = (u8 *)init_vals_ver_21;
 		break;
 	case QT602240_VER_22:
-		init_vals = (u8 *) init_vals_ver_22;
+		init_vals = (u8 *)init_vals_ver_22;
 		break;
 	default:
 		dev_err(dev, "Firmware version %d doesn't support\n", version);
@@ -887,7 +744,7 @@ static int qt602240_check_reg_init(struct qt602240_data *data)
 
 		for (j = 0; j < object->size + 1; j++)
 			qt602240_write_object(data, object->type, j,
-					      init_vals[index + j]);
+					init_vals[index + j]);
 
 		index += object->size + 1;
 	}
@@ -945,7 +802,7 @@ static int qt602240_check_matrix_size(struct qt602240_data *data)
 	}
 
 	error = qt602240_read_object(data, QT602240_SPT_CTECONFIG,
-				     QT602240_CTE_MODE, &val);
+				QT602240_CTE_MODE, &val);
 	if (error)
 		return error;
 
@@ -954,11 +811,11 @@ static int qt602240_check_matrix_size(struct qt602240_data *data)
 
 	/* Change the CTE configuration */
 	qt602240_write_object(data, QT602240_SPT_CTECONFIG,
-			      QT602240_CTE_CTRL, 1);
+			QT602240_CTE_CTRL, 1);
 	qt602240_write_object(data, QT602240_SPT_CTECONFIG,
-			      QT602240_CTE_MODE, mode);
+			QT602240_CTE_MODE, mode);
 	qt602240_write_object(data, QT602240_SPT_CTECONFIG,
-			      QT602240_CTE_CTRL, 0);
+			QT602240_CTE_CTRL, 0);
 
 	return 0;
 }
@@ -966,17 +823,16 @@ static int qt602240_check_matrix_size(struct qt602240_data *data)
 static int qt602240_make_highchg(struct qt602240_data *data)
 {
 	struct device *dev = &data->client->dev;
-	struct qt602240_message message;
 	int count = 10;
 	int error;
+	u8 val;
 
 	/* Read dummy message to make high CHG pin */
 	do {
-		error =
-		    qt602240_read_message(data, &message);
+		error = qt602240_read_object(data, QT602240_GEN_MESSAGE, 0, &val);
 		if (error)
 			return error;
-	} while (message.reportid != 0xff && --count);
+	} while ((val != 0xff) && --count);
 
 	if (!count) {
 		dev_err(dev, "CHG pin isn't cleared\n");
@@ -993,48 +849,44 @@ static void qt602240_handle_pdata(struct qt602240_data *data)
 
 	/* Set touchscreen lines */
 	qt602240_write_object(data, QT602240_TOUCH_MULTI, QT602240_TOUCH_XSIZE,
-			      pdata->x_line);
+			pdata->x_line);
 	qt602240_write_object(data, QT602240_TOUCH_MULTI, QT602240_TOUCH_YSIZE,
-			      pdata->y_line);
+			pdata->y_line);
 
 	/* Set touchscreen orient */
 	qt602240_write_object(data, QT602240_TOUCH_MULTI, QT602240_TOUCH_ORIENT,
-			      pdata->orient);
+			pdata->orient);
 
 	/* Set touchscreen burst length */
 	qt602240_write_object(data, QT602240_TOUCH_MULTI,
-			      QT602240_TOUCH_BLEN, pdata->blen);
+			QT602240_TOUCH_BLEN, pdata->blen);
 
 	/* Set touchscreen threshold */
 	qt602240_write_object(data, QT602240_TOUCH_MULTI,
-			      QT602240_TOUCH_TCHTHR, pdata->threshold);
+			QT602240_TOUCH_TCHTHR, pdata->threshold);
 
 	/* Set touchscreen resolution */
 	qt602240_write_object(data, QT602240_TOUCH_MULTI,
-			      QT602240_TOUCH_XRANGE_LSB,
-			      (pdata->x_size - 1) & 0xff);
+			QT602240_TOUCH_XRANGE_LSB, (pdata->x_size - 1) & 0xff);
 	qt602240_write_object(data, QT602240_TOUCH_MULTI,
-			      QT602240_TOUCH_XRANGE_MSB,
-			      (pdata->x_size - 1) >> 8);
+			QT602240_TOUCH_XRANGE_MSB, (pdata->x_size - 1) >> 8);
 	qt602240_write_object(data, QT602240_TOUCH_MULTI,
-			      QT602240_TOUCH_YRANGE_LSB,
-			      (pdata->y_size - 1) & 0xff);
+			QT602240_TOUCH_YRANGE_LSB, (pdata->y_size - 1) & 0xff);
 	qt602240_write_object(data, QT602240_TOUCH_MULTI,
-			      QT602240_TOUCH_YRANGE_MSB,
-			      (pdata->y_size - 1) >> 8);
+			QT602240_TOUCH_YRANGE_MSB, (pdata->y_size - 1) >> 8);
 
 	/* Set touchscreen voltage */
 	if (data->info.version >= QT602240_VER_21 && pdata->voltage) {
 		if (pdata->voltage < QT602240_VOLTAGE_DEFAULT) {
 			voltage = (QT602240_VOLTAGE_DEFAULT - pdata->voltage) /
-			    QT602240_VOLTAGE_STEP;
+				QT602240_VOLTAGE_STEP;
 			voltage = 0xff - voltage + 1;
 		} else
 			voltage = (pdata->voltage - QT602240_VOLTAGE_DEFAULT) /
-			    QT602240_VOLTAGE_STEP;
+				QT602240_VOLTAGE_STEP;
 
 		qt602240_write_object(data, QT602240_SPT_CTECONFIG,
-				      QT602240_CTE_VOLTAGE, voltage);
+				QT602240_CTE_VOLTAGE, voltage);
 	}
 }
 
@@ -1097,10 +949,11 @@ static int qt602240_get_object_table(struct qt602240_data *data)
 
 		if (object->num_report_ids) {
 			reportid += object->num_report_ids *
-			    (object->instances + 1);
+					(object->instances + 1);
 			object->max_reportid = reportid;
 		}
 	}
+
 	return 0;
 }
 
@@ -1116,7 +969,8 @@ static int qt602240_initialize(struct qt602240_data *data)
 		return error;
 
 	data->object_table = kcalloc(info->object_num,
-				     sizeof(struct qt602240_data), GFP_KERNEL);
+				     sizeof(struct qt602240_data),
+				     GFP_KERNEL);
 	if (!data->object_table) {
 		dev_err(&client->dev, "Failed to allocate memory\n");
 		return -ENOMEM;
@@ -1137,17 +991,21 @@ static int qt602240_initialize(struct qt602240_data *data)
 	if (error)
 		return error;
 
+	error = qt602240_make_highchg(data);
+	if (error)
+		return error;
 
 	qt602240_handle_pdata(data);
 
 	/* Backup to memory */
 	qt602240_write_object(data, QT602240_GEN_COMMAND,
-			      QT602240_COMMAND_BACKUPNV, QT602240_BACKUP_VALUE);
+			QT602240_COMMAND_BACKUPNV,
+			QT602240_BACKUP_VALUE);
 	msleep(QT602240_BACKUP_TIME);
 
 	/* Soft reset */
 	qt602240_write_object(data, QT602240_GEN_COMMAND,
-			      QT602240_COMMAND_RESET, 1);
+			QT602240_COMMAND_RESET, 1);
 	msleep(QT602240_RESET_TIME);
 
 	/* Update matrix size at info struct */
@@ -1162,12 +1020,14 @@ static int qt602240_initialize(struct qt602240_data *data)
 	info->matrix_ysize = val;
 
 	dev_info(&client->dev,
-		 "Family ID: %d Variant ID: %d Version: %d Build: %d\n",
-		 info->family_id, info->variant_id, info->version, info->build);
+			"Family ID: %d Variant ID: %d Version: %d Build: %d\n",
+			info->family_id, info->variant_id, info->version,
+			info->build);
 
 	dev_info(&client->dev,
-		 "Matrix X Size: %d Matrix Y Size: %d Object Num: %d\n",
-		 info->matrix_xsize, info->matrix_ysize, info->object_num);
+			"Matrix X Size: %d Matrix Y Size: %d Object Num: %d\n",
+			info->matrix_xsize, info->matrix_ysize,
+			info->object_num);
 
 	return 0;
 }
@@ -1186,8 +1046,8 @@ static ssize_t qt602240_object_show(struct device *dev,
 		object = data->object_table + i;
 
 		count += sprintf(buf + count,
-				 "Object Table Element %d(Type %d)\n",
-				 i + 1, object->type);
+				"Object Table Element %d(Type %d)\n",
+				i + 1, object->type);
 
 		if (!qt602240_object_readable(object->type)) {
 			count += sprintf(buf + count, "\n");
@@ -1196,12 +1056,12 @@ static ssize_t qt602240_object_show(struct device *dev,
 
 		for (j = 0; j < object->size + 1; j++) {
 			error = qt602240_read_object(data,
-						     object->type, j, &val);
+						object->type, j, &val);
 			if (error)
 				return error;
 
 			count += sprintf(buf + count,
-					 "  Byte %d: 0x%x (%d)\n", j, val, val);
+					"  Byte %d: 0x%x (%d)\n", j, val, val);
 		}
 
 		count += sprintf(buf + count, "\n");
@@ -1227,7 +1087,7 @@ static int qt602240_load_fw(struct device *dev, const char *fn)
 
 	/* Change to the bootloader mode */
 	qt602240_write_object(data, QT602240_GEN_COMMAND,
-			      QT602240_COMMAND_RESET, QT602240_BOOT_VALUE);
+			QT602240_COMMAND_RESET, QT602240_BOOT_VALUE);
 	msleep(QT602240_RESET_TIME);
 
 	/* Change to slave address of bootloader */
@@ -1325,24 +1185,9 @@ static ssize_t qt602240_update_fw_store(struct device *dev,
 static DEVICE_ATTR(object, 0444, qt602240_object_show, NULL);
 static DEVICE_ATTR(update_fw, 0664, NULL, qt602240_update_fw_store);
 
-#if defined(DEBUG_PEN_STATUS)
-static ssize_t pen_status_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct qt602240_data *p_data =
-	    (struct qt602240_data *)dev_get_drvdata(dev);
-	return sprintf(buf, "%d\n", p_data->pen_down);
-}
-
-static DEVICE_ATTR(pen_status, 0644, pen_status_show, NULL);
-#endif
-
 static struct attribute *qt602240_attrs[] = {
 	&dev_attr_object.attr,
 	&dev_attr_update_fw.attr,
-#if defined(DEBUG_PEN_STATUS)
-	&dev_attr_pen_status.attr,
-#endif
 	NULL
 };
 
@@ -1353,23 +1198,15 @@ static const struct attribute_group qt602240_attr_group = {
 static void qt602240_start(struct qt602240_data *data)
 {
 	/* Touch enable */
-
-	/*
-	 * Writing 0x03 does not enable the SCANEN bit.
-	 * which is optimized for not notifying the Host with unnecessary
-	 * messages.
-	 * The data sheet says that, if there are some issues in detecting
-	 * multiple touches try, enabling this bit i.e write 0x83
-	 */
 	qt602240_write_object(data,
-			      QT602240_TOUCH_MULTI, QT602240_TOUCH_CTRL, 0x03);
+			QT602240_TOUCH_MULTI, QT602240_TOUCH_CTRL, 0x83);
 }
 
 static void qt602240_stop(struct qt602240_data *data)
 {
 	/* Touch disable */
 	qt602240_write_object(data,
-			      QT602240_TOUCH_MULTI, QT602240_TOUCH_CTRL, 0);
+			QT602240_TOUCH_MULTI, QT602240_TOUCH_CTRL, 0);
 }
 
 static int qt602240_input_open(struct input_dev *dev)
@@ -1388,71 +1225,8 @@ static void qt602240_input_close(struct input_dev *dev)
 	qt602240_stop(data);
 }
 
-#if defined(CONFIG_PM) || defined(CONFIG_HAS_EARLYSUSPEND)
-static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
-{
-	struct qt602240_data *data = i2c_get_clientdata(client);
-	struct input_dev *input_dev = data->input_dev;
-
-	mutex_lock(&input_dev->mutex);
-
-	if (input_dev->users) {
-		qt602240_stop(data);
-
-		qt602240_write_object(data, QT602240_GEN_POWER,
-				QT602240_POWER_IDLEACQINT, 0);
-		qt602240_write_object(data, QT602240_GEN_POWER,
-				QT602240_POWER_ACTVACQINT, 0);
-	}
-	mutex_unlock(&input_dev->mutex);
-
-	return 0;
-}
-
-static int qt602240_resume(struct i2c_client *client)
-{
-	struct qt602240_data *data = i2c_get_clientdata(client);
-	struct input_dev *input_dev = data->input_dev;
-
-	mutex_lock(&input_dev->mutex);
-
-	if (input_dev->users) {
-		qt602240_write_object(data, QT602240_GEN_POWER,
-				QT602240_POWER_IDLEACQINT, init_vals_ver_22[14]);
-		qt602240_write_object(data, QT602240_GEN_POWER,
-				QT602240_POWER_ACTVACQINT, init_vals_ver_22[15]);
-		qt602240_start(data);
-
-	}
-
-	mutex_unlock(&input_dev->mutex);
-
-	return 0;
-}
-#else
-#define qt602240_suspend	NULL
-#define qt602240_resume		NULL
-#endif
-
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void qt602240_early_suspend(struct early_suspend *desc)
-{
-	struct qt602240_data *data = container_of(desc, struct qt602240_data, suspend_desc);
-	pm_message_t mesg = {
-		.event = PM_EVENT_SUSPEND,
-		};
-	qt602240_suspend(data->client, mesg);
-}
-
-static void qt602240_late_resume(struct early_suspend *desc)
-{
-	struct qt602240_data *data = container_of(desc, struct qt602240_data, suspend_desc);
-	qt602240_resume(data->client);
-}
-#endif
-
 static int __devinit qt602240_probe(struct i2c_client *client,
-				    const struct i2c_device_id *id)
+		const struct i2c_device_id *id)
 {
 	struct qt602240_data *data;
 	struct input_dev *input_dev;
@@ -1479,62 +1253,39 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 	__set_bit(EV_KEY, input_dev->evbit);
 	__set_bit(BTN_TOUCH, input_dev->keybit);
 
+	/* For single touch */
+	input_set_abs_params(input_dev, ABS_X,
+			     0, QT602240_MAX_XC, 0, 0);
+	input_set_abs_params(input_dev, ABS_Y,
+			     0, QT602240_MAX_YC, 0, 0);
+
+	/* For multi touch */
+	input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR,
+			     0, QT602240_MAX_AREA, 0, 0);
+	input_set_abs_params(input_dev, ABS_MT_POSITION_X,
+			     0, QT602240_MAX_XC, 0, 0);
+	input_set_abs_params(input_dev, ABS_MT_POSITION_Y,
+			     0, QT602240_MAX_YC, 0, 0);
+
+	input_set_drvdata(input_dev, data);
+
 	data->client = client;
 	data->input_dev = input_dev;
 	data->pdata = client->dev.platform_data;
 	data->irq = client->irq;
 
-	/* For single touch */
-	input_set_abs_params(input_dev, ABS_X,
-			     data->pdata->x_min, data->pdata->x_size, 0, 0);
-	input_set_abs_params(input_dev, ABS_Y,
-			     data->pdata->y_min, data->pdata->y_size, 0, 0);
-
-	/* For multi touch */
-	input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR,
-			     0, data->pdata->max_area, 0, 0);
-	input_set_abs_params(input_dev, ABS_MT_POSITION_X,
-			     0, data->pdata->x_max, 0, 0);
-	input_set_abs_params(input_dev, ABS_MT_POSITION_Y,
-			     0, data->pdata->y_max, 0, 0);
-	input_set_drvdata(input_dev, data);
-
 	i2c_set_clientdata(client, data);
-
-	if (data->pdata->platform_init)
-		data->pdata->platform_init();
 
 	error = qt602240_initialize(data);
 	if (error)
 		goto err_free_object;
 
-	data->pen_down = 0;
-
-#ifdef USE_BRCM_WORK_QUEUE
-	INIT_DELAYED_WORK(&data->work, qt602240_touch_work);
-
-	error = request_irq(client->irq, qt602240_touch_interrupt,
-			    IRQF_TRIGGER_FALLING, "qt602240_touch", data);
-
-	if (error < 0) {
-		printk("qt602240_touch: Failed to register interrupt \r\n");
-		goto err_free_object;
-	}
-
-	printk("qt602240_touch: registered the interrupt \r\n");
-#else
 	error = request_threaded_irq(client->irq, NULL, qt602240_interrupt,
-				     IRQF_TRIGGER_FALLING,
-				     client->dev.driver->name, data);
+			IRQF_TRIGGER_FALLING, client->dev.driver->name, data);
 	if (error) {
 		dev_err(&client->dev, "Failed to register interrupt\n");
 		goto err_free_object;
 	}
-#endif
-
-	error = qt602240_make_highchg(data);
-	if (error)
-		return error;
 
 	error = input_register_device(input_dev);
 	if (error)
@@ -1544,12 +1295,6 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 	if (error)
 		goto err_unregister_device;
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	data->suspend_desc.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
-	data->suspend_desc.suspend = qt602240_early_suspend,
-	data->suspend_desc.resume = qt602240_late_resume,
-	register_early_suspend(&data->suspend_desc);
-#endif
 	return 0;
 
 err_unregister_device:
@@ -1578,25 +1323,63 @@ static int __devexit qt602240_remove(struct i2c_client *client)
 	return 0;
 }
 
-static const struct i2c_device_id qt602240_id[] = {
-	{"qt602240_ts", 0},
-	{}
-};
+#ifdef CONFIG_PM
+static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
+{
+	struct qt602240_data *data = i2c_get_clientdata(client);
+	struct input_dev *input_dev = data->input_dev;
 
+	mutex_lock(&input_dev->mutex);
+
+	if (input_dev->users)
+		qt602240_stop(data);
+
+	mutex_unlock(&input_dev->mutex);
+
+	return 0;
+}
+
+static int qt602240_resume(struct i2c_client *client)
+{
+	struct qt602240_data *data = i2c_get_clientdata(client);
+	struct input_dev *input_dev = data->input_dev;
+
+	/* Soft reset */
+	qt602240_write_object(data, QT602240_GEN_COMMAND,
+			QT602240_COMMAND_RESET, 1);
+
+	msleep(QT602240_RESET_TIME);
+
+	mutex_lock(&input_dev->mutex);
+
+	if (input_dev->users)
+		qt602240_start(data);
+
+	mutex_unlock(&input_dev->mutex);
+
+	return 0;
+}
+#else
+#define qt602240_suspend	NULL
+#define qt602240_resume		NULL
+#endif
+
+static const struct i2c_device_id qt602240_id[] = {
+	{ "qt602240_ts", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, qt602240_id);
 
 static struct i2c_driver qt602240_driver = {
 	.driver = {
-		   .name = "qt602240_ts",
-		   .owner = THIS_MODULE,
-		   },
-	.probe = qt602240_probe,
-	.remove = __devexit_p(qt602240_remove),
-#ifndef CONFIG_HAS_EARLYSUSPEND
-	.suspend = qt602240_suspend,
-	.resume = qt602240_resume,
-#endif
-	.id_table = qt602240_id,
+		.name	= "qt602240_ts",
+		.owner	= THIS_MODULE,
+	},
+	.probe		= qt602240_probe,
+	.remove		= __devexit_p(qt602240_remove),
+	.suspend	= qt602240_suspend,
+	.resume		= qt602240_resume,
+	.id_table	= qt602240_id,
 };
 
 static int __init qt602240_init(void)

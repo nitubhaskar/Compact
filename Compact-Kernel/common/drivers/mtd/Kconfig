@@ -182,8 +182,7 @@ config MTD_CHAR
 	  the device, or to erase parts of it.
 
 config HAVE_MTD_OTP
-	tristate "Devices support flash OTP"
-	depends on MTD_CHAR
+	bool
 	help
 	  Enable access to OTP regions using MTD_CHAR.
 

@@ -378,20 +378,7 @@ struct input_absinfo {
 #define KEY_WIMAX		246
 #define KEY_RFKILL		247	/* Key that controls all radios */
 
-/*
-According to Android,OEM can define their own keys and changes
-in framework/apps to get those keys in framework or send it to application.
-so the application can take action on that.
-
-In case of single button headset as here, it would be phone app which
-needs to get this key and takes action like accept  or hang-up the call.
-We define our own key for Headset button press for this puspose.
-Its KEY_BCM_HEADSET_BUTTON which has same value as KEY_SEND as defined here
-in input.h for Martini platform.
-*/
-#define KEY_BCM_HEADSET_BUTTON KEY_SEND
-
-/* Range 248 - 255 is reserved for special needs of AT keyboard driver */
+/* Code 255 is reserved for special needs of AT keyboard driver */
 
 #define BTN_MISC		0x100
 #define BTN_0			0x100
@@ -608,7 +595,7 @@ in input.h for Martini platform.
 #define KEY_NUMERIC_9		0x209
 #define KEY_NUMERIC_STAR	0x20a
 #define KEY_NUMERIC_POUND	0x20b
-
+#define KEY_CAMERA_SNAPSHOT	0x2fe
 #define KEY_CAMERA_FOCUS	0x210
 #define KEY_WPS_BUTTON		0x211	/* WiFi Protected Setup key */
 
@@ -826,6 +813,13 @@ in input.h for Martini platform.
  */
 #define MT_TOOL_FINGER		0
 #define MT_TOOL_PEN		1
+
+
+#ifdef CONFIG_KERNEL_DEBUG_SEC
+#define KERNEL_SEC_FORCED_UPLOAD_1ST_KEY  KEY_VOLUMEUP		/*VOLUME UP KEY*/
+#define KERNEL_SEC_FORCED_UPLOAD_2ND_KEY  KEY_HOME			/*HOME KEY*/
+#endif // CONFIG_KERNEL_DEBUG_SEC
+
 
 /*
  * Values describing the status of a force-feedback effect

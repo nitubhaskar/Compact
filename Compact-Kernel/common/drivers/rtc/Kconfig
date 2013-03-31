@@ -146,53 +146,6 @@ comment "I2C RTC drivers"
 
 if I2C
 
-config RTC_DRV_BCM59035
-        tristate "Broadcom BCM59035 PMU RTC"
-        depends on MFD_BCM59035
-        select RTC_ANDROID_ALARM_WORKAROUND
-        help
-          If you say yes here you will get support for the RTC subsystem
-          of Broadcom BCM59035 PMU chip
-
-          This driver can also be built as a module. If so, the module
-          will be called "rtc-bcm59035".
-
-config RTC_DRV_BCM59038
-        tristate "Broadcom BCM59038 PMU RTC"
-        depends on MFD_BCM59038
-        help
-          If you say yes here you will get support for the RTC subsystem
-          of Broadcom BCM59038 PMU chip
-
-          This driver can also be built as a module. If so, the module
-          will be called "rtc-bcm59038".
-
-config RTC_DRV_MAX8986
-       tristate "Maxim MAX8986 PMU RTC"
-       depends on MFD_MAX8986
-       select RTC_ANDROID_ALARM_WORKAROUND
-       help
-         If you say yes here you will get support for the RTC subsystem
-         of Maxim MAX8986 PMU chip
-
-         This driver can also be built as a module. If so, the module
-         will be called "rtc-max8986".
-
-config RTC_ANDROID_ALARM_WORKAROUND
-       bool "Fix for alarm handling in 'Android' environment"
-       help
-         This option selects temporary fix for alarm handling in 'Android'
-         environment. This option enables code to disable alarm in the
-         'resume' handler of RTC driver. In the normal mode,
-         android handles all alarms in software without using the RTC chip.
-         Android sets the alarm in the rtc only in the suspend path (by
-         calling .set_alarm with struct rtc_wkalrm->enabled set to 1).
-         In the resume path, android tries to disable alarm by calling
-         .set_alarm with struct rtc_wkalrm->enabled' field set to 0.
-         But unfortunately, it memsets the rtc_wkalrm struct to 0, which
-         causes the rtc lib to flag error and control does not reach RTC
-         driver. Hence this workaround.
-
 config RTC_DRV_DS1307
 	tristate "Dallas/Maxim DS1307/37/38/39/40, ST M41T00, EPSON RX-8025"
 	help
@@ -388,10 +341,6 @@ config RTC_DRV_RX8025
 
 	  This driver can also be built as a module. If so, the module
 	  will be called rtc-rx8025.
-
-config RTC_DRV_D2041
-	tristate "Dialog D2041 RTC"
-	depends on MFD_D2041
 
 endif # I2C
 
@@ -696,6 +645,37 @@ config RTC_DRV_NUC900
 
 comment "on-CPU RTC drivers"
 
+config RTC_DRV_MSM
+	tristate "RTC on Qualcomm Chipsets"
+	depends on ARCH_MSM
+	default y
+	help
+	  RTC driver for Qualcomm chipsets
+
+
+config RTC_SECURE_TIME_SUPPORT
+        bool "Support for secure time on Qualcomm Chipsets"
+        depends on RTC_DRV_MSM = y
+        default y
+        help
+          Say yes here to have additional handle for reading secure time
+          maintained by ARM9.
+
+config RTC_ASYNC_MODEM_SUPPORT
+	bool "Support for time update on async modem boot"
+        depends on RTC_DRV_MSM && (ARCH_MSM8X60 || ARCH_QSD8X50)
+	default n
+	help
+	 Say yes here to have the system time updated if there is
+	 an asynchronous MODEM boot.
+
+config RTC_DRV_MSM7X00A
+	tristate "MSM7X00A"
+	depends on ARCH_MSM
+	default n
+	help
+	  RTC driver for Qualcomm MSM7K chipsets
+
 config RTC_DRV_DAVINCI
 	tristate "TI DaVinci RTC"
 	depends on ARCH_DAVINCI_DM365
@@ -705,6 +685,13 @@ config RTC_DRV_DAVINCI
 
 	  This driver can also be built as a module. If so, the module
 	  will be called rtc-davinci.
+
+config RTC_DRV_MSM7X00A
+	tristate "MSM7X00A"
+	depends on ARCH_MSM
+	default y
+	help
+	  RTC driver for Qualcomm MSM7K chipsets
 
 config RTC_DRV_OMAP
 	tristate "TI OMAP1"
@@ -973,5 +960,25 @@ config RTC_DRV_MPC5121
 
 	  This driver can also be built as a module. If so, the module
 	  will be called rtc-mpc5121.
+
+config RTC_PM8058
+	tristate "PMIC8058 RTC support"
+	default n
+	depends on PMIC8058
+	help
+	  Say Y here if you want support for the PMIC8058 RTC.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called pmic8058-rtc.
+
+config RTC_PM8058_WRITE_ENABLE
+	bool "PM8058 RTC write enable"
+	default n
+	depends on RTC_PM8058
+	help
+	  Say Y here if you want to support the write operation for
+	  PMIC8058 RTC.
+
+	  By default the write operation is not supported.
 
 endif # RTC_CLASS

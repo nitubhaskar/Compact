@@ -110,16 +110,6 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 	  Be aware that not all cpufreq drivers support the conservative
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
-
-config CPU_FREQ_DEFAULT_GOV_BCM21553
-	bool "bcm21553"
-	select CPU_FREQ_GOV_BCM21553
-	help
-	  Use the CPUFreq governor 'bcm21553' as default. This option enables
-	  CPUFReq governor implemented for Broadcom BCM21553 chip. This
-	  governor adjusts the cpu frequency and voltage based on certain
-	  usecases.
-
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE

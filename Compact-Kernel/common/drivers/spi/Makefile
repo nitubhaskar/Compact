@@ -6,10 +6,6 @@ ifeq ($(CONFIG_SPI_DEBUG),y)
 EXTRA_CFLAGS += -DDEBUG
 endif
 
-ifeq ($(CONFIG_ATHENA),y)
-EXTRA_CFLAGS                += -D_ATHENA_
-endif
-
 # small core, mostly translating board-specific
 # config declarations into driver model code
 obj-$(CONFIG_SPI_MASTER)		+= spi.o
@@ -40,6 +36,7 @@ obj-$(CONFIG_SPI_MPC52xx_PSC)		+= mpc52xx_psc_spi.o
 obj-$(CONFIG_SPI_MPC52xx)		+= mpc52xx_spi.o
 obj-$(CONFIG_SPI_MPC8xxx)		+= spi_mpc8xxx.o
 obj-$(CONFIG_SPI_PPC4xx)		+= spi_ppc4xx.o
+obj-$(CONFIG_SPI_QSD)			+= spi_qsd.o
 obj-$(CONFIG_SPI_S3C24XX_GPIO)		+= spi_s3c24xx_gpio.o
 obj-$(CONFIG_SPI_S3C24XX)		+= spi_s3c24xx_hw.o
 obj-$(CONFIG_SPI_S3C64XX)		+= spi_s3c64xx.o
@@ -50,12 +47,9 @@ obj-$(CONFIG_SPI_XILINX_PLTFM)		+= xilinx_spi_pltfm.o
 obj-$(CONFIG_SPI_SH_SCI)		+= spi_sh_sci.o
 obj-$(CONFIG_SPI_SH_MSIOF)		+= spi_sh_msiof.o
 obj-$(CONFIG_SPI_STMP3XXX)		+= spi_stmp.o
-ifdef CONFIG_OSDAL_SUPPORT
-obj-$(CONFIG_SPI_BCM21XX)       += spi_bcm21xx_osdal.o
-else
-obj-$(CONFIG_SPI_BCM21XX)		+= spi_bcm21xx.o
-endif
 obj-$(CONFIG_SPI_NUC900)		+= spi_nuc900.o
+obj-$(CONFIG_SPI_QSD)			+= spi_qsd.o
+obj-$(CONFIG_SPI_QUP)			+= spi_qsd.o
 
 # special build for s3c24xx spi driver with fiq support
 spi_s3c24xx_hw-y			:= spi_s3c24xx.o

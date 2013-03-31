@@ -183,7 +183,6 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 	char *p;
 	int len;
 	int error = -EINVAL;
-	pr_info("%s\n",__func__);
 
 	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
@@ -203,7 +202,6 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 #ifdef CONFIG_EARLYSUSPEND
 		if (state == PM_SUSPEND_ON || valid_state(state)) {
 			error = 0;
-			pr_info("%s invoking request_suspend_state - state = %d\n",__func__,state);
 			request_suspend_state(state);
 		}
 #else

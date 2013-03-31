@@ -17,10 +17,6 @@
 #include <linux/mmc/card.h>
 #include <linux/mmc/mmc.h>
 #include <linux/mmc/sd.h>
-#include <linux/mmc/core.h>
-#include <mach/sdio.h>
-#include "../host/bcmsdhc.h"
-
 
 #include "core.h"
 #include "bus.h"
@@ -46,6 +42,7 @@ static const unsigned int tacc_mant[] = {
 	35,	40,	45,	50,	55,	60,	70,	80,
 };
 
+#define CONFIG_MMC_PARANOID_SD_INIT //qualcomm
 #define UNSTUFF_BITS(resp,start,size)					\
 	({								\
 		const int __size = size;				\
@@ -353,11 +350,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	 * state.  We wait 1ms to give cards time to
 	 * respond.
 	 */
-	printk("%s : Card go to idle state\n",__func__);
-	err = mmc_go_idle(host);
-	
-	if(err)
-		printk("%s:fail to send CMD0 to go idle\n",__func__);
+	mmc_go_idle(host);
 
 	/*
 	 * If SD_SEND_IF_COND indicates an SD 2.0
@@ -369,13 +362,10 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	if (!err)
 		ocr |= 1 << 30;
 
-	printk("%s : send ACMD41\n",__func__);
 	err = mmc_send_app_op_cond(host, ocr, NULL);
 	if (err)
-	{
-		printk("%s : fail to send ACMD41\n",__func__);
 		goto err;
-	}
+
 	/*
 	 * Fetch CID from card.
 	 */
@@ -384,15 +374,11 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	else
 		err = mmc_all_send_cid(host, cid);
 	if (err)
-	{
-		printk("%s : fail to send CMD2\n",__func__);
 		goto err;
-	}
 
 	if (oldcard) {
 		if (memcmp(cid, oldcard->raw_cid, sizeof(cid)) != 0) {
 			err = -ENOENT;
-			printk("%s : fail to memcpy\n",__func__);
 			goto err;
 		}
 
@@ -638,42 +624,44 @@ static int mmc_sd_suspend(struct mmc_host *host)
  * This function tries to determine if the same card is still present
  * and, if so, restore all state to it.
  */
-#ifdef CONFIG_MMC_PARANOID_SD_INIT
-#define MMC_PARANOID_SD_INIT_RETRY_CNT	5
-#endif
 static int mmc_sd_resume(struct mmc_host *host)
 {
 	int err;
-	struct bcmsdhc_host *bcm_host;
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
 	int retries;
-	int power_mdelay_table[MMC_PARANOID_SD_INIT_RETRY_CNT]={300, 300, 250, 200, 150};
 #endif
 
 	BUG_ON(!host);
 	BUG_ON(!host->card);
 
-	bcm_host = mmc_priv(host);
-
 	mmc_claim_host(host);
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
-	retries = MMC_PARANOID_SD_INIT_RETRY_CNT;
+	retries = 5;
 	while (retries) {
 		err = mmc_sd_init_card(host, host->ocr, host->card);
+
+#if 1	//defined(CONFIG_MACH_LUCAS)
+		if (err) {
+			printk(KERN_ERR "%s: Re-init card rc = %d (retries = %d)\n",
+		       mmc_hostname(host), err, retries);
+
+			retries--;
+			// qualcomm add
+			mmc_power_off(host);
+			mdelay(5);
+			mmc_power_up(host);
+			continue;
+		}
+#else		
 
 		if (err) {
 			printk(KERN_ERR "%s: Re-init card rc = %d (retries = %d)\n",
 			       mmc_hostname(host), err, retries);
 			mdelay(5);
 			retries--;
-			if(bcm_host->bcm_plat->flags&SDHC_DEVTYPE_SD){
-				//force to power-off/on
-				mmc_power_off_brcm(host);
-				mdelay(power_mdelay_table[retries]);
-				mmc_power_up_brcm(host);
-			}
 			continue;
 		}
+#endif		
 		break;
 	}
 #else
@@ -782,6 +770,10 @@ int mmc_attach_sd(struct mmc_host *host, u32 ocr)
 		err = mmc_sd_init_card(host, host->ocr, NULL);
 		if (err) {
 			retries--;
+			// qualcomm add
+			mmc_power_off(host);
+			mdelay(5);
+			mmc_power_up(host);
 			continue;
 		}
 		break;

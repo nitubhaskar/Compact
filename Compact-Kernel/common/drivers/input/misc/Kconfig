@@ -226,36 +226,6 @@ config INPUT_POWERMATE
 	  To compile this driver as a module, choose M here: the
 	  module will be called powermate.
 
-config INPUT_BCM59035_PONKEY
-        tristate "Broadcom BCM59035 PMU PONKEY"
-        depends on MFD_BCM59035
-        help
-          If you say yes here you will get support for the poweron button
-          feature of PMU BCM59035
-
-          This driver can also be built as a module. If so, the module
-          will be called "ponkey-bcm59035".
-
-config PONKEY_DRV_BCM59038
-        tristate "Broadcom BCM59038 PMU PONKEY"
-        depends on MFD_BCM59038
-        help
-          If you say yes here you will get support for the poweron button
-          feature of PMU BCM59038
-
-          This driver can also be built as a module. If so, the module
-          will be called "ponkey-bcm59038".
-
-config PONKEY_DRV_MAX8986
-        tristate "Maxim MAX8986 PMU PONKEY"
-        depends on MFD_MAX8986
-        help
-          If you say yes here you will get support for the poweron button
-          feature of PMU MAX8986
-
-          This driver can also be built as a module. If so, the module
-          will be called "ponkey-max8986".
-
 config INPUT_YEALINK
 	tristate "Yealink usb-p1k voip phone"
 	depends on EXPERIMENTAL
@@ -343,10 +313,22 @@ config INPUT_WINBOND_CIR
 	  To compile this driver as a module, choose M here: the module will be
 	  called winbond_cir.
 
-config INPUT_GPIOKEY_MATRIX
+config INPUT_GPIO
 	tristate "GPIO driver support"
 	help
 	  Say Y here if you want to support gpio based keys, wheels etc...
+
+config INPUT_ISA1200_FF_MEMLESS
+	tristate "ISA1200 haptic ff-memless support"
+	depends on I2C
+	select INPUT_FF_MEMLESS
+	help
+	  ISA1200 is a high performance enhanced haptic chip.
+	  Say Y here if you want to support ISA1200 connected via I2C,
+	  and select N if you are unsure.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called isa1200-ff-memless.
 
 config HP_SDC_RTC
 	tristate "HP SDC Real Time Clock"
@@ -436,20 +418,36 @@ config INPUT_PCAP
 	  To compile this driver as a module, choose M here: the
 	  module will be called pcap_keys.
 
-config INPUT_BMA150_SMB380
-	tristate "Bosch BMA150 accelerometer support"
-	help
-	  Say Y to enable BMA150/ SMB380 based acceleromter support
+config PMIC8058_PWRKEY
+        tristate "PMIC8058 power key support"
+        default n
+        depends on PMIC8058
+        help
+          Say Y here if you want support for the PMIC8058 power key.
 
-config INPUT_ONKEY_D2041
-	tristate "Onkey D2041 support"
-	depends on MFD_D2041	
+          To compile this driver as a module, choose M here: the
+          module will be called pmic8058-pwrkey.
 
-config SENSORS_AK8973
-	tristate "AK8973 3-axis Electronic Compass support"
-	depends on I2C=y
+config PMIC8058_OTHC
+        tristate "Qualcomm PMIC8058 OTHC support"
+        default n
+        depends on PMIC8058
+        help
+          Say Y here if you want support PMIC8058 OTHC.
+
+          To compile this driver as a module, choose M here: the
+          module will be called pmic8058-othc.
+
+config INPUT_PMIC8058_VIBRA_MEMLESS
+	tristate "Qualcomm PM8058 vibrator support (ff-memless)"
+	depends on PMIC8058 && INPUT_FF_MEMLESS
+	default n
 	help
-	If you say yes here you get support for Asahi Kasei's
-	orientation sensor AK8973.
+	  This option enables device driver support for the vibrator
+	  on Qualcomm PM8058 chip. This driver supports ff-memless interface
+	  from input framework.
+
+	  To compile this driver as module, choose M here: the
+	  module will be called pmic8058-vib-memless.
 
 endif

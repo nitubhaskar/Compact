@@ -39,16 +39,13 @@ struct early_suspend {
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	struct list_head link;
 	int level;
-	char name[51];
 	void (*suspend)(struct early_suspend *h);
 	void (*resume)(struct early_suspend *h);
 #endif
 };
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
-#define register_early_suspend(x) strncpy((x)->name,__func__,50);\
-			register_early_suspend_actual(x)
-void register_early_suspend_actual(struct early_suspend *handler);
+void register_early_suspend(struct early_suspend *handler);
 void unregister_early_suspend(struct early_suspend *handler);
 #else
 #define register_early_suspend(handler) do { } while (0)

@@ -24,6 +24,11 @@
 #endif
 #include "power.h"
 
+#ifdef CONFIG_DPRAM_WHITELIST
+#include <linux/delay.h>
+#include "portlist.h"
+#endif /* CONFIG_DPRAM_WHITELIST */
+
 enum {
 	DEBUG_EXIT_SUSPEND = 1U << 0,
 	DEBUG_WAKEUP = 1U << 1,
@@ -31,8 +36,7 @@ enum {
 	DEBUG_EXPIRE = 1U << 3,
 	DEBUG_WAKE_LOCK = 1U << 4,
 };
-//static int debug_mask = DEBUG_EXIT_SUSPEND | DEBUG_WAKEUP;
-static int debug_mask = 0xF;
+static int debug_mask = DEBUG_EXIT_SUSPEND | DEBUG_WAKEUP;
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 
 #define WAKE_LOCK_TYPE_MASK              (0x0f)
@@ -46,7 +50,11 @@ static LIST_HEAD(inactive_locks);
 static struct list_head active_wake_locks[WAKE_LOCK_TYPE_COUNT];
 static int current_event_num;
 struct workqueue_struct *suspend_work_queue;
+// hsil
+struct workqueue_struct *sync_work_queue;
 struct wake_lock main_wake_lock;
+// hsil
+struct wake_lock sync_wake_lock;
 suspend_state_t requested_suspend_state = PM_SUSPEND_MEM;
 static struct wake_lock unknown_wakeup;
 
@@ -270,7 +278,24 @@ static void suspend(struct work_struct *work)
 			pr_info("suspend: abort suspend\n");
 		return;
 	}
-	pr_info("%s-b4 suspend: current_event_num = %d\n",__func__,current_event_num);
+
+#ifdef CONFIG_DPRAM_WHITELIST
+	// call process white list
+	ret = process_white_list();
+	if (unlikely(ret !=0)) {
+		printk("fail to send whitelist\n");
+		return;
+	} else {
+		msleep(1000); // watch suspend condition change
+		if (has_wake_lock(WAKE_LOCK_SUSPEND)) {
+			if (debug_mask & DEBUG_SUSPEND)
+				pr_info("suspend: abort suspend after processing white list\n");
+			return;
+		}
+	} 
+#endif /* CONFIG_DPRAM_WHITELIST */
+
+
 	entry_event_num = current_event_num;
 	sys_sync();
 	if (debug_mask & DEBUG_SUSPEND)
@@ -286,7 +311,6 @@ static void suspend(struct work_struct *work)
 			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
 	}
-	pr_info("%s-after suspend: current_event_num = %d\n",__func__,current_event_num);
 	if (current_event_num == entry_event_num) {
 		if (debug_mask & DEBUG_SUSPEND)
 			pr_info("suspend: pm_suspend returned with no event\n");
@@ -308,10 +332,7 @@ static void expire_wake_locks(unsigned long data)
 	if (debug_mask & DEBUG_EXPIRE)
 		pr_info("expire_wake_locks: done, has_lock %ld\n", has_lock);
 	if (has_lock == 0)
-	{
-		pr_info("%s: queuing suspend_work\n",__func__);
 		queue_work(suspend_work_queue, &suspend_work);
-	}
 	spin_unlock_irqrestore(&list_lock, irqflags);
 }
 static DEFINE_TIMER(expire_timer, expire_wake_locks, 0, 0);
@@ -346,7 +367,7 @@ void wake_lock_init(struct wake_lock *lock, int type, const char *name)
 	if (name)
 		lock->name = name;
 	BUG_ON(!lock->name);
-	pr_info("wake_lock_init name=%s\n", lock->name);
+
 	if (debug_mask & DEBUG_WAKE_LOCK)
 		pr_info("wake_lock_init name=%s\n", lock->name);
 #ifdef CONFIG_WAKELOCK_STAT
@@ -370,7 +391,6 @@ EXPORT_SYMBOL(wake_lock_init);
 void wake_lock_destroy(struct wake_lock *lock)
 {
 	unsigned long irqflags;
-	pr_info("wake_lock_destroy name=%s\n", lock->name);
 	if (debug_mask & DEBUG_WAKE_LOCK)
 		pr_info("wake_lock_destroy name=%s\n", lock->name);
 	spin_lock_irqsave(&list_lock, irqflags);
@@ -403,7 +423,6 @@ static void wake_lock_internal(
 	long expire_in;
 
 	spin_lock_irqsave(&list_lock, irqflags);
-// haipeng	pr_info("%s:%s\n",__func__,lock->name);
 	type = lock->flags & WAKE_LOCK_TYPE_MASK;
 	BUG_ON(type >= WAKE_LOCK_TYPE_COUNT);
 	BUG_ON(!(lock->flags & WAKE_LOCK_INITIALIZED));
@@ -465,11 +484,8 @@ static void wake_lock_internal(
 					pr_info("wake_lock: %s, stop expire timer\n",
 						lock->name);
 			if (expire_in == 0)
-			{
-				pr_info("%s: queuing suspend_work\n",__func__);
 				queue_work(suspend_work_queue, &suspend_work);
 		}
-	}
 	}
 	spin_unlock_irqrestore(&list_lock, irqflags);
 }
@@ -492,7 +508,6 @@ void wake_unlock(struct wake_lock *lock)
 	unsigned long irqflags;
 	spin_lock_irqsave(&list_lock, irqflags);
 	type = lock->flags & WAKE_LOCK_TYPE_MASK;
-// haipeng	pr_info("%s: lock->name:%s\n",__func__,lock->name);
 #ifdef CONFIG_WAKELOCK_STAT
 	wake_unlock_stat_locked(lock, 0);
 #endif
@@ -514,14 +529,9 @@ void wake_unlock(struct wake_lock *lock)
 					pr_info("wake_unlock: %s, stop expire "
 						"timer\n", lock->name);
 			if (has_lock == 0)
-			{
-				pr_info("%s: lock->name %s queuing suspend_work\n",__func__,lock->name);
 				queue_work(suspend_work_queue, &suspend_work);
 		}
-		}
-		if (lock == &main_wake_lock) 
-		{
-			pr_info("%s: main_wake_lock unlocked....\n",__func__);
+		if (lock == &main_wake_lock) {
 			if (debug_mask & DEBUG_SUSPEND)
 				print_active_locks(WAKE_LOCK_SUSPEND);
 #ifdef CONFIG_WAKELOCK_STAT
@@ -565,6 +575,8 @@ static int __init wakelocks_init(void)
 			"deleted_wake_locks");
 #endif
 	wake_lock_init(&main_wake_lock, WAKE_LOCK_SUSPEND, "main");
+	// hsil	
+	wake_lock_init(&sync_wake_lock, WAKE_LOCK_SUSPEND, "sync_system");
 	wake_lock(&main_wake_lock);
 	wake_lock_init(&unknown_wakeup, WAKE_LOCK_SUSPEND, "unknown_wakeups");
 
@@ -585,6 +597,14 @@ static int __init wakelocks_init(void)
 		goto err_suspend_work_queue;
 	}
 
+	// hsil
+	sync_work_queue = create_singlethread_workqueue("sync_system_work");
+	if (sync_work_queue == NULL) {
+		pr_err("%s: failed to create sync_work_queue\n", __func__);
+		ret = -ENOMEM;
+		goto err_suspend_work_queue;
+	}
+
 #ifdef CONFIG_WAKELOCK_STAT
 	proc_create("wakelocks", S_IRUGO, NULL, &wakelock_stats_fops);
 #endif
@@ -597,6 +617,8 @@ err_platform_driver_register:
 	platform_device_unregister(&power_device);
 err_platform_device_register:
 	wake_lock_destroy(&unknown_wakeup);
+	// hsil
+	wake_lock_destroy(&sync_wake_lock);
 	wake_lock_destroy(&main_wake_lock);
 #ifdef CONFIG_WAKELOCK_STAT
 	wake_lock_destroy(&deleted_wake_locks);
@@ -610,9 +632,11 @@ static void  __exit wakelocks_exit(void)
 	remove_proc_entry("wakelocks", NULL);
 #endif
 	destroy_workqueue(suspend_work_queue);
+	destroy_workqueue(sync_work_queue);	// hsil
 	platform_driver_unregister(&power_driver);
 	platform_device_unregister(&power_device);
 	wake_lock_destroy(&unknown_wakeup);
+	wake_lock_destroy(&sync_wake_lock);
 	wake_lock_destroy(&main_wake_lock);
 #ifdef CONFIG_WAKELOCK_STAT
 	wake_lock_destroy(&deleted_wake_locks);
