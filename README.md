@@ -2,23 +2,24 @@ Compact Kernel Version : 1.2.6
 For Samsung GT-S6102 : Galaxy Y DUOS
 
 Introduction:
+-------------
 
 This kernel source code repository has all my files downloaded from various links and research in XDA site to build a kernel for my phone and a lot of help from manoranjan2050. It includes tools to building the kernel, compress the kernel image (zImage, RamDisk), also menuconfig to config kernel, extract boot.img to get zImage & RamDisk.
 
 
 Folders Description:
 
-"arm-2009q3" is cross compiler used to build android kernel.
+"arm-2009q3" under "Usefull_Tools" is cross compiler used to build android kernel.
 Or You can also get the Toolchain from here. Visit http://www.codesourcery.com/, download and install it(hard way).
 
-"ncurses-5.9" is required to enablemenuconfig option which helps you config kernel with a menu instead of editing manually .config files.. even though everyone says menuconfig is better, i prefer to edit .config file directly using text editor.
+"ncurses-5.9" under "Usefull_Tools" is required to enablemenuconfig option which helps you config kernel with a menu instead of editing manually .config files.. even though everyone says menuconfig is better, i prefer to edit .config file directly using text editor.
 You can also get ncurses from its official page from here. link--> http://ftp.gnu.org/pub/gnu/ncurses/
 
 "source" is the folder which has files required to compile the kernel or name itself is self explanatory i guess.
 
-"bootimgpack" contains all the necessary files to compress kernel(zImage) and ramdisk(ramdisk.gz). remember you need to put these 2 files of yours under this folder.
+"mkbootimg_src" under "Usefull_Tools" contains all the necessary files to compress kernel(zImage) and ramdisk(ramdisk.gz). remember you need to put these 2 files of yours under this folder.
 
-"original" is having all the files i have modified in source folder. There is a Readme file inside that folder which explains things more.
+"Original" is having all the files i have modified in source folder. There is a Readme file inside that folder which explains things more.
 
 ".config working backup" has my .config file.. just for backup purpose.
 
@@ -69,4 +70,4 @@ d78f52b755b388381d6207c13d8a46ab zImage
 Now you have yourself a boot.img file in the same folder which you can flash through Odin software by making a tar compression of boot.img or make a flashable zip file for cwm.
 
 
-and finally thanks to manoranjan2050, kurotsugi, savie and Maroc-os. All of them have taught me lot of things. i am greatful for them. thanks guys.
+and finally thanks to manoranjan2050, kurotsugi, savie, irfanbagus and Maroc-os. All of them have taught me lot of things. i am greatful for them. thanks guys.
