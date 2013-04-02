@@ -1,5 +1,5 @@
 Compact Kernel Version: Test
-For Samsung GT-S5302 : Galaxy ACE
+For Samsung GT-S5830 : Galaxy ACE
 
 Introduction:
 ~~~~~~~~~~~~~
