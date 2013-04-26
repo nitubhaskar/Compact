@@ -185,22 +185,6 @@ static int bcm_avs_drv_probe(struct platform_device *pdev)
 		regulator_put(regl);
 	}
 
-	/* It is assumed that, at boot up system is in normal mode */
-	if (pdata->core_nml_regl && type_info->nm2_normal_voltage != -1)
-	{
-		regl = regulator_get(NULL, pdata->core_nml_regl);
-		if(IS_ERR(regl))
-		{
-			pr_info("%s: Core Normal mode regulator_get failed\n",
-				__func__);
-			ret = PTR_ERR(regl);
-			goto error;
-		}
-		regulator_set_voltage(regl, type_info->nm2_normal_voltage,
-				      type_info->nm2_normal_voltage);
-		regulator_put(regl);
-	}
-
 	/* It is assumed that, at boot up system is in meda mode */
 	if (pdata->core_meda_regl && type_info->nm2_meda_voltage != -1)
 	{
@@ -262,22 +246,6 @@ static int bcm_avs_drv_probe(struct platform_device *pdev)
 		}
 		regulator_set_voltage(regl, type_info->nm2_turbo_voltage,
 				      type_info->nm2_turbo_voltage);
-		regulator_put(regl);
-	}
-
-	/* It is assumed that, at boot up system is in overc mode */
-	if (pdata->core_overc_regl && type_info->nm2_overc_voltage != -1)
-	{
-		regl = regulator_get(NULL, pdata->core_overc_regl);
-		if(IS_ERR(regl))
-		{
-			pr_info("%s: Core Over_Clock mode regulator_get failed\n",
-				__func__);
-			ret = PTR_ERR(regl);
-			goto error;
-		}
-		regulator_set_voltage(regl, type_info->nm2_overc_voltage,
-				      type_info->nm2_overc_voltage);
 		regulator_put(regl);
 	}
 

@@ -48,11 +48,9 @@ struct bcm_cpu_info {
 	char *cpu_clk;
 	/* Name of appspll enable clock */
 	char *appspll_en_clk;
-	/* Index of overc mode cpu frequency in the DVFS table. Switching
-	 * to overc mode needs special handling.
+	/* Index of turbo mode cpu frequency in the DVFS table. Switching
+	 * to turbo mode needs special handling.
 	 */
-	int index_overc;
-	/* Index of turbo mode cpu frequency in DVFS table. */
 	int index_turbo;
 	/* Index of turbol mode cpu frequency in DVFS table. */
 	int index_turbol;

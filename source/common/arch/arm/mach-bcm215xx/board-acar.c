@@ -523,8 +523,8 @@ struct platform_device bcm_backlight_devices = {
 static struct platform_pwm_backlight_data bcm_backlight_data = {
 	/* backlight */
 	.pwm_id = 1,
-	.max_brightness = 16,	/* Android calibrates to 16 levels*/
-	.dft_brightness = 16,   //by wangpl, change 32 to 16 for bug176757
+	.max_brightness = 32,	/* Android calibrates to 32 levels*/
+	.dft_brightness = 32,
 	/*set pwm clock rate to 200Hz. min value of the operating range of the max1561
          *step-up converter(200Hz - 200KHz) which takes this PWM as an input signal*/
 	.pwm_period_ns =  5000000,

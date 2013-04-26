@@ -331,7 +331,6 @@ static int bcm_cpufreq_set_speed(struct cpufreq_policy *policy,
 	struct cpufreq_freqs freqs;
 	struct bcm_cpufreq *b = &bcm_cpufreq[policy->cpu];
 	struct bcm_cpu_info *info = &b->plat->info[policy->cpu];
-	unsigned int freq_overc, index_overc;
 	unsigned int freq_turbo, index_turbo;
 	unsigned int freq_turbol, index_turbol;
 	unsigned int freq_medb, index_medb;
@@ -351,9 +350,10 @@ static int bcm_cpufreq_set_speed(struct cpufreq_policy *policy,
 		return -EINVAL;
 	}
 
+	freqs.cpu = 0;
 	freqs.old = bcm_cpufreq_get_speed(0);
 	freqs.new = b->bcm_freqs_table[index].frequency;
-
+	freq_pll = 156000;
 	if (freqs.new > policy->max) {
 #ifdef CONFIG_CPU_FREQ_DEBUG
 		printk(KERN_DEBUG "cpufreq set to : %u --> %u we don't support higher\n",
@@ -424,8 +424,6 @@ static int bcm_cpufreq_set_speed(struct cpufreq_policy *policy,
 		}
 
 	/* We set the nedded declarations for all found freqs */
-	index_overc		= info->index_overc;
-	freq_overc		= info->freq_tbl[index_overc].cpu_freq * 1000;
 	index_turbo		= info->index_turbo;
 	freq_turbo		= info->freq_tbl[index_turbo].cpu_freq * 1000;
 	index_turbol	= info->index_turbol;
@@ -440,11 +438,11 @@ static int bcm_cpufreq_set_speed(struct cpufreq_policy *policy,
 	freq_lowa		= info->freq_tbl[index_lowa].cpu_freq * 1000;
 
 		/* High Frequencies needs special handling :) */
-		if ((freqs.new == freq_overc)	||
-			(freqs.new == freq_turbo)	||
+		if ((freqs.new == freq_turbo)	||
 			(freqs.new == freq_turbol))
 		{
 			clk_enable(b->appspll_en_clk);
+	/* freq.new will be in kHz. convert it to Hz for clk_set_rate */
 			ret = wait_for_pll_on();
 			if (!ret)
 				ret = clk_set_rate(b->cpu_clk, freqs.new * 1000);
@@ -529,7 +527,7 @@ static int bcm_cpufreq_init(struct cpufreq_policy *policy)
 	policy->cur = bcm_cpufreq_get_speed(0);
 
 	/* FIX_ME: Tune this value */
-	/* I think it's alrady done :) */
+	/* I think it's already done */
 	policy->cpuinfo.transition_latency = CPUFREQ_ETERNAL_LATENCY;
 
 	ret = bcm_create_cpufreqs_table(policy, &(b->bcm_freqs_table));

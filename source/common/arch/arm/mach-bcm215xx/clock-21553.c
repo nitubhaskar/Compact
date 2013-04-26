@@ -592,7 +592,7 @@ unsigned long bcm21553_arm11_get_rate(struct clk *clk)
 int bcm21553_arm11_set_rate(struct clk *clk, unsigned long val)
 {
 	u32 mode;
-	u32 arm11_freq[7];
+	u32 arm11_freq[6];
 	u32 apps_pll_freq = bcm21553_apps_pll_get_rate();
 	
 	arm11_freq[0] = (apps_pll_freq*3)/16;//234
@@ -601,34 +601,29 @@ int bcm21553_arm11_set_rate(struct clk *clk, unsigned long val)
 	arm11_freq[3] = (apps_pll_freq*3)/8;//468
 	arm11_freq[4] = (apps_pll_freq)/2;//624
 	arm11_freq[5] = (apps_pll_freq*2)/3;//832
-	arm11_freq[6] = (apps_pll_freq*3)/4;//936
-    /* 936, 832, 624, 468, 416, 312, 234 */
+    /* 832, 624, 468, 416, 312, 234 */
 	/*we support only two modes - 0x0C/0x0F - thats what he said*/
 	if (val == arm11_freq[0])
 	{
-		mode = 0x10;
+		mode = 0x0A;
 	}
 	else if (val == arm11_freq[1])
 	{
-		mode = 0x0A;
+		mode = 0x0B;
 	}
 	else if (val == arm11_freq[2])
 	{
-		mode = 0x0B;
+		mode = 0x0C;
 	}
 	else if (val == arm11_freq[3])
 	{
-		mode = 0x0C;
+		mode = 0x0D;
 	}
 	else if (val == arm11_freq[4])
 	{
-		mode = 0x0D;
-	}
-	else if (val == arm11_freq[5])
-	{
 		mode = 0x0E;
 	}
-	else if (val == arm11_freq[6])
+	else if (val == arm11_freq[5])
 	{
 		mode = 0x0F;
 	} else
@@ -642,7 +637,7 @@ int bcm21553_arm11_set_rate(struct clk *clk, unsigned long val)
 
 long bcm21553_arm11_round_rate(struct clk *clk, unsigned long desired_val)
 {
-	u32 arm11_freq[7];
+	u32 arm11_freq[6];
 	u32 apps_pll_freq = bcm21553_apps_pll_get_rate();
 
 	/*we support only two freq  - 312Mhz & appPll/1.5*/
@@ -652,11 +647,10 @@ long bcm21553_arm11_round_rate(struct clk *clk, unsigned long desired_val)
 	arm11_freq[3] = (apps_pll_freq*3)/8;//468
 	arm11_freq[4] = (apps_pll_freq)/2;//624
 	arm11_freq[5] = (apps_pll_freq*2)/3;//832
-	arm11_freq[6] = (apps_pll_freq*3)/4;//936
 
 	return (long)bcm21553_generic_round_rate(desired_val,
 						 arm11_freq,
-						 7);
+						 6);
 }
 
 /*AHB clock*/
@@ -1511,8 +1505,8 @@ int bcm21553_v3d_power_enable(struct clk *clk)
 	/*Save ahb mode and set ahb mode to 0x0C*/
 	ahb_mode = readl(ADDR_CLKPWR_CLK_ARMAHB_MODE) & 0x0F;
 	//writel(0x0C, ADDR_CLKPWR_CLK_ARMAHB_MODE);
-//	bcm215xx_set_armahb_mode(0x0C);
-//	udelay(100);
+	bcm215xx_set_armahb_mode(0x0C);
+	udelay(100);
 
 	/* Write 0 bit 0 to POWER ON V3D island */
 	writel(V3D_POWER_ON, clk->enable_reg);

@@ -279,8 +279,8 @@ void cpufreq_bcm_dvfs_disable(struct cpufreq_client_desc *desc)
 
 	if (dvfs_disable == 1) {
 		if (IS_FLOW_DBG_ENABLED)
-		pr_info("%s: Switching to overc mode: %s\n",
-			__func__, desc->name);
+			pr_info("%s: switching to turbo mode: %s\n",
+				__func__, desc->name);
 		cpufreq_bcm_turbo_on();
 	}
 	mutex_unlock(&dvfs_lock);

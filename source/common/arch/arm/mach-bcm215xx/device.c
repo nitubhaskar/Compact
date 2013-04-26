@@ -549,13 +549,13 @@ struct platform_device bcm215xx_lcdc_device = {
 };
 #endif
 
-#define BCM_CORE_CLK_OVERC	BCM21553_CORECLK_KHZ_936
 #define BCM_CORECLK_TURBO	BCM21553_CORECLK_KHZ_832
 #define BCM_CORE_CLK_TURBOL	BCM21553_CORECLK_KHZ_624
 #define BCM_CORE_CLK_MEDB	BCM21553_CORECLK_KHZ_468
 #define BCM_CORE_CLK_MEDA	BCM21553_CORECLK_KHZ_416
 #define BCM_CORE_CLK_NORMAL	BCM21553_CORECLK_KHZ_312
 #define BCM_CORE_CLK_LOWA	BCM21553_CORECLK_KHZ_234
+//#define BCM_CORE_CLK_TURBOL	(624U*1000)
 
 #if defined(CONFIG_BCM_CPU_FREQ)
 /*********************************************************************
@@ -570,19 +570,17 @@ enum {
 	BCM_MEDB_MODE,
 	BCM_TURBOL_MODE,
 	BCM_TURBO_MODE,
-	BCM_OVERC_MODE,
 };
 
 /* Voltage-Frequency mapping for BCM21553 CPU0 */
 static struct bcm_freq_tbl bcm215xx_cpu0_freq_tbl[] = {
 	/* NOW WE NEED ONLY TO FIXE VOLTAGES*/
-	FTBL_INIT(BCM_CORE_CLK_LOWA / 1000, 1120000),
-	FTBL_INIT(BCM_CORE_CLK_NORMAL / 1000, 1160000),
+	FTBL_INIT(BCM_CORE_CLK_LOWA / 1000, 1160000),
+	FTBL_INIT(BCM_CORE_CLK_NORMAL / 1000, 1180000),
 	FTBL_INIT(BCM_CORE_CLK_MEDA / 1000, 1200000),
 	FTBL_INIT(BCM_CORE_CLK_MEDB / 1000, 1240000),
-	FTBL_INIT(BCM_CORE_CLK_TURBOL / 1000, 1280000),
-	FTBL_INIT(BCM_CORECLK_TURBO / 1000, 1320000),
-	FTBL_INIT(BCM_CORE_CLK_OVERC / 1000, 1360000),
+	FTBL_INIT(BCM_CORE_CLK_TURBOL / 1000, 1300000),
+	FTBL_INIT(BCM_CORECLK_TURBO / 1000, 1360000),
 };
 /* BCM21553 CPU info */
 static struct bcm_cpu_info bcm215xx_cpu_info[] = {
@@ -593,7 +591,6 @@ static struct bcm_cpu_info bcm215xx_cpu_info[] = {
 		.cpu_clk = "arm11",
 		.appspll_en_clk = "appspll_en",
 		.cpu_regulator = "csr_nm2",
-		.index_overc = BCM_OVERC_MODE,
 		.index_turbo = BCM_TURBO_MODE,
 		.index_turbol = BCM_TURBOL_MODE,
 		.index_medb = BCM_MEDB_MODE,
@@ -623,7 +620,6 @@ struct platform_device bcm21553_cpufreq_drv = {
  *********************************************************************/
 
 static struct bcm21553_cpufreq_gov_plat bcm21553_cpufreq_gov_plat = {
-	.freq_overc		= BCM_CORE_CLK_OVERC,
 	.freq_turbo		= BCM_CORECLK_TURBO,
 	.freq_turbol	= BCM_CORE_CLK_TURBOL,
 	.freq_medb		= BCM_CORE_CLK_MEDB,
@@ -647,34 +643,29 @@ struct platform_device bcm21553_cpufreq_gov = {
  *********************************************************************/
 
 /* THIS IS THE MAN CORE OF OUR VOLTAGE WE NEED TO CRACK IT */
+#define NM2_FF_VOLTAGE_LOWA		1160000
+#define NM2_TT_VOLTAGE_LOWA		1160000
+#define NM2_SS_VOLTAGE_LOWA		1180000
 
-#define NM2_FF_VOLTAGE_LOWA	1120000
-#define NM2_TT_VOLTAGE_LOWA	1140000
-#define NM2_SS_VOLTAGE_LOWA	1180000
-
-#define NM2_FF_VOLTAGE_NORMAL	1140000
+#define NM2_FF_VOLTAGE_NORMAL	1180000
 #define NM2_TT_VOLTAGE_NORMAL	1180000
-#define NM2_SS_VOLTAGE_NORMAL	1220000
+#define NM2_SS_VOLTAGE_NORMAL	1200000
 
-#define NM2_FF_VOLTAGE_MEDA	1180000
-#define NM2_TT_VOLTAGE_MEDA	1200000
-#define NM2_SS_VOLTAGE_MEDA	1240000
+#define NM2_FF_VOLTAGE_MEDA		1200000
+#define NM2_TT_VOLTAGE_MEDA		1200000
+#define NM2_SS_VOLTAGE_MEDA		1240000
 
-#define NM2_FF_VOLTAGE_MEDB	1200000
-#define NM2_TT_VOLTAGE_MEDB	1220000
-#define NM2_SS_VOLTAGE_MEDB	1260000
+#define NM2_FF_VOLTAGE_MEDB		1240000
+#define NM2_TT_VOLTAGE_MEDB		1240000
+#define NM2_SS_VOLTAGE_MEDB		1300000
 
-#define NM2_FF_VOLTAGE_TURBOL	1220000
-#define NM2_TT_VOLTAGE_TURBOL	1260000
-#define NM2_SS_VOLTAGE_TURBOL	1300000
+#define NM2_FF_VOLTAGE_TURBOL	1300000
+#define NM2_TT_VOLTAGE_TURBOL	1300000
+#define NM2_SS_VOLTAGE_TURBOL	1320000
 
-#define NM2_FF_VOLTAGE_TURBO	1260000
-#define NM2_TT_VOLTAGE_TURBO	1300000
-#define NM2_SS_VOLTAGE_TURBO	1340000
-
-#define NM2_FF_VOLTAGE_OVERC	1300000
-#define NM2_TT_VOLTAGE_OVERC	1320000
-#define NM2_SS_VOLTAGE_OVERC	1360000
+#define NM2_FF_VOLTAGE_TURBO	1320000
+#define NM2_TT_VOLTAGE_TURBO	1320000
+#define NM2_SS_VOLTAGE_TURBO	1360000
 
 #define NM_FF_VOLTAGE		1320000
 #define NM_TT_VOLTAGE		1320000
@@ -692,7 +683,6 @@ static struct silicon_type_info part_type_ss = {
 	.nm2_medb_voltage = NM2_SS_VOLTAGE_MEDB,
 	.nm2_turbol_voltage = NM2_SS_VOLTAGE_TURBOL,
 	.nm2_turbo_voltage = NM2_SS_VOLTAGE_TURBO,
-	.nm2_overc_voltage = NM2_SS_VOLTAGE_OVERC,
 };
 
 static struct silicon_type_info part_type_tt = {
@@ -704,7 +694,6 @@ static struct silicon_type_info part_type_tt = {
 	.nm2_medb_voltage = NM2_TT_VOLTAGE_MEDB,
 	.nm2_turbol_voltage = NM2_TT_VOLTAGE_TURBOL,
 	.nm2_turbo_voltage = NM2_TT_VOLTAGE_TURBO,
-	.nm2_overc_voltage = NM2_TT_VOLTAGE_OVERC,
 };
 
 static struct silicon_type_info part_type_ff = {
@@ -716,12 +705,11 @@ static struct silicon_type_info part_type_ff = {
 	.nm2_medb_voltage = NM2_FF_VOLTAGE_MEDB,
 	.nm2_turbol_voltage = NM2_FF_VOLTAGE_TURBOL,
 	.nm2_turbo_voltage = NM2_FF_VOLTAGE_TURBO,
-	.nm2_overc_voltage = NM2_FF_VOLTAGE_OVERC,
 };
 
 #ifdef CONFIG_BCM_CPU_FREQ
 /* If cpufreq is enabled, this callback updates the voltages
- * for the normal and overc modes in the cpufreq driver
+ * for the normal and turbo modes in the cpufreq driver
  * voltage-to-frequency mapping table.
  */
 static void bcm215xx_avs_notify(int silicon_type)
@@ -732,7 +720,6 @@ static void bcm215xx_avs_notify(int silicon_type)
 	int medb;
 	int turbol;
 	int turbo;
-	int overc;
 
 	pr_info("%s: silicon_type : %d\n", __func__, silicon_type);
 
@@ -745,7 +732,6 @@ static void bcm215xx_avs_notify(int silicon_type)
 		medb	= part_type_ss.nm2_medb_voltage;
 		turbol	= part_type_ss.nm2_turbol_voltage;
 		turbo	= part_type_ss.nm2_turbo_voltage;
-		overc	= part_type_ss.nm2_overc_voltage;
 		break;
 
 	case SILICON_TYPE_TYPICAL:
@@ -755,7 +741,6 @@ static void bcm215xx_avs_notify(int silicon_type)
 		medb	= part_type_tt.nm2_medb_voltage;
 		turbol	= part_type_tt.nm2_turbol_voltage;
 		turbo	= part_type_tt.nm2_turbo_voltage;
-		overc	= part_type_tt.nm2_overc_voltage;
 		break;
 
 	case SILICON_TYPE_FAST:
@@ -765,7 +750,6 @@ static void bcm215xx_avs_notify(int silicon_type)
 		medb	= part_type_ff.nm2_medb_voltage;
 		turbol	= part_type_ff.nm2_turbol_voltage;
 		turbo	= part_type_ff.nm2_turbo_voltage;
-		overc	= part_type_ff.nm2_overc_voltage;
 		break;
 
 	default:
@@ -775,7 +759,6 @@ static void bcm215xx_avs_notify(int silicon_type)
 		medb	= part_type_ss.nm2_medb_voltage;
 		turbol	= part_type_ss.nm2_turbol_voltage;
 		turbo	= part_type_ss.nm2_turbo_voltage;
-		overc	= part_type_ss.nm2_overc_voltage;
 		break;
 	}
 
@@ -801,11 +784,7 @@ static void bcm215xx_avs_notify(int silicon_type)
 
 	if (turbo > 0)
 		bcm215xx_cpu0_freq_tbl[BCM_TURBO_MODE].cpu_voltage =
-		  (u32)turbo;
-
-	if (overc > 0)
-		bcm215xx_cpu0_freq_tbl[BCM_OVERC_MODE].cpu_voltage =
-		  (u32)overc;
+			(u32)turbo;
 }
 #else
 #define bcm215xx_avs_notify NULL
@@ -821,7 +800,6 @@ static struct bcm_avs_platform_data_t bcm_avs_pdata = {
 	.core_meda_regl = "csr_nm2",
 	.core_turbol_regl = "csr_nm2",
 	.core_turbo_regl = "csr_nm2",
-	.core_overc_regl = "csr_nm2",
 
 	.otp_bit_lsb = 169,
 	.otp_bit_msb = 188,
@@ -869,10 +847,6 @@ struct platform_device bcm215xx_avs_device = {
 
 void __init update_avs_sysparm(void)
 {
-	SYSPARM_VOLT("nm2_ff_voltage_overc", part_type_ff.nm2_overc_voltage);
-	SYSPARM_VOLT("nm2_tt_voltage_overc", part_type_tt.nm2_overc_voltage);
-	SYSPARM_VOLT("nm2_ss_voltage_overc", part_type_ss.nm2_overc_voltage);
-
 	SYSPARM_VOLT("nm2_ff_voltage_turbo", part_type_ff.nm2_turbo_voltage);
 	SYSPARM_VOLT("nm2_tt_voltage_turbo", part_type_tt.nm2_turbo_voltage);
 	SYSPARM_VOLT("nm2_ss_voltage_turbo", part_type_ss.nm2_turbo_voltage);

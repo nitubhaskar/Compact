@@ -44,8 +44,6 @@ struct silicon_type_info
 	int lpm_voltage;
 	/* NM voltage. Pass -1 if no update needed */
 	int nm_voltage;
-	/* NM2 overc mode voltage. Pass -1 if no update needed */
-	int nm2_overc_voltage;
 	/* NM2 turbo mode voltage. Pass -1 if no update needed */
 	int nm2_turbo_voltage;
 	/* NM2 turbol mode voltage. Pass -1 if no update needed */
@@ -101,11 +99,6 @@ struct bcm_avs_platform_data_t
 	 * Pass NULL if not supported/need not update
 	 */
 	char *core_turbo_regl;
-
-	/* Name of the regulator to control core overc mode voltage
-	 * Pass NULL if not supported/need not update
-	 */
-	char *core_overc_regl;
 
 	/* OTP params to idenltify silicon type.
 	 * Assumption : total number of bits <=32
