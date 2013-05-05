@@ -732,7 +732,7 @@ static void max8986_start_charging(struct max8986_power *max8986_power,
 	struct max8986 *max8986 = max8986_power->max8986;
 	u8 charging_cc = max8986_get_charging_current(max8986_power,charger_type,&supply_type);
 
-	pr_debug("%s\n", __func__);
+	pr_info("%s\n", __func__);
 
 	if(supply_type == POWER_SUPPLY_TYPE_BATTERY)
 	{

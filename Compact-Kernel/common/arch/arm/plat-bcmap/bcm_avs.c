@@ -153,6 +153,86 @@ static int bcm_avs_drv_probe(struct platform_device *pdev)
 		regulator_put(regl);
 	}
 
+	/* It is assumed that, at boot up system is in lowa mode */
+	if (pdata->core_lowa_regl && type_info->nm2_lowa_voltage != -1)
+	{
+		regl = regulator_get(NULL, pdata->core_lowa_regl);
+		if(IS_ERR(regl))
+		{
+			pr_info("%s: Core Lower mode regulator_get failed\n",
+				__func__);
+			ret = PTR_ERR(regl);
+			goto error;
+		}
+		regulator_set_voltage(regl, type_info->nm2_lowa_voltage,
+				      type_info->nm2_lowa_voltage);
+		regulator_put(regl);
+	}
+
+	/* It is assumed that, at boot up system is in normal mode */
+	if (pdata->core_normal_regl && type_info->nm2_normal_voltage != -1)
+	{
+		regl = regulator_get(NULL, pdata->core_normal_regl);
+		if(IS_ERR(regl))
+		{
+			pr_info("%s: Core normal mode regulator_get failed\n",
+				__func__);
+			ret = PTR_ERR(regl);
+			goto error;
+		}
+		regulator_set_voltage(regl, type_info->nm2_normal_voltage,
+				      type_info->nm2_normal_voltage);
+		regulator_put(regl);
+	}
+
+	/* It is assumed that, at boot up system is in meda mode */
+	if (pdata->core_meda_regl && type_info->nm2_meda_voltage != -1)
+	{
+		regl = regulator_get(NULL, pdata->core_meda_regl);
+		if(IS_ERR(regl))
+		{
+			pr_info("%s: Core Under_Medium mode regulator_get failed\n",
+				__func__);
+			ret = PTR_ERR(regl);
+			goto error;
+		}
+		regulator_set_voltage(regl, type_info->nm2_meda_voltage,
+				      type_info->nm2_meda_voltage);
+		regulator_put(regl);
+	}
+
+	/* It is assumed that, at boot up system is in medb mode */
+	if (pdata->core_medb_regl && type_info->nm2_medb_voltage != -1)
+	{
+		regl = regulator_get(NULL, pdata->core_medb_regl);
+		if(IS_ERR(regl))
+		{
+			pr_info("%s: Core Over_Medium mode regulator_get failed\n",
+				__func__);
+			ret = PTR_ERR(regl);
+			goto error;
+		}
+		regulator_set_voltage(regl, type_info->nm2_medb_voltage,
+				      type_info->nm2_medb_voltage);
+		regulator_put(regl);
+	}
+
+	/* It is assumed that, at boot up system is in turbol mode */
+	if (pdata->core_turbol_regl && type_info->nm2_turbol_voltage != -1)
+	{
+		regl = regulator_get(NULL, pdata->core_turbol_regl);
+		if(IS_ERR(regl))
+		{
+			pr_info("%s: Core Higher mode regulator_get failed\n",
+				__func__);
+			ret = PTR_ERR(regl);
+			goto error;
+		}
+		regulator_set_voltage(regl, type_info->nm2_turbol_voltage,
+				      type_info->nm2_turbol_voltage);
+		regulator_put(regl);
+	}
+
 	/* It is assumed that, at boot up system is in turbo mode */
 	if (pdata->core_turbo_regl && type_info->nm2_turbo_voltage != -1)
 	{

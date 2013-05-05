@@ -1,4 +1,4 @@
-Compact Kernel Version : 1.2.4
+Compact Kernel Version : 1.3
 For Samsung GT-S5512 : Galaxy Y PRO DUOS
 
 Introduction:

@@ -44,26 +44,25 @@ config CFQ_GROUP_IOSCHED
 	  Enable group IO scheduling in CFQ.
 
 config IOSCHED_VR
-	tristate "v/r I/O scheduler"
-	default y
+	tristate "V(R) I/O scheduler"
+	default n
 	---help---
-	  The deadline I/O scheduler is simple and compact. It will provide
-	  CSCAN service with FIFO expiration of requests, switching to
-	  a new point in the service tree and doing a batch of IO from there
-	  in case of expiry.
+	  Requests are chosen according to SSTF with a penalty of rev_penalty
+	  for switching head direction.
 
 config IOSCHED_SIO
-	tristate "sio I/O scheduler"
+	tristate "Simple I/O scheduler"
 	default y
 	---help---
-	  The deadline I/O scheduler is simple and compact. It will provide
-	  CSCAN service with FIFO expiration of requests, switching to
-	  a new point in the service tree and doing a batch of IO from there
-	  in case of expiry.
+	  The Simple I/O scheduler is an extremely simple scheduler,
+	  based on noop and deadline, that relies on deadlines to
+	  ensure fairness. The algorithm does not do any sorting but
+	  basic merging, trying to keep a minimum overhead. It is aimed
+	  mainly for aleatory access devices (eg: flash devices).
 
 choice
 	prompt "Default I/O scheduler"
-	default DEFAULT_CFQ
+	default DEFAULT_SIO
 	help
 	  Select the I/O scheduler which will be used by default for all
 	  block devices.
@@ -74,14 +73,14 @@ choice
 	config DEFAULT_CFQ
 		bool "CFQ" if IOSCHED_CFQ=y
 
+	config DEFAULT_NOOP
+		bool "No-op"
+
 	config DEFAULT_VR
-		bool "VR" if IOSCHED_VR=y
+		bool "V(R)" if IOSCHED_VR=y
 
 	config DEFAULT_SIO
 		bool "SIO" if IOSCHED_SIO=y
-
-	config DEFAULT_NOOP
-		bool "No-op"
 
 endchoice
 

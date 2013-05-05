@@ -109,49 +109,49 @@ struct regulator {
 
 static void bcmsdhc_dumpregs(struct bcmsdhc_host *host)
 {
-	pr_debug(DRIVER_NAME ": ============== REGISTER DUMP ==============\n");
+	pr_info(DRIVER_NAME ": ============== REGISTER DUMP ==============\n");
 
-	pr_debug(DRIVER_NAME ": Sys addr: 0x%08x | Version:  0x%08x\n",
+	pr_info(DRIVER_NAME ": Sys addr: 0x%08x | Version:  0x%08x\n",
 		 readl(host->ioaddr + SDHC_SYSTEMADDRESS_LO),
 		 readw(host->ioaddr + SDHC_HOST_CONTROLLER_VER));
-	pr_debug(DRIVER_NAME ": Blk size: 0x%08x | Blk cnt:  0x%08x\n",
+	pr_info(DRIVER_NAME ": Blk size: 0x%08x | Blk cnt:  0x%08x\n",
 		 readw(host->ioaddr + SDHC_BLOCKSIZE),
 		 readw(host->ioaddr + SDHC_BLOCKCOUNT));
-	pr_debug(DRIVER_NAME ": Argument: 0x%08x | Trn mode: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Argument: 0x%08x | Trn mode: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_ARGUMENT_0),
 		 readw(host->ioaddr + SDHC_TRANSFERMODE));
-	pr_debug(DRIVER_NAME ": Present:  0x%08x | Host ctl: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Present:  0x%08x | Host ctl: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_PRESENT_STATE),
 		 readb(host->ioaddr + SDHC_HOST_CONTROL));
-	pr_debug(DRIVER_NAME ": Power:    0x%08x | Blk gap:  0x%08x\n",
+	pr_info(DRIVER_NAME ": Power:    0x%08x | Blk gap:  0x%08x\n",
 		 readb(host->ioaddr + SDHC_POWER_CONTROL),
 		 readb(host->ioaddr + SDHC_BLOCK_GAP_CONTROL));
-	pr_debug(DRIVER_NAME ": Wake-up:  0x%08x | Clock:    0x%08x\n",
+	pr_info(DRIVER_NAME ": Wake-up:  0x%08x | Clock:    0x%08x\n",
 		 readb(host->ioaddr + SDHC_WAKEUP_CONTROL),
 		 readw(host->ioaddr + SDHC_CLOCK_CONTROL));
-	pr_debug(DRIVER_NAME ": Timeout:  0x%08x | Int stat: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Timeout:  0x%08x | Int stat: 0x%08x\n",
 		 readb(host->ioaddr + SDHC_TIMEOUT_CONTROL),
 		 readl(host->ioaddr + SDHC_NORMAL_INT_STATUS));
-	pr_debug(DRIVER_NAME ": Int enab: 0x%08x | Sig enab: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Int enab: 0x%08x | Sig enab: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_NORMAL_INT_STATUS_ENABLE),
 		 readl(host->ioaddr + SDHC_NORMAL_INT_SIGNAL_ENABLE));
-	pr_debug(DRIVER_NAME ": AC12 err: 0x%08x | Slot int: 0x%08x\n",
+	pr_info(DRIVER_NAME ": AC12 err: 0x%08x | Slot int: 0x%08x\n",
 		 readw(host->ioaddr + SDHC_AUTOCMD12_ERROR_STATUS),
 		 readw(host->ioaddr + SDHC_SLOT_INT_STATUS));
-	pr_debug(DRIVER_NAME ": Caps:     0x%08x | Max curr: 0x%08x\n",
+	pr_info(DRIVER_NAME ": Caps:     0x%08x | Max curr: 0x%08x\n",
 		 readl(host->ioaddr + SDHC_CAPABILITIES),
 		 readl(host->ioaddr + SDHC_MAX_CURRENT_CAPABILITIES));
 
 #if (defined(CONFIG_ARCH_BCM282X) || defined(CONFIG_ARCH_BCM116X) || defined(CONFIG_ARCH_BCM215XX))
-	pr_debug(DRIVER_NAME ": COM:     0x%08x | resp0: 0x%08x\n",
+	pr_info(DRIVER_NAME ": COM:     0x%08x | resp0: 0x%08x\n",
 		 readw(host->ioaddr + SDHC_COMMAND),
 		 readl(host->ioaddr + SDHC_R0));
 #endif
-	pr_debug(DRIVER_NAME ": ADMA Err: 0x%08x | ADMA Ptr: 0x%08x\n",
+	pr_info(DRIVER_NAME ": ADMA Err: 0x%08x | ADMA Ptr: 0x%08x\n",
 	       readl(host->ioaddr + SDHC_ADMA_ERR_STAT),
 	       readl(host->ioaddr + SDHC_ADMA_ADDRESS));
 
-	pr_debug(DRIVER_NAME ": ===========================================\n");
+	pr_info(DRIVER_NAME ": ===========================================\n");
 }
 
 /* *************************************************************************************************** */
